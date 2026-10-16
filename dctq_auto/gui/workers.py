@@ -44,76 +44,133 @@ class BotWorker(QThread):
                 return False
         return not self.isInterruptionRequested()
 
-    def _run_mock(self) -> None:
-        """Simulate Giao tranh decisions without connecting to ADB."""
-        if not self._config.get("thuc_hien_giao_tranh", False):
-            self.progress_changed.emit(1, 1, "Không chọn Giao tranh")
-            self.log_message.emit(
-                "Mock hiện chỉ mô phỏng Giao tranh; mục này đang được tắt."
-            )
-            return
+    def _mock_tick(self, message: str) -> bool:
+        """Log one simulated action, respecting pause and stop requests."""
+        if not self._wait_if_paused():
+            self.log_message.emit("[MOCK] Đã dừng theo yêu cầu.")
+            return False
+        time.sleep(0.12)
+        if self.isInterruptionRequested():
+            self.log_message.emit("[MOCK] Đã dừng theo yêu cầu.")
+            return False
+        self.log_message.emit(f"[MOCK] {message}")
+        return True
 
-        total_battles = int(self._config.get("giao_tranh", 1))
-        self.log_message.emit(
-            f"[MOCK] Bắt đầu mô phỏng {total_battles} trận Giao tranh. "
-            "Không kết nối ADB và không điều khiển game."
-        )
-        completed = 0
-
-        for battle_number in range(1, total_battles + 1):
-            if not self._wait_if_paused():
-                self.log_message.emit("[MOCK] Đã dừng theo yêu cầu.")
-                return
-
-            timeline = []
+    def _simulate_battles(self, task: str, count: int, required_flags: int,
+                          time_limit: int | None) -> bool:
+        for number in range(1, count + 1):
             elapsed = 0
             while True:
                 if not self._wait_if_paused():
                     self.log_message.emit("[MOCK] Đã dừng theo yêu cầu.")
-                    return
-
-                # One mock tick represents three simulated seconds.
-                time.sleep(0.1)
+                    return False
+                time.sleep(0.12)
                 elapsed += 3
-                # Time-limit scenarios deliberately never win so the
-                # log demonstrates that the timer ends the battle regardless.
-                won = (
-                    self._config.get("thoi_gian_giao_tranh") is None
-                    and elapsed >= 9
-                )
-                snapshot = BattleSnapshot(
-                    elapsed_seconds=elapsed,
-                    won=won,
-                    flags=min(max(elapsed // 3 - 1, 0), 3),
-                )
-                timeline.append(snapshot)
-                self.log_message.emit(
-                    f"[MOCK] Trận {battle_number}/{total_battles}: "
-                    f"t={snapshot.elapsed_seconds}s, "
-                    f"{'thắng' if snapshot.won else 'chưa thắng'}, "
-                    f"{snapshot.flags} cờ."
-                )
-                result = run_mock_battle(self._config, timeline)
-                # run_mock_battle replays the whole timeline; only finish this
-                # simulated battle once its configured stop condition is met.
-                if result.finished:
-                    self.log_message.emit(
-                        f"[MOCK] Kết thúc trận {battle_number}: {result.reason}."
-                    )
+                won = time_limit is None and elapsed >= 9
+                flags = min(max(elapsed // 3 - 1, 0), required_flags)
+                if task == "Giao tranh":
+                    snapshot = BattleSnapshot(elapsed, won, flags)
+                    result = run_mock_battle(self._config, [snapshot])
+                    finished = result.finished
+                    reason = result.reason
+                elif time_limit is not None:
+                    finished = elapsed >= time_limit
+                    reason = "time_limit_reached" if finished else "time_limit_not_reached"
+                elif not won:
+                    finished, reason = False, "battle_not_won"
+                elif flags >= required_flags:
+                    finished, reason = True, f"win_with_{required_flags}_flags"
+                else:
+                    finished, reason = False, "flags_not_reached"
+                if not self._mock_tick(
+                    f"{task} {number}/{count}: t={elapsed}s, "
+                    f"{'thắng' if won else 'chưa thắng'}, {flags} cờ."
+                ):
+                    return False
+                if finished:
+                    if not self._mock_tick(f"Kết thúc {task} {number}: {reason}."):
+                        return False
                     break
+        return True
 
-            completed += 1
+    def _run_mock(self) -> None:
+        """Simulate configured tasks without connecting to ADB."""
+        tasks: list[tuple[str, int]] = []
+        if self._config.get("thuc_hien_giao_tranh"):
+            tasks.append(("Giao tranh", int(self._config.get("giao_tranh", 1))))
+        if self._config.get("thuc_hien_tranh_ba"):
+            tasks.append(("Tranh bá", int(self._config.get("tranh_ba", 1))))
+        for key, label in (
+            ("diem_danh", "Điểm danh"),
+            ("bao_danh_quan_doan", "Báo danh quân đoàn"),
+            ("thiet_lap_muu_binh", "Thiết lập mưu binh"),
+            ("nhiem_vu_luu_ly_thap", "Nhiệm vụ Lưu Ly Tháp"),
+        ):
+            if self._config.get(key):
+                tasks.append((label, 1))
+        for key, label in (
+            ("dong_gop_knb", "Đóng góp KNB"),
+            ("tham_do_lanh_dia", "Thăm dò lãnh địa"),
+        ):
+            if self._config.get(key):
+                tasks.append((label, int(self._config.get(
+                    "so_lan_dong_gop_knb" if key == "dong_gop_knb"
+                    else "so_lan_tham_do_lanh_dia", 1
+                ))))
+
+        total = sum(count for _, count in tasks)
+        if total == 0:
+            self.log_message.emit("[MOCK] Không có nhiệm vụ nào được chọn.")
+            self.progress_changed.emit(1, 1, "Không có nhiệm vụ được chọn")
+            return
+
+        self.log_message.emit(
+            f"[MOCK] Bắt đầu mô phỏng {len(tasks)} nhóm nhiệm vụ, "
+            f"{total} lượt. Không kết nối ADB và không điều khiển game."
+        )
+        completed = 0
+        for task, count in tasks:
+            if not self._wait_if_paused():
+                self.log_message.emit("[MOCK] Đã dừng theo yêu cầu.")
+                return
+            if task in ("Giao tranh", "Tranh bá"):
+                is_giao_tranh = task == "Giao tranh"
+                if is_giao_tranh:
+                    flags = 3
+                    limit = self._config.get("thoi_gian_giao_tranh")
+                    if self._config.get("giao_tranh_nhanh_1_co"):
+                        flags = 1
+                else:
+                    flags = int(self._config.get("tranh_ba_fast_mode", 4))
+                    limit = self._config.get("thoi_gian_tranh_ba")
+                if not self._simulate_battles(task, count, flags, limit):
+                    return
+                completed += count
+            else:
+                for number in range(1, count + 1):
+                    extras = []
+                    if task == "Đóng góp KNB":
+                        extras.append(f"lượt {number}/{count}")
+                    if task == "Thăm dò lãnh địa":
+                        extras.append(
+                            "có mua lượt bằng KNB" if self._config.get("tham_do_lanh_dia_knb")
+                            else "chỉ dùng lượt miễn phí"
+                        )
+                    suffix = f" ({', '.join(extras)})" if extras else ""
+                    if not self._mock_tick(f"{task}: mô phỏng hoàn tất{suffix}."):
+                        return
+                    completed += 1
+                    self.progress_changed.emit(
+                        completed, total, f"Mock: hoàn thành {completed}/{total} lượt"
+                    )
             self.progress_changed.emit(
-                completed,
-                total_battles,
-                f"Mock Giao tranh: hoàn thành {completed}/{total_battles} trận",
+                completed, total, f"Mock: hoàn thành {completed}/{total} lượt"
             )
-
-        self.log_message.emit("[MOCK] Hoàn tất mô phỏng Giao tranh.")
+        self.log_message.emit("[MOCK] Hoàn tất mô phỏng tất cả nhiệm vụ.")
 
     def run(self) -> None:
         if self._mock_mode:
-            self.progress_changed.emit(0, max(1, int(self._config.get("giao_tranh", 1))), "Đang mô phỏng Giao tranh")
+            self.progress_changed.emit(0, 1, "Đang chuẩn bị mô phỏng")
             self.log_message.emit(f"Bắt đầu với cấu hình: {self._config}")
             try:
                 self._run_mock()
