@@ -80,3 +80,17 @@ The shared **Bắt đầu** and **Dừng** controls and activity log are below t
 - `dctq_auto/automation/`: bot orchestration and state handling
 - `dctq_auto/config/`: environment-based settings
 - `tests/`: unit tests
+
+## Build a single Windows EXE
+
+Build on Windows (the EXE is platform-specific). From the repository folder, install dependencies if needed, then run:
+
+```bat
+py -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+build_windows.bat
+```
+
+When the build completes, the executable is created at `dist\DCTQ-Auto.exe`. You can copy that EXE to another Windows machine. The first launch may take longer because PyInstaller extracts bundled files.
+
+The EXE does not include an Android emulator. ADB mode still requires an emulator/device and a usable `adb.exe` available to the application (for example, through PATH). The current ADB mode only connects and captures a screenshot; it does not perform real in-game tasks yet. Build and test the EXE on Windows; a successful build has not been verified by this repository change.
