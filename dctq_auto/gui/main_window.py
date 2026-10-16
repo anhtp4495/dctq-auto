@@ -5,10 +5,12 @@ import logging
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QCheckBox,
+    QComboBox,
     QGroupBox,
     QHBoxLayout,
     QLabel,
     QMainWindow,
+    QMessageBox,
     QPlainTextEdit,
     QPushButton,
     QSpinBox,
@@ -17,6 +19,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from dctq_auto.adb.client import AdbClient
 from dctq_auto.config.settings import Settings
 from dctq_auto.gui.workers import BotWorker
 
@@ -25,21 +28,46 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("DCTQ Auto")
-        self.resize(640, 520)
+        self.resize(700, 560)
         self._settings = Settings.from_env()
         self._worker: BotWorker | None = None
 
         central = QWidget(self)
         root = QVBoxLayout(central)
+
+        adb_group = QGroupBox("Thiết bị ADB")
+        adb_layout = QHBoxLayout(adb_group)
+        adb_layout.addWidget(QLabel("LDPlayer:"))
+        self.device_combo = QComboBox()
+        self.device_combo.setMinimumWidth(280)
+        self.device_combo.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+        )
+        self.device_combo.setMinimumContentsLength(24)
+        adb_layout.addWidget(self.device_combo, 1)
+        self.scan_button = QPushButton("Quét ADB")
+        self.scan_button.clicked.connect(self.scan_adb_devices)
+        adb_layout.addWidget(self.scan_button)
+        root.addWidget(adb_group)
+
         self.tabs = QTabWidget(central)
         root.addWidget(self.tabs)
 
         self.giao_tranh = QSpinBox()
-        self.giao_tranh.setRange(0, 999)
+        self.giao_tranh.setRange(1, 60)
         self.giao_tranh.setValue(15)
+        self.giao_tranh.setKeyboardTracking(False)
+        self.giao_tranh.editingFinished.connect(self.giao_tranh.clearFocus)
+
         self.tranh_ba = QSpinBox()
-        self.tranh_ba.setRange(0, 999)
+        self.tranh_ba.setRange(1, 15)
         self.tranh_ba.setValue(6)
+        self.tranh_ba.setKeyboardTracking(False)
+        self.tranh_ba.editingFinished.connect(self.tranh_ba.clearFocus)
+
+        self.mua_luot_knb = QCheckBox("Mua lượt bằng KNB (Kim Nguyên Bảo)")
+        self.mua_luot_knb.setChecked(False)
+
         self.diem_danh = QCheckBox("Thực hiện điểm danh")
         self.diem_danh.setChecked(True)
         self.bao_danh_quan_doan = QCheckBox("Thực hiện báo danh quân đoàn")
@@ -59,6 +87,7 @@ class MainWindow(QMainWindow):
         self.stop_button.clicked.connect(self.stop_bot)
         controls.addWidget(self.start_button)
         controls.addWidget(self.stop_button)
+        controls.addStretch(1)
         root.addLayout(controls)
 
         log_group = QGroupBox("Nhật ký hoạt động")
@@ -70,6 +99,7 @@ class MainWindow(QMainWindow):
         root.addWidget(log_group, 1)
 
         self.setCentralWidget(central)
+        self.scan_adb_devices()
         self._log("Ứng dụng đã khởi động. Logic gameplay chưa được triển khai.")
 
     def _build_daily_tab(self) -> QWidget:
@@ -88,7 +118,9 @@ class MainWindow(QMainWindow):
             row.addWidget(control)
             layout.addLayout(row)
 
-        layout.addSpacing(12)
+        layout.addSpacing(8)
+        layout.addWidget(self.mua_luot_knb)
+        layout.addSpacing(8)
         layout.addWidget(self.diem_danh)
         layout.addWidget(self.bao_danh_quan_doan)
         layout.addStretch(1)
@@ -111,10 +143,49 @@ class MainWindow(QMainWindow):
         layout.addStretch(1)
         return page
 
+    def scan_adb_devices(self) -> None:
+        current_serial = self.device_combo.currentData()
+        self.scan_button.setEnabled(False)
+        self.device_combo.setEnabled(False)
+        try:
+            devices = AdbClient.list_devices()
+            self.device_combo.clear()
+            for device in devices:
+                serial = device.serial
+                try:
+                    state = device.get_state()
+                except Exception:
+                    state = "unavailable"
+                if state == "device":
+                    self.device_combo.addItem(serial, serial)
+
+            if current_serial:
+                index = self.device_combo.findData(current_serial)
+                if index >= 0:
+                    self.device_combo.setCurrentIndex(index)
+
+            if self.device_combo.count() == 0:
+                self.device_combo.addItem("Không tìm thấy thiết bị ADB", None)
+                self._log("Quét ADB: không tìm thấy thiết bị đang online.")
+            else:
+                self._log(f"Quét ADB: tìm thấy {self.device_combo.count()} thiết bị.")
+                if self._settings.adb_serial:
+                    index = self.device_combo.findData(self._settings.adb_serial)
+                    if index >= 0:
+                        self.device_combo.setCurrentIndex(index)
+        except Exception as exc:
+            self.device_combo.clear()
+            self.device_combo.addItem("Không thể quét ADB", None)
+            self._log(f"Lỗi quét ADB: {exc}")
+        finally:
+            self.scan_button.setEnabled(True)
+            self.device_combo.setEnabled(True)
+
     def _current_config(self) -> dict:
         return {
             "giao_tranh": self.giao_tranh.value(),
             "tranh_ba": self.tranh_ba.value(),
+            "mua_luot_knb": self.mua_luot_knb.isChecked(),
             "diem_danh": self.diem_danh.isChecked(),
             "bao_danh_quan_doan": self.bao_danh_quan_doan.isChecked(),
             "thiet_lap_muu_binh": self.thiet_lap_muu_binh.isChecked(),
@@ -124,9 +195,18 @@ class MainWindow(QMainWindow):
         if self._worker is not None and self._worker.isRunning():
             return
 
+        serial = self.device_combo.currentData()
+        if not serial:
+            QMessageBox.warning(
+                self,
+                "Chưa chọn thiết bị",
+                "Hãy mở LDPlayer, nhấn Quét ADB và chọn thiết bị cần chạy.",
+            )
+            return
+
         config = self._current_config()
         self._worker = BotWorker(
-            serial=self._settings.adb_serial,
+            serial=serial,
             screenshot_dir=self._settings.screenshot_dir,
             config=config,
             parent=self,
@@ -135,7 +215,7 @@ class MainWindow(QMainWindow):
         self._worker.finished.connect(self._on_worker_finished)
         self.start_button.setEnabled(False)
         self.stop_button.setEnabled(True)
-        self._log("Đang chạy tác vụ nền…")
+        self._log(f"Đang chạy tác vụ nền trên thiết bị {serial}…")
         self._worker.start()
 
     def stop_bot(self) -> None:
