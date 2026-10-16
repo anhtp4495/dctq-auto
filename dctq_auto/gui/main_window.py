@@ -210,10 +210,12 @@ class MainWindow(QMainWindow):
         self.tham_do_lanh_dia.toggled.connect(
             self.tham_do_lanh_dia_knb.setEnabled
         )
-        self.tham_do_lanh_dia_description = QLabel(
-            "Không chọn: chỉ dùng phiếu thăm dò miễn phí. Chọn: nếu không đủ phiếu, tự động mua các lượt còn thiếu bằng KNB."
-        )
+        self.tham_do_lanh_dia_description = QLabel()
         self.tham_do_lanh_dia_description.setWordWrap(True)
+        self.tham_do_lanh_dia_knb.toggled.connect(
+            self._update_tham_do_lanh_dia_description
+        )
+        self._update_tham_do_lanh_dia_description()
 
         self.nhiem_vu_luu_ly_thap = QCheckBox("Nhiệm vụ Lưu Ly Tháp")
         self.thiet_lap_muu_binh = QCheckBox("Thiết lập mưu binh")
@@ -375,6 +377,16 @@ class MainWindow(QMainWindow):
         else:
             self.giao_tranh_mode_description.setText(
                 "Đánh đến khi chắc chắn thắng và đạt đủ 3 cờ mới kết thúc."
+            )
+
+    def _update_tham_do_lanh_dia_description(self, *_args) -> None:
+        if self.tham_do_lanh_dia_knb.isChecked():
+            self.tham_do_lanh_dia_description.setText(
+                "Nếu không đủ phiếu thăm dò, tự động mua các lượt còn thiếu bằng KNB."
+            )
+        else:
+            self.tham_do_lanh_dia_description.setText(
+                "Chỉ sử dụng phiếu thăm dò miễn phí, không mua thêm lượt bằng KNB."
             )
 
     def _update_tranh_ba_mode_description(self, *_args) -> None:
