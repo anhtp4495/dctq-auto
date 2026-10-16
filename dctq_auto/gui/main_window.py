@@ -3,7 +3,8 @@
 import logging
 import time
 
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, QSettings
+from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
     QAbstractButton,
     QButtonGroup,
@@ -35,7 +36,7 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("DCTQ Auto")
-        self.resize(700, 600)
+        self._ui_settings = QSettings("DCTQAuto", "DCTQAuto")
         self._settings = Settings.from_env()
         self._worker: BotWorker | None = None
         self._paused = False
@@ -302,10 +303,88 @@ class MainWindow(QMainWindow):
         root.addWidget(log_group)
 
         self.setCentralWidget(central)
+        self._restore_settings()
+        self._place_window_on_right()
+        self._connect_settings_persistence()
         self._on_device_changed()
         self._log(
             "Ứng dụng đã khởi động. Chọn Chạy thử hoặc một thiết bị ADB."
         )
+
+
+    def _place_window_on_right(self) -> None:
+        """Open as a narrow, full-height utility window on the right side."""
+        screen = QGuiApplication.primaryScreen()
+        if screen is None:
+            self.resize(333, 800)
+            return
+        area = screen.availableGeometry()
+        width = min(333, area.width())
+        self.setMinimumWidth(min(300, width))
+        self.resize(width, area.height())
+        self.move(area.right() - width + 1, area.top())
+
+    def _settings_widgets(self) -> dict[str, QWidget]:
+        """Return named controls whose values should persist between launches."""
+        supported = (QCheckBox, QRadioButton, QSpinBox, QComboBox, QGroupBox)
+        widgets: dict[str, QWidget] = {}
+        for name, widget in self.__dict__.items():
+            if not isinstance(widget, supported):
+                continue
+            if isinstance(widget, QGroupBox) and not widget.isCheckable():
+                continue
+            if name in {"device_combo"}:
+                continue
+            widgets[name] = widget
+        return widgets
+
+    def _restore_settings(self) -> None:
+        for name, widget in self._settings_widgets().items():
+            key = f"controls/{name}"
+            if not self._ui_settings.contains(key):
+                continue
+            value = self._ui_settings.value(key)
+            if isinstance(widget, (QCheckBox, QRadioButton, QGroupBox)):
+                widget.setChecked(str(value).lower() in {"true", "1", "yes"})
+            elif isinstance(widget, QSpinBox):
+                try:
+                    widget.setValue(int(value))
+                except (TypeError, ValueError):
+                    pass
+            elif isinstance(widget, QComboBox):
+                index = widget.findData(value)
+                if index < 0:
+                    index = widget.findText(str(value))
+                if index >= 0:
+                    widget.setCurrentIndex(index)
+
+    def _connect_settings_persistence(self) -> None:
+        for widget in self._settings_widgets().values():
+            if isinstance(widget, (QCheckBox, QRadioButton, QGroupBox)):
+                widget.toggled.connect(self._save_settings)
+            elif isinstance(widget, QSpinBox):
+                widget.valueChanged.connect(self._save_settings)
+            elif isinstance(widget, QComboBox):
+                widget.currentIndexChanged.connect(self._save_settings)
+
+    def _save_settings(self, *_args) -> None:
+        for name, widget in self._settings_widgets().items():
+            if isinstance(widget, (QCheckBox, QRadioButton, QGroupBox)):
+                value = widget.isChecked()
+            elif isinstance(widget, QSpinBox):
+                value = widget.value()
+            elif isinstance(widget, QComboBox):
+                value = widget.currentData()
+                if value is None:
+                    value = widget.currentText()
+            else:
+                continue
+            self._ui_settings.setValue(f"controls/{name}", value)
+        self._ui_settings.sync()
+
+    def closeEvent(self, event) -> None:
+        self._save_settings()
+        super().closeEvent(event)
 
     def _build_mode_row(self, *widgets: QWidget) -> QWidget:
         """Build mode options with the same first-column width and spacing."""
