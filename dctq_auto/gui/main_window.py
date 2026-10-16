@@ -753,13 +753,9 @@ class MainWindow(QMainWindow):
     @staticmethod
     def _task_specs(config: dict) -> list[tuple[str, int]]:
         tasks: list[tuple[str, int]] = []
-        if config.get("thuc_hien_giao_tranh"):
-            tasks.append(("Giao tranh", int(config.get("giao_tranh", 1))))
-        if config.get("thuc_hien_tranh_ba"):
-            tasks.append(("Tranh bá", int(config.get("tranh_ba", 1))))
         for key, label in (
             ("diem_danh", "Điểm danh"),
-            ("bao_danh_quan_doan", "Báo danh"),
+            ("bao_danh_quan_doan", "Báo danh quân đoàn"),
             ("thiet_lap_muu_binh", "Thiết lập mưu binh"),
         ):
             if config.get(key):
@@ -771,6 +767,10 @@ class MainWindow(QMainWindow):
         ):
             if config.get(key):
                 tasks.append((label, int(config.get(count_key, 1))))
+        if config.get("thuc_hien_giao_tranh"):
+            tasks.append(("Giao tranh", int(config.get("giao_tranh", 1))))
+        if config.get("thuc_hien_tranh_ba"):
+            tasks.append(("Tranh bá", int(config.get("tranh_ba", 1))))
         return tasks
 
     def _init_task_progress(self, config: dict) -> None:
