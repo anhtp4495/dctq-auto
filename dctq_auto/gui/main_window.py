@@ -221,8 +221,8 @@ class MainWindow(QMainWindow):
 
         self.nhiem_vu_luu_ly_thap = QCheckBox("Nhiệm vụ Lưu Ly Tháp")
         self.so_lan_luu_ly_thap = QSpinBox()
-        self.so_lan_luu_ly_thap.setRange(1, 10)
-        self.so_lan_luu_ly_thap.setValue(1)
+        self.so_lan_luu_ly_thap.setRange(6, 10)
+        self.so_lan_luu_ly_thap.setValue(6)
         self.so_lan_luu_ly_thap.setEnabled(False)
         self.so_lan_luu_ly_thap.setKeyboardTracking(False)
         self.nhiem_vu_luu_ly_thap.toggled.connect(
@@ -380,7 +380,7 @@ class MainWindow(QMainWindow):
         other_layout.addWidget(self.nhiem_vu_luu_ly_thap, 4, 0)
         other_layout.addWidget(self.so_lan_luu_ly_thap, 4, 1)
         other_layout.addWidget(QLabel("lần"), 4, 2)
-        other_layout.addWidget(self.luu_ly_thap_knb, 5, 0)
+        other_layout.addWidget(self.luu_ly_thap_knb, 4, 3)
         layout.addWidget(other_group)
 
         layout.addStretch(1)
