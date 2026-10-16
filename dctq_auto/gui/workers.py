@@ -27,6 +27,7 @@ class BotWorker(QThread):
             "Bắt đầu với cấu hình: "
             f"giao_tranh={self._config['giao_tranh']}, "
             f"tranh_ba={self._config['tranh_ba']}, "
+            f"mua_luot_knb={self._config['mua_luot_knb']}, "
             f"diem_danh={self._config['diem_danh']}, "
             f"bao_danh_quan_doan={self._config['bao_danh_quan_doan']}, "
             f"thiet_lap_muu_binh={self._config['thiet_lap_muu_binh']}"
@@ -38,7 +39,7 @@ class BotWorker(QThread):
         try:
             client = AdbClient(serial=self._serial)
             device = client.connect()
-            self.log_message.emit("Đã kết nối ADB.")
+            self.log_message.emit(f"Đã kết nối ADB: {self._serial}")
             if self.isInterruptionRequested():
                 self.log_message.emit("Đã yêu cầu dừng trước khi chụp màn hình.")
                 return
@@ -47,5 +48,5 @@ class BotWorker(QThread):
             self.log_message.emit(
                 "Chưa thực hiện nhiệm vụ trong game: logic gameplay chưa được triển khai."
             )
-        except Exception as exc:  # Report device/ADB errors in the GUI log.
+        except Exception as exc:
             self.log_message.emit(f"Lỗi: {exc}")
