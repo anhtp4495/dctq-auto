@@ -194,7 +194,6 @@ class BotWorker(QThread):
                     self._emit_mock_progress(
                         0, f"Đã hoàn thành {self._progress_completed // 100}/{total} lượt"
                     )
-        for task, count in tasks:
             self.task_progress_changed.emit(task, "done", count, count)
         self.log_message.emit("Hoàn tất chạy thử tất cả nhiệm vụ.")
 
