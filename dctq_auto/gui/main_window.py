@@ -136,11 +136,15 @@ class MainWindow(QMainWindow):
 
         self.mua_luot_knb = QCheckBox("Mua lượt bằng KNB (Kim Nguyên Bảo)")
         self.mua_luot_knb.setChecked(False)
-        self.tranh_ba_0_co = QRadioButton("Nhanh 0 cờ")
-        self.tranh_ba_1_co = QRadioButton("Nhanh 1 cờ")
+        self.tranh_ba_1_co = QCheckBox("Nhanh 1 cờ")
         self.tranh_ba_1_co.setToolTip("Chỉ cần thắng trận là kết thúc.")
-        self.tranh_ba_4_co = QRadioButton("Bình thường 4 cờ")
-        self.tranh_ba_thoi_gian_mode = QRadioButton("Thời gian tối đa:")
+        self.tranh_ba_4_co = QCheckBox("Bình thường 4 cờ")
+        self.tranh_ba_thoi_gian_mode = QCheckBox("Thời gian tối đa:")
+        self.tranh_ba_mode_group = QButtonGroup(self)
+        self.tranh_ba_mode_group.setExclusive(True)
+        self.tranh_ba_mode_group.addButton(self.tranh_ba_1_co)
+        self.tranh_ba_mode_group.addButton(self.tranh_ba_4_co)
+        self.tranh_ba_mode_group.addButton(self.tranh_ba_thoi_gian_mode)
         self.tranh_ba_thoi_gian = QSpinBox()
         self.tranh_ba_thoi_gian.setRange(15, 180)
         self.tranh_ba_thoi_gian.setValue(15)
@@ -156,7 +160,7 @@ class MainWindow(QMainWindow):
         self.tranh_ba_thoi_gian_mode.setToolTip(
             "Kết thúc trận khi đạt giới hạn thời gian đã chọn."
         )
-        self.tranh_ba_0_co.setChecked(True)
+        self.tranh_ba_4_co.setChecked(True)
 
         self.diem_danh = QCheckBox("Thực hiện điểm danh")
         self.diem_danh.setChecked(True)
@@ -231,7 +235,6 @@ class MainWindow(QMainWindow):
         tranh_ba_layout.addWidget(self.mua_luot_knb)
         fast_mode_row = QHBoxLayout()
         fast_mode_row.addWidget(QLabel("Chế độ:"))
-        fast_mode_row.addWidget(self.tranh_ba_0_co)
         fast_mode_row.addWidget(self.tranh_ba_1_co)
         fast_mode_row.addWidget(self.tranh_ba_4_co)
         fast_mode_row.addWidget(self.tranh_ba_thoi_gian_mode)
@@ -368,10 +371,8 @@ class MainWindow(QMainWindow):
 
         if self.tranh_ba_1_co.isChecked():
             tranh_ba_fast_mode = 1
-        elif self.tranh_ba_4_co.isChecked():
-            tranh_ba_fast_mode = 4
         else:
-            tranh_ba_fast_mode = 0
+            tranh_ba_fast_mode = 4
 
         return {
             "thuc_hien_giao_tranh": self.giao_tranh_group.isChecked(),
