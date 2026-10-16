@@ -1,5 +1,5 @@
 # DCTQ Auto
-1
+
 Python desktop application scaffold for Đại Chiến Tam Quốc running in an Android emulator. It uses ADB APIs for device interaction rather than physical mouse/keyboard input.
 
 ## Requirements
