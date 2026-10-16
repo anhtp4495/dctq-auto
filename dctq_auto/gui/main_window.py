@@ -118,13 +118,13 @@ class MainWindow(QMainWindow):
         options_layout.setVerticalSpacing(4)
         options_layout.addWidget(self.chon_nha_npc, 0, 0)
         options_layout.addWidget(self.su_dung_canh_bat_tran, 0, 1)
-        self.giao_tranh_mode_label = QLabel("Chế độ:")
-        self.giao_tranh_mode_label.setFixedWidth(self.chon_nha_npc.sizeHint().width())
-        options_layout.addWidget(self.giao_tranh_mode_label, 1, 0)
-        options_layout.addWidget(self.giao_tranh_nhanh_1_co, 1, 1)
-        options_layout.addWidget(self.ba_co, 1, 2)
-        options_layout.addWidget(self.thoi_gian_mode, 1, 3)
-        options_layout.addWidget(self.thoi_gian_giao_tranh, 1, 4)
+        giao_tranh_mode_row = self._build_mode_row(
+            self.giao_tranh_nhanh_1_co,
+            self.ba_co,
+            self.thoi_gian_mode,
+            self.thoi_gian_giao_tranh,
+        )
+        options_layout.addWidget(giao_tranh_mode_row, 1, 0, 1, 5)
         options_layout.addWidget(self.giao_tranh_mode_description, 2, 0, 1, 5)
 
         self.chien_cong_row = QWidget()
@@ -200,6 +200,22 @@ class MainWindow(QMainWindow):
         self.scan_adb_devices()
         self._log("Ứng dụng đã khởi động. Logic gameplay chưa được triển khai.")
 
+    def _build_mode_row(self, *widgets: QWidget) -> QWidget:
+        """Build mode options with the same first-column width and spacing."""
+        row = QWidget()
+        row_layout = QHBoxLayout(row)
+        row_layout.setContentsMargins(0, 0, 0, 0)
+        row_layout.setSpacing(16)
+
+        label = QLabel("Chế độ:")
+        label.setFixedWidth(self.chon_nha_npc.sizeHint().width())
+        row_layout.addWidget(label)
+        for widget in widgets:
+            row_layout.addWidget(widget)
+
+        row_layout.addStretch(1)
+        return row
+
     def _build_daily_tab(self) -> QWidget:
         page = QWidget()
         layout = QVBoxLayout(page)
@@ -236,18 +252,12 @@ class MainWindow(QMainWindow):
         row.addWidget(self.tranh_ba)
         tranh_ba_layout.addLayout(row)
         tranh_ba_layout.addWidget(self.mua_luot_knb)
-        tranh_ba_mode_row = QWidget()
-        tranh_ba_mode_layout = QGridLayout(tranh_ba_mode_row)
-        tranh_ba_mode_layout.setContentsMargins(0, 0, 0, 0)
-        tranh_ba_mode_layout.setHorizontalSpacing(16)
-        tranh_ba_mode_layout.setVerticalSpacing(4)
-        tranh_ba_mode_label = QLabel("Chế độ:")
-        tranh_ba_mode_label.setFixedWidth(self.chon_nha_npc.sizeHint().width())
-        tranh_ba_mode_layout.addWidget(tranh_ba_mode_label, 0, 0)
-        tranh_ba_mode_layout.addWidget(self.tranh_ba_1_co, 0, 1)
-        tranh_ba_mode_layout.addWidget(self.tranh_ba_4_co, 0, 2)
-        tranh_ba_mode_layout.addWidget(self.tranh_ba_thoi_gian_mode, 0, 3)
-        tranh_ba_mode_layout.addWidget(self.tranh_ba_thoi_gian, 0, 4)
+        tranh_ba_mode_row = self._build_mode_row(
+            self.tranh_ba_1_co,
+            self.tranh_ba_4_co,
+            self.tranh_ba_thoi_gian_mode,
+            self.tranh_ba_thoi_gian,
+        )
         tranh_ba_layout.addWidget(tranh_ba_mode_row)
         layout.addWidget(tranh_ba_group)
 
