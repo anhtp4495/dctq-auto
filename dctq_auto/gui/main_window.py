@@ -451,7 +451,7 @@ class MainWindow(QMainWindow):
         mock_mode = self.device_combo.currentData() == "mock"
         self.scan_button.setEnabled(True)
         if mock_mode:
-            self._log("Đã chọn Adb-Mock: mô phỏng, không kết nối hoặc điều khiển game.")
+            self._log("Đã chọn chế độ chạy thử, không kết nối ADB.")
         elif self.device_combo.currentData():
             self._log(f"Đã chọn thiết bị ADB: {self.device_combo.currentData()}")
 
@@ -462,7 +462,7 @@ class MainWindow(QMainWindow):
         try:
             devices = AdbClient.list_devices()
             self.device_combo.clear()
-            self.device_combo.addItem("Adb-Mock (mô phỏng, không cần LDPlayer)", "mock")
+            self.device_combo.addItem("Chạy thử (không cần thiết bị)", "mock")
             online_count = 0
             for device in devices:
                 serial = device.serial
@@ -480,9 +480,9 @@ class MainWindow(QMainWindow):
             self._log(f"Quét ADB: tìm thấy {online_count} thiết bị online.")
         except Exception as exc:
             self.device_combo.clear()
-            self.device_combo.addItem("Adb-Mock (mô phỏng, không cần LDPlayer)", "mock")
+            self.device_combo.addItem("Chạy thử (không cần thiết bị)", "mock")
             self.device_combo.setCurrentIndex(0)
-            self._log(f"Lỗi quét ADB: {exc}. Vẫn có thể dùng Adb-Mock.")
+            self._log(f"Lỗi quét ADB: {exc}. Vẫn có thể chạy thử.")
         finally:
             self.scan_button.setEnabled(True)
             self.device_combo.setEnabled(True)
