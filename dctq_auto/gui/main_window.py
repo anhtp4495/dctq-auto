@@ -1,8 +1,9 @@
 """Main PySide6 window with task tabs and shared controls."""
 
 import logging
+import time
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
     QButtonGroup,
     QCheckBox,
@@ -14,6 +15,7 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QPlainTextEdit,
+    QProgressBar,
     QPushButton,
     QRadioButton,
     QScrollArea,
@@ -35,6 +37,10 @@ class MainWindow(QMainWindow):
         self.resize(700, 600)
         self._settings = Settings.from_env()
         self._worker: BotWorker | None = None
+        self._paused = False
+        self._run_started_at: float | None = None
+        self._pause_started_at: float | None = None
+        self._paused_duration = 0.0
 
         central = QWidget(self)
         root = QVBoxLayout(central)
@@ -219,14 +225,45 @@ class MainWindow(QMainWindow):
 
         controls = QHBoxLayout()
         self.start_button = QPushButton("Bắt đầu")
-        self.stop_button = QPushButton("Dừng")
+        self.pause_button = QPushButton("Tạm dừng")
+        self.stop_button = QPushButton("Dừng hẳn")
+        self.pause_button.setEnabled(False)
         self.stop_button.setEnabled(False)
         self.start_button.clicked.connect(self.start_bot)
+        self.pause_button.clicked.connect(self.toggle_pause_bot)
         self.stop_button.clicked.connect(self.stop_bot)
         controls.addWidget(self.start_button)
+        controls.addWidget(self.pause_button)
         controls.addWidget(self.stop_button)
         controls.addStretch(1)
         root.addLayout(controls)
+
+        progress_group = QGroupBox("Tiến trình")
+        progress_layout = QVBoxLayout(progress_group)
+        progress_header = QHBoxLayout()
+        self.progress_status_label = QLabel("Chưa bắt đầu")
+        self.progress_count_label = QLabel("0/2 bước")
+        progress_header.addWidget(self.progress_status_label)
+        progress_header.addStretch(1)
+        progress_header.addWidget(self.progress_count_label)
+        progress_layout.addLayout(progress_header)
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setFormat("%p%")
+        progress_layout.addWidget(self.progress_bar)
+        timing_layout = QHBoxLayout()
+        self.elapsed_time_label = QLabel("Thời gian đã chạy: 00:00:00")
+        self.eta_label = QLabel("Dự kiến còn lại: Chưa ước tính")
+        timing_layout.addWidget(self.elapsed_time_label)
+        timing_layout.addStretch(1)
+        timing_layout.addWidget(self.eta_label)
+        progress_layout.addLayout(timing_layout)
+        root.addWidget(progress_group)
+
+        self.elapsed_timer = QTimer(self)
+        self.elapsed_timer.setInterval(1000)
+        self.elapsed_timer.timeout.connect(self._update_elapsed_time)
 
         log_group = QGroupBox("Nhật ký hoạt động")
         log_layout = QVBoxLayout(log_group)
@@ -502,21 +539,103 @@ class MainWindow(QMainWindow):
             parent=self,
         )
         self._worker.log_message.connect(self._log)
+        self._worker.progress_changed.connect(self._update_progress)
         self._worker.finished.connect(self._on_worker_finished)
+        self._paused = False
+        self._run_started_at = time.monotonic()
+        self._pause_started_at = None
+        self._paused_duration = 0.0
+        self.progress_bar.setValue(0)
+        self.progress_count_label.setText("0/2 bước")
+        self.progress_status_label.setText("Đang chuẩn bị")
+        self.elapsed_time_label.setText("Thời gian đã chạy: 00:00:00")
+        self.eta_label.setText("Dự kiến còn lại: Chưa ước tính")
         self.start_button.setEnabled(False)
+        self.pause_button.setEnabled(True)
+        self.pause_button.setText("Tạm dừng")
         self.stop_button.setEnabled(True)
+        self.elapsed_timer.start()
         self._log(f"Đang chạy tác vụ nền trên thiết bị {serial}…")
         self._worker.start()
 
+    def toggle_pause_bot(self) -> None:
+        if self._worker is None or not self._worker.isRunning():
+            return
+        if self._paused:
+            self.resume_bot()
+        else:
+            self.pause_bot()
+
+    def pause_bot(self) -> None:
+        if self._worker is None or not self._worker.isRunning() or self._paused:
+            return
+        self._worker.pause()
+        self._paused = True
+        self._pause_started_at = time.monotonic()
+        self.pause_button.setText("Tiếp tục")
+        self.progress_status_label.setText("Đang tạm dừng")
+        self._log("Đã tạm dừng tại điểm an toàn; nhấn Tiếp tục để chạy tiếp.")
+
+    def resume_bot(self) -> None:
+        if self._worker is None or not self._worker.isRunning() or not self._paused:
+            return
+        now = time.monotonic()
+        if self._pause_started_at is not None:
+            self._paused_duration += now - self._pause_started_at
+        self._pause_started_at = None
+        self._paused = False
+        self._worker.resume()
+        self.pause_button.setText("Tạm dừng")
+        self.progress_status_label.setText("Đang chạy")
+        self._log("Tiếp tục tác vụ.")
+
     def stop_bot(self) -> None:
         if self._worker is not None and self._worker.isRunning():
+            self._worker.resume()
             self._worker.requestInterruption()
+            self.pause_button.setEnabled(False)
             self.stop_button.setEnabled(False)
-            self._log("Đã gửi yêu cầu dừng; worker sẽ dừng tại điểm kiểm tra tiếp theo.")
+            self.progress_status_label.setText("Đang dừng...")
+            self._log("Đã gửi yêu cầu dừng hẳn; worker sẽ dừng tại điểm kiểm tra tiếp theo.")
+
+    def _update_progress(self, completed: int, total: int, status: str) -> None:
+        percent = int(completed * 100 / total) if total else 0
+        self.progress_bar.setValue(percent)
+        self.progress_count_label.setText(f"{completed}/{total} bước")
+        self.progress_status_label.setText(status)
+
+    @staticmethod
+    def _format_duration(seconds: float) -> str:
+        seconds = max(0, int(seconds))
+        hours, remainder = divmod(seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+    def _update_elapsed_time(self) -> None:
+        if self._run_started_at is None:
+            return
+        now = time.monotonic()
+        paused_duration = self._paused_duration
+        if self._paused and self._pause_started_at is not None:
+            paused_duration += now - self._pause_started_at
+        elapsed = now - self._run_started_at - paused_duration
+        self.elapsed_time_label.setText(
+            f"Thời gian đã chạy: {self._format_duration(elapsed)}"
+        )
 
     def _on_worker_finished(self) -> None:
+        self.elapsed_timer.stop()
+        self._paused = False
+        self._pause_started_at = None
+        self._run_started_at = None
         self.start_button.setEnabled(True)
+        self.pause_button.setEnabled(False)
+        self.pause_button.setText("Tạm dừng")
         self.stop_button.setEnabled(False)
+        if self.progress_bar.value() == 100:
+            self.progress_status_label.setText("Hoàn tất bước chuẩn bị")
+        else:
+            self.progress_status_label.setText("Đã kết thúc")
         self._log("Worker đã kết thúc.")
 
     def _log(self, message: str) -> None:
