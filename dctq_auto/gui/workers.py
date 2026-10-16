@@ -60,6 +60,15 @@ class BotWorker(QThread):
         self.log_message.emit(f"{message}")
         return True
 
+    @staticmethod
+    def _estimated_task_seconds(task: str, config: dict) -> int:
+        """Ước tính thời lượng để phân bổ tiến trình tổng theo thời gian."""
+        if task == "Giao tranh":
+            return max(1, int(config.get("thoi_gian_giao_tranh") or 180))
+        if task == "Tranh bá":
+            return max(1, int(config.get("thoi_gian_tranh_ba") or 180))
+        return 30
+
     def _emit_mock_progress(self, partial_units: int, status: str) -> None:
         value = min(self._progress_total, self._progress_completed + max(0, partial_units))
         self.progress_changed.emit(value, self._progress_total, status)
@@ -94,15 +103,15 @@ class BotWorker(QThread):
                     f"{'thắng' if won else 'chưa thắng'}, {flags} cờ."
                 ):
                     return False
-                expected_seconds = max(12, time_limit or 12)
-                partial = min(99, int(elapsed * 99 / expected_seconds))
+                expected_seconds = self._estimated_task_seconds(task, self._config)
+                partial = min(expected_seconds - 1, elapsed)
                 self._emit_mock_progress(
                     partial, f"{task}: trận {number}/{count}"
                 )
                 if finished:
                     if not self._mock_tick(f"Kết thúc {task} {number}: {reason}."):
                         return False
-                    self._progress_completed += 100
+                    self._progress_completed += expected_seconds
                     self.task_progress_changed.emit(task, "running", number, count)
                     self._emit_mock_progress(0, f"{task}: hoàn thành {number}/{count}")
                     break
@@ -112,18 +121,18 @@ class BotWorker(QThread):
         """Simulate configured tasks and update progress without connecting to ADB."""
         tasks = [(spec.label, count) for spec, count in get_enabled_tasks(self._config)]
 
-        total = sum(count for _, count in tasks)
+        total = sum(count * self._estimated_task_seconds(task, self._config) for task, count in tasks)
         if total == 0:
             self.log_message.emit("Không có nhiệm vụ nào được chọn.")
             self.progress_changed.emit(0, 0, "Không có nhiệm vụ được chọn")
             return
 
-        self._progress_total = total * 100
+        self._progress_total = total
         self._progress_completed = 0
         self.progress_changed.emit(0, self._progress_total, "Bắt đầu")
         self.log_message.emit(
             f"Bắt đầu chạy thử {len(tasks)} nhóm nhiệm vụ, "
-            f"{total} lượt. Không kết nối ADB và không điều khiển game."
+            ước tính {total} giây. Không kết nối ADB và không điều khiển game."
         )
         for task, count in tasks:
             self.task_progress_changed.emit(task, "running", 0, count)
@@ -172,7 +181,7 @@ class BotWorker(QThread):
                     suffix = f" ({', '.join(extras)})" if extras else ""
                     if not self._mock_tick(f"{task}: chạy thử hoàn tất{suffix}."):
                         return
-                    self._progress_completed += 100
+                    self._progress_completed += self._estimated_task_seconds(task, self._config)
                     self.task_progress_changed.emit(task, "running", number, count)
                     self._emit_mock_progress(
                         0, f"Đã hoàn thành {self._progress_completed // 100}/{total} lượt"
