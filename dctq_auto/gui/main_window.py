@@ -541,6 +541,9 @@ class MainWindow(QMainWindow):
         self._worker.log_message.connect(self._log)
         self._worker.progress_changed.connect(self._update_progress)
         self._worker.finished.connect(self._on_worker_finished)
+        self.tabs.setEnabled(False)
+        self.device_combo.setEnabled(False)
+        self.scan_button.setEnabled(False)
         self._paused = False
         self._run_started_at = time.monotonic()
         self._pause_started_at = None
@@ -632,6 +635,9 @@ class MainWindow(QMainWindow):
         self.pause_button.setEnabled(False)
         self.pause_button.setText("Tạm dừng")
         self.stop_button.setEnabled(False)
+        self.tabs.setEnabled(True)
+        self.device_combo.setEnabled(True)
+        self.scan_button.setEnabled(True)
         if self.progress_bar.value() == 100:
             self.progress_status_label.setText("Hoàn tất bước chuẩn bị")
         else:
