@@ -1,0 +1,5 @@
+adbutils>=2.8.0
+opencv-python>=4.10.0
+numpy>=1.26.0
+python-dotenv>=1.0.1
+pytest>=8.0.0
