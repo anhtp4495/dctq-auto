@@ -25,11 +25,11 @@ You do not need to activate the virtual environment; the commands above call its
 
 If `copy .env.example .env` reports that the destination already exists, keep your existing `.env` file rather than overwriting your settings.
 
-## Run in Mock mode (no emulator required)
+## Run without connecting a device
 
-Start the GUI using the command above. Trong dropdown **Thiết bị**, chọn **Adb-Mock (mô phỏng, không cần LDPlayer)** để mô phỏng mà không kết nối ADB hoặc điều khiển game. Dropdown này cũng liệt kê các thiết bị ADB online sau khi nhấn **Quét ADB**.
+Start the GUI using the command above. Trong dropdown **Thiết bị**, chọn **Chạy thử (không cần thiết bị)** để chạy thử mà không kết nối ADB hoặc điều khiển game. Dropdown này cũng liệt kê các thiết bị ADB online sau khi nhấn **Quét ADB**.
 
-Mock mô phỏng luồng nhiệm vụ đã cấu hình trên GUI: Giao tranh, Tranh bá, điểm danh, báo danh quân đoàn, đóng góp KNB, thăm dò lãnh địa, Lưu Ly Tháp và thiết lập mưu binh. Nhật ký/tiến trình thể hiện hành động giả lập; đây chưa phải gameplay thật và không xác nhận thao tác nào đã xảy ra trong game. Có thể thử tạm dừng, tiếp tục và dừng hẳn.
+Chế độ chạy thử thực hiện luồng nhiệm vụ đã cấu hình trên GUI: Giao tranh, Tranh bá, điểm danh, báo danh quân đoàn, đóng góp KNB, thăm dò lãnh địa, Lưu Ly Tháp và thiết lập mưu binh. Nhật ký/tiến trình thể hiện các bước chạy thử; đây chưa phải gameplay thật và không xác nhận thao tác nào đã xảy ra trong game. Có thể thử tạm dừng, tiếp tục và dừng hẳn.
 
 ## Connect the Android emulator
 
@@ -70,7 +70,7 @@ The GUI has three tabs:
 
 The shared **Bắt đầu** and **Dừng** controls and activity log are below the tabs. Configuration remains in the widgets when switching tabs. Số trận Giao tranh nhận từ 1 đến 60; Tranh bá từ 1 đến 15.
 
-**Important:** ADB mode currently checks ADB connectivity and captures one screenshot; it does not perform real in-game tasks yet. Mock mode is only for exercising the Giao tranh decision logic. The **Dừng hẳn** button requests a cooperative stop at the next check point and does not forcibly terminate a running thread.
+**Important:** ADB mode currently checks ADB connectivity and captures one screenshot; it does not perform real in-game tasks yet. Chế độ chạy thử không điều khiển game thật. The **Dừng hẳn** button requests a cooperative stop at the next check point and does not forcibly terminate a running thread.
 
 ## Layout
 
