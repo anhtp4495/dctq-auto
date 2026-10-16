@@ -4,6 +4,7 @@ import logging
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
+    QButtonGroup,
     QCheckBox,
     QComboBox,
     QGroupBox,
@@ -69,9 +70,13 @@ class MainWindow(QMainWindow):
         self.tranh_ba.editingFinished.connect(self.tranh_ba.clearFocus)
 
         self.chon_nha_npc = QCheckBox("Chọn nhà NPC")
-        self.ba_co = QRadioButton("3 cờ")
-        self.thoi_gian_mode = QRadioButton("Thời gian giao tranh tối đa:")
+        self.ba_co = QCheckBox("3 cờ")
+        self.thoi_gian_mode = QCheckBox("Thời gian giao tranh tối đa:")
         self.ba_co.setChecked(True)
+        self.giao_tranh_mode_group = QButtonGroup(self)
+        self.giao_tranh_mode_group.setExclusive(True)
+        self.giao_tranh_mode_group.addButton(self.ba_co)
+        self.giao_tranh_mode_group.addButton(self.thoi_gian_mode)
         self.su_dung_canh_bat_tran = QCheckBox("Sử dụng Canh Bát Trân")
         self.thoi_gian_giao_tranh = QSpinBox()
         self.thoi_gian_giao_tranh.setRange(15, 180)
@@ -105,11 +110,11 @@ class MainWindow(QMainWindow):
         options_layout.setHorizontalSpacing(16)
         options_layout.setVerticalSpacing(4)
         options_layout.addWidget(self.chon_nha_npc, 0, 0)
-        options_layout.addWidget(self.ba_co, 0, 1)
-        options_layout.addWidget(self.thoi_gian_mode, 0, 2)
-        options_layout.addWidget(self.thoi_gian_giao_tranh, 0, 3)
-        options_layout.addWidget(self.su_dung_canh_bat_tran, 0, 4)
-        options_layout.addWidget(self.giao_tranh_mode_description, 1, 0, 1, 5)
+        options_layout.addWidget(self.su_dung_canh_bat_tran, 0, 1)
+        options_layout.addWidget(self.ba_co, 1, 0)
+        options_layout.addWidget(self.thoi_gian_mode, 1, 1)
+        options_layout.addWidget(self.thoi_gian_giao_tranh, 1, 2)
+        options_layout.addWidget(self.giao_tranh_mode_description, 2, 0, 1, 5)
 
         self.chien_cong_row = QWidget()
         chien_cong_layout = QHBoxLayout(self.chien_cong_row)
