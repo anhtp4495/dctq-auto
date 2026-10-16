@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QGroupBox,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
     QMainWindow,
@@ -77,11 +78,13 @@ class MainWindow(QMainWindow):
         self.chien_cong.editingFinished.connect(self.chien_cong.clearFocus)
 
         self.giao_tranh_options = QWidget()
-        options_layout = QVBoxLayout(self.giao_tranh_options)
+        options_layout = QGridLayout(self.giao_tranh_options)
         options_layout.setContentsMargins(0, 0, 0, 0)
-        options_layout.addWidget(self.chon_nha_npc)
-        options_layout.addWidget(self.ba_co)
-        options_layout.addWidget(self.su_dung_canh_bat_tran)
+        options_layout.setHorizontalSpacing(16)
+        options_layout.setVerticalSpacing(4)
+        options_layout.addWidget(self.chon_nha_npc, 0, 0)
+        options_layout.addWidget(self.ba_co, 0, 1)
+        options_layout.addWidget(self.su_dung_canh_bat_tran, 0, 2)
 
         self.chien_cong_row = QWidget()
         chien_cong_layout = QHBoxLayout(self.chien_cong_row)
@@ -160,16 +163,19 @@ class MainWindow(QMainWindow):
         row.addWidget(self.tranh_ba)
         tranh_ba_layout.addLayout(row)
         tranh_ba_layout.addWidget(self.mua_luot_knb)
-        tranh_ba_layout.addWidget(QLabel("Chế độ nhanh:"))
-        tranh_ba_layout.addWidget(self.tranh_ba_0_co)
-        tranh_ba_layout.addWidget(self.tranh_ba_1_co)
-        tranh_ba_layout.addWidget(self.tranh_ba_4_co)
+        fast_mode_row = QHBoxLayout()
+        fast_mode_row.addWidget(QLabel("Chế độ nhanh:"))
+        fast_mode_row.addWidget(self.tranh_ba_0_co)
+        fast_mode_row.addWidget(self.tranh_ba_1_co)
+        fast_mode_row.addWidget(self.tranh_ba_4_co)
+        fast_mode_row.addStretch(1)
+        tranh_ba_layout.addLayout(fast_mode_row)
         layout.addWidget(tranh_ba_group)
 
         other_group = QGroupBox("Nhiệm vụ khác")
-        other_layout = QVBoxLayout(other_group)
-        other_layout.addWidget(self.diem_danh)
-        other_layout.addWidget(self.bao_danh_quan_doan)
+        other_layout = QGridLayout(other_group)
+        other_layout.addWidget(self.diem_danh, 0, 0)
+        other_layout.addWidget(self.bao_danh_quan_doan, 0, 1)
         layout.addWidget(other_group)
 
         layout.addStretch(1)
