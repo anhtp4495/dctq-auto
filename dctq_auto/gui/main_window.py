@@ -691,7 +691,7 @@ class MainWindow(QMainWindow):
         for key, label, count_key in (
             ("dong_gop_knb", "Đóng góp KNB", "so_lan_dong_gop_knb"),
             ("tham_do_lanh_dia", "Thăm dò lãnh địa", "so_lan_tham_do_lanh_dia"),
-            ("nhiem_vu_luu_ly_thap", "Lưu Ly Tháp", "so_lan_luu_ly_thap"),
+            ("nhiem_vu_luu_ly_thap", "Nhiệm vụ Lưu Ly Tháp", "so_lan_luu_ly_thap"),
         ):
             if config.get(key):
                 tasks.append((label, int(config.get(count_key, 1))))
