@@ -4,23 +4,56 @@ Python desktop application scaffold for Đại Chiến Tam Quốc running in an 
 
 ## Requirements
 
-- Python 3.11+
+- Python 3.11 or newer (the current setup can use Python 3.13)
 - Android emulator with ADB enabled (for example, LDPlayer)
 - PySide6 for the Windows desktop GUI
 
-## Setup (Windows PowerShell)
+## Setup (Windows Command Prompt / CMD)
 
-```powershell
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-Copy-Item .env.example .env
+Open **Command Prompt** and change to the project directory:
+
+```bat
+cd /d I:\work\dctq-auto
+py --version
+py -m venv .venv
+.venv\Scripts\python.exe -m pip install --upgrade pip
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+copy .env.example .env
 ```
 
-Connect the emulator and verify that ADB can see it, then run:
+You do not need to activate the virtual environment; the commands above call its Python executable directly.
 
-```powershell
-python -m dctq_auto
+If `copy .env.example .env` reports that the destination already exists, keep your existing `.env` file rather than overwriting your settings.
+
+## Connect the Android emulator
+
+Make sure ADB is enabled in the emulator. In CMD, check that ADB can see the device:
+
+```bat
+adb devices
+```
+
+If the emulator requires connecting to a local ADB endpoint, use the address and port configured by your emulator, for example:
+
+```bat
+adb connect 127.0.0.1:5555
+adb devices
+```
+
+If you use an explicit device serial, set `ADB_SERIAL` in the `.env` file, for example:
+
+```dotenv
+ADB_SERIAL=127.0.0.1:5555
+```
+
+The address and port above are only an example; use the endpoint shown by your emulator. If `adb` is not recognized, add the Android SDK platform-tools directory (or your emulator's ADB directory) to PATH, or run the emulator's `adb.exe` by its full path.
+
+## Run the GUI
+
+From the project directory in CMD:
+
+```bat
+.venv\Scripts\python.exe -m dctq_auto
 ```
 
 The GUI has three tabs:
