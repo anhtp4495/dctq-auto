@@ -110,17 +110,14 @@ class BotWorker(QThread):
     def _run_mock(self) -> None:
         """Simulate configured tasks and update progress without connecting to ADB."""
         tasks: list[tuple[str, int]] = []
-        if self._config.get("thuc_hien_giao_tranh"):
-            tasks.append(("Giao tranh", int(self._config.get("giao_tranh", 1))))
-        if self._config.get("thuc_hien_tranh_ba"):
-            tasks.append(("Tranh bá", int(self._config.get("tranh_ba", 1))))
+        # Check-in tasks have the highest priority.
         for key, label in (
             ("diem_danh", "Điểm danh"),
             ("bao_danh_quan_doan", "Báo danh quân đoàn"),
-            ("thiet_lap_muu_binh", "Thiết lập mưu binh"),
         ):
             if self._config.get(key):
                 tasks.append((label, 1))
+        # Run other daily tasks before battles.
         for key, label, count_key in (
             ("dong_gop_knb", "Đóng góp KNB", "so_lan_dong_gop_knb"),
             ("tham_do_lanh_dia", "Thăm dò lãnh địa", "so_lan_tham_do_lanh_dia"),
@@ -128,6 +125,10 @@ class BotWorker(QThread):
         ):
             if self._config.get(key):
                 tasks.append((label, int(self._config.get(count_key, 1))))
+        if self._config.get("thuc_hien_giao_tranh"):
+            tasks.append(("Giao tranh", int(self._config.get("giao_tranh", 1))))
+        if self._config.get("thuc_hien_tranh_ba"):
+            tasks.append(("Tranh bá", int(self._config.get("tranh_ba", 1))))
 
         total = sum(count for _, count in tasks)
         if total == 0:
