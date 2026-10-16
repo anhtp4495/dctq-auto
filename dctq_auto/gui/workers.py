@@ -23,15 +23,7 @@ class BotWorker(QThread):
         self._config = config
 
     def run(self) -> None:
-        self.log_message.emit(
-            "Bắt đầu với cấu hình: "
-            f"giao_tranh={self._config['giao_tranh']}, "
-            f"tranh_ba={self._config['tranh_ba']}, "
-            f"mua_luot_knb={self._config['mua_luot_knb']}, "
-            f"diem_danh={self._config['diem_danh']}, "
-            f"bao_danh_quan_doan={self._config['bao_danh_quan_doan']}, "
-            f"thiet_lap_muu_binh={self._config['thiet_lap_muu_binh']}"
-        )
+        self.log_message.emit(f"Bắt đầu với cấu hình: {self._config}")
         if self.isInterruptionRequested():
             self.log_message.emit("Đã yêu cầu dừng trước khi kết nối ADB.")
             return
