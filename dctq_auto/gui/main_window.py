@@ -99,7 +99,7 @@ class MainWindow(QMainWindow):
         self.mua_luot_knb.setChecked(False)
         self.tranh_ba_0_co = QRadioButton("Nhanh 0 cờ")
         self.tranh_ba_1_co = QRadioButton("Nhanh 1 cờ")
-        self.tranh_ba_4_co = QRadioButton("Nhanh 4 cờ")
+        self.tranh_ba_4_co = QRadioButton("Bình thường 4 cờ")
         self.tranh_ba_0_co.setChecked(True)
 
         self.diem_danh = QCheckBox("Thực hiện điểm danh")
