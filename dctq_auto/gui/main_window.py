@@ -444,7 +444,7 @@ class MainWindow(QMainWindow):
 
     def _on_device_changed(self, *_args) -> None:
         mock_mode = self.device_combo.currentData() == "mock"
-        self.scan_button.setEnabled(not mock_mode)
+        self.scan_button.setEnabled(True)
         if mock_mode:
             self._log("Đã chọn Adb-Mock: mô phỏng, không kết nối hoặc điều khiển game.")
         elif self.device_combo.currentData():
@@ -479,7 +479,7 @@ class MainWindow(QMainWindow):
             self.device_combo.setCurrentIndex(0)
             self._log(f"Lỗi quét ADB: {exc}. Vẫn có thể dùng Adb-Mock.")
         finally:
-            self.scan_button.setEnabled(self.device_combo.currentData() != "mock")
+            self.scan_button.setEnabled(True)
             self.device_combo.setEnabled(True)
 
     def _current_config(self) -> dict:
@@ -571,13 +571,10 @@ class MainWindow(QMainWindow):
         self._pause_started_at = None
         self._paused_duration = 0.0
         self.progress_bar.setValue(0)
-        if mock_mode:
-            total = config["giao_tranh"] if config["thuc_hien_giao_tranh"] else 1
-            self.progress_count_label.setText(f"0/{total} trận")
-            self.progress_status_label.setText("Đang chuẩn bị mô phỏng")
-        else:
-            self.progress_count_label.setText("0/2 bước")
-            self.progress_status_label.setText("Đang chuẩn bị")
+        self.progress_count_label.setText("0/1 bước")
+        self.progress_status_label.setText(
+            "Đang chuẩn bị mô phỏng" if mock_mode else "Đang chuẩn bị"
+        )
         self.elapsed_time_label.setText("Thời gian đã chạy: 00:00:00")
         self.eta_label.setText("Dự kiến kết thúc: Chưa ước tính")
         self.start_button.setEnabled(False)
