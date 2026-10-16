@@ -29,7 +29,7 @@ If `copy .env.example .env` reports that the destination already exists, keep yo
 
 Start the GUI using the command above. Trong dropdown **Thiết bị**, chọn **Chạy thử (không cần thiết bị)** để chạy thử mà không kết nối ADB hoặc điều khiển game. Dropdown này cũng liệt kê các thiết bị ADB online sau khi nhấn **Quét ADB**.
 
-Chế độ chạy thử thực hiện luồng nhiệm vụ đã cấu hình trên GUI: Giao tranh, Tranh bá, điểm danh, báo danh quân đoàn, đóng góp KNB, thăm dò lãnh địa, Lưu Ly Tháp và thiết lập mưu binh. Nhật ký/tiến trình thể hiện các bước chạy thử; đây chưa phải gameplay thật và không xác nhận thao tác nào đã xảy ra trong game. Có thể thử tạm dừng, tiếp tục và dừng hẳn.
+Chế độ chạy thử thực hiện luồng nhiệm vụ đã cấu hình trên GUI: Giao tranh, Tranh bá, điểm danh, báo danh quân đoàn, đóng góp KNB, thăm dò lãnh địa, Lưu Ly Tháp (có thể chọn số lần và mua lượt bằng KNB) và thiết lập mưu binh. Nhật ký/tiến trình thể hiện các bước chạy thử; đây chưa phải gameplay thật và không xác nhận thao tác nào đã xảy ra trong game. Có thể thử tạm dừng, tiếp tục và dừng hẳn.
 
 ## Connect the Android emulator
 
