@@ -168,6 +168,9 @@ class MainWindow(QMainWindow):
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         giao_tranh_group = QGroupBox("Giao tranh")
+        giao_tranh_group.setCheckable(True)
+        giao_tranh_group.setChecked(True)
+        self.giao_tranh_group = giao_tranh_group
         giao_tranh_layout = QVBoxLayout(giao_tranh_group)
         row = QHBoxLayout()
         row.addWidget(QLabel("Số trận:"))
@@ -184,6 +187,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(giao_tranh_group)
 
         tranh_ba_group = QGroupBox("Tranh bá")
+        tranh_ba_group.setCheckable(True)
+        tranh_ba_group.setChecked(True)
+        self.tranh_ba_group = tranh_ba_group
         tranh_ba_layout = QVBoxLayout(tranh_ba_group)
         row = QHBoxLayout()
         row.addWidget(QLabel("Số trận:"))
@@ -328,8 +334,10 @@ class MainWindow(QMainWindow):
             tranh_ba_fast_mode = 0
 
         return {
+            "thuc_hien_giao_tranh": self.giao_tranh_group.isChecked(),
             "giao_tranh": self.giao_tranh.value(),
             **giao_tranh_mode,
+            "thuc_hien_tranh_ba": self.tranh_ba_group.isChecked(),
             "tranh_ba": self.tranh_ba.value(),
             "mua_luot_knb": self.mua_luot_knb.isChecked(),
             "tranh_ba_fast_mode": tranh_ba_fast_mode,
