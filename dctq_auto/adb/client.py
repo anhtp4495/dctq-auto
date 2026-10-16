@@ -9,8 +9,15 @@ class AdbClient:
     def __init__(self, serial: str | None = None) -> None:
         self.serial = serial
 
+    @staticmethod
+    def list_devices() -> list[AdbDevice]:
+        """Return devices currently visible to the ADB server."""
+        return adb.device_list()
+
     def connect(self) -> AdbDevice:
-        device = adb.device(serial=self.serial) if self.serial else adb.device()
+        if not self.serial:
+            raise RuntimeError("Chưa chọn thiết bị ADB. Hãy quét và chọn LDPlayer.")
+        device = adb.device(serial=self.serial)
         device.get_state()
         return device
 
