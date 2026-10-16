@@ -163,7 +163,19 @@ class MainWindow(QMainWindow):
         self.tranh_ba_thoi_gian_mode.setToolTip(
             "Kết thúc trận khi đạt giới hạn thời gian đã chọn."
         )
+        self.tranh_ba_1_co.toggled.connect(
+            self._update_tranh_ba_mode_description
+        )
+        self.tranh_ba_4_co.toggled.connect(
+            self._update_tranh_ba_mode_description
+        )
+        self.tranh_ba_thoi_gian_mode.toggled.connect(
+            self._update_tranh_ba_mode_description
+        )
+        self.tranh_ba_mode_description = QLabel()
+        self.tranh_ba_mode_description.setWordWrap(True)
         self.tranh_ba_4_co.setChecked(True)
+        self._update_tranh_ba_mode_description()
 
         self.diem_danh = QCheckBox("Thực hiện điểm danh")
         self.diem_danh.setChecked(True)
@@ -288,6 +300,7 @@ class MainWindow(QMainWindow):
             self.tranh_ba_thoi_gian,
         )
         tranh_ba_layout.addWidget(tranh_ba_mode_row)
+        tranh_ba_layout.addWidget(self.tranh_ba_mode_description)
         layout.addWidget(tranh_ba_group)
 
         other_group = QGroupBox("Nhiệm vụ khác")
@@ -325,6 +338,20 @@ class MainWindow(QMainWindow):
         else:
             self.giao_tranh_mode_description.setText(
                 "Đánh đến khi chắc chắn thắng và đạt đủ 3 cờ mới kết thúc."
+            )
+
+    def _update_tranh_ba_mode_description(self, *_args) -> None:
+        if self.tranh_ba_thoi_gian_mode.isChecked():
+            self.tranh_ba_mode_description.setText(
+                "Kết thúc trận khi đạt giới hạn thời gian đã chọn, dù đã thắng hay chưa."
+            )
+        elif self.tranh_ba_1_co.isChecked():
+            self.tranh_ba_mode_description.setText(
+                "Chỉ cần thắng trận là kết thúc, không cần đủ 4 cờ."
+            )
+        else:
+            self.tranh_ba_mode_description.setText(
+                "Đánh đến khi chắc chắn thắng và đạt đủ 4 cờ mới kết thúc."
             )
 
     def _toggle_chien_cong_mode(self, enabled: bool) -> None:
