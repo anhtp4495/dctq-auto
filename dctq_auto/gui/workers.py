@@ -188,7 +188,7 @@ class BotWorker(QThread):
                         return
                     self._progress_completed += 100
                     self._emit_mock_progress(
-                        0, f"Đã hoàn thành hoàn thành {self._progress_completed // 100}/{total} lượt"
+                        0, f"Đã hoàn thành {self._progress_completed // 100}/{total} lượt"
                     )
         self.log_message.emit("Hoàn tất chạy thử tất cả nhiệm vụ.")
 
