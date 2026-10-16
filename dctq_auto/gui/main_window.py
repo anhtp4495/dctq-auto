@@ -271,11 +271,17 @@ class MainWindow(QMainWindow):
 
         log_group = QGroupBox("Nhật ký hoạt động")
         log_layout = QVBoxLayout(log_group)
+        log_header = QHBoxLayout()
+        log_header.addStretch(1)
+        self.clear_log_button = QPushButton("Xóa nhật ký")
+        self.clear_log_button.clicked.connect(self.clear_log)
+        log_header.addWidget(self.clear_log_button)
+        log_layout.addLayout(log_header)
         self.log_view = QPlainTextEdit()
         self.log_view.setReadOnly(True)
         self.log_view.setPlaceholderText("Nhật ký sẽ hiển thị tại đây.")
         log_layout.addWidget(self.log_view)
-        log_group.setFixedHeight(190)
+        log_group.setFixedHeight(210)
         root.addWidget(log_group)
 
         self.setCentralWidget(central)
@@ -630,9 +636,8 @@ class MainWindow(QMainWindow):
 
     def _update_progress(self, completed: int, total: int, status: str) -> None:
         percent = int(completed * 100 / total) if total else 0
-        self.progress_bar.setValue(percent)
-        unit = "bước"
-        self.progress_count_label.setText(f"{completed}/{total} {unit}")
+        self.progress_bar.setValue(max(0, min(100, percent)))
+        self.progress_count_label.setText(f"{percent}%")
         self.progress_status_label.setText(status)
 
     @staticmethod
@@ -674,6 +679,9 @@ class MainWindow(QMainWindow):
         else:
             self.progress_status_label.setText("Đã kết thúc")
         self._log("Worker đã kết thúc.")
+
+    def clear_log(self) -> None:
+        self.log_view.clear()
 
     def _log(self, message: str) -> None:
         self.log_view.appendPlainText(message)
