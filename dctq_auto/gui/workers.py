@@ -116,13 +116,13 @@ class BotWorker(QThread):
             ("diem_danh", "Điểm danh"),
             ("bao_danh_quan_doan", "Báo danh quân đoàn"),
             ("thiet_lap_muu_binh", "Thiết lập mưu binh"),
-            ("nhiem_vu_luu_ly_thap", "Nhiệm vụ Lưu Ly Tháp"),
         ):
             if self._config.get(key):
                 tasks.append((label, 1))
         for key, label, count_key in (
             ("dong_gop_knb", "Đóng góp KNB", "so_lan_dong_gop_knb"),
             ("tham_do_lanh_dia", "Thăm dò lãnh địa", "so_lan_tham_do_lanh_dia"),
+            ("nhiem_vu_luu_ly_thap", "Nhiệm vụ Lưu Ly Tháp", "so_lan_luu_ly_thap"),
         ):
             if self._config.get(key):
                 tasks.append((label, int(self._config.get(count_key, 1))))
@@ -170,6 +170,11 @@ class BotWorker(QThread):
                     return
             else:
                 for number in range(1, count + 1):
+                    if task == "Nhiệm vụ Lưu Ly Tháp" and self._config.get("luu_ly_thap_knb"):
+                        if not self._mock_tick(
+                            f"{task}: chạy thử mua lượt bằng KNB ({number}/{count})."
+                        ):
+                            return
                     extras = []
                     if task == "Đóng góp KNB":
                         extras.append(f"lượt {number}/{count}")
