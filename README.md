@@ -25,9 +25,15 @@ You do not need to activate the virtual environment; the commands above call its
 
 If `copy .env.example .env` reports that the destination already exists, keep your existing `.env` file rather than overwriting your settings.
 
+## Run in Mock mode (no emulator required)
+
+Start the GUI using the command above. The default mode is **Mock (không cần LDPlayer)**. Choose the number of Giao tranh matches and a stop mode, then click **Bắt đầu**. The log simulates battle snapshots and the selected stop condition without connecting to ADB or issuing game-control commands. Pause, resume, and stop can be exercised during the simulation.
+
+Mock mode currently simulates only the Giao tranh stop conditions: quick mode ends on a win, normal mode ends on a win with at least three flags, and time-limit mode ends at the selected simulated time. One mock tick represents three simulated seconds. It does not yet simulate NPC selection, Hạ chiến công, Canh Bát Trân, Tranh bá, or other daily tasks.
+
 ## Connect the Android emulator
 
-Make sure ADB is enabled in the emulator. In CMD, check that ADB can see the device:
+Choose **ADB (chuẩn bị thiết bị)** in the GUI to use ADB. Make sure ADB is enabled in the emulator. In CMD, check that ADB can see the device:
 
 ```bat
 adb devices
@@ -64,7 +70,7 @@ The GUI has three tabs:
 
 The shared **Bắt đầu** and **Dừng** controls and activity log are below the tabs. Configuration remains in the widgets when switching tabs. The battle counts accept values from 0 to 999, so negative values cannot be entered.
 
-**Important:** The background worker currently checks ADB connectivity and captures one screenshot. It logs the selected configuration but does not perform in-game tasks; game-specific behavior must be implemented after its rules are defined. The Stop button requests a cooperative stop at the next check point and does not forcibly terminate a running thread.
+**Important:** ADB mode currently checks ADB connectivity and captures one screenshot; it does not perform real in-game tasks yet. Mock mode is only for exercising the Giao tranh decision logic. The **Dừng hẳn** button requests a cooperative stop at the next check point and does not forcibly terminate a running thread.
 
 ## Layout
 
