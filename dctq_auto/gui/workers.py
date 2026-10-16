@@ -11,7 +11,7 @@ from dctq_auto.automation.battle_testkit import BattleSnapshot, run_mock_battle
 
 
 class BotWorker(QThread):
-    """Run mock battle logic or the current ADB preparation flow."""
+    """Run test battle logic or the current ADB preparation flow."""
 
     log_message = Signal(str)
     progress_changed = Signal(int, int, str)
@@ -49,13 +49,13 @@ class BotWorker(QThread):
     def _mock_tick(self, message: str) -> bool:
         """Log one simulated action, respecting pause and stop requests."""
         if not self._wait_if_paused():
-            self.log_message.emit("[MOCK] Đã dừng theo yêu cầu.")
+            self.log_message.emit("Đã dừng theo yêu cầu.")
             return False
         time.sleep(0.12)
         if self.isInterruptionRequested():
-            self.log_message.emit("[MOCK] Đã dừng theo yêu cầu.")
+            self.log_message.emit("Đã dừng theo yêu cầu.")
             return False
-        self.log_message.emit(f"[MOCK] {message}")
+        self.log_message.emit(f"{message}")
         return True
 
     def _emit_mock_progress(self, partial_units: int, status: str) -> None:
@@ -68,7 +68,7 @@ class BotWorker(QThread):
             elapsed = 0
             while True:
                 if not self._wait_if_paused():
-                    self.log_message.emit("[MOCK] Đã dừng theo yêu cầu.")
+                    self.log_message.emit("Đã dừng theo yêu cầu.")
                     return False
                 time.sleep(0.12)
                 elapsed += 3
@@ -95,7 +95,7 @@ class BotWorker(QThread):
                 expected_seconds = max(12, time_limit or 12)
                 partial = min(99, int(elapsed * 99 / expected_seconds))
                 self._emit_mock_progress(
-                    partial, f"{task}: trận {number}/{count} ({partial}% trận)"
+                    partial, f"{task}: trận {number}/{count}"
                 )
                 if finished:
                     if not self._mock_tick(f"Kết thúc {task} {number}: {reason}."):
@@ -129,40 +129,40 @@ class BotWorker(QThread):
 
         total = sum(count for _, count in tasks)
         if total == 0:
-            self.log_message.emit("[MOCK] Không có nhiệm vụ nào được chọn.")
-            self.progress_changed.emit(1, 1, "Không có nhiệm vụ được chọn")
+            self.log_message.emit("Không có nhiệm vụ nào được chọn.")
+            self.progress_changed.emit(0, 0, "Không có nhiệm vụ được chọn")
             return
 
         self._progress_total = total * 100
         self._progress_completed = 0
-        self.progress_changed.emit(0, self._progress_total, "Bắt đầu mô phỏng")
+        self.progress_changed.emit(0, self._progress_total, "Bắt đầu")
         self.log_message.emit(
-            f"[MOCK] Bắt đầu mô phỏng {len(tasks)} nhóm nhiệm vụ, "
+            f"Bắt đầu chạy thử {len(tasks)} nhóm nhiệm vụ, "
             f"{total} lượt. Không kết nối ADB và không điều khiển game."
         )
         for task, count in tasks:
             if not self._wait_if_paused():
-                self.log_message.emit("[MOCK] Đã dừng theo yêu cầu.")
+                self.log_message.emit("Đã dừng theo yêu cầu.")
                 return
             if task in ("Giao tranh", "Tranh bá"):
                 is_giao_tranh = task == "Giao tranh"
                 if is_giao_tranh:
                     if self._config.get("ha_chien_cong"):
                         if not self._mock_tick(
-                            f"Hạ chiến công: mô phỏng mục tiêu {self._config.get('chien_cong', 200)}."
+                            f"Hạ chiến công: chạy thử mục tiêu {self._config.get('chien_cong', 200)}."
                         ):
                             return
                     elif self._config.get("chon_nha_npc"):
-                        if not self._mock_tick("Chọn nhà NPC: mô phỏng chọn mục tiêu."):
+                        if not self._mock_tick("Chọn nhà NPC: chạy thử chọn mục tiêu."):
                             return
                     if self._config.get("su_dung_canh_bat_tran"):
-                        if not self._mock_tick("Canh Bát Trân: mô phỏng kích hoạt."):
+                        if not self._mock_tick("Canh Bát Trân: chạy thử kích hoạt."):
                             return
                     flags = 1 if self._config.get("giao_tranh_nhanh_1_co") else 3
                     limit = self._config.get("thoi_gian_giao_tranh")
                 else:
                     if self._config.get("mua_luot_knb"):
-                        if not self._mock_tick("Tranh bá: mô phỏng mua lượt bằng KNB."):
+                        if not self._mock_tick("Tranh bá: chạy thử mua lượt bằng KNB."):
                             return
                     flags = int(self._config.get("tranh_ba_fast_mode", 4))
                     limit = self._config.get("thoi_gian_tranh_ba")
@@ -179,22 +179,22 @@ class BotWorker(QThread):
                             else "chỉ dùng lượt miễn phí"
                         )
                     suffix = f" ({', '.join(extras)})" if extras else ""
-                    if not self._mock_tick(f"{task}: mô phỏng hoàn tất{suffix}."):
+                    if not self._mock_tick(f"{task}: chạy thử hoàn tất{suffix}."):
                         return
                     self._progress_completed += 100
                     self._emit_mock_progress(
-                        0, f"Mock: hoàn thành {self._progress_completed // 100}/{total} lượt"
+                        0, f"Đã hoàn thành hoàn thành {self._progress_completed // 100}/{total} lượt"
                     )
-        self.log_message.emit("[MOCK] Hoàn tất mô phỏng tất cả nhiệm vụ.")
+        self.log_message.emit("Hoàn tất chạy thử tất cả nhiệm vụ.")
 
     def run(self) -> None:
         if self._mock_mode:
-            self.progress_changed.emit(0, 1, "Đang chuẩn bị mô phỏng")
+            self.progress_changed.emit(0, 1, "Đang chuẩn bị chạy thử")
             self.log_message.emit(f"Bắt đầu với cấu hình: {self._config}")
             try:
                 self._run_mock()
             except Exception as exc:
-                self.log_message.emit(f"[MOCK] Lỗi mô phỏng: {exc}")
+                self.log_message.emit(f"Lỗi chạy thử: {exc}")
             return
 
         self.progress_changed.emit(0, 2, "Đang kết nối ADB")
