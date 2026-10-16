@@ -51,11 +51,11 @@ class MainWindow(QMainWindow):
         adb_layout = QHBoxLayout(adb_group)
         adb_layout.addWidget(QLabel("Thiết bị:"))
         self.device_combo = QComboBox()
-        self.device_combo.setMinimumWidth(280)
+        self.device_combo.setMinimumWidth(0)
         self.device_combo.setSizeAdjustPolicy(
             QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
         )
-        self.device_combo.setMinimumContentsLength(24)
+        self.device_combo.setMinimumContentsLength(10)
         self.device_combo.addItem("Chạy thử (không cần thiết bị)", "mock")
         self.device_combo.currentIndexChanged.connect(self._on_device_changed)
         adb_layout.addWidget(self.device_combo, 1)
@@ -471,6 +471,7 @@ class MainWindow(QMainWindow):
 
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         scroll_area.setFrameShape(QScrollArea.Shape.NoFrame)
         scroll_area.setWidget(page)
         return scroll_area
