@@ -70,11 +70,15 @@ class MainWindow(QMainWindow):
         self.tranh_ba.editingFinished.connect(self.tranh_ba.clearFocus)
 
         self.chon_nha_npc = QCheckBox("Chọn nhà NPC")
-        self.ba_co = QCheckBox("3 cờ")
-        self.thoi_gian_mode = QCheckBox("Thời gian giao tranh tối đa:")
+        self.giao_tranh_nhanh_1_co = QCheckBox("Nhanh 1 cờ")
+        self.ba_co = QCheckBox("Bình thường 3 cờ")
+        self.thoi_gian_mode = QCheckBox("Thời gian tối đa:")
+        self.giao_tranh_nhanh_1_co.setToolTip("Chỉ cần thắng trận là kết thúc.")
+        self.giao_tranh_nhanh_1_co.setChecked(False)
         self.ba_co.setChecked(True)
         self.giao_tranh_mode_group = QButtonGroup(self)
         self.giao_tranh_mode_group.setExclusive(True)
+        self.giao_tranh_mode_group.addButton(self.giao_tranh_nhanh_1_co)
         self.giao_tranh_mode_group.addButton(self.ba_co)
         self.giao_tranh_mode_group.addButton(self.thoi_gian_mode)
         self.su_dung_canh_bat_tran = QCheckBox("Sử dụng Canh Bát Trân")
@@ -89,6 +93,9 @@ class MainWindow(QMainWindow):
         self.thoi_gian_giao_tranh.setEnabled(False)
         self.thoi_gian_mode.toggled.connect(
             self.thoi_gian_giao_tranh.setEnabled
+        )
+        self.giao_tranh_nhanh_1_co.toggled.connect(
+            self._update_giao_tranh_mode_description
         )
         self.ba_co.toggled.connect(self._update_giao_tranh_mode_description)
         self.thoi_gian_mode.toggled.connect(
@@ -111,9 +118,10 @@ class MainWindow(QMainWindow):
         options_layout.setVerticalSpacing(4)
         options_layout.addWidget(self.chon_nha_npc, 0, 0)
         options_layout.addWidget(self.su_dung_canh_bat_tran, 0, 1)
-        options_layout.addWidget(self.ba_co, 1, 0)
-        options_layout.addWidget(self.thoi_gian_mode, 1, 1)
-        options_layout.addWidget(self.thoi_gian_giao_tranh, 1, 2)
+        options_layout.addWidget(self.giao_tranh_nhanh_1_co, 1, 0)
+        options_layout.addWidget(self.ba_co, 1, 1)
+        options_layout.addWidget(self.thoi_gian_mode, 1, 2)
+        options_layout.addWidget(self.thoi_gian_giao_tranh, 1, 3)
         options_layout.addWidget(self.giao_tranh_mode_description, 2, 0, 1, 5)
 
         self.chien_cong_row = QWidget()
@@ -130,6 +138,22 @@ class MainWindow(QMainWindow):
         self.tranh_ba_0_co = QRadioButton("Nhanh 0 cờ")
         self.tranh_ba_1_co = QRadioButton("Nhanh 1 cờ")
         self.tranh_ba_4_co = QRadioButton("Bình thường 4 cờ")
+        self.tranh_ba_thoi_gian_mode = QRadioButton("Thời gian tối đa:")
+        self.tranh_ba_thoi_gian = QSpinBox()
+        self.tranh_ba_thoi_gian.setRange(15, 180)
+        self.tranh_ba_thoi_gian.setValue(15)
+        self.tranh_ba_thoi_gian.setSuffix(" giây")
+        self.tranh_ba_thoi_gian.setKeyboardTracking(False)
+        self.tranh_ba_thoi_gian.editingFinished.connect(
+            self.tranh_ba_thoi_gian.clearFocus
+        )
+        self.tranh_ba_thoi_gian.setEnabled(False)
+        self.tranh_ba_thoi_gian_mode.toggled.connect(
+            self.tranh_ba_thoi_gian.setEnabled
+        )
+        self.tranh_ba_thoi_gian_mode.setToolTip(
+            "Kết thúc trận khi đạt giới hạn thời gian đã chọn."
+        )
         self.tranh_ba_0_co.setChecked(True)
 
         self.diem_danh = QCheckBox("Thực hiện điểm danh")
@@ -204,10 +228,12 @@ class MainWindow(QMainWindow):
         tranh_ba_layout.addLayout(row)
         tranh_ba_layout.addWidget(self.mua_luot_knb)
         fast_mode_row = QHBoxLayout()
-        fast_mode_row.addWidget(QLabel("Chế độ nhanh:"))
+        fast_mode_row.addWidget(QLabel("Chế độ:"))
         fast_mode_row.addWidget(self.tranh_ba_0_co)
         fast_mode_row.addWidget(self.tranh_ba_1_co)
         fast_mode_row.addWidget(self.tranh_ba_4_co)
+        fast_mode_row.addWidget(self.tranh_ba_thoi_gian_mode)
+        fast_mode_row.addWidget(self.tranh_ba_thoi_gian)
         fast_mode_row.addStretch(1)
         tranh_ba_layout.addLayout(fast_mode_row)
         layout.addWidget(tranh_ba_group)
@@ -229,7 +255,11 @@ class MainWindow(QMainWindow):
     def _update_giao_tranh_mode_description(self, *_args) -> None:
         if self.thoi_gian_mode.isChecked():
             self.giao_tranh_mode_description.setText(
-                "Kết thúc trận khi đạt giới hạn thời gian đã chọn, dù đã đạt 3 cờ hay chưa."
+                "Kết thúc trận khi đạt giới hạn thời gian đã chọn, dù đã thắng hay chưa."
+            )
+        elif self.giao_tranh_nhanh_1_co.isChecked():
+            self.giao_tranh_mode_description.setText(
+                "Chỉ cần thắng trận là kết thúc, không cần đủ 3 cờ."
             )
         else:
             self.giao_tranh_mode_description.setText(
@@ -238,6 +268,7 @@ class MainWindow(QMainWindow):
 
     def _toggle_chien_cong_mode(self, enabled: bool) -> None:
         self.chon_nha_npc.setEnabled(not enabled)
+        self.giao_tranh_nhanh_1_co.setEnabled(not enabled)
         self.ba_co.setEnabled(not enabled)
         self.thoi_gian_mode.setEnabled(not enabled)
         self.thoi_gian_giao_tranh.setEnabled(
@@ -313,6 +344,7 @@ class MainWindow(QMainWindow):
                 "ha_chien_cong": True,
                 "chien_cong": self.chien_cong.value(),
                 "chon_nha_npc": False,
+                "giao_tranh_nhanh_1_co": False,
                 "ba_co": False,
                 "thoi_gian_giao_tranh": None,
                 "su_dung_canh_bat_tran": False,
@@ -322,6 +354,7 @@ class MainWindow(QMainWindow):
                 "ha_chien_cong": False,
                 "chien_cong": self.chien_cong.value(),
                 "chon_nha_npc": self.chon_nha_npc.isChecked(),
+                "giao_tranh_nhanh_1_co": self.giao_tranh_nhanh_1_co.isChecked(),
                 "ba_co": self.ba_co.isChecked(),
                 "thoi_gian_giao_tranh": (
                     self.thoi_gian_giao_tranh.value()
@@ -346,6 +379,11 @@ class MainWindow(QMainWindow):
             "tranh_ba": self.tranh_ba.value(),
             "mua_luot_knb": self.mua_luot_knb.isChecked(),
             "tranh_ba_fast_mode": tranh_ba_fast_mode,
+            "thoi_gian_tranh_ba": (
+                self.tranh_ba_thoi_gian.value()
+                if self.tranh_ba_thoi_gian_mode.isChecked()
+                else None
+            ),
             "diem_danh": self.diem_danh.isChecked(),
             "bao_danh_quan_doan": self.bao_danh_quan_doan.isChecked(),
             "thiet_lap_muu_binh": self.thiet_lap_muu_binh.isChecked(),
