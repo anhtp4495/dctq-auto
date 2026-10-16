@@ -753,25 +753,8 @@ class MainWindow(QMainWindow):
 
     @staticmethod
     def _task_specs(config: dict) -> list[tuple[str, int]]:
-        tasks: list[tuple[str, int]] = []
-        for key, label in (
-            ("diem_danh", "Điểm danh"),
-            ("bao_danh_quan_doan", "Báo danh quân đoàn"),
-        ):
-            if config.get(key):
-                tasks.append((label, 1))
-        for key, label, count_key in (
-            ("dong_gop_knb", "Đóng góp KNB", "so_lan_dong_gop_knb"),
-            ("tham_do_lanh_dia", "Thăm dò lãnh địa", "so_lan_tham_do_lanh_dia"),
-            ("nhiem_vu_luu_ly_thap", "Nhiệm vụ Lưu Ly Tháp", "so_lan_luu_ly_thap"),
-        ):
-            if config.get(key):
-                tasks.append((label, int(config.get(count_key, 1))))
-        if config.get("thuc_hien_giao_tranh"):
-            tasks.append(("Giao tranh", int(config.get("giao_tranh", 1))))
-        if config.get("thuc_hien_tranh_ba"):
-            tasks.append(("Tranh bá", int(config.get("tranh_ba", 1))))
-        return tasks
+        """Use the shared registry so UI order matches worker execution."""
+        return [(spec.label, count) for spec, count in get_enabled_tasks(config)]
 
     def _init_task_progress(self, config: dict) -> None:
         while self.task_progress_layout.count():
