@@ -136,11 +136,26 @@ class BotWorker(QThread):
             if task in ("Giao tranh", "Tranh bá"):
                 is_giao_tranh = task == "Giao tranh"
                 if is_giao_tranh:
+                    if self._config.get("ha_chien_cong"):
+                        if not self._mock_tick(
+                            f"Hạ chiến công: mô phỏng mục tiêu "
+                            f"{self._config.get('chien_cong', 200)}."
+                        ):
+                            return
+                    elif self._config.get("chon_nha_npc"):
+                        if not self._mock_tick("Chọn nhà NPC: mô phỏng chọn mục tiêu."):
+                            return
+                    if self._config.get("su_dung_canh_bat_tran"):
+                        if not self._mock_tick("Canh Bát Trân: mô phỏng kích hoạt."):
+                            return
                     flags = 3
                     limit = self._config.get("thoi_gian_giao_tranh")
                     if self._config.get("giao_tranh_nhanh_1_co"):
                         flags = 1
                 else:
+                    if self._config.get("mua_luot_knb"):
+                        if not self._mock_tick("Tranh bá: mô phỏng mua lượt bằng KNB."):
+                            return
                     flags = int(self._config.get("tranh_ba_fast_mode", 4))
                     limit = self._config.get("thoi_gian_tranh_ba")
                 if not self._simulate_battles(task, count, flags, limit):
