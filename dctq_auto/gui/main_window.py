@@ -69,7 +69,9 @@ class MainWindow(QMainWindow):
         self.tranh_ba.editingFinished.connect(self.tranh_ba.clearFocus)
 
         self.chon_nha_npc = QCheckBox("Chọn nhà NPC")
-        self.ba_co = QCheckBox("3 cờ")
+        self.ba_co = QRadioButton("3 cờ")
+        self.thoi_gian_mode = QRadioButton("Thời gian:")
+        self.ba_co.setChecked(True)
         self.su_dung_canh_bat_tran = QCheckBox("Sử dụng Canh Bát Trân")
         self.thoi_gian_giao_tranh = QSpinBox()
         self.thoi_gian_giao_tranh.setRange(15, 180)
@@ -78,6 +80,10 @@ class MainWindow(QMainWindow):
         self.thoi_gian_giao_tranh.setKeyboardTracking(False)
         self.thoi_gian_giao_tranh.editingFinished.connect(
             self.thoi_gian_giao_tranh.clearFocus
+        )
+        self.thoi_gian_giao_tranh.setEnabled(False)
+        self.thoi_gian_mode.toggled.connect(
+            self.thoi_gian_giao_tranh.setEnabled
         )
         self.ha_chien_cong = QCheckBox("Hạ chiến công")
         self.chien_cong = QSpinBox()
@@ -93,9 +99,9 @@ class MainWindow(QMainWindow):
         options_layout.setVerticalSpacing(4)
         options_layout.addWidget(self.chon_nha_npc, 0, 0)
         options_layout.addWidget(self.ba_co, 0, 1)
-        options_layout.addWidget(self.su_dung_canh_bat_tran, 0, 2)
-        options_layout.addWidget(QLabel("Thời gian:"), 0, 3)
-        options_layout.addWidget(self.thoi_gian_giao_tranh, 0, 4)
+        options_layout.addWidget(self.thoi_gian_mode, 0, 2)
+        options_layout.addWidget(self.thoi_gian_giao_tranh, 0, 3)
+        options_layout.addWidget(self.su_dung_canh_bat_tran, 0, 4)
 
         self.chien_cong_row = QWidget()
         chien_cong_layout = QHBoxLayout(self.chien_cong_row)
@@ -204,6 +210,10 @@ class MainWindow(QMainWindow):
     def _toggle_chien_cong_mode(self, enabled: bool) -> None:
         self.chon_nha_npc.setEnabled(not enabled)
         self.ba_co.setEnabled(not enabled)
+        self.thoi_gian_mode.setEnabled(not enabled)
+        self.thoi_gian_giao_tranh.setEnabled(
+            not enabled and self.thoi_gian_mode.isChecked()
+        )
         self.su_dung_canh_bat_tran.setEnabled(not enabled)
         self.chien_cong.setEnabled(enabled)
 
@@ -275,6 +285,7 @@ class MainWindow(QMainWindow):
                 "chien_cong": self.chien_cong.value(),
                 "chon_nha_npc": False,
                 "ba_co": False,
+                "thoi_gian_giao_tranh": None,
                 "su_dung_canh_bat_tran": False,
             }
         else:
@@ -283,6 +294,11 @@ class MainWindow(QMainWindow):
                 "chien_cong": self.chien_cong.value(),
                 "chon_nha_npc": self.chon_nha_npc.isChecked(),
                 "ba_co": self.ba_co.isChecked(),
+                "thoi_gian_giao_tranh": (
+                    self.thoi_gian_giao_tranh.value()
+                    if self.thoi_gian_mode.isChecked()
+                    else None
+                ),
                 "su_dung_canh_bat_tran": self.su_dung_canh_bat_tran.isChecked(),
             }
 
@@ -295,7 +311,6 @@ class MainWindow(QMainWindow):
 
         return {
             "giao_tranh": self.giao_tranh.value(),
-            "thoi_gian_giao_tranh": self.thoi_gian_giao_tranh.value(),
             **giao_tranh_mode,
             "tranh_ba": self.tranh_ba.value(),
             "mua_luot_knb": self.mua_luot_knb.isChecked(),
