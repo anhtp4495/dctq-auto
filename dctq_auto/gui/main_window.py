@@ -579,6 +579,7 @@ class MainWindow(QMainWindow):
         self._worker.progress_changed.connect(self._update_progress)
         self._worker.finished.connect(self._on_worker_finished)
         self.tabs.setEnabled(False)
+        self.run_mode_combo.setEnabled(False)
         self.device_combo.setEnabled(False)
         self.scan_button.setEnabled(False)
         self._paused = False
@@ -682,8 +683,8 @@ class MainWindow(QMainWindow):
         self.pause_button.setText("Tạm dừng")
         self.stop_button.setEnabled(False)
         self.tabs.setEnabled(True)
-        self.device_combo.setEnabled(True)
-        self.scan_button.setEnabled(True)
+        self.run_mode_combo.setEnabled(True)
+        self._on_run_mode_changed()
         if self.progress_bar.value() == 100:
             if self.run_mode_combo.currentData() == "mock":
                 self.progress_status_label.setText("Hoàn tất mô phỏng")
