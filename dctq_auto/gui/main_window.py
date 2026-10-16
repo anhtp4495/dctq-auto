@@ -71,6 +71,14 @@ class MainWindow(QMainWindow):
         self.chon_nha_npc = QCheckBox("Chọn nhà NPC")
         self.ba_co = QCheckBox("3 cờ")
         self.su_dung_canh_bat_tran = QCheckBox("Sử dụng Canh Bát Trân")
+        self.thoi_gian_giao_tranh = QSpinBox()
+        self.thoi_gian_giao_tranh.setRange(15, 180)
+        self.thoi_gian_giao_tranh.setValue(15)
+        self.thoi_gian_giao_tranh.setSuffix(" giây")
+        self.thoi_gian_giao_tranh.setKeyboardTracking(False)
+        self.thoi_gian_giao_tranh.editingFinished.connect(
+            self.thoi_gian_giao_tranh.clearFocus
+        )
         self.ha_chien_cong = QCheckBox("Hạ chiến công")
         self.chien_cong = QSpinBox()
         self.chien_cong.setRange(200, 4000)
@@ -86,6 +94,8 @@ class MainWindow(QMainWindow):
         options_layout.addWidget(self.chon_nha_npc, 0, 0)
         options_layout.addWidget(self.ba_co, 0, 1)
         options_layout.addWidget(self.su_dung_canh_bat_tran, 0, 2)
+        options_layout.addWidget(QLabel("Thời gian:"), 0, 3)
+        options_layout.addWidget(self.thoi_gian_giao_tranh, 0, 4)
 
         self.chien_cong_row = QWidget()
         chien_cong_layout = QHBoxLayout(self.chien_cong_row)
@@ -285,6 +295,7 @@ class MainWindow(QMainWindow):
 
         return {
             "giao_tranh": self.giao_tranh.value(),
+            "thoi_gian_giao_tranh": self.thoi_gian_giao_tranh.value(),
             **giao_tranh_mode,
             "tranh_ba": self.tranh_ba.value(),
             "mua_luot_knb": self.mua_luot_knb.isChecked(),
