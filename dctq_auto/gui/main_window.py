@@ -54,7 +54,7 @@ class MainWindow(QMainWindow):
             QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
         )
         self.device_combo.setMinimumContentsLength(24)
-        self.device_combo.addItem("Adb-Mock (mô phỏng, không cần LDPlayer)", "mock")
+        self.device_combo.addItem("Chạy thử (không cần thiết bị)", "mock")
         self.device_combo.currentIndexChanged.connect(self._on_device_changed)
         adb_layout.addWidget(self.device_combo, 1)
         self.scan_button = QPushButton("Quét ADB")
@@ -246,7 +246,7 @@ class MainWindow(QMainWindow):
         progress_layout = QVBoxLayout(progress_group)
         progress_header = QHBoxLayout()
         self.progress_status_label = QLabel("Chưa bắt đầu")
-        self.progress_count_label = QLabel("0/2 bước")
+        self.progress_count_label = QLabel("0/0 lượt")
         progress_header.addWidget(self.progress_status_label)
         progress_header.addStretch(1)
         progress_header.addWidget(self.progress_count_label)
@@ -287,8 +287,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central)
         self._on_device_changed()
         self._log(
-            "Ứng dụng đã khởi động. Chọn Adb-Mock để mô phỏng các nhiệm vụ; "
-            "chọn thiết bị ADB để kiểm tra kết nối và chụp màn hình."
+            "Ứng dụng đã khởi động. Chọn Chạy thử hoặc một thiết bị ADB."
         )
 
     def _build_mode_row(self, *widgets: QWidget) -> QWidget:
@@ -577,9 +576,9 @@ class MainWindow(QMainWindow):
         self._pause_started_at = None
         self._paused_duration = 0.0
         self.progress_bar.setValue(0)
-        self.progress_count_label.setText("0/1 bước")
+        self.progress_count_label.setText("0/0 lượt")
         self.progress_status_label.setText(
-            "Đang chuẩn bị mô phỏng" if mock_mode else "Đang chuẩn bị"
+            "Đang chuẩn bị"
         )
         self.elapsed_time_label.setText("Thời gian đã chạy: 00:00:00")
         self.eta_label.setText("Dự kiến kết thúc: Chưa ước tính")
@@ -589,7 +588,7 @@ class MainWindow(QMainWindow):
         self.stop_button.setEnabled(True)
         self.elapsed_timer.start()
         if mock_mode:
-            self._log("Đang chạy Mock; không gửi lệnh ADB.")
+            self._log("Đang chạy thử; không gửi lệnh ADB.")
         else:
             self._log(f"Đang chạy tác vụ nền trên thiết bị {serial}…")
         self._worker.start()
@@ -637,7 +636,10 @@ class MainWindow(QMainWindow):
     def _update_progress(self, completed: int, total: int, status: str) -> None:
         percent = int(completed * 100 / total) if total else 0
         self.progress_bar.setValue(max(0, min(100, percent)))
-        self.progress_count_label.setText(f"{percent}%")
+        self.progress_count_label.setText(
+            f"{completed // 100}/{total // 100} lượt"
+            if total >= 100 else f"{completed}/{total} bước"
+        )
         self.progress_status_label.setText(status)
 
     @staticmethod
@@ -673,7 +675,7 @@ class MainWindow(QMainWindow):
         self._on_device_changed()
         if self.progress_bar.value() == 100:
             if self.device_combo.currentData() == "mock":
-                self.progress_status_label.setText("Hoàn tất mô phỏng")
+                self.progress_status_label.setText("Hoàn tất chạy thử")
             else:
                 self.progress_status_label.setText("Hoàn tất bước chuẩn bị")
         else:
