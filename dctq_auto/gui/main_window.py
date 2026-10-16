@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
     QPlainTextEdit,
     QPushButton,
     QRadioButton,
+    QScrollArea,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
@@ -130,7 +131,8 @@ class MainWindow(QMainWindow):
         self.log_view.setReadOnly(True)
         self.log_view.setPlaceholderText("Nhật ký sẽ hiển thị tại đây.")
         log_layout.addWidget(self.log_view)
-        root.addWidget(log_group, 1)
+        log_group.setFixedHeight(190)
+        root.addWidget(log_group)
 
         self.setCentralWidget(central)
         self.scan_adb_devices()
@@ -179,7 +181,12 @@ class MainWindow(QMainWindow):
         layout.addWidget(other_group)
 
         layout.addStretch(1)
-        return page
+
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QScrollArea.Shape.NoFrame)
+        scroll_area.setWidget(page)
+        return scroll_area
 
     def _toggle_chien_cong_mode(self, enabled: bool) -> None:
         self.chon_nha_npc.setEnabled(not enabled)
