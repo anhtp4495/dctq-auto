@@ -185,9 +185,9 @@ class MainWindow(QMainWindow):
         self.tranh_ba_4_co.setChecked(True)
         self._update_tranh_ba_mode_description()
 
-        self.diem_danh = QCheckBox("Thực hiện điểm danh")
+        self.diem_danh = QCheckBox("Điểm danh hằng ngày")
         self.diem_danh.setChecked(True)
-        self.bao_danh_quan_doan = QCheckBox("Thực hiện báo danh quân đoàn")
+        self.bao_danh_quan_doan = QCheckBox("Báo danh quân đoàn")
         self.bao_danh_quan_doan.setChecked(True)
 
         self.dong_gop_knb = QCheckBox("Đóng góp KNB")
@@ -263,13 +263,6 @@ class MainWindow(QMainWindow):
 
         progress_group = QGroupBox("Tiến trình")
         progress_layout = QVBoxLayout(progress_group)
-        progress_header = QHBoxLayout()
-        self.progress_status_label = QLabel("Chưa bắt đầu")
-        self.progress_count_label = QLabel("0/0 lượt")
-        progress_header.addWidget(self.progress_status_label)
-        progress_header.addStretch(1)
-        progress_header.addWidget(self.progress_count_label)
-        progress_layout.addLayout(progress_header)
         self.progress_bar = QProgressBar()
         self.progress_bar.setRange(0, 100)
         self.progress_bar.setValue(0)
@@ -581,6 +574,15 @@ class MainWindow(QMainWindow):
             "thiet_lap_muu_binh": self.thiet_lap_muu_binh.isChecked(),
         }
 
+    def _set_settings_enabled(self, enabled: bool) -> None:
+        """Lock configuration controls while keeping tabs and scrolling usable."""
+        for widget_type in (QCheckBox, QSpinBox, QComboBox, QRadioButton, QAbstractButton):
+            for widget in self.tabs.findChildren(widget_type):
+                widget.setEnabled(enabled)
+        for group in self.tabs.findChildren(QGroupBox):
+            if group.isCheckable():
+                group.setEnabled(enabled)
+
     def start_bot(self) -> None:
         if self._worker is not None and self._worker.isRunning():
             return
@@ -609,7 +611,7 @@ class MainWindow(QMainWindow):
         self._worker.task_progress_changed.connect(self._update_task_progress)
         self._init_task_progress(config)
         self._worker.finished.connect(self._on_worker_finished)
-        self.tabs.setEnabled(False)
+        self._set_settings_enabled(False)
         self.device_combo.setEnabled(False)
         self.scan_button.setEnabled(False)
         self._paused = False
@@ -617,10 +619,6 @@ class MainWindow(QMainWindow):
         self._pause_started_at = None
         self._paused_duration = 0.0
         self.progress_bar.setValue(0)
-        self.progress_count_label.setText("0/0 lượt")
-        self.progress_status_label.setText(
-            "Đang chuẩn bị"
-        )
         self.elapsed_time_label.setText("Thời gian đã chạy: 00:00:00")
         self.eta_label.setText("Dự kiến kết thúc: Chưa ước tính")
         self.start_button.setEnabled(False)
@@ -649,7 +647,6 @@ class MainWindow(QMainWindow):
         self._paused = True
         self._pause_started_at = time.monotonic()
         self.pause_button.setText("Tiếp tục")
-        self.progress_status_label.setText("Đang tạm dừng")
         self._log("Đã tạm dừng tại điểm an toàn; nhấn Tiếp tục để chạy tiếp.")
 
     def resume_bot(self) -> None:
@@ -662,7 +659,6 @@ class MainWindow(QMainWindow):
         self._paused = False
         self._worker.resume()
         self.pause_button.setText("Tạm dừng")
-        self.progress_status_label.setText("Đang chạy")
         self._log("Tiếp tục tác vụ.")
 
     def stop_bot(self) -> None:
@@ -671,7 +667,6 @@ class MainWindow(QMainWindow):
             self._worker.requestInterruption()
             self.pause_button.setEnabled(False)
             self.stop_button.setEnabled(False)
-            self.progress_status_label.setText("Đang dừng...")
             self._log("Đã gửi yêu cầu dừng hẳn; worker sẽ dừng tại điểm kiểm tra tiếp theo.")
 
     @staticmethod
@@ -733,11 +728,6 @@ class MainWindow(QMainWindow):
     def _update_progress(self, completed: int, total: int, status: str) -> None:
         percent = int(completed * 100 / total) if total else 0
         self.progress_bar.setValue(max(0, min(100, percent)))
-        self.progress_count_label.setText(
-            f"{completed // 100}/{total // 100} lượt"
-            if total >= 100 else f"{completed}/{total} bước"
-        )
-        self.progress_status_label.setText(status)
 
     @staticmethod
     def _format_duration(seconds: float) -> str:
@@ -767,16 +757,9 @@ class MainWindow(QMainWindow):
         self.pause_button.setEnabled(False)
         self.pause_button.setText("Tạm dừng")
         self.stop_button.setEnabled(False)
-        self.tabs.setEnabled(True)
+        self._set_settings_enabled(True)
         self.device_combo.setEnabled(True)
         self._on_device_changed()
-        if self.progress_bar.value() == 100:
-            if self.device_combo.currentData() == "mock":
-                self.progress_status_label.setText("Hoàn tất chạy thử")
-            else:
-                self.progress_status_label.setText("Hoàn tất bước chuẩn bị")
-        else:
-            self.progress_status_label.setText("Đã kết thúc")
         if self.progress_bar.value() < 100:
             for name, label in self.task_progress_labels.items():
                 if label.text().startswith("→"):
