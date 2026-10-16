@@ -4,6 +4,7 @@ import logging
 import time
 
 from PySide6.QtCore import Qt, QTimer, QSettings
+from dctq_auto.tasks.registry import get_enabled_tasks
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
     QAbstractButton,
