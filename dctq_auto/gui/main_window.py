@@ -85,6 +85,13 @@ class MainWindow(QMainWindow):
         self.thoi_gian_mode.toggled.connect(
             self.thoi_gian_giao_tranh.setEnabled
         )
+        self.ba_co.toggled.connect(self._update_giao_tranh_mode_description)
+        self.thoi_gian_mode.toggled.connect(
+            self._update_giao_tranh_mode_description
+        )
+        self.giao_tranh_mode_description = QLabel()
+        self.giao_tranh_mode_description.setWordWrap(True)
+        self._update_giao_tranh_mode_description()
         self.ha_chien_cong = QCheckBox("Hạ chiến công")
         self.chien_cong = QSpinBox()
         self.chien_cong.setRange(200, 4000)
@@ -102,6 +109,7 @@ class MainWindow(QMainWindow):
         options_layout.addWidget(self.thoi_gian_mode, 0, 2)
         options_layout.addWidget(self.thoi_gian_giao_tranh, 0, 3)
         options_layout.addWidget(self.su_dung_canh_bat_tran, 0, 4)
+        options_layout.addWidget(self.giao_tranh_mode_description, 1, 0, 1, 5)
 
         self.chien_cong_row = QWidget()
         chien_cong_layout = QHBoxLayout(self.chien_cong_row)
@@ -206,6 +214,16 @@ class MainWindow(QMainWindow):
         scroll_area.setFrameShape(QScrollArea.Shape.NoFrame)
         scroll_area.setWidget(page)
         return scroll_area
+
+    def _update_giao_tranh_mode_description(self, *_args) -> None:
+        if self.thoi_gian_mode.isChecked():
+            self.giao_tranh_mode_description.setText(
+                "Đánh đến khi hết thời gian đã chọn thì kết thúc."
+            )
+        else:
+            self.giao_tranh_mode_description.setText(
+                "Đánh đến khi chắc chắn thắng và đạt đủ 3 cờ mới kết thúc."
+            )
 
     def _toggle_chien_cong_mode(self, enabled: bool) -> None:
         self.chon_nha_npc.setEnabled(not enabled)
