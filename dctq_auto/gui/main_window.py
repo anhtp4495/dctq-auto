@@ -275,6 +275,10 @@ class MainWindow(QMainWindow):
         self.progress_bar.setValue(0)
         self.progress_bar.setFormat("%p%")
         progress_layout.addWidget(self.progress_bar)
+        self.task_progress_layout = QVBoxLayout()
+        self.task_progress_layout.setSpacing(2)
+        self.task_progress_labels: dict[str, QLabel] = {}
+        progress_layout.addLayout(self.task_progress_layout)
         timing_layout = QHBoxLayout()
         self.elapsed_time_label = QLabel("Thời gian đã chạy: 00:00:00")
         self.eta_label = QLabel("Dự kiến kết thúc: Chưa ước tính")
@@ -602,6 +606,8 @@ class MainWindow(QMainWindow):
         )
         self._worker.log_message.connect(self._log)
         self._worker.progress_changed.connect(self._update_progress)
+        self._worker.task_progress_changed.connect(self._update_task_progress)
+        self._init_task_progress(config)
         self._worker.finished.connect(self._on_worker_finished)
         self.tabs.setEnabled(False)
         self.device_combo.setEnabled(False)
@@ -668,6 +674,62 @@ class MainWindow(QMainWindow):
             self.progress_status_label.setText("Đang dừng...")
             self._log("Đã gửi yêu cầu dừng hẳn; worker sẽ dừng tại điểm kiểm tra tiếp theo.")
 
+    @staticmethod
+    def _task_specs(config: dict) -> list[tuple[str, int]]:
+        tasks: list[tuple[str, int]] = []
+        if config.get("thuc_hien_giao_tranh"):
+            tasks.append(("Giao tranh", int(config.get("giao_tranh", 1))))
+        if config.get("thuc_hien_tranh_ba"):
+            tasks.append(("Tranh bá", int(config.get("tranh_ba", 1))))
+        for key, label in (
+            ("diem_danh", "Điểm danh"),
+            ("bao_danh_quan_doan", "Báo danh"),
+            ("thiet_lap_muu_binh", "Thiết lập mưu binh"),
+        ):
+            if config.get(key):
+                tasks.append((label, 1))
+        for key, label, count_key in (
+            ("dong_gop_knb", "Đóng góp KNB", "so_lan_dong_gop_knb"),
+            ("tham_do_lanh_dia", "Thăm dò lãnh địa", "so_lan_tham_do_lanh_dia"),
+            ("nhiem_vu_luu_ly_thap", "Lưu Ly Tháp", "so_lan_luu_ly_thap"),
+        ):
+            if config.get(key):
+                tasks.append((label, int(config.get(count_key, 1))))
+        return tasks
+
+    def _init_task_progress(self, config: dict) -> None:
+        while self.task_progress_layout.count():
+            item = self.task_progress_layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+        self.task_progress_labels.clear()
+        for name, count in self._task_specs(config):
+            label = QLabel()
+            label.setStyleSheet("color: #808080;")
+            self.task_progress_layout.addWidget(label)
+            self.task_progress_labels[name] = label
+            self._render_task_progress(name, "pending", 0, count)
+
+    def _render_task_progress(self, name: str, state: str, completed: int, total: int) -> None:
+        label = self.task_progress_labels.get(name)
+        if label is None:
+            return
+        if state == "running":
+            prefix, color = "→", "#D97706"
+        elif state == "done":
+            prefix, color = "✓", "#16A34A"
+        elif state == "stopped":
+            prefix, color = "■", "#DC2626"
+        else:
+            prefix, color = "·", "#808080"
+        detail = f" {completed}/{total}" if total > 1 else ""
+        label.setText(f"{prefix} {name}{detail}")
+        label.setStyleSheet("color: " + color + ";")
+
+    def _update_task_progress(self, name: str, state: str, completed: int, total: int) -> None:
+        self._render_task_progress(name, state, completed, total)
+
     def _update_progress(self, completed: int, total: int, status: str) -> None:
         percent = int(completed * 100 / total) if total else 0
         self.progress_bar.setValue(max(0, min(100, percent)))
@@ -715,6 +777,11 @@ class MainWindow(QMainWindow):
                 self.progress_status_label.setText("Hoàn tất bước chuẩn bị")
         else:
             self.progress_status_label.setText("Đã kết thúc")
+        if self.progress_bar.value() < 100:
+            for name, label in self.task_progress_labels.items():
+                if label.text().startswith("→"):
+                    self._render_task_progress(name, "stopped", 0, 1)
+                    break
         self._log("Worker đã kết thúc.")
 
     def clear_log(self) -> None:
