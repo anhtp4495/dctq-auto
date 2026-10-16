@@ -132,7 +132,7 @@ class BotWorker(QThread):
         self.progress_changed.emit(0, self._progress_total, "Bắt đầu")
         self.log_message.emit(
             f"Bắt đầu chạy thử {len(tasks)} nhóm nhiệm vụ, "
-            ước tính {total} giây. Không kết nối ADB và không điều khiển game."
+            f"thời lượng ước tính {total} giây. Không kết nối ADB và không điều khiển game."
         )
         for task, count in tasks:
             self.task_progress_changed.emit(task, "running", 0, count)
