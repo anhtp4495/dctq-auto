@@ -228,11 +228,17 @@ class MainWindow(QMainWindow):
         self.nhiem_vu_luu_ly_thap.toggled.connect(
             self.so_lan_luu_ly_thap.setEnabled
         )
-        self.luu_ly_thap_knb = QCheckBox("Mua lượt bằng KNB")
+        self.luu_ly_thap_knb = QCheckBox("Mua lượt thiếu bằng KNB")
         self.luu_ly_thap_knb.setEnabled(False)
         self.nhiem_vu_luu_ly_thap.toggled.connect(
             self.luu_ly_thap_knb.setEnabled
         )
+        self.luu_ly_thap_description = QLabel()
+        self.luu_ly_thap_description.setWordWrap(True)
+        self.luu_ly_thap_knb.toggled.connect(
+            self._update_luu_ly_thap_description
+        )
+        self._update_luu_ly_thap_description()
         self.thiet_lap_muu_binh = QCheckBox("Thiết lập mưu binh")
         self.thiet_lap_muu_binh.setChecked(True)
 
@@ -381,6 +387,7 @@ class MainWindow(QMainWindow):
         other_layout.addWidget(self.so_lan_luu_ly_thap, 4, 1)
         other_layout.addWidget(QLabel("lần"), 4, 2)
         other_layout.addWidget(self.luu_ly_thap_knb, 4, 3)
+        other_layout.addWidget(self.luu_ly_thap_description, 5, 0, 1, 4)
         layout.addWidget(other_group)
 
         layout.addStretch(1)
@@ -413,6 +420,16 @@ class MainWindow(QMainWindow):
         else:
             self.tham_do_lanh_dia_description.setText(
                 "Chỉ sử dụng phiếu thăm dò miễn phí, không mua thêm lượt bằng KNB."
+            )
+
+    def _update_luu_ly_thap_description(self, *_args) -> None:
+        if self.luu_ly_thap_knb.isChecked():
+            self.luu_ly_thap_description.setText(
+                "Nếu không đủ lượt miễn phí, tự động mua các lượt còn thiếu bằng KNB."
+            )
+        else:
+            self.luu_ly_thap_description.setText(
+                "Chỉ sử dụng lượt miễn phí, không mua thêm lượt bằng KNB."
             )
 
     def _update_tranh_ba_mode_description(self, *_args) -> None:
