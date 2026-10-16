@@ -70,7 +70,7 @@ class MainWindow(QMainWindow):
 
         self.chon_nha_npc = QCheckBox("Chọn nhà NPC")
         self.ba_co = QRadioButton("3 cờ")
-        self.thoi_gian_mode = QRadioButton("Thời gian:")
+        self.thoi_gian_mode = QRadioButton("Thời gian giao tranh tối đa:")
         self.ba_co.setChecked(True)
         self.su_dung_canh_bat_tran = QCheckBox("Sử dụng Canh Bát Trân")
         self.thoi_gian_giao_tranh = QSpinBox()
@@ -218,7 +218,7 @@ class MainWindow(QMainWindow):
     def _update_giao_tranh_mode_description(self, *_args) -> None:
         if self.thoi_gian_mode.isChecked():
             self.giao_tranh_mode_description.setText(
-                "Đánh đến khi hết thời gian đã chọn thì kết thúc."
+                "Kết thúc trận khi đạt giới hạn thời gian đã chọn, dù đã đạt 3 cờ hay chưa."
             )
         else:
             self.giao_tranh_mode_description.setText(
