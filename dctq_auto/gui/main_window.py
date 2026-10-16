@@ -169,6 +169,26 @@ class MainWindow(QMainWindow):
         self.diem_danh.setChecked(True)
         self.bao_danh_quan_doan = QCheckBox("Thực hiện báo danh quân đoàn")
         self.bao_danh_quan_doan.setChecked(True)
+
+        self.dong_gop_knb = QCheckBox("Đóng góp KNB")
+        self.so_lan_dong_gop_knb = QSpinBox()
+        self.so_lan_dong_gop_knb.setRange(1, 10)
+        self.so_lan_dong_gop_knb.setValue(1)
+        self.so_lan_dong_gop_knb.setEnabled(False)
+        self.so_lan_dong_gop_knb.setKeyboardTracking(False)
+        self.dong_gop_knb.toggled.connect(self.so_lan_dong_gop_knb.setEnabled)
+
+        self.tham_do_lanh_dia = QCheckBox("Thăm dò lãnh địa")
+        self.so_lan_tham_do_lanh_dia = QSpinBox()
+        self.so_lan_tham_do_lanh_dia.setRange(1, 10)
+        self.so_lan_tham_do_lanh_dia.setValue(1)
+        self.so_lan_tham_do_lanh_dia.setEnabled(False)
+        self.so_lan_tham_do_lanh_dia.setKeyboardTracking(False)
+        self.tham_do_lanh_dia.toggled.connect(
+            self.so_lan_tham_do_lanh_dia.setEnabled
+        )
+
+        self.nhiem_vu_luu_ly_thap = QCheckBox("Nhiệm vụ Lưu Ly Tháp")
         self.thiet_lap_muu_binh = QCheckBox("Thiết lập mưu binh")
         self.thiet_lap_muu_binh.setChecked(True)
 
@@ -265,6 +285,13 @@ class MainWindow(QMainWindow):
         other_layout = QGridLayout(other_group)
         other_layout.addWidget(self.diem_danh, 0, 0)
         other_layout.addWidget(self.bao_danh_quan_doan, 0, 1)
+        other_layout.addWidget(self.dong_gop_knb, 1, 0)
+        other_layout.addWidget(self.so_lan_dong_gop_knb, 1, 1)
+        other_layout.addWidget(QLabel("lần"), 1, 2)
+        other_layout.addWidget(self.tham_do_lanh_dia, 2, 0)
+        other_layout.addWidget(self.so_lan_tham_do_lanh_dia, 2, 1)
+        other_layout.addWidget(QLabel("lần"), 2, 2)
+        other_layout.addWidget(self.nhiem_vu_luu_ly_thap, 3, 0)
         layout.addWidget(other_group)
 
         layout.addStretch(1)
@@ -407,6 +434,11 @@ class MainWindow(QMainWindow):
             ),
             "diem_danh": self.diem_danh.isChecked(),
             "bao_danh_quan_doan": self.bao_danh_quan_doan.isChecked(),
+            "dong_gop_knb": self.dong_gop_knb.isChecked(),
+            "so_lan_dong_gop_knb": self.so_lan_dong_gop_knb.value(),
+            "tham_do_lanh_dia": self.tham_do_lanh_dia.isChecked(),
+            "so_lan_tham_do_lanh_dia": self.so_lan_tham_do_lanh_dia.value(),
+            "nhiem_vu_luu_ly_thap": self.nhiem_vu_luu_ly_thap.isChecked(),
             "thiet_lap_muu_binh": self.thiet_lap_muu_binh.isChecked(),
         }
 
