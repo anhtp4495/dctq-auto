@@ -187,13 +187,13 @@ class MainWindow(QMainWindow):
         self.tham_do_lanh_dia.toggled.connect(
             self.so_lan_tham_do_lanh_dia.setEnabled
         )
-        self.tham_do_lanh_dia_knb = QCheckBox("Dùng KNB")
+        self.tham_do_lanh_dia_knb = QCheckBox("Mua lượt thiếu bằng KNB")
         self.tham_do_lanh_dia_knb.setEnabled(False)
         self.tham_do_lanh_dia.toggled.connect(
             self.tham_do_lanh_dia_knb.setEnabled
         )
         self.tham_do_lanh_dia_description = QLabel(
-            "Nếu không đủ phiếu thăm dò, tự động mua lượt bằng KNB."
+            "Không chọn: chỉ dùng phiếu thăm dò miễn phí. Chọn: nếu không đủ phiếu, tự động mua các lượt còn thiếu bằng KNB."
         )
         self.tham_do_lanh_dia_description.setWordWrap(True)
 
