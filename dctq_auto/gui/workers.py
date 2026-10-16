@@ -75,9 +75,15 @@ class BotWorker(QThread):
                 # One mock tick represents three simulated seconds.
                 time.sleep(0.1)
                 elapsed += 3
+                # Time-limit scenarios deliberately never win so the
+                # log demonstrates that the timer ends the battle regardless.
+                won = (
+                    self._config.get("thoi_gian_giao_tranh") is None
+                    and elapsed >= 9
+                )
                 snapshot = BattleSnapshot(
                     elapsed_seconds=elapsed,
-                    won=elapsed >= 9,
+                    won=won,
                     flags=min(max(elapsed // 3 - 1, 0), 3),
                 )
                 timeline.append(snapshot)
