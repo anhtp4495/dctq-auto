@@ -187,6 +187,15 @@ class MainWindow(QMainWindow):
         self.tham_do_lanh_dia.toggled.connect(
             self.so_lan_tham_do_lanh_dia.setEnabled
         )
+        self.tham_do_lanh_dia_knb = QCheckBox("Dùng KNB")
+        self.tham_do_lanh_dia_knb.setEnabled(False)
+        self.tham_do_lanh_dia.toggled.connect(
+            self.tham_do_lanh_dia_knb.setEnabled
+        )
+        self.tham_do_lanh_dia_description = QLabel(
+            "Nếu không đủ phiếu thăm dò, tự động mua lượt bằng KNB."
+        )
+        self.tham_do_lanh_dia_description.setWordWrap(True)
 
         self.nhiem_vu_luu_ly_thap = QCheckBox("Nhiệm vụ Lưu Ly Tháp")
         self.thiet_lap_muu_binh = QCheckBox("Thiết lập mưu binh")
@@ -291,7 +300,9 @@ class MainWindow(QMainWindow):
         other_layout.addWidget(self.tham_do_lanh_dia, 2, 0)
         other_layout.addWidget(self.so_lan_tham_do_lanh_dia, 2, 1)
         other_layout.addWidget(QLabel("lần"), 2, 2)
-        other_layout.addWidget(self.nhiem_vu_luu_ly_thap, 3, 0)
+        other_layout.addWidget(self.tham_do_lanh_dia_knb, 2, 3)
+        other_layout.addWidget(self.tham_do_lanh_dia_description, 3, 0, 1, 4)
+        other_layout.addWidget(self.nhiem_vu_luu_ly_thap, 4, 0)
         layout.addWidget(other_group)
 
         layout.addStretch(1)
@@ -438,6 +449,7 @@ class MainWindow(QMainWindow):
             "so_lan_dong_gop_knb": self.so_lan_dong_gop_knb.value(),
             "tham_do_lanh_dia": self.tham_do_lanh_dia.isChecked(),
             "so_lan_tham_do_lanh_dia": self.so_lan_tham_do_lanh_dia.value(),
+            "tham_do_lanh_dia_knb": self.tham_do_lanh_dia_knb.isChecked(),
             "nhiem_vu_luu_ly_thap": self.nhiem_vu_luu_ly_thap.isChecked(),
             "thiet_lap_muu_binh": self.thiet_lap_muu_binh.isChecked(),
         }
