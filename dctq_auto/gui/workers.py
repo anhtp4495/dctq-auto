@@ -31,6 +31,8 @@ class BotWorker(QThread):
         self._mock_mode = mock_mode
         self._resume_event = Event()
         self._resume_event.set()
+        self._progress_total = 1
+        self._progress_completed = 0
 
     def pause(self) -> None:
         self._resume_event.clear()
@@ -56,6 +58,10 @@ class BotWorker(QThread):
         self.log_message.emit(f"[MOCK] {message}")
         return True
 
+    def _emit_mock_progress(self, partial_units: int, status: str) -> None:
+        value = min(self._progress_total, self._progress_completed + max(0, partial_units))
+        self.progress_changed.emit(value, self._progress_total, status)
+
     def _simulate_battles(self, task: str, count: int, required_flags: int,
                           time_limit: int | None) -> bool:
         for number in range(1, count + 1):
@@ -71,8 +77,7 @@ class BotWorker(QThread):
                 if task == "Giao tranh":
                     snapshot = BattleSnapshot(elapsed, won, flags)
                     result = run_mock_battle(self._config, [snapshot])
-                    finished = result.finished
-                    reason = result.reason
+                    finished, reason = result.finished, result.reason
                 elif time_limit is not None:
                     finished = elapsed >= time_limit
                     reason = "time_limit_reached" if finished else "time_limit_not_reached"
@@ -87,14 +92,21 @@ class BotWorker(QThread):
                     f"{'thắng' if won else 'chưa thắng'}, {flags} cờ."
                 ):
                     return False
+                expected_seconds = max(12, time_limit or 12)
+                partial = min(99, int(elapsed * 99 / expected_seconds))
+                self._emit_mock_progress(
+                    partial, f"{task}: trận {number}/{count} ({partial}% trận)"
+                )
                 if finished:
                     if not self._mock_tick(f"Kết thúc {task} {number}: {reason}."):
                         return False
+                    self._progress_completed += 100
+                    self._emit_mock_progress(0, f"{task}: hoàn thành {number}/{count}")
                     break
         return True
 
     def _run_mock(self) -> None:
-        """Simulate configured tasks without connecting to ADB."""
+        """Simulate configured tasks and update progress without connecting to ADB."""
         tasks: list[tuple[str, int]] = []
         if self._config.get("thuc_hien_giao_tranh"):
             tasks.append(("Giao tranh", int(self._config.get("giao_tranh", 1))))
@@ -108,15 +120,12 @@ class BotWorker(QThread):
         ):
             if self._config.get(key):
                 tasks.append((label, 1))
-        for key, label in (
-            ("dong_gop_knb", "Đóng góp KNB"),
-            ("tham_do_lanh_dia", "Thăm dò lãnh địa"),
+        for key, label, count_key in (
+            ("dong_gop_knb", "Đóng góp KNB", "so_lan_dong_gop_knb"),
+            ("tham_do_lanh_dia", "Thăm dò lãnh địa", "so_lan_tham_do_lanh_dia"),
         ):
             if self._config.get(key):
-                tasks.append((label, int(self._config.get(
-                    "so_lan_dong_gop_knb" if key == "dong_gop_knb"
-                    else "so_lan_tham_do_lanh_dia", 1
-                ))))
+                tasks.append((label, int(self._config.get(count_key, 1))))
 
         total = sum(count for _, count in tasks)
         if total == 0:
@@ -124,11 +133,13 @@ class BotWorker(QThread):
             self.progress_changed.emit(1, 1, "Không có nhiệm vụ được chọn")
             return
 
+        self._progress_total = total * 100
+        self._progress_completed = 0
+        self.progress_changed.emit(0, self._progress_total, "Bắt đầu mô phỏng")
         self.log_message.emit(
             f"[MOCK] Bắt đầu mô phỏng {len(tasks)} nhóm nhiệm vụ, "
             f"{total} lượt. Không kết nối ADB và không điều khiển game."
         )
-        completed = 0
         for task, count in tasks:
             if not self._wait_if_paused():
                 self.log_message.emit("[MOCK] Đã dừng theo yêu cầu.")
@@ -138,8 +149,7 @@ class BotWorker(QThread):
                 if is_giao_tranh:
                     if self._config.get("ha_chien_cong"):
                         if not self._mock_tick(
-                            f"Hạ chiến công: mô phỏng mục tiêu "
-                            f"{self._config.get('chien_cong', 200)}."
+                            f"Hạ chiến công: mô phỏng mục tiêu {self._config.get('chien_cong', 200)}."
                         ):
                             return
                     elif self._config.get("chon_nha_npc"):
@@ -148,10 +158,8 @@ class BotWorker(QThread):
                     if self._config.get("su_dung_canh_bat_tran"):
                         if not self._mock_tick("Canh Bát Trân: mô phỏng kích hoạt."):
                             return
-                    flags = 3
+                    flags = 1 if self._config.get("giao_tranh_nhanh_1_co") else 3
                     limit = self._config.get("thoi_gian_giao_tranh")
-                    if self._config.get("giao_tranh_nhanh_1_co"):
-                        flags = 1
                 else:
                     if self._config.get("mua_luot_knb"):
                         if not self._mock_tick("Tranh bá: mô phỏng mua lượt bằng KNB."):
@@ -160,7 +168,6 @@ class BotWorker(QThread):
                     limit = self._config.get("thoi_gian_tranh_ba")
                 if not self._simulate_battles(task, count, flags, limit):
                     return
-                completed += count
             else:
                 for number in range(1, count + 1):
                     extras = []
@@ -174,13 +181,10 @@ class BotWorker(QThread):
                     suffix = f" ({', '.join(extras)})" if extras else ""
                     if not self._mock_tick(f"{task}: mô phỏng hoàn tất{suffix}."):
                         return
-                    completed += 1
-                    self.progress_changed.emit(
-                        completed, total, f"Mock: hoàn thành {completed}/{total} lượt"
+                    self._progress_completed += 100
+                    self._emit_mock_progress(
+                        0, f"Mock: hoàn thành {self._progress_completed // 100}/{total} lượt"
                     )
-            self.progress_changed.emit(
-                completed, total, f"Mock: hoàn thành {completed}/{total} lượt"
-            )
         self.log_message.emit("[MOCK] Hoàn tất mô phỏng tất cả nhiệm vụ.")
 
     def run(self) -> None:
