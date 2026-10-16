@@ -8,6 +8,7 @@ from PySide6.QtCore import QThread, Signal
 
 from dctq_auto.adb.client import AdbClient
 from dctq_auto.automation.battle_testkit import BattleSnapshot, run_mock_battle
+from dctq_auto.tasks.registry import get_enabled_tasks
 
 
 class BotWorker(QThread):
@@ -109,26 +110,7 @@ class BotWorker(QThread):
 
     def _run_mock(self) -> None:
         """Simulate configured tasks and update progress without connecting to ADB."""
-        tasks: list[tuple[str, int]] = []
-        # Check-in tasks have the highest priority.
-        for key, label in (
-            ("diem_danh", "Điểm danh"),
-            ("bao_danh_quan_doan", "Báo danh quân đoàn"),
-        ):
-            if self._config.get(key):
-                tasks.append((label, 1))
-        # Run other daily tasks before battles.
-        for key, label, count_key in (
-            ("dong_gop_knb", "Đóng góp KNB", "so_lan_dong_gop_knb"),
-            ("tham_do_lanh_dia", "Thăm dò lãnh địa", "so_lan_tham_do_lanh_dia"),
-            ("nhiem_vu_luu_ly_thap", "Nhiệm vụ Lưu Ly Tháp", "so_lan_luu_ly_thap"),
-        ):
-            if self._config.get(key):
-                tasks.append((label, int(self._config.get(count_key, 1))))
-        if self._config.get("thuc_hien_giao_tranh"):
-            tasks.append(("Giao tranh", int(self._config.get("giao_tranh", 1))))
-        if self._config.get("thuc_hien_tranh_ba"):
-            tasks.append(("Tranh bá", int(self._config.get("tranh_ba", 1))))
+        tasks = [(spec.label, count) for spec, count in get_enabled_tasks(self._config)]
 
         total = sum(count for _, count in tasks)
         if total == 0:
