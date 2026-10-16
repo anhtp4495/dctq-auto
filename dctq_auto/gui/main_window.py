@@ -220,6 +220,19 @@ class MainWindow(QMainWindow):
         self._update_tham_do_lanh_dia_description()
 
         self.nhiem_vu_luu_ly_thap = QCheckBox("Nhiệm vụ Lưu Ly Tháp")
+        self.so_lan_luu_ly_thap = QSpinBox()
+        self.so_lan_luu_ly_thap.setRange(1, 10)
+        self.so_lan_luu_ly_thap.setValue(1)
+        self.so_lan_luu_ly_thap.setEnabled(False)
+        self.so_lan_luu_ly_thap.setKeyboardTracking(False)
+        self.nhiem_vu_luu_ly_thap.toggled.connect(
+            self.so_lan_luu_ly_thap.setEnabled
+        )
+        self.luu_ly_thap_knb = QCheckBox("Mua lượt bằng KNB")
+        self.luu_ly_thap_knb.setEnabled(False)
+        self.nhiem_vu_luu_ly_thap.toggled.connect(
+            self.luu_ly_thap_knb.setEnabled
+        )
         self.thiet_lap_muu_binh = QCheckBox("Thiết lập mưu binh")
         self.thiet_lap_muu_binh.setChecked(True)
 
@@ -365,6 +378,9 @@ class MainWindow(QMainWindow):
         other_layout.addWidget(self.tham_do_lanh_dia_knb, 2, 3)
         other_layout.addWidget(self.tham_do_lanh_dia_description, 3, 0, 1, 4)
         other_layout.addWidget(self.nhiem_vu_luu_ly_thap, 4, 0)
+        other_layout.addWidget(self.so_lan_luu_ly_thap, 4, 1)
+        other_layout.addWidget(QLabel("lần"), 4, 2)
+        other_layout.addWidget(self.luu_ly_thap_knb, 5, 0)
         layout.addWidget(other_group)
 
         layout.addStretch(1)
@@ -539,6 +555,8 @@ class MainWindow(QMainWindow):
             "so_lan_tham_do_lanh_dia": self.so_lan_tham_do_lanh_dia.value(),
             "tham_do_lanh_dia_knb": self.tham_do_lanh_dia_knb.isChecked(),
             "nhiem_vu_luu_ly_thap": self.nhiem_vu_luu_ly_thap.isChecked(),
+            "so_lan_luu_ly_thap": self.so_lan_luu_ly_thap.value(),
+            "luu_ly_thap_knb": self.luu_ly_thap_knb.isChecked(),
             "thiet_lap_muu_binh": self.thiet_lap_muu_binh.isChecked(),
         }
 
