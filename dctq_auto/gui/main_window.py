@@ -45,9 +45,16 @@ class MainWindow(QMainWindow):
         central = QWidget(self)
         root = QVBoxLayout(central)
 
-        adb_group = QGroupBox("Thiết bị ADB")
+        adb_group = QGroupBox("Chế độ chạy")
         adb_layout = QHBoxLayout(adb_group)
-        adb_layout.addWidget(QLabel("LDPlayer:"))
+        adb_layout.addWidget(QLabel("Chế độ:"))
+        self.run_mode_combo = QComboBox()
+        self.run_mode_combo.addItem("Mock (không cần LDPlayer)", "mock")
+        self.run_mode_combo.addItem("ADB (chuẩn bị thiết bị)", "adb")
+        self.run_mode_combo.currentIndexChanged.connect(self._on_run_mode_changed)
+        adb_layout.addWidget(self.run_mode_combo)
+        adb_layout.addSpacing(12)
+        adb_layout.addWidget(QLabel("Thiết bị:"))
         self.device_combo = QComboBox()
         self.device_combo.setMinimumWidth(280)
         self.device_combo.setSizeAdjustPolicy(
@@ -277,8 +284,11 @@ class MainWindow(QMainWindow):
         root.addWidget(log_group)
 
         self.setCentralWidget(central)
-        self.scan_adb_devices()
-        self._log("Ứng dụng đã khởi động. Logic gameplay chưa được triển khai.")
+        self._on_run_mode_changed()
+        self._log(
+            "Ứng dụng đã khởi động. Chế độ Mock mô phỏng logic Giao tranh; "
+            "chế độ ADB hiện chỉ kiểm tra kết nối và chụp màn hình."
+        )
 
     def _build_mode_row(self, *widgets: QWidget) -> QWidget:
         """Build mode options with the same first-column width and spacing."""
@@ -437,7 +447,19 @@ class MainWindow(QMainWindow):
         layout.addStretch(1)
         return page
 
+    def _on_run_mode_changed(self, *_args) -> None:
+        mock_mode = self.run_mode_combo.currentData() == "mock"
+        self.device_combo.setEnabled(not mock_mode)
+        self.scan_button.setEnabled(not mock_mode)
+        if mock_mode:
+            self.device_combo.clear()
+            self.device_combo.addItem("Không cần thiết bị ở chế độ Mock", None)
+        else:
+            self.scan_adb_devices()
+
     def scan_adb_devices(self) -> None:
+        if self.run_mode_combo.currentData() == "mock":
+            return
         current_serial = self.device_combo.currentData()
         self.scan_button.setEnabled(False)
         self.device_combo.setEnabled(False)
@@ -534,12 +556,14 @@ class MainWindow(QMainWindow):
         if self._worker is not None and self._worker.isRunning():
             return
 
+        mock_mode = self.run_mode_combo.currentData() == "mock"
         serial = self.device_combo.currentData()
-        if not serial:
+        if not mock_mode and not serial:
             QMessageBox.warning(
                 self,
                 "Chưa chọn thiết bị",
-                "Hãy mở LDPlayer, nhấn Quét ADB và chọn thiết bị cần chạy.",
+                "Hãy chuyển sang chế độ ADB, mở LDPlayer, nhấn Quét ADB "
+                "và chọn thiết bị cần chạy.",
             )
             return
 
@@ -548,6 +572,7 @@ class MainWindow(QMainWindow):
             serial=serial,
             screenshot_dir=self._settings.screenshot_dir,
             config=config,
+            mock_mode=mock_mode,
             parent=self,
         )
         self._worker.log_message.connect(self._log)
@@ -561,8 +586,13 @@ class MainWindow(QMainWindow):
         self._pause_started_at = None
         self._paused_duration = 0.0
         self.progress_bar.setValue(0)
-        self.progress_count_label.setText("0/2 bước")
-        self.progress_status_label.setText("Đang chuẩn bị")
+        if mock_mode:
+            total = config["giao_tranh"] if config["thuc_hien_giao_tranh"] else 1
+            self.progress_count_label.setText(f"0/{total} trận")
+            self.progress_status_label.setText("Đang chuẩn bị mô phỏng")
+        else:
+            self.progress_count_label.setText("0/2 bước")
+            self.progress_status_label.setText("Đang chuẩn bị")
         self.elapsed_time_label.setText("Thời gian đã chạy: 00:00:00")
         self.eta_label.setText("Dự kiến kết thúc: Chưa ước tính")
         self.start_button.setEnabled(False)
@@ -570,7 +600,10 @@ class MainWindow(QMainWindow):
         self.pause_button.setText("Tạm dừng")
         self.stop_button.setEnabled(True)
         self.elapsed_timer.start()
-        self._log(f"Đang chạy tác vụ nền trên thiết bị {serial}…")
+        if mock_mode:
+            self._log("Đang chạy Mock; không gửi lệnh ADB.")
+        else:
+            self._log(f"Đang chạy tác vụ nền trên thiết bị {serial}…")
         self._worker.start()
 
     def toggle_pause_bot(self) -> None:
@@ -616,7 +649,8 @@ class MainWindow(QMainWindow):
     def _update_progress(self, completed: int, total: int, status: str) -> None:
         percent = int(completed * 100 / total) if total else 0
         self.progress_bar.setValue(percent)
-        self.progress_count_label.setText(f"{completed}/{total} bước")
+        unit = "trận" if self.run_mode_combo.currentData() == "mock" else "bước"
+        self.progress_count_label.setText(f"{completed}/{total} {unit}")
         self.progress_status_label.setText(status)
 
     @staticmethod
@@ -651,7 +685,10 @@ class MainWindow(QMainWindow):
         self.device_combo.setEnabled(True)
         self.scan_button.setEnabled(True)
         if self.progress_bar.value() == 100:
-            self.progress_status_label.setText("Hoàn tất bước chuẩn bị")
+            if self.run_mode_combo.currentData() == "mock":
+                self.progress_status_label.setText("Hoàn tất mô phỏng")
+            else:
+                self.progress_status_label.setText("Hoàn tất bước chuẩn bị")
         else:
             self.progress_status_label.setText("Đã kết thúc")
         self._log("Worker đã kết thúc.")
