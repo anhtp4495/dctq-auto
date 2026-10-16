@@ -756,7 +756,6 @@ class MainWindow(QMainWindow):
         for key, label in (
             ("diem_danh", "Điểm danh"),
             ("bao_danh_quan_doan", "Báo danh quân đoàn"),
-            ("thiet_lap_muu_binh", "Thiết lập mưu binh"),
         ):
             if config.get(key):
                 tasks.append((label, 1))
@@ -799,7 +798,8 @@ class MainWindow(QMainWindow):
             prefix, color = "■", "#DC2626"
         else:
             prefix, color = "·", "#808080"
-        detail = f" {completed}/{total}" if total > 1 else ""
+        show_count = total > 1 or name == "Thăm dò lãnh địa"
+        detail = f" {completed}/{total}" if show_count else ""
         label.setText(f"{prefix} {name}{detail}")
         label.setStyleSheet("color: " + color + ";")
 
