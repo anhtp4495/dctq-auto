@@ -15,6 +15,7 @@ class BotWorker(QThread):
 
     log_message = Signal(str)
     progress_changed = Signal(int, int, str)
+    task_progress_changed = Signal(str, str, int, int)
 
     def __init__(
         self,
@@ -101,6 +102,7 @@ class BotWorker(QThread):
                     if not self._mock_tick(f"Kết thúc {task} {number}: {reason}."):
                         return False
                     self._progress_completed += 100
+                    self.task_progress_changed.emit(task, "running", number, count)
                     self._emit_mock_progress(0, f"{task}: hoàn thành {number}/{count}")
                     break
         return True
@@ -141,6 +143,7 @@ class BotWorker(QThread):
             f"{total} lượt. Không kết nối ADB và không điều khiển game."
         )
         for task, count in tasks:
+            self.task_progress_changed.emit(task, "running", 0, count)
             if not self._wait_if_paused():
                 self.log_message.emit("Đã dừng theo yêu cầu.")
                 return
@@ -187,9 +190,12 @@ class BotWorker(QThread):
                     if not self._mock_tick(f"{task}: chạy thử hoàn tất{suffix}."):
                         return
                     self._progress_completed += 100
+                    self.task_progress_changed.emit(task, "running", number, count)
                     self._emit_mock_progress(
                         0, f"Đã hoàn thành {self._progress_completed // 100}/{total} lượt"
                     )
+        for task, count in tasks:
+            self.task_progress_changed.emit(task, "done", count, count)
         self.log_message.emit("Hoàn tất chạy thử tất cả nhiệm vụ.")
 
     def run(self) -> None:
