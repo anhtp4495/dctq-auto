@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPlainTextEdit,
     QPushButton,
+    QRadioButton,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
@@ -28,7 +29,7 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("DCTQ Auto")
-        self.resize(700, 560)
+        self.resize(700, 600)
         self._settings = Settings.from_env()
         self._worker: BotWorker | None = None
 
@@ -65,8 +66,38 @@ class MainWindow(QMainWindow):
         self.tranh_ba.setKeyboardTracking(False)
         self.tranh_ba.editingFinished.connect(self.tranh_ba.clearFocus)
 
+        self.chon_nha_npc = QCheckBox("Chọn nhà NPC")
+        self.ba_co = QCheckBox("3 cờ")
+        self.su_dung_canh_bat_tran = QCheckBox("Sử dụng Canh Bát Trân")
+        self.ha_chien_cong = QCheckBox("Hạ chiến công")
+        self.chien_cong = QSpinBox()
+        self.chien_cong.setRange(1, 999999)
+        self.chien_cong.setValue(1)
+        self.chien_cong.setKeyboardTracking(False)
+        self.chien_cong.editingFinished.connect(self.chien_cong.clearFocus)
+
+        self.giao_tranh_options = QWidget()
+        options_layout = QVBoxLayout(self.giao_tranh_options)
+        options_layout.setContentsMargins(0, 0, 0, 0)
+        options_layout.addWidget(self.chon_nha_npc)
+        options_layout.addWidget(self.ba_co)
+        options_layout.addWidget(self.su_dung_canh_bat_tran)
+
+        self.chien_cong_row = QWidget()
+        chien_cong_layout = QHBoxLayout(self.chien_cong_row)
+        chien_cong_layout.setContentsMargins(0, 0, 0, 0)
+        chien_cong_layout.addWidget(QLabel("Chiến công cần hạ:"))
+        chien_cong_layout.addWidget(self.chien_cong)
+        chien_cong_layout.addStretch(1)
+        self.chien_cong_row.setVisible(False)
+        self.ha_chien_cong.toggled.connect(self._toggle_chien_cong_mode)
+
         self.mua_luot_knb = QCheckBox("Mua lượt bằng KNB (Kim Nguyên Bảo)")
         self.mua_luot_knb.setChecked(False)
+        self.tranh_ba_0_co = QRadioButton("Nhanh 0 cờ")
+        self.tranh_ba_1_co = QRadioButton("Nhanh 1 cờ")
+        self.tranh_ba_4_co = QRadioButton("Nhanh 4 cờ")
+        self.tranh_ba_0_co.setChecked(True)
 
         self.diem_danh = QCheckBox("Thực hiện điểm danh")
         self.diem_danh.setChecked(True)
@@ -107,24 +138,38 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(page)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        for label, control in (
-            ("Giao tranh (trận)", self.giao_tranh),
-            ("Tranh bá (trận)", self.tranh_ba),
-        ):
-            row = QHBoxLayout()
-            row.addWidget(QLabel(label))
-            row.addStretch(1)
-            control.setMinimumWidth(120)
-            row.addWidget(control)
-            layout.addLayout(row)
+        row = QHBoxLayout()
+        row.addWidget(QLabel("Giao tranh (trận)"))
+        row.addStretch(1)
+        self.giao_tranh.setMinimumWidth(120)
+        row.addWidget(self.giao_tranh)
+        layout.addLayout(row)
+        layout.addWidget(self.ha_chien_cong)
+        layout.addWidget(self.giao_tranh_options)
+        layout.addWidget(self.chien_cong_row)
 
         layout.addSpacing(8)
+        row = QHBoxLayout()
+        row.addWidget(QLabel("Tranh bá (trận)"))
+        row.addStretch(1)
+        self.tranh_ba.setMinimumWidth(120)
+        row.addWidget(self.tranh_ba)
+        layout.addLayout(row)
         layout.addWidget(self.mua_luot_knb)
+        layout.addWidget(QLabel("Chế độ nhanh:"))
+        layout.addWidget(self.tranh_ba_0_co)
+        layout.addWidget(self.tranh_ba_1_co)
+        layout.addWidget(self.tranh_ba_4_co)
+
         layout.addSpacing(8)
         layout.addWidget(self.diem_danh)
         layout.addWidget(self.bao_danh_quan_doan)
         layout.addStretch(1)
         return page
+
+    def _toggle_chien_cong_mode(self, enabled: bool) -> None:
+        self.giao_tranh_options.setVisible(not enabled)
+        self.chien_cong_row.setVisible(enabled)
 
     def _build_strategy_tab(self) -> QWidget:
         page = QWidget()
@@ -182,10 +227,36 @@ class MainWindow(QMainWindow):
             self.device_combo.setEnabled(True)
 
     def _current_config(self) -> dict:
+        if self.ha_chien_cong.isChecked():
+            giao_tranh_mode = {
+                "ha_chien_cong": True,
+                "chien_cong": self.chien_cong.value(),
+                "chon_nha_npc": False,
+                "ba_co": False,
+                "su_dung_canh_bat_tran": False,
+            }
+        else:
+            giao_tranh_mode = {
+                "ha_chien_cong": False,
+                "chien_cong": self.chien_cong.value(),
+                "chon_nha_npc": self.chon_nha_npc.isChecked(),
+                "ba_co": self.ba_co.isChecked(),
+                "su_dung_canh_bat_tran": self.su_dung_canh_bat_tran.isChecked(),
+            }
+
+        if self.tranh_ba_1_co.isChecked():
+            tranh_ba_fast_mode = 1
+        elif self.tranh_ba_4_co.isChecked():
+            tranh_ba_fast_mode = 4
+        else:
+            tranh_ba_fast_mode = 0
+
         return {
             "giao_tranh": self.giao_tranh.value(),
+            **giao_tranh_mode,
             "tranh_ba": self.tranh_ba.value(),
             "mua_luot_knb": self.mua_luot_knb.isChecked(),
+            "tranh_ba_fast_mode": tranh_ba_fast_mode,
             "diem_danh": self.diem_danh.isChecked(),
             "bao_danh_quan_doan": self.bao_danh_quan_doan.isChecked(),
             "thiet_lap_muu_binh": self.thiet_lap_muu_binh.isChecked(),
