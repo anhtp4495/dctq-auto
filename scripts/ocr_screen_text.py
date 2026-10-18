@@ -188,16 +188,19 @@ def main() -> int:
             tokens = ocr_button_region(crop, args.lang)
             raw_text = " ".join(token[0] for token in tokens)
             normalized = normalize_text(raw_text)
-            words = set(normalized.split())
             if label.startswith("Làm mới"):
-                has_lam = bool(words & {"lam", "am", "3m"})
-                has_moi = "moi" in words
-                has_mien_phi = bool(words & {"mienphi", "mieniphi", "mien", "phi"}) and (
-                    "phi" in words or bool(words & {"mienphi", "mieniphi"})
-                )
+                # Tesseract often merges the first Vietnamese words into one token,
+                # e.g. "[3mirmơi" -> "3mirmoi". Match useful substrings instead
+                # of requiring exact token boundaries.
+                has_lam = "lam" in normalized or "3m" in normalized or "u3m" in normalized
+                has_moi = "moi" in normalized
+                has_mien_phi = "mien" in normalized and "phi" in normalized
                 detected = has_lam and has_moi and has_mien_phi
             else:
-                detected = "nhan" in words and bool(words & {"xac", "xacinhan", "xác"})
+                # The label is frequently returned as one token: "Xacinhan".
+                detected = "xacinhan" in normalized or (
+                    "xac" in normalized and "nhan" in normalized
+                )
             all_detected = all_detected and detected
             print(f"  {label}: {'DETECTED' if detected else 'NOT CONFIRMED'}")
             print(f"    OCR text: {raw_text or '(none)'}")
