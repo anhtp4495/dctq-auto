@@ -9,6 +9,7 @@ from PySide6.QtCore import QThread, Signal
 from dctq_auto.adb.client import AdbClient
 from dctq_auto.automation.battle_testkit import BattleSnapshot, run_mock_battle
 from dctq_auto.tasks.registry import get_enabled_tasks
+from dctq_auto.tasks.clone.accounts import load_accounts
 
 
 class BotWorker(QThread):
@@ -119,6 +120,9 @@ class BotWorker(QThread):
 
     def _run_mock(self) -> None:
         """Simulate configured tasks and update progress without connecting to ADB."""
+        if self._config.get("clone_mode"):
+            self._run_clone_mock()
+            return
         tasks = [(spec.label, count) for spec, count in get_enabled_tasks(self._config)]
 
         total = sum(count * self._estimated_task_seconds(task, self._config) for task, count in tasks)
@@ -189,6 +193,58 @@ class BotWorker(QThread):
             self.task_progress_changed.emit(task, "done", count, count)
         self.log_message.emit("Hoàn tất chạy thử tất cả nhiệm vụ.")
 
+    def _run_clone_mock(self) -> None:
+        """Chạy thử thứ tự tài khoản/nhiệm vụ, tuyệt đối không kết nối game."""
+        accounts = load_accounts(self._config.get("clone_account_file", ""))
+        task_specs = (
+            ("clone_login", "Đăng nhập"),
+            ("clone_daily_check_in", "Điểm danh"),
+            ("clone_guild_check_in", "Báo danh quân đoàn"),
+            ("clone_receive_lucky_bag", "Nhận túi phúc"),
+            ("clone_logout", "Đăng xuất"),
+        )
+        selected = [
+            (key, label) for key, label in task_specs if self._config.get(key)
+        ]
+        total = len(accounts) * len(selected)
+        if total == 0:
+            self.log_message.emit("Tab Clone: không có tài khoản hoặc nhiệm vụ để chạy.")
+            self.progress_changed.emit(0, 0, "Không có nhiệm vụ được chọn")
+            return
+
+        self._progress_total = total
+        self._progress_completed = 0
+        self.progress_changed.emit(0, total, "Bắt đầu chạy thử Clone")
+        self.log_message.emit(
+            f"Chạy thử Clone: {len(accounts)} tài khoản, "
+            f"{len(selected)} nhiệm vụ/tài khoản. Chế độ mô phỏng, không điều khiển game."
+        )
+        for account_index, account in enumerate(accounts, start=1):
+            if not self._wait_if_paused():
+                self.log_message.emit("Đã dừng theo yêu cầu.")
+                return
+            self.log_message.emit(
+                f"[{account_index}/{len(accounts)}] Tài khoản: {account.username}"
+            )
+            for task_index, (_key, label) in enumerate(selected, start=1):
+                if not self._mock_tick(
+                    f"[{account.username}] {label}: chạy thử bước "
+                    f"{task_index}/{len(selected)}."
+                ):
+                    return
+                self._progress_completed += 1
+                self.task_progress_changed.emit(
+                    f"{account.username} - {label}", "done", 1, 1
+                )
+                self.progress_changed.emit(
+                    self._progress_completed,
+                    self._progress_total,
+                    f"Clone {account_index}/{len(accounts)}: {label}",
+                )
+        self.log_message.emit(
+            "Hoàn tất chạy thử Clone. Đây chỉ là mô phỏng; chưa có thao tác trong game."
+        )
+
     def run(self) -> None:
         if self._mock_mode:
             self.progress_changed.emit(0, 1, "Đang chuẩn bị chạy thử")
@@ -210,6 +266,15 @@ class BotWorker(QThread):
             device = client.connect()
             self.log_message.emit(f"Đã kết nối ADB: {self._serial}")
             self.progress_changed.emit(1, 2, "Đã kết nối ADB")
+            if self._config.get("clone_mode"):
+                self.log_message.emit(
+                    "Tab Clone: đã kết nối ADB nhưng thao tác đăng nhập, điểm danh, "
+                    "báo danh quân đoàn, nhận túi phúc và đăng xuất trong game chưa được "
+                    "triển khai. Không tài khoản nào được thao tác."
+                )
+                self.progress_changed.emit(2, 2, "Clone: chờ triển khai thao tác game")
+                return
+
 
             if not self._wait_if_paused():
                 self.log_message.emit("Đã yêu cầu dừng trước khi chụp màn hình.")
