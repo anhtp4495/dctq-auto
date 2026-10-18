@@ -31,6 +31,8 @@ from PySide6.QtWidgets import (
 from dctq_auto.adb.client import AdbClient
 from dctq_auto.config.settings import Settings
 from dctq_auto.gui.workers import BotWorker
+from dctq_auto.gui.clone_tab import CloneTab
+from dctq_auto.tasks.clone.accounts import load_accounts
 
 
 class MainWindow(QMainWindow):
@@ -248,6 +250,8 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self._build_daily_tab(), "Nhiệm vụ hằng ngày")
         self.tabs.addTab(self._build_strategy_tab(), "Mưu binh")
         self.tabs.addTab(self._build_war_tab(), "Quốc chiến")
+        self.clone_tab = CloneTab()
+        self.tabs.addTab(self.clone_tab, "Clone")
 
         controls = QHBoxLayout()
         self.start_button = QPushButton("Bắt đầu")
@@ -600,6 +604,8 @@ class MainWindow(QMainWindow):
             self.device_combo.setEnabled(True)
 
     def _current_config(self) -> dict:
+        if self.tabs.currentWidget() is self.clone_tab:
+            return self.clone_tab.current_config()
         if self.ha_chien_cong.isChecked():
             giao_tranh_mode = {
                 "ha_chien_cong": True,
@@ -681,6 +687,37 @@ class MainWindow(QMainWindow):
             return
 
         config = self._current_config()
+        if config.get("clone_mode"):
+            account_file = config.get("clone_account_file", "")
+            try:
+                accounts = load_accounts(account_file)
+            except (OSError, UnicodeError, ValueError) as exc:
+                QMessageBox.warning(
+                    self,
+                    "Danh sách tài khoản không hợp lệ",
+                    str(exc),
+                )
+                return
+            selected_tasks = [
+                key for key in (
+                    "clone_login",
+                    "clone_daily_check_in",
+                    "clone_guild_check_in",
+                    "clone_receive_lucky_bag",
+                    "clone_logout",
+                ) if config.get(key)
+            ]
+            if not selected_tasks:
+                QMessageBox.warning(
+                    self,
+                    "Chưa chọn nhiệm vụ",
+                    "Hãy chọn ít nhất một nhiệm vụ trong tab Clone.",
+                )
+                return
+            self._log(
+                f"Tab Clone: đã nạp {len(accounts)} tài khoản. "
+                "Mật khẩu không được ghi vào nhật ký."
+            )
         self._worker = BotWorker(
             serial=serial,
             screenshot_dir=self._settings.screenshot_dir,
