@@ -16,9 +16,9 @@ import argparse
 import sys
 from pathlib import Path
 
-import cv2
 import pytesseract
 from adbutils import adb
+from PIL import Image, ImageOps, UnidentifiedImageError
 from pytesseract import TesseractNotFoundError
 
 
@@ -62,22 +62,22 @@ def main() -> int:
         device.screenshot().save(str(output_path))
         print(f"Screenshot saved: {output_path.resolve()}")
 
-        image = cv2.imread(str(output_path))
-        if image is None:
-            print("Could not open the captured screenshot with OpenCV.", file=sys.stderr)
-            return 1
+        # Pillow handles image loading, resizing, grayscale conversion, and
+        # contrast enhancement without requiring OpenCV native DLLs.
+        with Image.open(output_path) as captured:
+            image = captured.convert("RGB")
 
-        # Enlarge small game text to improve OCR accuracy.
-        height, width = image.shape[:2]
+        width, height = image.size
         scale = 2 if max(width, height) < 1800 else 1
         if scale > 1:
-            image = cv2.resize(
-                image, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC
+            image = image.resize(
+                (width * scale, height * scale), Image.Resampling.LANCZOS
             )
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        image = ImageOps.grayscale(image)
+        image = ImageOps.autocontrast(image)
 
         data = pytesseract.image_to_data(
-            gray,
+            image,
             lang=args.lang,
             config="--psm 11",
             output_type=pytesseract.Output.DICT,
@@ -126,6 +126,9 @@ def main() -> int:
             f"{args.lang!r} is installed.",
             file=sys.stderr,
         )
+        return 1
+    except (UnidentifiedImageError, OSError) as exc:
+        print(f"Could not read the captured screenshot: {exc}", file=sys.stderr)
         return 1
     except Exception as exc:
         print(f"Could not capture or OCR the screen: {exc}", file=sys.stderr)
