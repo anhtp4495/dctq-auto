@@ -59,6 +59,40 @@ def ocr_region(crop: Image.Image, lang: str) -> list[tuple[str, float, tuple[int
     return tokens
 
 
+def ocr_button_region(
+    crop: Image.Image, lang: str
+) -> list[tuple[str, float, tuple[int, int, int, int]]]:
+    """Try several Tesseract segmentation modes for short button labels."""
+    scale = 3
+    processed = crop.resize((crop.width * scale, crop.height * scale), Image.Resampling.LANCZOS)
+    processed = ImageOps.autocontrast(ImageOps.grayscale(processed))
+    tokens: list[tuple[str, float, tuple[int, int, int, int]]] = []
+    seen: set[tuple[str, tuple[int, int, int, int]]] = set()
+    for psm in (6, 11, 12):
+        data = pytesseract.image_to_data(
+            processed, lang=lang, config=f"--psm {psm}", output_type=pytesseract.Output.DICT
+        )
+        for i, raw_text in enumerate(data["text"]):
+            text = raw_text.strip()
+            try:
+                confidence = float(data["conf"][i])
+            except (TypeError, ValueError):
+                continue
+            if not text or confidence < 10:
+                continue
+            box = (
+                int(data["left"][i] / scale),
+                int(data["top"][i] / scale),
+                int(data["width"][i] / scale),
+                int(data["height"][i] / scale),
+            )
+            key = (text.lower(), box)
+            if key not in seen:
+                seen.add(key)
+                tokens.append((text, confidence, box))
+    return tokens
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Capture and OCR three game options and buttons below Option 1 and Option 3."
@@ -151,13 +185,19 @@ def main() -> int:
         print("\nButton detection summary:")
         all_detected = True
         for label, left, top, crop in button_crops:
-            tokens = ocr_region(crop, args.lang)
+            tokens = ocr_button_region(crop, args.lang)
             raw_text = " ".join(token[0] for token in tokens)
             normalized = normalize_text(raw_text)
+            words = set(normalized.split())
             if label.startswith("Làm mới"):
-                detected = all(word in normalized for word in ("lam", "moi", "mien", "phi"))
+                has_lam = bool(words & {"lam", "am", "3m"})
+                has_moi = "moi" in words
+                has_mien_phi = bool(words & {"mienphi", "mieniphi", "mien", "phi"}) and (
+                    "phi" in words or bool(words & {"mienphi", "mieniphi"})
+                )
+                detected = has_lam and has_moi and has_mien_phi
             else:
-                detected = "nhan" in normalized and ("xac" in normalized or "xacinhan" in normalized)
+                detected = "nhan" in words and bool(words & {"xac", "xacinhan", "xác"})
             all_detected = all_detected and detected
             print(f"  {label}: {'DETECTED' if detected else 'NOT CONFIRMED'}")
             print(f"    OCR text: {raw_text or '(none)'}")
