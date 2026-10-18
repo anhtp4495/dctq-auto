@@ -1,4 +1,4 @@
-"""CLI kiểm thử hàm OCR dùng chung trong dctq_auto.tasks.game_options."""
+"""CLI kiểm thử hàm OCR dùng chung trong dctq_auto.tasks.muu_binh.chon_thuong_phong_thu."""
 from __future__ import annotations
 
 import argparse
@@ -8,7 +8,7 @@ import sys
 import pytesseract
 from pytesseract import TesseractNotFoundError
 
-from dctq_auto.tasks.game_options import recognize_game_options
+from dctq_auto.tasks.muu_binh.chon_thuong_phong_thu import chon_thuong_phong_thu
 
 
 def main() -> int:
@@ -22,7 +22,7 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        result = recognize_game_options(
+        result = chon_thuong_phong_thu(
             image=args.image,
             serial=args.serial,
             lang=args.lang,
