@@ -3,5 +3,32 @@
     1920,
     1080
   ],
-  "screens": {}
+  "screens": {
+    "main": {
+      "guild_house": {
+        "x": null,
+        "y": null
+      },
+      "guild_check_in": {
+        "x": null,
+        "y": null
+      },
+      "lucky_bag": {
+        "x": null,
+        "y": null
+      },
+      "guild_luck_draw": {
+        "x": null,
+        "y": null
+      },
+      "daily_check_in": {
+        "x": null,
+        "y": null
+      },
+      "events": {
+        "x": null,
+        "y": null
+      }
+    }
+  }
 }
