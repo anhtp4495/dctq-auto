@@ -4,3 +4,7 @@ Tên file dùng tiếng Anh; mô tả hành động trong từng module viết b
 Giai đoạn này, package chuẩn hóa metadata và thứ tự nhiệm vụ; logic thao tác game
 thật sẽ được tách dần vào từng module khi triển khai.
 """
+
+from dctq_auto.tasks.game_options import get_screen_image, recognize_game_options
+
+__all__ = ["get_screen_image", "recognize_game_options"]
