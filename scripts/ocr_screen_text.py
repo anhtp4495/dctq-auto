@@ -1,8 +1,10 @@
-"""OCR text only inside three approximate game-option boxes."""
+"""OCR the three game options and the two action buttons at the bottom."""
 from __future__ import annotations
 
 import argparse
+import re
 import sys
+import unicodedata
 from pathlib import Path
 
 import pytesseract
@@ -11,22 +13,32 @@ from PIL import Image, ImageOps
 from pytesseract import TesseractNotFoundError
 
 # Approximate screen coordinates: (label, x, y, width, height).
-# Adjust these values if the three cards are elsewhere on your screen.
 OPTION_REGIONS = (
     ("Option 1", 350, 250, 380, 500),
     ("Option 2", 760, 250, 380, 500),
     ("Option 3", 1160, 250, 400, 500),
 )
 
+# The action buttons are expected near the bottom of the game screen.
+# OCR the entire bottom strip so small coordinate/layout changes do not matter.
+BUTTONS_TOP_RATIO = 0.70
+
+
+def normalize_text(value: str) -> str:
+    value = unicodedata.normalize("NFD", value.lower())
+    value = "".join(char for char in value if unicodedata.category(char) != "Mn")
+    return re.sub(r"[^a-z0-9]+", " ", value).strip()
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Capture the screen and OCR only the three game-option boxes."
+        description="Capture and OCR three game options plus bottom action buttons."
     )
     parser.add_argument("--serial", default="emulator-5554")
-    parser.add_argument("--lang", default="eng", help="Use vie+eng for Vietnamese and English")
+    parser.add_argument("--lang", default="vie+eng", help="Tesseract languages, e.g. vie+eng")
     parser.add_argument("--output", default="screenshots/ocr_screen.png")
     parser.add_argument("--crop-output", default="screenshots/ocr_options.png")
+    parser.add_argument("--buttons-output", default="screenshots/ocr_buttons.png")
     parser.add_argument("--tesseract-cmd", help="Path to tesseract.exe if it is not on PATH")
     args = parser.parse_args()
 
@@ -71,7 +83,7 @@ def main() -> int:
         crop_output = Path(args.crop_output)
         crop_output.parent.mkdir(parents=True, exist_ok=True)
         composite.save(crop_output)
-        print(f"Image with only the three cropped boxes saved: {crop_output.resolve()}")
+        print(f"Image with three option crops saved: {crop_output.resolve()}")
         print(f"Screen size: {screen_width}x{screen_height}")
 
         total = 0
@@ -111,8 +123,62 @@ def main() -> int:
             if count == 0:
                 print("  No readable text detected in this box.")
 
+        # OCR the whole bottom strip, rather than relying on exact button coordinates.
+        buttons_top = int(screen_height * BUTTONS_TOP_RATIO)
+        buttons_crop = screenshot.crop((0, buttons_top, screen_width, screen_height))
+        buttons_path = Path(args.buttons_output)
+        buttons_path.parent.mkdir(parents=True, exist_ok=True)
+        buttons_crop.save(buttons_path)
+        print(f"Bottom action-area image saved: {buttons_path.resolve()}")
+
+        scale = 2
+        processed = buttons_crop.resize(
+            (buttons_crop.width * scale, buttons_crop.height * scale),
+            Image.Resampling.LANCZOS,
+        )
+        processed = ImageOps.autocontrast(ImageOps.grayscale(processed))
+        button_data = pytesseract.image_to_data(
+            processed,
+            lang=args.lang,
+            config="--psm 11",
+            output_type=pytesseract.Output.DICT,
+        )
+        recognized = []
+        print("\nBottom action area (buttons):")
+        for i, raw_text in enumerate(button_data["text"]):
+            text = raw_text.strip()
+            try:
+                confidence = float(button_data["conf"][i])
+            except (TypeError, ValueError):
+                continue
+            if not text or confidence < 25:
+                continue
+            x = int(button_data["left"][i] / scale)
+            y = buttons_top + int(button_data["top"][i] / scale)
+            width = int(button_data["width"][i] / scale)
+            height = int(button_data["height"][i] / scale)
+            recognized.append(text)
+            total += 1
+            print(
+                f"  {text!r} | box=(x={x}, y={y}, w={width}, h={height}) "
+                f"| confidence={confidence:.0f}%"
+            )
+
+        normalized = normalize_text(" ".join(recognized))
+        # Allow minor OCR errors by checking the key words separately.
+        has_refresh = "lam" in normalized and "moi" in normalized
+        has_free = "mien" in normalized and "phi" in normalized
+        has_confirm = "xac" in normalized and "nhan" in normalized
+
+        print("\nButton detection summary:")
+        print(f"  Làm mới (Miễn Phí): {'DETECTED' if has_refresh and has_free else 'NOT CONFIRMED'}")
+        print(f"  Xác Nhận: {'DETECTED' if has_confirm else 'NOT CONFIRMED'}")
+        if not (has_refresh and has_free and has_confirm):
+            print("  If a button is visible but not detected, inspect screenshots/ocr_buttons.png.")
+            print("  You can also try --lang vie+eng and verify Vietnamese Tesseract data is installed.")
+
         if total == 0:
-            print("No text found. Open the cropped image and adjust OPTION_REGIONS.")
+            print("No text found. Check the saved crop images and adjust OPTION_REGIONS if needed.")
         return 0
     except TesseractNotFoundError:
         print("Tesseract not found. Install it or pass --tesseract-cmd.", file=sys.stderr)
