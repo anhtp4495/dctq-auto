@@ -95,3 +95,29 @@ build_windows.bat
 When the build completes, the executable is created at `dist\DCTQ-Auto.exe`. You can copy that EXE to another Windows machine. The first launch may take longer because PyInstaller extracts bundled files.
 
 The EXE does not include an Android emulator. ADB mode still requires an emulator/device and a usable `adb.exe` available to the application (for example, through PATH). The current ADB mode only connects and captures a screenshot; it does not perform real in-game tasks yet. Build and test the EXE on Windows; a successful build has not been verified by this repository change.
+
+
+## Chụp và đánh dấu tọa độ nút Clone
+
+Hai script hỗ trợ khảo sát giao diện bằng tay; chúng **chỉ chụp/đọc ảnh và lưu tọa độ, không tự bấm nút trong game**. Chạy lệnh từ thư mục gốc repo sau khi cài requirements.
+
+1. Mở LDPlayer và đưa game đến màn hình muốn khảo sát. Kiểm tra serial bằng `adb devices`.
+2. Chụp màn hình:
+
+   ```bat
+   .venv\\Scripts\\python.exe scripts\\capture_screen.py --serial emulator-5554
+   ```
+
+   Ảnh mặc định được lưu trong `artifacts/screenshots/`. Nếu serial của máy là địa chỉ/port khác, thay `emulator-5554` bằng serial thực tế.
+
+3. Mở ảnh để chọn tâm từng nút. Ví dụ với màn hình đăng nhập:
+
+   ```bat
+   .venv\\Scripts\\python.exe scripts\\analyze_screen.py --image artifacts\\screenshots\\emulator-5554_YYYYMMDD_HHMMSS.png --screen login
+   ```
+
+   Nhấp chuột vào tâm mỗi nút, nhấn **ESC** để kết thúc chọn điểm, sau đó nhập tên tương ứng (ví dụ `username`, `password`, `login_button`). Dùng tên màn hình khác như `main` để lưu nhóm tọa độ khác.
+
+4. Kết quả được lưu vào `dctq_auto/tasks/clone/locations.json`. Mỗi nút có tọa độ tỷ lệ `x`/`y` trong khoảng 0..1 để dễ quy đổi độ phân giải, kèm `x_px`/`y_px` tham chiếu pixel trên ảnh gốc. Mỗi lần phân tích, nhóm màn hình có cùng tên sẽ được cập nhật.
+
+Lưu ý: cửa sổ phân tích cần môi trường desktop có hỗ trợ OpenCV GUI. Tọa độ ban đầu phải được kiểm tra trực quan trước khi dùng cho bất kỳ thao tác tự động nào.
