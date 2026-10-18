@@ -62,15 +62,16 @@ From the project directory in CMD:
 .venv\Scripts\python.exe -m dctq_auto
 ```
 
-The GUI has three tabs:
+The GUI has four tabs:
 
 - **Nhiệm vụ hằng ngày**: Giao tranh (default 15), Tranh bá (default 6), Điểm danh (enabled by default), and Báo danh quân đoàn (enabled by default).
 - **Mưu binh**: Thiết lập mưu binh (enabled by default).
-- **Quốc chiến**: empty placeholder for future configuration.
+- **Quốc chiến**: placeholder for future configuration.
+- **Clone**: chọn file TXT chứa tài khoản và bật/tắt Đăng nhập, Điểm danh, Báo danh quân đoàn, Nhận túi phúc, Đăng xuất. Mỗi dòng file TXT có dạng `username|password`; dòng trống và dòng bắt đầu bằng `#` được bỏ qua. Mật khẩu được giữ trong bộ nhớ khi đọc file và không được ghi vào nhật ký. File chứa mật khẩu dạng văn bản thuần nên cần được bảo vệ.
 
-The shared **Bắt đầu** and **Dừng** controls and activity log are below the tabs. Configuration remains in the widgets when switching tabs. Số trận Giao tranh nhận từ 1 đến 60; Tranh bá từ 1 đến 15.
+The shared **Bắt đầu**, **Tạm dừng**, **Dừng hẳn** controls and activity log are below the tabs. Configuration remains in the widgets when switching tabs. Số trận Giao tranh nhận từ 1 đến 60; Tranh bá từ 1 đến 15.
 
-**Important:** ADB mode currently checks ADB connectivity and captures one screenshot; it does not perform real in-game tasks yet. Chế độ chạy thử không điều khiển game thật. The **Dừng hẳn** button requests a cooperative stop at the next check point and does not forcibly terminate a running thread.
+**Important:** Các nhiệm vụ Clone hiện mới có giao diện, đọc/kiểm tra danh sách tài khoản và mô phỏng thứ tự chạy. Trong chế độ ADB, ứng dụng chưa tự đăng nhập, điểm danh, báo danh quân đoàn, nhận túi phúc hoặc đăng xuất. ADB mode của các tab hiện tại cũng chỉ kiểm tra kết nối và chụp screenshot; chưa thực hiện gameplay thật. Chế độ chạy thử không điều khiển game thật. The **Dừng hẳn** button requests a cooperative stop at the next check point and does not forcibly terminate a running thread.
 
 ## Layout
 
