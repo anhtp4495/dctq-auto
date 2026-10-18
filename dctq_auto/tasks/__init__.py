@@ -1,10 +1,10 @@
-"""Các module nhiệm vụ tự động hóa game.
-
-Tên file dùng tiếng Anh; mô tả hành động trong từng module viết bằng tiếng Việt.
-Giai đoạn này, package chuẩn hóa metadata và thứ tự nhiệm vụ; logic thao tác game
-thật sẽ được tách dần vào từng module khi triển khai.
-"""
+"""Các module nhiệm vụ tự động hóa game."""
 
 from dctq_auto.tasks.game_options import get_screen_image, recognize_game_options
+from dctq_auto.tasks.muu_binh import chon_thuong_phong_thu
 
-__all__ = ["get_screen_image", "recognize_game_options"]
+__all__ = [
+    "get_screen_image",
+    "recognize_game_options",
+    "chon_thuong_phong_thu",
+]
