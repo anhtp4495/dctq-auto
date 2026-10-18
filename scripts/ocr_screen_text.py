@@ -18,10 +18,11 @@ OPTION_REGIONS = (
     ("Option 3", 1160, 250, 400, 500),
 )
 
-# Estimated regions for a 1920x1080 game screen; adjust if the layout differs.
+# Button regions calibrated from the user's 1920x1080 coordinate grid.
+# Each tuple is (label, left, top, width, height).
 BUTTON_REGIONS = (
-    ("Làm mới (Miễn Phí)", 350, 820, 380, 200),
-    ("Xác Nhận", 1100, 820, 420, 200),
+    ("Làm mới (Miễn Phí)", 500, 800, 400, 100),
+    ("Xác Nhận", 1050, 900, 360, 100),
 )
 
 
