@@ -18,11 +18,11 @@ OPTION_REGIONS = (
     ("Option 3", 1160, 250, 400, 500),
 )
 
-# Button regions calibrated from the user's 1920x1080 coordinate grid.
+# Button regions refined from OCR-detected text positions on a 1920x1080 screen.
 # Each tuple is (label, left, top, width, height).
 BUTTON_REGIONS = (
-    ("Làm mới (Miễn Phí)", 500, 800, 400, 100),
-    ("Xác Nhận", 1050, 900, 360, 100),
+    ("Làm mới (Miễn Phí)", 400, 820, 500, 180),
+    ("Xác Nhận", 1000, 820, 500, 180),
 )
 
 
