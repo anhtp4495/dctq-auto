@@ -1015,7 +1015,7 @@ class MainWindow(QMainWindow):
         self._paused_duration = 0.0
         if self._active_clone_mode:
             self.progress_bar.setRange(0, max(1, self._clone_total_accounts))
-            self.progress_bar.setFormat("%v/%m tài khoản thành công")
+            self.progress_bar.setFormat("0 thành công | 0 thất bại | 0/%m tài khoản")
             self.progress_bar.setValue(0)
         else:
             self.progress_bar.setRange(0, 100)
@@ -1084,7 +1084,15 @@ class MainWindow(QMainWindow):
             if widget is not None:
                 widget.deleteLater()
         self.task_progress_labels.clear()
-        for name, count in self._task_specs(config):
+        if config.get("clone_mode"):
+            try:
+                accounts = load_accounts(config.get("clone_account_file", ""))
+            except (OSError, UnicodeError, ValueError):
+                accounts = []
+            task_names = [(f"{account.username} - Đăng nhập", 1) for account in accounts]
+        else:
+            task_names = self._task_specs(config)
+        for name, count in task_names:
             label = QLabel()
             label.setStyleSheet("color: #808080;")
             self.task_progress_layout.addWidget(label)
@@ -1099,6 +1107,8 @@ class MainWindow(QMainWindow):
             prefix, color = "→", "#D97706"
         elif state == "done":
             prefix, color = "✓", "#16A34A"
+        elif state == "failed":
+            prefix, color = "✗", "#DC2626"
         elif state == "stopped":
             prefix, color = "■", "#DC2626"
         else:
@@ -1113,11 +1123,12 @@ class MainWindow(QMainWindow):
 
     def _update_progress(self, completed: int, total: int, status: str) -> None:
         if self._active_clone_mode:
-            # Clone worker emits completed account counts only after login verification.
+            # The value tracks processed accounts; the format exposes success/failure counts.
             self.progress_bar.setRange(0, max(1, self._clone_total_accounts))
             self.progress_bar.setValue(
                 max(0, min(self._clone_total_accounts, completed))
             )
+            self.progress_bar.setFormat(status or "%v/%m tài khoản đã xử lý")
             return
         percent = int(completed * 100 / total) if total else 0
         self.progress_bar.setRange(0, 100)
