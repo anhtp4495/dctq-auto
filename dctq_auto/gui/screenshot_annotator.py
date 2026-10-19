@@ -266,6 +266,11 @@ class ScreenshotAnnotator(QDialog):
         root = QVBoxLayout(self)
 
         toolbar = QHBoxLayout()
+        self.image_info = QLabel("Chưa có ảnh.")
+        self.image_info.setWordWrap(True)
+        self.image_info.setMinimumWidth(80)
+        toolbar.addWidget(self.image_info, 1)
+
         self.capture_button = QPushButton("📂")
         self.capture_button.setFixedSize(34, 30)
         self.capture_button.setToolTip("Chọn file ảnh")
@@ -280,27 +285,37 @@ class ScreenshotAnnotator(QDialog):
 
         self.coordinate_input_button = QPushButton("⌖")
         self.coordinate_input_button.setFixedSize(34, 30)
-        self.coordinate_input_button.setToolTip(
-            "Nhập X, Y, Width, Height theo pixel ảnh gốc"
-        )
+        self.coordinate_input_button.setToolTip("Nhập X, Y, Width, Height theo pixel ảnh gốc")
         self.coordinate_input_button.clicked.connect(self.input_coordinates)
         toolbar.addWidget(self.coordinate_input_button)
 
-        self.mode_combo = QComboBox()
-        self.mode_combo.addItems(["Từng điểm", "Từng vùng"])
-        self.mode_combo.setToolTip(
-            "Từng điểm: nhấp để lưu nhiều tọa độ. Từng vùng: chọn một RECT để phân tích OCR."
-        )
         saved_mode = self._ui_settings.value("screenshot_annotator/mode", "Từng điểm")
-        if saved_mode not in ("Từng điểm", "Từng vùng"):
+        if saved_mode not in ("Từng điểm", "Từng vùng", "Con trỏ"):
             saved_mode = "Từng điểm"
-        self.mode_combo.setCurrentText(saved_mode)
-        self.mode_combo.currentTextChanged.connect(self._on_mode_changed)
-        toolbar.addWidget(self.mode_combo)
-
-        self.image_info = QLabel("Chưa có ảnh.")
-        self.image_info.setWordWrap(True)
-        toolbar.addWidget(self.image_info, 1)
+        self.mode_group = QButtonGroup(self)
+        self.mode_group.setExclusive(True)
+        self.point_mode_button = QPushButton("↖")
+        self.region_mode_button = QPushButton("▧")
+        self.cursor_mode_button = QPushButton("✥")
+        for button, tooltip in (
+            (self.point_mode_button, "Từng điểm: nhấp ảnh để thêm tọa độ"),
+            (self.region_mode_button, "Từng vùng: kéo chọn vùng RECT để phân tích OCR"),
+            (self.cursor_mode_button, "Con trỏ: kéo ảnh để di chuyển vùng nhìn"),
+        ):
+            button.setFixedSize(34, 30)
+            button.setCheckable(True)
+            button.setToolTip(tooltip)
+            self.mode_group.addButton(button)
+            toolbar.addWidget(button)
+        if saved_mode == "Từng vùng":
+            self.region_mode_button.setChecked(True)
+        elif saved_mode == "Con trỏ":
+            self.cursor_mode_button.setChecked(True)
+        else:
+            self.point_mode_button.setChecked(True)
+        self.point_mode_button.clicked.connect(lambda: self._on_mode_changed("Từng điểm"))
+        self.region_mode_button.clicked.connect(lambda: self._on_mode_changed("Từng vùng"))
+        self.cursor_mode_button.clicked.connect(lambda: self._on_mode_changed("Con trỏ"))
         root.addLayout(toolbar)
 
         self._ocr_elements: list[dict] = []
