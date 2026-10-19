@@ -78,6 +78,7 @@ class MainWindow(QMainWindow):
         self._pause_started_at: float | None = None
         self._paused_duration = 0.0
         self._screenshot_worker = None
+        self._screenshot_annotator = None
         self.last_screen_short: str | None = None
 
         central = QWidget(self)
@@ -352,6 +353,7 @@ class MainWindow(QMainWindow):
         log_layout.addLayout(log_header)
         self.log_view = QPlainTextEdit()
         self.log_view.setReadOnly(True)
+        self.log_view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         self.log_view.setPlaceholderText("Nhật ký sẽ hiển thị tại đây.")
         log_layout.addWidget(self.log_view)
         log_group.setFixedHeight(210)
@@ -710,17 +712,31 @@ class MainWindow(QMainWindow):
         )
 
     def _open_screenshot_annotator(self, serial: str | None, initial_image=None) -> None:
-        try:
-            dialog = ScreenshotAnnotator(
-                serial, self,
-                on_ocr_result=self._log_ocr_results,
-                on_location_result=self._log_coordinate_result,
-                initial_image=initial_image,
-            )
-            dialog.exec()
-        finally:
-            self.raise_()
-            self.activateWindow()
+        # Reuse the existing analysis window instead of opening duplicates.
+        if self._screenshot_annotator is not None:
+            try:
+                if self._screenshot_annotator.isVisible():
+                    self._screenshot_annotator.raise_()
+                    self._screenshot_annotator.activateWindow()
+                    return
+            except RuntimeError:
+                # Qt object was already destroyed.
+                self._screenshot_annotator = None
+
+        dialog = ScreenshotAnnotator(
+            serial, self,
+            on_ocr_result=self._log_ocr_results,
+            on_location_result=self._log_coordinate_result,
+            initial_image=initial_image,
+        )
+        dialog.setModal(False)
+        dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
+        dialog.destroyed.connect(self._clear_screenshot_annotator_reference)
+        self._screenshot_annotator = dialog
+        dialog.show()
+
+    def _clear_screenshot_annotator_reference(self, *_args) -> None:
+        self._screenshot_annotator = None
 
     def _log_coordinate_result(
         self, text: str, name: str, x: int, y: int,
@@ -1062,5 +1078,11 @@ class MainWindow(QMainWindow):
         self.log_view.clear()
 
     def _log(self, message: str) -> None:
+        scrollbar = self.log_view.verticalScrollBar()
+        was_at_bottom = scrollbar.value() >= scrollbar.maximum() - 1
+        previous_value = scrollbar.value()
         self.log_view.appendPlainText(message)
+        if not was_at_bottom:
+            # Keep the reader's position when new log lines arrive.
+            scrollbar.setValue(previous_value)
         logging.getLogger(__name__).info(message)
