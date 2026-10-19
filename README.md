@@ -67,7 +67,7 @@ The GUI has four tabs:
 - **Nhiệm vụ hằng ngày**: Giao tranh (default 15), Tranh bá (default 6), Điểm danh (enabled by default), and Báo danh quân đoàn (enabled by default).
 - **Mưu binh**: Thiết lập mưu binh (enabled by default).
 - **Quốc chiến**: placeholder for future configuration.
-- **Clone**: chọn file TXT chứa tài khoản và bật/tắt Đăng nhập, Điểm danh, Báo danh quân đoàn, Nhận túi phúc, Đăng xuất. Mỗi dòng file TXT có dạng `username|password`; dòng trống và dòng bắt đầu bằng `#` được bỏ qua. Mật khẩu được giữ trong bộ nhớ khi đọc file và không được ghi vào nhật ký. File chứa mật khẩu dạng văn bản thuần nên cần được bảo vệ.
+- **Clone**: chọn file TXT chứa tài khoản; Đăng nhập và Đăng xuất luôn được thực hiện, còn có thể bật/tắt Điểm danh, Báo danh quân đoàn và Nhận túi phúc. Mỗi dòng file TXT có dạng `username|password`; dòng trống và dòng bắt đầu bằng `#` được bỏ qua. Mật khẩu được giữ trong bộ nhớ khi đọc file và không được ghi vào nhật ký. File chứa mật khẩu dạng văn bản thuần nên cần được bảo vệ.
 
 The shared **Bắt đầu**, **Tạm dừng**, **Dừng hẳn** controls and activity log are below the tabs. Configuration remains in the widgets when switching tabs. Số trận Giao tranh nhận từ 1 đến 60; Tranh bá từ 1 đến 15.
 
