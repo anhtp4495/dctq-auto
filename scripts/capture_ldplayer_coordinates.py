@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import ctypes
+import ctypes.wintypes
 import json
 import logging
 import sys
@@ -250,9 +251,6 @@ def main() -> int:
                 print("Đã kết thúc chọn vùng. Nhấn F9 để chọn vùng khác, F8 để ghi một điểm.")
 
     def on_press(key: keyboard.Key | keyboard.KeyCode) -> None:
-        if key == keyboard.Key.f8:
-            x, y = user32.GetCursorPosPoint()
-        # GetCursorPosPoint is not a Win32 API; use the POINT structure below.
         if key == keyboard.Key.f8:
             point = ctypes.wintypes.POINT()
             user32.GetCursorPos(ctypes.byref(point))
