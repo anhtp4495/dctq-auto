@@ -4,28 +4,82 @@
     1080
   ],
   "screens": {
+    "login": {
+      "username_field": {
+        "x": null,
+        "y": null
+      },
+      "password_field": {
+        "x": null,
+        "y": null
+      },
+      "login_button": {
+        "x": null,
+        "y": null
+      }
+    },
     "main": {
       "guild_house": {
         "x": null,
         "y": null
       },
+      "events": {
+        "x": null,
+        "y": null
+      }
+    },
+    "guild_house_info": {
+      "guild_enter": {
+        "x": null,
+        "y": null
+      }
+    },
+    "guild_inside": {
       "guild_check_in": {
+        "x": null,
+        "y": null
+      },
+      "guild_slider_start": {
         "x": null,
         "y": null
       },
       "lucky_bag": {
         "x": null,
         "y": null
-      },
-      "guild_luck_draw": {
+      }
+    },
+    "lucky_bag": {
+      "receive_lucky_bag": {
         "x": null,
         "y": null
-      },
+      }
+    },
+    "events": {
+      "daily_events": {
+        "x": null,
+        "y": null
+      }
+    },
+    "daily_events": {
       "daily_check_in": {
         "x": null,
         "y": null
-      },
-      "events": {
+      }
+    },
+    "daily_check_in": {
+      "today": {
+        "x": null,
+        "y": null
+      }
+    },
+    "logout_menu": {
+      "exit": {
+        "x": null,
+        "y": null
+      }
+    },
+    "logout_confirm": {
+      "confirm_exit": {
         "x": null,
         "y": null
       }
