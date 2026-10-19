@@ -60,6 +60,7 @@ class ClickableImage(QWidget):
         self._ocr_boxes: list[dict] = []
         self._drag_start: QPoint | None = None
         self._drag_current: QPoint | None = None
+        self._ctrl_gesture = False
         self._pan_start: QPoint | None = None
         self._pan_scroll_start: tuple[int, int] | None = None
         self._scroll_area: QScrollArea | None = None
@@ -165,9 +166,23 @@ class ClickableImage(QWidget):
 
     def mousePressEvent(self, event) -> None:
         point = event.position().toPoint()
+        is_left = event.button() == Qt.MouseButton.LeftButton
+        ctrl_pressed = bool(event.modifiers() & Qt.KeyboardModifier.ControlModifier)
+        # Ctrl+drag is a temporary gesture and takes priority over cursor/pan mode.
+        if is_left and ctrl_pressed and not self._pixmap.isNull():
+            if not self._target_rect().contains(point):
+                return
+            self._ctrl_gesture = True
+            self._drag_start = point
+            self._drag_current = point
+            self.setCursor(Qt.CursorShape.CrossCursor)
+            self.update()
+            event.accept()
+            return
+
         pan_requested = (
             event.button() in (Qt.MouseButton.MiddleButton, Qt.MouseButton.RightButton)
-            or (event.button() == Qt.MouseButton.LeftButton and (self._space_pressed or self._is_cursor_mode()))
+            or (is_left and (self._space_pressed or self._is_cursor_mode()))
         )
         if pan_requested and self._scroll_area is not None:
             self._pan_start = point
@@ -178,7 +193,7 @@ class ClickableImage(QWidget):
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
             event.accept()
             return
-        if event.button() != Qt.MouseButton.LeftButton or self._pixmap.isNull():
+        if not is_left or self._pixmap.isNull():
             return
         target = self._target_rect()
         if not target.contains(point):
@@ -222,13 +237,22 @@ class ClickableImage(QWidget):
             return
         start = self._drag_start
         end = self._drag_current or event.position().toPoint()
+        was_ctrl_gesture = self._ctrl_gesture
         self._drag_start = None
         self._drag_current = None
+        self._ctrl_gesture = False
+        self.unsetCursor()
         self.update()
         x1, y1 = self._to_image_point(start)
         x2, y2 = self._to_image_point(end)
         left, right = sorted((x1, x2))
         top, bottom = sorted((y1, y2))
+        if was_ctrl_gesture:
+            if right - left < 3 and bottom - top < 3:
+                self._on_image_click(x1, y1)
+            else:
+                self._on_image_rect(left, top, right, bottom)
+            return
         if right - left < 2 or bottom - top < 2:
             return
         self._on_image_rect(left, top, right, bottom)
