@@ -434,6 +434,7 @@ class ScreenshotAnnotator(QDialog):
         # Remember the selected rectangle as the OCR input region.
         self._ocr_region = (left, top, right, bottom)
         self._ocr_elements = []
+        self.image_view.set_ocr_boxes([])
         self._points = [
             (left, top, f"{name}_top_left"),
             (right, top, f"{name}_top_right"),
@@ -538,7 +539,7 @@ class ScreenshotAnnotator(QDialog):
         if rect_mode and self._ocr_region is None:
             QMessageBox.information(
                 self, "Chưa chọn RECT",
-                "Hãy kéo chọn một vùng RECT trên ảnh trước khi chạy OCR. OCR sẽ chỉ phân tích vùng đó và trả về một kết quả.",
+                "Hãy kéo chọn một vùng RECT trên ảnh trước khi chạy OCR. OCR sẽ chỉ phân tích vùng đó và trả về hộp tọa độ cho từng dòng chữ nhận diện được.",
             )
             return
 
@@ -578,6 +579,7 @@ class ScreenshotAnnotator(QDialog):
 
             grouped = self._split_ocr_words(ocr_data, min_confidence=45.0)
             self._ocr_elements = []
+            self.image_view.set_ocr_boxes([])
             image_width, image_height = original_size
 
             if rect_mode:
