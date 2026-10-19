@@ -277,13 +277,14 @@ class BotWorker(QThread):
     def _is_login_screen(text: str) -> bool:
         normalized = BotWorker._normalize_screen_text(text)
         has_password = "mat khau" in normalized
-        has_login_label = (
-            "dang nhap" in normalized
-            or "ten dang nhap" in normalized
-            or "so dien thoai" in normalized
-            or "email" in normalized
+        has_username_hint = any(
+            marker in normalized
+            for marker in ("ten dang nhap", "so dien thoai", "email")
         )
-        return has_password and has_login_label
+        has_login_button = "dang nhap" in normalized
+        # OCR may miss one field on a frame, so accept the button plus either
+        # password or username-field text as evidence that the form is still open.
+        return has_login_button and (has_password or has_username_hint)
 
     @staticmethod
     def _login_error(text: str) -> str | None:
