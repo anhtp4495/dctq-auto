@@ -99,5 +99,6 @@ class CloneTab(QWidget):
             "clone_daily_check_in": self.clone_daily_check_in.isChecked(),
             "clone_guild_check_in": self.clone_guild_check_in.isChecked(),
             "clone_receive_lucky_bag": self.clone_receive_lucky_bag.isChecked(),
+            "clone_quoc_chien": self.clone_quoc_chien.isChecked(),
             "clone_logout": True,
         }
