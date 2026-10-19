@@ -1,6 +1,6 @@
 """Ghi tọa độ chuột trên LDPlayer và chọn vùng 4 góc để phân tích ảnh.
 
-Windows-only. F8 ghi một điểm; F9 bắt đầu chọn 4 góc theo thứ tự:
+Windows-only. F8 ghi một điểm; F9 bật chế độ ghi 4 góc bằng F8 theo thứ tự:
 trên-trái, trên-phải, dưới-phải, dưới-trái. ESC hủy chọn hoặc thoát.
 """
 from __future__ import annotations
@@ -18,7 +18,7 @@ from typing import Any
 
 try:
     from adbutils import adb
-    from pynput import keyboard, mouse
+    from pynput import keyboard
 except ImportError as exc:
     print(f"Thiếu thư viện: {exc}. Hãy cài bằng .venv\\Scripts\\python.exe -m pip install -r requirements.txt")
     raise SystemExit(1)
@@ -182,94 +182,95 @@ def main() -> int:
             "y_ratio": round(android_y / android_height, 6),
         }
 
-    def on_click(x: int, y: int, button: mouse.Button, pressed: bool) -> None:
-        if not pressed or button != mouse.Button.left:
+    def record_point(screen_x: int, screen_y: int) -> None:
+        converted = convert_point(screen_x, screen_y)
+        if converted is None:
+            message = f"Con trỏ Windows=({screen_x},{screen_y}) nằm ngoài viewport Android."
+            print(message)
+            logging.info(message)
             return
         with lock:
-            if state["stopped"] or not state["selecting"]:
-                return
-            point = convert_point(int(x), int(y))
-            if point is None:
-                print("Bỏ qua click: con trỏ nằm ngoài vùng hiển thị Android đã nhận diện.")
-                logging.info("Bỏ qua click ngoài viewport tại windows=(%s,%s)", x, y)
-                return
-            state["points"].append(point)
-            index = len(state["points"])
-            names = ["trên-trái", "trên-phải", "dưới-phải", "dưới-trái"]
-            line = (
-                f"Vùng {args.name} - điểm {index}/4 ({names[index - 1]}): "
-                f"Android=({point['android_x']},{point['android_y']}), "
-                f"Windows=({point['windows_x']},{point['windows_y']})"
-            )
-            print(line)
-            logging.info(line)
-            if index == 4:
-                points = list(state["points"])
-                xs = [p["android_x"] for p in points]
-                ys = [p["android_y"] for p in points]
-                region = {
-                    "name": args.name,
-                    "serial": args.serial,
-                    "window_title": title,
-                    "android_resolution": [android_width, android_height],
-                    "viewport_screen_rect": {
-                        "x": viewport[0], "y": viewport[1],
-                        "width": viewport[2], "height": viewport[3],
-                    },
-                    "corners_order": ["top_left", "top_right", "bottom_right", "bottom_left"],
-                    "corners": points,
-                    "bounds_android": {
-                        "left": min(xs), "top": min(ys),
-                        "right": max(xs), "bottom": max(ys),
-                        "width": max(xs) - min(xs), "height": max(ys) - min(ys),
-                    },
-                    "saved_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-                }
-                try:
-                    if output_path.exists():
-                        existing = json.loads(output_path.read_text(encoding="utf-8"))
-                    else:
-                        existing = {"regions": {}}
-                    if not isinstance(existing, dict):
-                        raise ValueError("Cấu trúc JSON gốc phải là object.")
-                    existing.setdefault("regions", {})
-                    if not isinstance(existing["regions"], dict):
-                        raise ValueError("Khóa 'regions' trong JSON phải là object.")
-                    existing["regions"][args.name] = region
-                    output_path.write_text(
-                        json.dumps(existing, ensure_ascii=False, indent=2) + "\n",
-                        encoding="utf-8",
-                    )
-                    message = f"Đã lưu vùng {args.name!r} vào {output_path}"
-                    print(message)
-                    logging.info(message)
-                except (OSError, json.JSONDecodeError, ValueError) as exc:
-                    print(f"Không lưu được JSON: {exc}")
-                    logging.exception("Lưu vùng thất bại")
-                state["selecting"] = False
-                state["points"] = []
-                print("Đã kết thúc chọn vùng. Nhấn F9 để chọn vùng khác, F8 để ghi một điểm.")
-
-    def on_press(key: keyboard.Key | keyboard.KeyCode) -> None:
-        if key == keyboard.Key.f8:
-            point = ctypes.wintypes.POINT()
-            user32.GetCursorPos(ctypes.byref(point))
-            converted = convert_point(point.x, point.y)
-            if converted is None:
-                message = f"F8 tại Windows=({point.x},{point.y}); ngoài viewport Android."
-            else:
+            if not state["selecting"]:
                 message = (
                     f"F8: Android=({converted['android_x']},{converted['android_y']}), "
                     f"Windows=({converted['windows_x']},{converted['windows_y']}), "
                     f"ratio=({converted['x_ratio']},{converted['y_ratio']})"
                 )
-            print(message)
-            logging.info(message)
+                print(message)
+                logging.info(message)
+                return
+
+            state["points"].append(converted)
+            index = len(state["points"])
+            names = ["trên-trái", "trên-phải", "dưới-phải", "dưới-trái"]
+            line = (
+                f"Vùng {args.name} - điểm {index}/4 ({names[index - 1]}): "
+                f"Android=({converted['android_x']},{converted['android_y']}), "
+                f"Windows=({converted['windows_x']},{converted['windows_y']})"
+            )
+            print(line)
+            logging.info(line)
+            if index != 4:
+                print(f"Di chuyển chuột đến góc {names[index]} rồi nhấn F8 để ghi điểm tiếp theo.")
+                return
+
+            points = list(state["points"])
+            xs = [p["android_x"] for p in points]
+            ys = [p["android_y"] for p in points]
+            region = {
+                "name": args.name,
+                "serial": args.serial,
+                "window_title": title,
+                "android_resolution": [android_width, android_height],
+                "viewport_screen_rect": {
+                    "x": viewport[0], "y": viewport[1],
+                    "width": viewport[2], "height": viewport[3],
+                },
+                "corners_order": ["top_left", "top_right", "bottom_right", "bottom_left"],
+                "corners": points,
+                "bounds_android": {
+                    "left": min(xs), "top": min(ys),
+                    "right": max(xs), "bottom": max(ys),
+                    "width": max(xs) - min(xs), "height": max(ys) - min(ys),
+                },
+                "saved_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+            }
+            try:
+                if output_path.exists():
+                    existing = json.loads(output_path.read_text(encoding="utf-8"))
+                else:
+                    existing = {"regions": {}}
+                if not isinstance(existing, dict):
+                    raise ValueError("Cấu trúc JSON gốc phải là object.")
+                existing.setdefault("regions", {})
+                if not isinstance(existing["regions"], dict):
+                    raise ValueError("Khóa 'regions' trong JSON phải là object.")
+                existing["regions"][args.name] = region
+                output_path.write_text(
+                    json.dumps(existing, ensure_ascii=False, indent=2) + "\\n",
+                    encoding="utf-8",
+                )
+                message = f"Đã lưu vùng {args.name!r} vào {output_path}"
+                print(message)
+                logging.info(message)
+            except (OSError, json.JSONDecodeError, ValueError) as exc:
+                print(f"Không lưu được JSON: {exc}")
+                logging.exception("Lưu vùng thất bại")
+            state["selecting"] = False
+            state["points"] = []
+            print("Đã kết thúc chọn vùng. Nhấn F9 để chọn vùng khác, F8 để ghi một điểm.")
+ 
+    def on_press(key: keyboard.Key | keyboard.KeyCode) -> None:
+        if key == keyboard.Key.f8:
+            point = ctypes.wintypes.POINT()
+            user32.GetCursorPos(ctypes.byref(point))
+            record_point(point.x, point.y)
         elif key == keyboard.Key.f9:
             with lock:
                 state["points"] = []
                 state["selecting"] = True
-            print("Chọn 4 góc trên LDPlayer theo thứ tự: trên-trái, trên-phải, dưới-phải, dưới-trái.")
+            print("Di chuyển chuột đến góc trên-trái rồi nhấn F8; tiếp tục trên-phải, dưới-phải, dưới-trái.")
+            print("Chế độ này không click vào game, chỉ ghi vị trí con trỏ bằng hotkey F8.")
             logging.info("Bắt đầu chọn vùng %s", args.name)
         elif key == keyboard.Key.esc:
             with lock:
@@ -291,13 +292,11 @@ def main() -> int:
     print(f"Viewport được dùng: {viewport[2]}x{viewport[3]} tại ({viewport[0]},{viewport[1]})")
     print(f"Nhật ký: {log_path.resolve()}")
     print(f"JSON vùng: {output_path.resolve()}")
-    print("F8 = ghi tọa độ con trỏ | F9 = chọn 4 góc | ESC = hủy chọn hoặc thoát")
+    print("F8 = ghi tọa độ / ghi góc kế tiếp | F9 = bắt đầu chọn 4 góc | ESC = hủy chọn hoặc thoát")
     print("Giữ LDPlayer mở và không thay đổi kích thước cửa sổ trong lúc chọn.")
 
-    with mouse.Listener(on_click=on_click) as mouse_listener:
-        with keyboard.Listener(on_press=on_press) as keyboard_listener:
-            keyboard_listener.join()
-        mouse_listener.stop()
+    with keyboard.Listener(on_press=on_press) as keyboard_listener:
+        keyboard_listener.join()
     return 0
 
 
