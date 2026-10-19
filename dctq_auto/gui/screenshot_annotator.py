@@ -58,6 +58,7 @@ class ClickableImage(QWidget):
         self._is_cursor_mode = is_cursor_mode or (lambda: False)
         self._points: list[tuple[int, int, str]] = []
         self._ocr_boxes: list[dict] = []
+        self._selected_region: tuple[int, int, int, int] | None = None
         self._drag_start: QPoint | None = None
         self._drag_current: QPoint | None = None
         self._ctrl_gesture = False
@@ -92,6 +93,10 @@ class ClickableImage(QWidget):
 
     def set_ocr_boxes(self, boxes: list[dict]) -> None:
         self._ocr_boxes = list(boxes)
+        self.update()
+
+    def set_selected_region(self, region: tuple[int, int, int, int] | None) -> None:
+        self._selected_region = region
         self.update()
 
     def _target_rect(self):
@@ -131,12 +136,22 @@ class ClickableImage(QWidget):
                     y1 = target.y() + round(bounds.get("top", 0) * scale_y)
                     x2 = target.x() + round(bounds.get("right", 0) * scale_x)
                     y2 = target.y() + round(bounds.get("bottom", 0) * scale_y)
-                    pen = QPen(Qt.GlobalColor.red if item.get("matched") else Qt.GlobalColor.cyan)
-                    pen.setWidth(3 if item.get("matched") else 1)
+                    pen = QPen(Qt.GlobalColor.red if item.get("matched") else Qt.GlobalColor.green)
+                    pen.setWidth(3 if item.get("matched") else 2)
                     painter.setPen(pen)
                     painter.drawRect(QRect(QPoint(x1, y1), QPoint(x2, y2)).normalized())
-                    if item.get("matched"):
-                        painter.drawText(x1, max(target.top() + 12, y1 - 4), "MATCH")
+
+            if self._selected_region is not None:
+                from PySide6.QtCore import QRect
+                left, top, right, bottom = self._selected_region
+                x1 = target.x() + round(left * scale_x)
+                y1 = target.y() + round(top * scale_y)
+                x2 = target.x() + round(right * scale_x)
+                y2 = target.y() + round(bottom * scale_y)
+                pen = QPen(Qt.GlobalColor.green)
+                pen.setWidth(2)
+                painter.setPen(pen)
+                painter.drawRect(QRect(QPoint(x1, y1), QPoint(x2, y2)).normalized())
 
             if self._points:
                 pen = QPen(Qt.GlobalColor.green)
@@ -318,9 +333,9 @@ class ScreenshotAnnotator(QDialog):
             saved_mode = "Từng điểm"
         self.mode_group = QButtonGroup(self)
         self.mode_group.setExclusive(True)
-        self.point_mode_button = QPushButton("↖")
+        self.point_mode_button = QPushButton("⌖")
         self.region_mode_button = QPushButton("▧")
-        self.cursor_mode_button = QPushButton("✥")
+        self.cursor_mode_button = QPushButton("↖")
         for button, tooltip in (
             (self.point_mode_button, "Từng điểm: nhấp ảnh để thêm tọa độ"),
             (self.region_mode_button, "Từng vùng: kéo chọn vùng RECT để phân tích OCR"),
@@ -427,10 +442,11 @@ class ScreenshotAnnotator(QDialog):
         """Persist one of the three exclusive interaction modes."""
         self._ui_settings.setValue("screenshot_annotator/mode", mode)
         is_region_mode = mode == "Từng vùng"
-        self.ocr_button.setEnabled(is_region_mode)
+        can_analyze = is_region_mode or self._ocr_region is not None
+        self.ocr_button.setEnabled(can_analyze)
         self.ocr_button.setToolTip(
-            "Phân tích OCR trong vùng đã chọn" if is_region_mode
-            else "OCR chỉ khả dụng ở chế độ Từng vùng."
+            "Phân tích OCR trong vùng RECT đã chọn" if can_analyze
+            else "Chọn Từng vùng hoặc giữ Ctrl và kéo để chọn RECT trước."
         )
         if mode == "Từng vùng":
             message = "Từng vùng: kéo chọn một vùng RECT rồi phân tích OCR."
@@ -478,6 +494,7 @@ class ScreenshotAnnotator(QDialog):
         self._points.clear()
         self._ocr_elements = []
         self._ocr_region = None
+        self.image_view.set_selected_region(None)
         self.image_view._pixmap = self._pixmap
         self._apply_zoom()
         self.image_view.set_points(self._points)
@@ -685,17 +702,13 @@ class ScreenshotAnnotator(QDialog):
         # Remember the selected rectangle as the OCR input region.
         self._ocr_region = (left, top, right, bottom)
         self._ocr_elements = []
-        self.image_view.set_ocr_boxes([])
-        self._points = [
-            (left, top, f"{name}_top_left"),
-            (right, top, f"{name}_top_right"),
-            (right, bottom, f"{name}_bottom_right"),
-            (left, bottom, f"{name}_bottom_left"),
-        ]
+        self._points = []
         self.image_view.set_points(self._points)
-        self.instruction.setText(
-            f"Đã chọn RECT '{name}': trái={left}, trên={top}, phải={right}, dưới={bottom}."
-        )
+        self.image_view.set_ocr_boxes([])
+        self.image_view.set_selected_region(self._ocr_region)
+        self.ocr_button.setEnabled(True)
+        self.ocr_button.setToolTip("Phân tích OCR trong vùng RECT đã chọn")
+        self.instruction.setText(f"Đã chọn RECT '{name}'. Có thể nhấn Phân tích (OCR).")
         if self._on_location_result is not None:
             width, height = self._pixmap.width(), self._pixmap.height()
             self._on_location_result(
@@ -796,7 +809,7 @@ class ScreenshotAnnotator(QDialog):
             QMessageBox.warning(self, "Chưa có ảnh", "Hãy chọn ảnh trong artifacts/screenshots trước.")
             return
 
-        rect_mode = self._current_mode() == "Từng vùng"
+        rect_mode = self._current_mode() == "Từng vùng" or self._ocr_region is not None
         if not rect_mode:
             return
         if self._ocr_region is None:
