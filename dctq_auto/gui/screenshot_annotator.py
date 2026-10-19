@@ -16,7 +16,7 @@ from PySide6.QtGui import QGuiApplication, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QDialog,
     QFileDialog,
-    QComboBox,
+    QButtonGroup,
     QFormLayout,
     QHBoxLayout,
     QInputDialog,
@@ -47,6 +47,7 @@ class ClickableImage(QWidget):
         on_image_click,
         is_region_mode,
         on_image_rect,
+        is_cursor_mode=None,
         parent=None,
     ) -> None:
         super().__init__(parent)
@@ -54,6 +55,7 @@ class ClickableImage(QWidget):
         self._on_image_click = on_image_click
         self._is_region_mode = is_region_mode
         self._on_image_rect = on_image_rect
+        self._is_cursor_mode = is_cursor_mode or (lambda: False)
         self._points: list[tuple[int, int, str]] = []
         self._ocr_boxes: list[dict] = []
         self._drag_start: QPoint | None = None
@@ -165,7 +167,7 @@ class ClickableImage(QWidget):
         point = event.position().toPoint()
         pan_requested = (
             event.button() in (Qt.MouseButton.MiddleButton, Qt.MouseButton.RightButton)
-            or (event.button() == Qt.MouseButton.LeftButton and self._space_pressed)
+            or (event.button() == Qt.MouseButton.LeftButton and (self._space_pressed or self._is_cursor_mode()))
         )
         if pan_requested and self._scroll_area is not None:
             self._pan_start = point
