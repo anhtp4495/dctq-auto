@@ -3,8 +3,13 @@
 from __future__ import annotations
 
 import json
+import re
+import unicodedata
 from datetime import datetime
 from pathlib import Path
+
+from PIL import Image
+import pytesseract
 
 from PySide6.QtCore import QPoint, Qt
 from PySide6.QtGui import QGuiApplication, QPainter, QPen, QPixmap
@@ -196,10 +201,17 @@ class ScreenshotAnnotator(QDialog):
         self.point_name = QLineEdit("button")
         self.point_name.setToolTip("Tên gợi ý cho điểm kế tiếp")
         self.region_name = QLineEdit("analysis_region")
+        self.ocr_text = QLineEdit()
+        self.ocr_text.setPlaceholderText("Text OCR nhận diện được...")
+        self.normalized_text = QLineEdit()
+        self.normalized_text.setPlaceholderText("dang_nhap")
+        self.ocr_text.textChanged.connect(self._update_normalized_text)
         settings.addRow("Chế độ:", self.mode_combo)
         settings.addRow("Tên màn hình:", self.screen_name)
         settings.addRow("Tên điểm tiếp theo:", self.point_name)
         settings.addRow("Tên vùng 4 góc:", self.region_name)
+        settings.addRow("Text OCR:", self.ocr_text)
+        settings.addRow("Tên không dấu:", self.normalized_text)
         root.addLayout(settings)
 
         self.instruction = QLabel("Chụp màn hình để bắt đầu.")
@@ -221,6 +233,9 @@ class ScreenshotAnnotator(QDialog):
         self.undo_button = QPushButton("Bỏ điểm cuối")
         self.undo_button.clicked.connect(self.undo_point)
         bottom.addWidget(self.undo_button)
+        self.ocr_button = QPushButton("Nhận diện text (OCR)")
+        self.ocr_button.clicked.connect(self.recognize_text)
+        bottom.addWidget(self.ocr_button)
         self.clear_button = QPushButton("Xóa điểm đã chọn")
         self.clear_button.clicked.connect(self.clear_points)
         bottom.addWidget(self.clear_button)
@@ -315,6 +330,66 @@ class ScreenshotAnnotator(QDialog):
             "— có thể kéo lại để chỉnh hoặc lưu vùng."
         )
 
+    @staticmethod
+    def normalize_text(text: str) -> str:
+        """Convert visible text to a lowercase, accent-free snake_case identifier."""
+        text = unicodedata.normalize("NFD", text.strip().lower())
+        text = "".join(char for char in text if unicodedata.category(char) != "Mn")
+        text = text.replace("đ", "d")
+        return re.sub(r"[^a-z0-9]+", "_", text).strip("_")
+
+    def _update_normalized_text(self, text: str) -> None:
+        self.normalized_text.setText(self.normalize_text(text))
+
+    def recognize_text(self) -> None:
+        if self._image_path is None or self._pixmap.isNull():
+            QMessageBox.warning(self, "Chưa có ảnh", "Hãy chụp màn hình trước.")
+            return
+        if self.mode_combo.currentData() != "region" or len(self._points) != 4:
+            QMessageBox.information(
+                self,
+                "Chưa chọn vùng",
+                "Hãy chọn chế độ vùng 4 góc và kéo chuột tạo hình chữ nhật trước khi chạy OCR.",
+            )
+            return
+
+        left = min(point[0] for point in self._points)
+        top = min(point[1] for point in self._points)
+        right = max(point[0] for point in self._points)
+        bottom = max(point[1] for point in self._points)
+        try:
+            with Image.open(self._image_path) as screenshot:
+                crop = screenshot.convert("RGB").crop((left, top, right + 1, bottom + 1))
+            try:
+                recognized = pytesseract.image_to_string(crop, lang="vie+eng", config="--psm 6")
+            except pytesseract.TesseractError:
+                # Allow OCR to remain useful when the Vietnamese traineddata is not installed.
+                recognized = pytesseract.image_to_string(crop, lang="eng", config="--psm 6")
+            recognized = " ".join(recognized.split())
+            self.ocr_text.setText(recognized)
+            normalized = self.normalize_text(recognized)
+            self.normalized_text.setText(normalized)
+            if normalized:
+                self.region_name.setText(normalized)
+            self.instruction.setText(
+                f"OCR: {recognized!r} → tên chuẩn hóa: {normalized or '(không nhận diện được chữ)'}"
+            )
+            if not recognized:
+                QMessageBox.information(
+                    self, "Không nhận diện được chữ",
+                    "Hãy chọn sát vùng chữ hơn, chụp ảnh rõ hơn hoặc kiểm tra Tesseract OCR.",
+                )
+        except pytesseract.TesseractNotFoundError:
+            QMessageBox.critical(
+                self,
+                "Chưa cài Tesseract OCR",
+                "Ứng dụng đã có thư viện pytesseract nhưng chưa tìm thấy chương trình Tesseract. "
+                "Hãy cài Tesseract OCR và dữ liệu ngôn ngữ Vietnamese (vie) + English (eng), "
+                "rồi mở lại ứng dụng.",
+            )
+        except Exception as exc:
+            QMessageBox.critical(self, "OCR thất bại", str(exc))
+
     def undo_point(self) -> None:
         if self._points:
             self._points.pop()
@@ -371,6 +446,8 @@ class ScreenshotAnnotator(QDialog):
                 region = {
                     "name": name,
                     "serial": self.serial or "desktop",
+                    "recognized_text": self.ocr_text.text().strip(),
+                    "normalized_text": self.normalized_text.text().strip(),
                     "screenshot": str(self._image_path),
                     "image_resolution": [width, height],
                     "corners_order": ["top_left", "top_right", "bottom_right", "bottom_left"],
