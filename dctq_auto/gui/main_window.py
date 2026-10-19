@@ -764,10 +764,18 @@ class MainWindow(QMainWindow):
                     current = current.parentWidget()
                 return False
 
-            for widget in central.findChildren(QWidget):
-                if is_log_or_ancestor(widget) or is_log_descendant(widget):
-                    continue
-                self._analysis_lock_states[widget] = widget.isEnabled()
+            widgets_to_lock = [
+                widget for widget in central.findChildren(QWidget)
+                if not is_log_or_ancestor(widget) and not is_log_descendant(widget)
+            ]
+
+            # Snapshot every widget's enabled state before disabling any parent.
+            # QWidget.isEnabled() reports effective state, so recording it while
+            # ancestors are already disabled would incorrectly save children as disabled.
+            self._analysis_lock_states = {
+                widget: widget.isEnabled() for widget in widgets_to_lock
+            }
+            for widget in widgets_to_lock:
                 widget.setEnabled(False)
             return
 
