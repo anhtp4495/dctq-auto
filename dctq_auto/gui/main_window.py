@@ -930,7 +930,8 @@ class MainWindow(QMainWindow):
         }
 
     def _set_settings_enabled(self, enabled: bool) -> None:
-        """Lock configuration controls while keeping tabs and scrolling usable."""
+        """Lock configuration controls and prevent tab switching while a run is active."""
+        self.tabs.tabBar().setEnabled(enabled)
         for widget_type in (QCheckBox, QSpinBox, QComboBox, QRadioButton, QAbstractButton):
             for widget in self.tabs.findChildren(widget_type):
                 widget.setEnabled(enabled)
