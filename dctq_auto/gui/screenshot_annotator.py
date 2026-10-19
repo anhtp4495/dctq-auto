@@ -54,6 +54,7 @@ class ClickableImage(QWidget):
         self._is_region_mode = is_region_mode
         self._on_image_rect = on_image_rect
         self._points: list[tuple[int, int, str]] = []
+        self._ocr_boxes: list[dict] = []
         self._drag_start: QPoint | None = None
         self._drag_current: QPoint | None = None
         self.setMinimumSize(480, 270)
@@ -61,6 +62,10 @@ class ClickableImage(QWidget):
 
     def set_points(self, points: list[tuple[int, int, str]]) -> None:
         self._points = list(points)
+        self.update()
+
+    def set_ocr_boxes(self, boxes: list[dict]) -> None:
+        self._ocr_boxes = list(boxes)
         self.update()
 
     def _target_rect(self):
@@ -86,25 +91,40 @@ class ClickableImage(QWidget):
         target = self._target_rect()
         if not self._pixmap.isNull():
             painter.drawPixmap(target, self._pixmap)
-        if not self._pixmap.isNull() and self._points:
+        if not self._pixmap.isNull():
             scale_x = target.width() / self._pixmap.width()
             scale_y = target.height() / self._pixmap.height()
-            pen = QPen(Qt.GlobalColor.green)
-            pen.setWidth(2)
-            painter.setPen(pen)
-            for index, (x, y, label) in enumerate(self._points, start=1):
-                px = target.x() + round(x * scale_x)
-                py = target.y() + round(y * scale_y)
-                painter.drawEllipse(QPoint(px, py), 5, 5)
-                painter.drawText(px + 7, py - 7, f"{index}. {label}")
+            if self._ocr_boxes:
+                pen = QPen(Qt.GlobalColor.red)
+                pen.setWidth(2)
+                painter.setPen(pen)
+                for index, item in enumerate(self._ocr_boxes, start=1):
+                    bounds = item.get("bounds", {})
+                    x1 = target.x() + round(bounds.get("left", 0) * scale_x)
+                    y1 = target.y() + round(bounds.get("top", 0) * scale_y)
+                    x2 = target.x() + round(bounds.get("right", 0) * scale_x)
+                    y2 = target.y() + round(bounds.get("bottom", 0) * scale_y)
+                    from PySide6.QtCore import QRect
+                    painter.drawRect(QRect(QPoint(x1, y1), QPoint(x2, y2)).normalized())
+                    painter.drawText(x1, max(target.top() + 12, y1 - 4), f"OCR {index}")
 
-            if len(self._points) == 4:
-                polygon = [
-                    QPoint(target.x() + round(x * scale_x), target.y() + round(y * scale_y))
-                    for x, y, _label in self._points
-                ]
-                for index in range(4):
-                    painter.drawLine(polygon[index], polygon[(index + 1) % 4])
+            if self._points:
+                pen = QPen(Qt.GlobalColor.green)
+                pen.setWidth(2)
+                painter.setPen(pen)
+                for index, (x, y, label) in enumerate(self._points, start=1):
+                    px = target.x() + round(x * scale_x)
+                    py = target.y() + round(y * scale_y)
+                    painter.drawEllipse(QPoint(px, py), 5, 5)
+                    painter.drawText(px + 7, py - 7, f"{index}. {label}")
+
+                if len(self._points) == 4:
+                    polygon = [
+                        QPoint(target.x() + round(x * scale_x), target.y() + round(y * scale_y))
+                        for x, y, _label in self._points
+                    ]
+                    for index in range(4):
+                        painter.drawLine(polygon[index], polygon[(index + 1) % 4])
 
         if self._drag_start is not None and self._drag_current is not None:
             pen = QPen(Qt.GlobalColor.yellow)
@@ -191,6 +211,13 @@ class ScreenshotAnnotator(QDialog):
         self.mode_combo.addItems(["Từng điểm", "RECT"])
         self.mode_combo.setToolTip("Từng điểm: nhấp để đặt tọa độ. RECT: kéo chuột để chọn hình chữ nhật.")
         toolbar.addWidget(self.mode_combo)
+        self.coordinate_input_button = QPushButton("⌖")
+        self.coordinate_input_button.setFixedSize(28, 28)
+        self.coordinate_input_button.setToolTip(
+            "Nhập tọa độ point (x,y) hoặc RECT (x,y,w,h) theo pixel ảnh gốc"
+        )
+        self.coordinate_input_button.clicked.connect(self.input_coordinates)
+        toolbar.addWidget(self.coordinate_input_button)
         self.capture_button = QPushButton("Chọn file ảnh")
         self.capture_button.clicked.connect(self.choose_screenshot_file)
         toolbar.addWidget(self.capture_button)
@@ -268,6 +295,7 @@ class ScreenshotAnnotator(QDialog):
         self._ocr_region = None
         self.image_view._pixmap = self._pixmap
         self.image_view.set_points(self._points)
+        self.image_view.set_ocr_boxes([])
         self.image_info.setText(
             f"{self._image_path} — ảnh gốc {self._pixmap.width()}×{self._pixmap.height()} px"
         )
@@ -276,6 +304,77 @@ class ScreenshotAnnotator(QDialog):
             "kết quả OCR và tọa độ sẽ ghi vào nhật ký cửa sổ chính."
         )
         self.image_view.update()
+
+    def input_coordinates(self) -> None:
+        """Set a point or OCR rectangle by typing original-image pixel coordinates."""
+        if self._pixmap.isNull():
+            QMessageBox.information(self, "Chưa có ảnh", "Hãy mở ảnh chụp màn hình trước.")
+            return
+
+        value, accepted = QInputDialog.getText(
+            self,
+            "Nhập tọa độ",
+            "Nhập point: x,y  hoặc RECT: x,y,w,h (pixel ảnh gốc):",
+            text="",
+        )
+        if not accepted:
+            return
+        try:
+            parts = [int(part.strip()) for part in value.split(",")]
+            if len(parts) not in (2, 4):
+                raise ValueError
+            image_width, image_height = self._pixmap.width(), self._pixmap.height()
+            x, y = parts[0], parts[1]
+            if len(parts) == 2:
+                if not (0 <= x < image_width and 0 <= y < image_height):
+                    raise ValueError
+                self.mode_combo.setCurrentText("Từng điểm")
+                self._ocr_region = None
+                self._ocr_elements = []
+                self.image_view.set_ocr_boxes([])
+                self._points = [(x, y, "manual_point")]
+                self.image_view.set_points(self._points)
+                self.instruction.setText(f"Đã nhập point: ({x}, {y}) trên ảnh gốc.")
+                if self._on_location_result is not None:
+                    self._on_location_result(
+                        "Point nhập tay", "manual_point", x, y,
+                        x / image_width, y / image_height,
+                    )
+                return
+
+            width, height = parts[2], parts[3]
+            if width <= 0 or height <= 0:
+                raise ValueError
+            right, bottom = x + width, y + height
+            if not (0 <= x < image_width and 0 <= y < image_height
+                    and right <= image_width and bottom <= image_height):
+                raise ValueError
+
+            self.mode_combo.setCurrentText("RECT")
+            self._ocr_region = (x, y, right, bottom)
+            self._ocr_elements = []
+            self.image_view.set_ocr_boxes([])
+            self._points = [
+                (x, y, "manual_rect_top_left"),
+                (right, y, "manual_rect_top_right"),
+                (right, bottom, "manual_rect_bottom_right"),
+                (x, bottom, "manual_rect_bottom_left"),
+            ]
+            self.image_view.set_points(self._points)
+            self.instruction.setText(
+                f"Đã nhập RECT: x={x}, y={y}, w={width}, h={height}. "
+                "Nhấn Phân tích (OCR) để nhận diện chữ trong vùng này."
+            )
+            if self._on_location_result is not None:
+                self._on_location_result(
+                    "RECT nhập tay", "manual_rect", x, y,
+                    x / image_width, y / image_height,
+                )
+        except (ValueError, TypeError):
+            QMessageBox.warning(
+                self, "Tọa độ không hợp lệ",
+                "Hãy nhập x,y hoặc x,y,w,h bằng số nguyên; tọa độ phải nằm trong kích thước ảnh gốc.",
+            )
 
     def capture_screenshot(self) -> None:
         """Capture a screenshot when invoked programmatically."""
@@ -482,19 +581,21 @@ class ScreenshotAnnotator(QDialog):
             image_width, image_height = original_size
 
             if rect_mode:
-                # Exactly one result for the selected rectangle, even if it contains multiple lines.
-                text = " ".join(item["text"] for item in sorted(grouped, key=lambda item: (item["top"], item["left"])))
-                text = re.sub(r"\s+", " ", text).strip()
-                if text:
-                    x1, y1, x2, y2 = left, top, right, bottom
+                # Return each OCR text line with its own bounding box in original-image coordinates.
+                for item in grouped:
+                    x1 = max(left, min(right, left + round(item["left"] / scale)))
+                    y1 = max(top, min(bottom, top + round(item["top"] / scale)))
+                    x2 = max(x1, min(right, left + round(item["right"] / scale)))
+                    y2 = max(y1, min(bottom, top + round(item["bottom"] / scale)))
                     width, height = x2 - x1, y2 - y1
+                    if width < 3 or height < 3:
+                        continue
                     center_x = round((x1 + x2) / 2)
                     center_y = round((y1 + y2) / 2)
-                    name = self.normalize_text(text)
                     self._ocr_elements.append({
-                        "name": name,
-                        "text": text,
-                        "confidence": round(sum(item["confidence"] for item in grouped) / len(grouped), 1),
+                        "name": self.normalize_text(item["text"]),
+                        "text": item["text"],
+                        "confidence": item["confidence"],
                         "bounds": {"left": x1, "top": y1, "right": x2, "bottom": y2},
                         "rect": {"x": x1, "y": y1, "width": width, "height": height},
                         "corners": [
@@ -515,6 +616,7 @@ class ScreenshotAnnotator(QDialog):
                             "bottom": round(y2 / image_height, 6),
                         },
                     })
+                self.image_view.set_ocr_boxes(self._ocr_elements)
             else:
                 # Point mode retains whole-image OCR, but only accepts filtered text lines.
                 for item in grouped:
@@ -565,7 +667,11 @@ class ScreenshotAnnotator(QDialog):
                     else "Không tìm thấy text có độ tin cậy đủ cao. Hãy thử ảnh rõ hơn.",
                 )
             else:
-                self.instruction.setText("Đã nhận diện 1 kết quả trong RECT." if rect_mode else f"Đã nhận diện {len(items)} cụm chữ sau khi lọc nhiễu.")
+                self.instruction.setText(
+                    f"Đã nhận diện {len(items)} cụm chữ trong RECT."
+                    if rect_mode
+                    else f"Đã nhận diện {len(items)} cụm chữ sau khi lọc nhiễu."
+                )
         except pytesseract.TesseractNotFoundError:
             QMessageBox.critical(
                 self,
