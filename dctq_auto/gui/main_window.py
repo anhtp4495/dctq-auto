@@ -4,7 +4,6 @@ import logging
 import time
 
 from PySide6.QtCore import Qt, QTimer, QSettings
-from dctq_auto.tasks.registry import get_enabled_tasks
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
     QAbstractButton,
@@ -31,7 +30,6 @@ from PySide6.QtWidgets import (
 
 from dctq_auto.adb.client import AdbClient
 from dctq_auto.config.settings import Settings
-from dctq_auto.gui.workers import BotWorker
 from dctq_auto.gui.clone_tab import CloneTab
 from dctq_auto.gui.screenshot_annotator import ScreenshotAnnotator
 from dctq_auto.tasks.clone.accounts import load_accounts
@@ -43,7 +41,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("DCTQ Auto")
         self._ui_settings = QSettings("DCTQAuto", "DCTQAuto")
         self._settings = Settings.from_env()
-        self._worker: BotWorker | None = None
+        self._worker = None
         self._paused = False
         self._run_started_at: float | None = None
         self._pause_started_at: float | None = None
@@ -67,14 +65,17 @@ class MainWindow(QMainWindow):
         self.scan_button = QPushButton("Quét ADB")
         self.scan_button.clicked.connect(self.scan_adb_devices)
         adb_layout.addWidget(self.scan_button)
+        root.addWidget(adb_group)
+        capture_row = QHBoxLayout()
+        capture_row.addStretch(1)
         self.capture_annotate_button = QPushButton("📷")
-        self.capture_annotate_button.setFixedWidth(38)
+        self.capture_annotate_button.setFixedSize(38, 30)
         self.capture_annotate_button.setToolTip(
-            "Chụp màn hình LDPlayer và chọn tọa độ trên ảnh (dùng được cả ở chế độ chạy thử)."
+            "Chụp màn hình hiện tại và chọn tọa độ trên ảnh."
         )
         self.capture_annotate_button.clicked.connect(self.open_screenshot_annotator)
-        adb_layout.addWidget(self.capture_annotate_button)
-        root.addWidget(adb_group)
+        capture_row.addWidget(self.capture_annotate_button)
+        root.addLayout(capture_row)
 
         self.tabs = QTabWidget(central)
         root.addWidget(self.tabs)
@@ -602,44 +603,8 @@ class MainWindow(QMainWindow):
 
     def open_screenshot_annotator(self) -> None:
         serial = self.device_combo.currentData()
-        if not serial or serial == "mock":
-            try:
-                online_devices = []
-                for device in AdbClient.list_devices():
-                    try:
-                        if device.get_state() == "device":
-                            online_devices.append(device.serial)
-                    except Exception:
-                        continue
-            except Exception as exc:
-                QMessageBox.warning(
-                    self, "Không tìm thấy thiết bị ADB",
-                    f"Không thể quét thiết bị để chụp màn hình: {exc}",
-                )
-                return
-
-            if not online_devices:
-                QMessageBox.warning(
-                    self,
-                    "Chưa có thiết bị ADB",
-                    "Chế độ chạy thử vẫn hỗ trợ chụp màn hình, nhưng cần mở LDPlayer "
-                    "và bật kết nối ADB trước.",
-                )
-                return
-            if len(online_devices) == 1:
-                serial = online_devices[0]
-            else:
-                serial, accepted = QInputDialog.getItem(
-                    self,
-                    "Chọn thiết bị chụp màn hình",
-                    "Chọn LDPlayer/thiết bị ADB để chụp:",
-                    online_devices,
-                    0,
-                    False,
-                )
-                if not accepted or not serial:
-                    return
-        dialog = ScreenshotAnnotator(str(serial), self)
+        # Chạy thử: chụp màn hình desktop đang hiển thị, không cần ADB.
+        dialog = ScreenshotAnnotator(None if serial == "mock" else str(serial), self)
         dialog.exec()
 
     def scan_adb_devices(self) -> None:
@@ -789,6 +754,7 @@ class MainWindow(QMainWindow):
                 f"Tab Clone: đã nạp {len(accounts)} tài khoản. "
                 "Mật khẩu không được ghi vào nhật ký."
             )
+        from dctq_auto.gui.workers import BotWorker
         self._worker = BotWorker(
             serial=serial,
             screenshot_dir=self._settings.screenshot_dir,
@@ -861,7 +827,8 @@ class MainWindow(QMainWindow):
 
     @staticmethod
     def _task_specs(config: dict) -> list[tuple[str, int]]:
-        """Use the shared registry so UI order matches worker execution."""
+        """Load task definitions only when the user starts a task."""
+        from dctq_auto.tasks.registry import get_enabled_tasks
         return [(spec.label, count) for spec, count in get_enabled_tasks(config)]
 
     def _init_task_progress(self, config: dict) -> None:
