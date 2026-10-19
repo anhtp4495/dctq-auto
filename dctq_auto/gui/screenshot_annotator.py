@@ -18,15 +18,12 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QDialogButtonBox,
     QComboBox,
-    QFormLayout,
     QHBoxLayout,
     QInputDialog,
     QLabel,
-    QLineEdit,
     QMessageBox,
     QPushButton,
     QScrollArea,
-    QSpinBox,
     QPlainTextEdit,
     QVBoxLayout,
     QWidget,
@@ -162,7 +159,8 @@ class ScreenshotAnnotator(QDialog):
     """Capture an ADB screenshot and save point/region coordinates from that image."""
 
     def __init__(
-        self, serial: str | None, parent=None, on_ocr_result=None, on_location_result=None
+        self, serial: str | None, parent=None, on_ocr_result=None, on_location_result=None,
+        initial_image: Path | None = None,
     ) -> None:
         super().__init__(parent)
         self._on_ocr_result = on_ocr_result
@@ -181,62 +179,25 @@ class ScreenshotAnnotator(QDialog):
         self._on_location_result = on_location_result
 
         root = QVBoxLayout(self)
-        heading = QLabel(
-            "Chọn trực tiếp trên ảnh chụp. Tọa độ được tính theo pixel của ảnh gốc, "
-            "không phụ thuộc kích thước cửa sổ xem ảnh."
-            if self.capture_desktop
-            else "Chọn trực tiếp trên ảnh chụp ADB. Tọa độ được tính theo pixel của ảnh gốc, "
-                 "không phụ thuộc kích thước cửa sổ xem ảnh."
-        )
-        heading.setWordWrap(True)
-        root.addWidget(heading)
 
         toolbar = QHBoxLayout()
-        self.capture_button = QPushButton("Chọn file ảnh")
-        self.capture_button.clicked.connect(self.choose_screenshot_file)
-        toolbar.addWidget(self.capture_button)
+        self.screenshot_dir_label = QLabel("artifacts/screenshots")
+        self.screenshot_dir_label.setToolTip("Thư mục chứa ảnh chụp màn hình")
+        toolbar.addWidget(self.screenshot_dir_label)
         self.image_info = QLabel("Chưa có ảnh.")
         self.image_info.setWordWrap(True)
         toolbar.addWidget(self.image_info, 1)
-        root.addLayout(toolbar)
-
-        settings = QFormLayout()
         self.mode_combo = QComboBox()
         self.mode_combo.addItems(["Từng điểm", "RECT"])
         self.mode_combo.setToolTip("Từng điểm: nhấp để đặt tọa độ. RECT: kéo chuột để chọn hình chữ nhật.")
-        settings.addRow("Chế độ chọn:", self.mode_combo)
-        self.screen_name = QLineEdit("captured")
-        self.screen_name.setToolTip("Tên màn hình lưu trong locations.json")
-        self.ocr_text = QLineEdit()
-        self.ocr_text.setPlaceholderText("Text OCR nhận diện được...")
-        self.normalized_text = QLineEdit()
-        self.normalized_text.setPlaceholderText("dang_nhap")
-        self.ocr_text.textChanged.connect(self._update_normalized_text)
-        self.ocr_item_count = QSpinBox()
-        self.ocr_item_count.setRange(1, 12)
-        self.ocr_item_count.setValue(3)
-        self.ocr_item_count.setToolTip("Số text độc lập cần tách khi các mục nằm cùng một hàng.")
-        self.ocr_items = QPlainTextEdit()
-        self.ocr_items.setPlaceholderText("Mỗi dòng là một text độc lập...")
-        self.ocr_items.setMaximumHeight(76)
-        self.normalized_items = QPlainTextEdit()
-        self.normalized_items.setPlaceholderText("moi_dong_la_mot_ten")
-        self.normalized_items.setMaximumHeight(76)
-        self.ocr_locations = QPlainTextEdit()
-        self.ocr_locations.setReadOnly(True)
-        self.ocr_locations.setPlaceholderText("Tọa độ 4 góc và trung điểm của từng text OCR")
-        self.ocr_locations.setMaximumHeight(110)
-        self._ocr_elements: list[dict] = []
-        settings.addRow("Tên màn hình:", self.screen_name)
-        settings.addRow("Text OCR (gộp):", self.ocr_text)
-        settings.addRow("Tên không dấu:", self.normalized_text)
-        settings.addRow("Số text cần tách:", self.ocr_item_count)
-        settings.addRow("Các text độc lập:", self.ocr_items)
-        settings.addRow("Tên chuẩn hóa từng text:", self.normalized_items)
-        settings.addRow("Location từng text:", self.ocr_locations)
-        root.addLayout(settings)
+        toolbar.addWidget(self.mode_combo)
+        self.capture_button = QPushButton("Chọn file ảnh")
+        self.capture_button.clicked.connect(self.choose_screenshot_file)
+        toolbar.addWidget(self.capture_button)
+        root.addLayout(toolbar)
 
-        self.instruction = QLabel("Chụp màn hình để bắt đầu.")
+        self._ocr_elements: list[dict] = []
+        self.instruction = QLabel("Chọn ảnh trong artifacts/screenshots để bắt đầu.")
         self.instruction.setWordWrap(True)
         root.addWidget(self.instruction)
 
@@ -255,24 +216,20 @@ class ScreenshotAnnotator(QDialog):
         self.undo_button = QPushButton("Bỏ điểm cuối")
         self.undo_button.clicked.connect(self.undo_point)
         bottom.addWidget(self.undo_button)
-        self.ocr_button = QPushButton("Nhận diện text (OCR)")
+        self.ocr_button = QPushButton("🔎 Phân tích (OCR)")
+        self.ocr_button.setToolTip("Phân tích chữ trên ảnh hiện tại")
         self.ocr_button.clicked.connect(self.recognize_text)
         bottom.addWidget(self.ocr_button)
-        self.clear_button = QPushButton("Xóa điểm đã chọn")
+        self.clear_button = QPushButton("Xóa điểm")
         self.clear_button.clicked.connect(self.clear_points)
         bottom.addWidget(self.clear_button)
         self.save_button = QPushButton("Lưu tọa độ")
         self.save_button.clicked.connect(self.save_coordinates)
         bottom.addWidget(self.save_button)
-        bottom.addStretch(1)
-        self.close_button = QPushButton("Đóng")
-        self.close_button.clicked.connect(self.accept)
-        bottom.addWidget(self.close_button)
         root.addLayout(bottom)
 
-        self.instruction.setText(
-            "Chọn file ảnh đã chụp trong artifacts/screenshots để bắt đầu chọn tọa độ."
-        )
+        if initial_image is not None and initial_image.is_file():
+            self._load_screenshot(initial_image)
 
     def choose_screenshot_file(self) -> None:
         """Allow selecting only an image directly inside artifacts/screenshots."""
@@ -313,7 +270,7 @@ class ScreenshotAnnotator(QDialog):
             f"{self._image_path} — ảnh gốc {self._pixmap.width()}×{self._pixmap.height()} px"
         )
         self.instruction.setText(
-            "Đã mở ảnh. Chọn chế độ Từng điểm hoặc RECT rồi thao tác trên ảnh; "
+            "Đã mở ảnh. Chọn Từng điểm hoặc RECT rồi thao tác trên ảnh; "
             "kết quả OCR và tọa độ sẽ ghi vào nhật ký cửa sổ chính."
         )
         self.image_view.update()
@@ -480,7 +437,7 @@ class ScreenshotAnnotator(QDialog):
 
     def recognize_text(self) -> None:
         if self._image_path is None or self._pixmap.isNull():
-            QMessageBox.warning(self, "Chưa có ảnh", "Hãy chụp màn hình trước.")
+            QMessageBox.warning(self, "Chưa có ảnh", "Hãy chọn ảnh trong artifacts/screenshots trước.")
             return
         try:
             with Image.open(self._image_path) as screenshot:
@@ -498,7 +455,7 @@ class ScreenshotAnnotator(QDialog):
                     output_type=pytesseract.Output.DICT,
                 )
 
-            grouped = self._split_ocr_words(ocr_data, self.ocr_item_count.value())
+            grouped = self._split_ocr_words(ocr_data, 3)
             items = [item["text"] for item in grouped]
             normalized_items = [self.normalize_text(item) for item in items]
             self._ocr_elements = []
@@ -532,25 +489,10 @@ class ScreenshotAnnotator(QDialog):
                     },
                 })
 
-            self.ocr_text.setText(" | ".join(items))
-            self.ocr_items.setPlainText("\n".join(items))
-            self.normalized_items.setPlainText("\n".join(normalized_items))
-            location_lines = []
-            for item in self._ocr_elements:
-                b = item["bounds"]
-                c = item["center"]
-                location_lines.append(
-                    f'{item["name"]}: TL=({b["left"]},{b["top"]}) '
-                    f'TR=({b["right"]},{b["top"]}) '
-                    f'BR=({b["right"]},{b["bottom"]}) '
-                    f'BL=({b["left"]},{b["bottom"]}) '
-                    f'CENTER=({c["x_px"]},{c["y_px"]})'
-                )
-            self.ocr_locations.setPlainText("\n".join(location_lines))
 
             if self._on_ocr_result is not None:
                 self._on_ocr_result(items, normalized_items, self._ocr_elements)
-            if len(items) == 1 and self.ocr_item_count.value() > 1:
+            if len(items) == 1:
                 self.instruction.setText(
                     "OCR chỉ tìm được một cụm chữ. Hãy mở rộng vùng chọn hoặc sửa thủ công "
                     "từng dòng nếu các mục nằm sát nhau."
@@ -560,8 +502,6 @@ class ScreenshotAnnotator(QDialog):
                     f"Đã tách {len(items)} text trên toàn ảnh. Mỗi text có bounding RECT, 4 góc và trung điểm; "
                     "kiểm tra lại nếu OCR chia cụm chưa đúng."
                 )
-            if normalized_items and normalized_items[0]:
-                self.normalized_text.setText(normalized_items[0])
             if not items:
                 QMessageBox.information(
                     self, "Không nhận diện được chữ",
@@ -588,21 +528,18 @@ class ScreenshotAnnotator(QDialog):
     def clear_points(self) -> None:
         self._points.clear()
         self.image_view.set_points(self._points)
-        self.instruction.setText("Đã xóa lựa chọn. Chọn chế độ Từng điểm hoặc RECT rồi thao tác trên ảnh.")
+        self.instruction.setText("Đã xóa các điểm đã chọn.")
 
     def save_coordinates(self) -> None:
         if self._pixmap.isNull() or self._image_path is None:
-            QMessageBox.warning(self, "Chưa có ảnh", "Hãy chụp màn hình trước.")
+            QMessageBox.warning(self, "Chưa có ảnh", "Hãy chọn ảnh trong artifacts/screenshots trước.")
             return
         if not self._points and not self._ocr_elements:
             QMessageBox.warning(self, "Chưa có tọa độ", "Hãy nhấp chọn điểm hoặc chạy OCR trước.")
             return
 
         width, height = self._pixmap.width(), self._pixmap.height()
-        screen = self.screen_name.text().strip()
-        if not screen:
-            QMessageBox.warning(self, "Thiếu tên màn hình", "Tên màn hình không được để trống.")
-            return
+        screen = self._image_path.stem
         try:
             if self._points:
                 data = self._read_json(
@@ -628,16 +565,10 @@ class ScreenshotAnnotator(QDialog):
             if self._ocr_elements:
                 region = {
                     "name": screen, "serial": self.serial or "desktop",
-                    "recognized_text": self.ocr_text.text().strip(),
-                    "normalized_text": self.normalized_text.text().strip(),
-                    "recognized_items": [
-                        item.strip() for item in self.ocr_items.toPlainText().splitlines()
-                        if item.strip()
-                    ],
-                    "normalized_items": [
-                        item.strip() for item in self.normalized_items.toPlainText().splitlines()
-                        if item.strip()
-                    ],
+                    "recognized_text": " | ".join(item["text"] for item in self._ocr_elements),
+                    "normalized_text": " | ".join(item["name"] for item in self._ocr_elements),
+                    "recognized_items": [item["text"] for item in self._ocr_elements],
+                    "normalized_items": [item["name"] for item in self._ocr_elements],
                     "elements": self._ocr_elements,
                     "screenshot": str(self._image_path),
                     "image_resolution": [width, height],
