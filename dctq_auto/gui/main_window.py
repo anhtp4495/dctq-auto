@@ -1113,16 +1113,11 @@ class MainWindow(QMainWindow):
 
     def _update_progress(self, completed: int, total: int, status: str) -> None:
         if self._active_clone_mode:
-            # Mock mode reports completed accounts. Real Clone actions are not
-            # implemented yet, so connection progress must not count as success.
-            if self._active_mock_mode:
-                self.progress_bar.setRange(0, max(1, self._clone_total_accounts))
-                self.progress_bar.setValue(
-                    max(0, min(self._clone_total_accounts, completed))
-                )
-            else:
-                self.progress_bar.setRange(0, max(1, self._clone_total_accounts))
-                self.progress_bar.setValue(0)
+            # Clone worker emits completed account counts only after login verification.
+            self.progress_bar.setRange(0, max(1, self._clone_total_accounts))
+            self.progress_bar.setValue(
+                max(0, min(self._clone_total_accounts, completed))
+            )
             return
         percent = int(completed * 100 / total) if total else 0
         self.progress_bar.setRange(0, 100)
