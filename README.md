@@ -99,6 +99,20 @@ Nếu chỉ muốn chạy toàn bộ test không phụ thuộc thiết bị, kh�
 - `dctq_auto/config/`: environment-based settings
 - `tests/`: unit tests
 
+## Hotkey ghi tọa độ trực tiếp trên LDPlayer
+
+Công cụ `scripts/capture_ldplayer_coordinates.py` ghi tọa độ chuột và lưu vùng ảnh 4 góc từ cửa sổ LDPlayer đang chạy. Chạy PowerShell/CMD tại thư mục gốc repo sau khi cài dependencies và xác nhận thiết bị trong `adb devices`:
+
+```bat
+.venv\Scripts\python.exe scripts\capture_ldplayer_coordinates.py --serial emulator-5554
+```
+
+- **F8**: ghi tọa độ con trỏ vào nhật ký `artifacts/coordinate_capture.log`. Nếu con trỏ nằm trong viewport Android, nhật ký có tọa độ Windows, tọa độ Android và tỷ lệ 0..1.
+- **F9**: bắt đầu chọn 4 góc; nhấp lần lượt **trên-trái → trên-phải → dưới-phải → dưới-trái** trên vùng game trong LDPlayer. Khi đủ 4 điểm, dữ liệu được lưu vào `dctq_auto/tasks/clone/regions.json`.
+- **ESC**: hủy chọn đang dang dở; nếu không ở chế độ chọn thì thoát công cụ.
+- Có thể dùng `--name guild_panel` để đặt tên vùng khác, `--output path\file.json` để đổi file, hoặc `--window-title "LDPlayer"` nếu tiêu đề cửa sổ khác. Nếu tự nhận diện viewport chưa khớp do thanh công cụ/bố cục cửa sổ, dùng `--viewport x,y,width,height` để chỉ định vùng Android tính từ góc trên-trái client area.
+- Script chỉ ghi nhật ký và lưu tọa độ, **không gửi lệnh click ADB**. Để tránh sai số, giữ nguyên kích thước/cách bố trí cửa sổ trong lúc chọn và kiểm tra tọa độ đã lưu trước khi dùng cho automation.
+
 ## Build a single Windows EXE
 
 Build on Windows (the EXE is platform-specific). From the repository folder, install dependencies if needed, then run:
