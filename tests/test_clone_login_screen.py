@@ -22,3 +22,24 @@ def test_login_screen_rejects_only_one_navigation_hint():
 
 def test_login_screen_rejects_unrelated_game_screen():
     assert not BotWorker._is_login_screen("chien truong ban do phan thuong")
+
+
+
+class FakeDevice:
+    def __init__(self):
+        self.commands = []
+
+    def shell(self, command):
+        self.commands.append(command)
+        return ""
+
+
+def test_clear_focused_text_selects_all_then_deletes():
+    device = FakeDevice()
+
+    BotWorker._clear_focused_text(device)
+
+    assert device.commands == [
+        "input keycombination KEYCODE_CTRL_LEFT KEYCODE_A",
+        "input keyevent KEYCODE_DEL",
+    ]
