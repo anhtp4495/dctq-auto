@@ -224,7 +224,7 @@ class BotWorker(QThread):
                 self.log_message.emit("Đã dừng theo yêu cầu.")
                 return
             self.log_message.emit(
-                f"[{account_index}/{len(accounts)}] Tài khoản: {account.username}"
+                f"Đang xử lý tài khoản: {account.username}"
             )
             for task_index, (_key, label) in enumerate(selected, start=1):
                 if not self._mock_tick(
