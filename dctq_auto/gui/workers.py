@@ -1,9 +1,14 @@
 """Background workers for GUI actions."""
 
+import re
+import shlex
 import time
+import unicodedata
 from pathlib import Path
 from threading import Event
 
+import pytesseract
+from PIL import ImageOps
 from PySide6.QtCore import QThread, Signal
 
 from dctq_auto.adb.client import AdbClient
@@ -249,6 +254,190 @@ class BotWorker(QThread):
             "Hoàn tất chạy thử Clone. Đây chỉ là mô phỏng; chưa có thao tác trong game."
         )
 
+    @staticmethod
+    def _normalize_screen_text(text: str) -> str:
+        text = unicodedata.normalize("NFD", text.lower())
+        text = "".join(
+            char for char in text
+            if unicodedata.category(char) != "Mn"
+        ).replace("đ", "d")
+        return re.sub(r"[^a-z0-9]+", " ", text).strip()
+
+    @staticmethod
+    def _screen_text(device) -> str:
+        """Read visible game text from a device screenshot using Tesseract."""
+        image = device.screenshot()
+        image = ImageOps.autocontrast(image.convert("L"))
+        try:
+            return pytesseract.image_to_string(image, lang="vie+eng", config="--psm 6")
+        except pytesseract.TesseractError:
+            return pytesseract.image_to_string(image, lang="eng", config="--psm 6")
+
+    @staticmethod
+    def _is_login_screen(text: str) -> bool:
+        normalized = BotWorker._normalize_screen_text(text)
+        has_password = "mat khau" in normalized
+        has_login_label = (
+            "dang nhap" in normalized
+            or "ten dang nhap" in normalized
+            or "so dien thoai" in normalized
+            or "email" in normalized
+        )
+        return has_password and has_login_label
+
+    @staticmethod
+    def _input_text(device, value: str) -> None:
+        """Send text safely through Android input; spaces use Android's %s syntax."""
+        value = value.replace(" ", "%s")
+        device.shell(f"input text {shlex.quote(value)}")
+
+    def _run_clone_login(self, device) -> None:
+        """Log in clone accounts using the confirmed login-screen OCR coordinates."""
+        accounts = load_accounts(self._config.get("clone_account_file", ""))
+        total = len(accounts)
+        if not self._config.get("clone_login", True):
+            self.log_message.emit(
+                "Clone: chưa chọn Đăng nhập; các thao tác Clone khác chưa được triển khai."
+            )
+            self.progress_changed.emit(0, total, f"0/{total} tài khoản thành công")
+            return
+
+        # OCR boxes were provided from a 1920x1080 reference screenshot.
+        reference_width, reference_height = 1920, 1080
+        resolution_text = device.shell("wm size")
+        sizes = re.findall(r"(?:Physical|Override) size:\\s*(\\d+)x(\\d+)", resolution_text)
+        if sizes:
+            device_width, device_height = map(int, sizes[-1])
+        else:
+            device_width, device_height = reference_width, reference_height
+
+        def scaled_point(x: int, y: int) -> tuple[int, int]:
+            return (
+                max(0, min(device_width - 1, round(x * device_width / reference_width))),
+                max(0, min(device_height - 1, round(y * device_height / reference_height))),
+            )
+
+        # Centers of the OCR rectangles supplied for username, password and login button.
+        username_point = scaled_point(round((517 + 445 / 2)), round((388 + 25 / 2)))
+        password_point = scaled_point(round((518 + 101 / 2)), round((469 + 26 / 2)))
+        login_point = scaled_point(round((889 + 143 / 2)), round((586 + 27 / 2)))
+
+        success_count = 0
+        self.progress_changed.emit(0, total, f"0/{total} tài khoản thành công")
+        for index, account in enumerate(accounts, start=1):
+            if not self._wait_if_paused():
+                self.log_message.emit("Đã dừng theo yêu cầu.")
+                return
+
+            self.log_message.emit(
+                f"[{account.username}] Kiểm tra màn hình đăng nhập ({index}/{total})."
+            )
+            try:
+                screen_text = self._screen_text(device)
+            except Exception as exc:
+                self.log_message.emit(
+                    f"[{account.username}] Không đọc được màn hình bằng OCR: {exc}"
+                )
+                break
+
+            if not self._is_login_screen(screen_text):
+                if success_count:
+                    self.log_message.emit(
+                        "Đã đăng nhập tài khoản trước đó, nhưng chưa thể chuyển tài khoản "
+                        "tiếp theo vì tính năng đăng xuất chưa được triển khai."
+                    )
+                else:
+                    self.log_message.emit(
+                        "Không nhận diện được màn hình đăng nhập (cần thấy ô tên đăng nhập, "
+                        "ô mật khẩu và nút Đăng nhập). Không nhập thông tin để tránh thao tác "
+                        "nhầm màn hình."
+                    )
+                break
+
+            try:
+                device.shell(f"input tap {username_point[0]} {username_point[1]}")
+                time.sleep(0.25)
+                device.shell("input keyevent KEYCODE_MOVE_END")
+                device.shell("input keyevent --longpress KEYCODE_DEL")
+                self._input_text(device, account.username)
+
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng theo yêu cầu.")
+                    return
+
+                device.shell(f"input tap {password_point[0]} {password_point[1]}")
+                time.sleep(0.25)
+                device.shell("input keyevent KEYCODE_MOVE_END")
+                device.shell("input keyevent --longpress KEYCODE_DEL")
+                self._input_text(device, account.password)
+
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng theo yêu cầu.")
+                    return
+
+                time.sleep(0.3)
+                device.shell(f"input tap {login_point[0]} {login_point[1]}")
+                self.log_message.emit(
+                    f"[{account.username}] Đã gửi yêu cầu đăng nhập; đang xác minh kết quả."
+                )
+            except Exception as exc:
+                self.log_message.emit(
+                    f"[{account.username}] Không thể nhập thông tin hoặc bấm đăng nhập: {exc}"
+                )
+                break
+
+            verified = False
+            for _attempt in range(8):
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng theo yêu cầu.")
+                    return
+                time.sleep(1)
+                try:
+                    result_text = self._screen_text(device)
+                except Exception as exc:
+                    self.log_message.emit(
+                        f"[{account.username}] Lỗi đọc màn hình khi xác minh: {exc}"
+                    )
+                    break
+                if result_text.strip() and not self._is_login_screen(result_text):
+                    verified = True
+                    break
+
+            if not verified:
+                self.log_message.emit(
+                    f"[{account.username}] Chưa xác nhận đăng nhập thành công. "
+                    "Có thể sai thông tin, mạng chậm hoặc màn hình đăng nhập vẫn còn."
+                )
+                break
+
+            success_count += 1
+            self.log_message.emit(
+                f"[{account.username}] Đăng nhập thành công ({success_count}/{total})."
+            )
+            self.progress_changed.emit(
+                success_count, total,
+                f"{success_count}/{total} tài khoản đăng nhập thành công",
+            )
+            self.task_progress_changed.emit(
+                f"{account.username} - Đăng nhập", "done", 1, 1
+            )
+
+            if index < total:
+                self.log_message.emit(
+                    "Dừng sau tài khoản đầu tiên: cần triển khai đăng xuất trước khi "
+                    "có thể đăng nhập an toàn tài khoản kế tiếp."
+                )
+                break
+
+        self.log_message.emit(
+            f"Kết quả đăng nhập Clone: {success_count}/{total} tài khoản đăng nhập thành công."
+        )
+        if self._config.get("clone_daily_check_in") or self._config.get("clone_guild_check_in") or self._config.get("clone_receive_lucky_bag") or self._config.get("clone_logout"):
+            self.log_message.emit(
+                "Lưu ý: điểm danh, báo danh quân đoàn, nhận túi phúc và đăng xuất "
+                "chưa được triển khai; hiện chỉ thực hiện đăng nhập."
+            )
+
     def run(self) -> None:
         if self._mock_mode:
             self.progress_changed.emit(0, 1, "Đang chuẩn bị chạy thử")
@@ -269,15 +458,10 @@ class BotWorker(QThread):
             client = AdbClient(serial=self._serial)
             device = client.connect()
             self.log_message.emit(f"Đã kết nối ADB: {self._serial}")
-            self.progress_changed.emit(1, 2, "Đã kết nối ADB")
             if self._config.get("clone_mode"):
-                self.log_message.emit(
-                    "Tab Clone: đã kết nối ADB nhưng thao tác đăng nhập, điểm danh, "
-                    "báo danh quân đoàn, nhận túi phúc và đăng xuất trong game chưa được "
-                    "triển khai. Không tài khoản nào được thao tác."
-                )
-                self.progress_changed.emit(2, 2, "Clone: chờ triển khai thao tác game")
+                self._run_clone_login(device)
                 return
+            self.progress_changed.emit(1, 2, "Đã kết nối ADB")
 
 
             if not self._wait_if_paused():
