@@ -373,7 +373,7 @@ class ScreenshotAnnotator(QDialog):
         words = []
         count = len(data.get("text", []))
         for i in range(count):
-            text = re.sub(r"\\s+", " ", str(data["text"][i])).strip()
+            text = re.sub(r"\s+", " ", str(data["text"][i])).strip()
             try:
                 confidence = float(data["conf"][i])
                 x = int(data["left"][i])
@@ -389,7 +389,7 @@ class ScreenshotAnnotator(QDialog):
                 continue
 
             # Discard low-confidence, tiny, punctuation-only and obvious one-character noise.
-            alphanumeric = re.sub(r"[^\\w]", "", text, flags=re.UNICODE)
+            alphanumeric = re.sub(r"[^\w]", "", text, flags=re.UNICODE)
             if (
                 not text or confidence < min_confidence or width < 4 or height < 7
                 or len(alphanumeric) < 2
@@ -417,7 +417,7 @@ class ScreenshotAnnotator(QDialog):
             group = sorted(groups[key], key=lambda word: word["left"])
             text = " ".join(word["text"] for word in group).strip()
             # Reject output that is mostly symbols or OCR artifacts.
-            useful_chars = len(re.findall(r"[\\w]", text, flags=re.UNICODE))
+            useful_chars = len(re.findall(r"[\w]", text, flags=re.UNICODE))
             if useful_chars < 2:
                 continue
             result.append({
@@ -484,7 +484,7 @@ class ScreenshotAnnotator(QDialog):
             if rect_mode:
                 # Exactly one result for the selected rectangle, even if it contains multiple lines.
                 text = " ".join(item["text"] for item in sorted(grouped, key=lambda item: (item["top"], item["left"])))
-                text = re.sub(r"\\s+", " ", text).strip()
+                text = re.sub(r"\s+", " ", text).strip()
                 if text:
                     x1, y1, x2, y2 = left, top, right, bottom
                     width, height = x2 - x1, y2 - y1
