@@ -428,8 +428,27 @@ class ScreenshotAnnotator(QDialog):
         available = screen.availableGeometry()
         default_width = min(1050, available.width())
         width = self._saved_window_width or default_width
-        width = max(480, min(width, available.width()))
+
+        # First place the client area at the screen origin so Qt has established
+        # the native frame geometry. Then account for title-bar/border margins:
+        # QWidget.geometry() excludes the native frame, while availableGeometry()
+        # describes the usable screen including where that frame must fit.
         self.setGeometry(available.left(), available.top(), width, available.height())
+        frame = self.frameGeometry()
+        client = self.geometry()
+        left_margin = client.left() - frame.left()
+        top_margin = client.top() - frame.top()
+        frame_width = max(0, frame.width() - client.width())
+        frame_height = max(0, frame.height() - client.height())
+
+        width = max(1, min(width, available.width() - frame_width))
+        height = max(1, available.height() - frame_height)
+        self.setGeometry(
+            available.left() + left_margin,
+            available.top() + top_margin,
+            width,
+            height,
+        )
 
     def closeEvent(self, event) -> None:
         """Persist the annotator width; its left position and full height are defaults."""
