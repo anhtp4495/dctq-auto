@@ -97,7 +97,10 @@ class ClickableImage(QWidget):
             if self._ocr_boxes:
                 from PySide6.QtCore import QRect
                 for index, item in enumerate(self._ocr_boxes, start=1):
-                    bounds = item.get("bounds", {})
+                    bounds = (
+                        item.get("highlight_bounds", item.get("bounds", {}))
+                        if item.get("matched") else item.get("bounds", {})
+                    )
                     x1 = target.x() + round(bounds.get("left", 0) * scale_x)
                     y1 = target.y() + round(bounds.get("top", 0) * scale_y)
                     x2 = target.x() + round(bounds.get("right", 0) * scale_x)
@@ -552,6 +555,16 @@ class ScreenshotAnnotator(QDialog):
                 "right": max(word["right"] for word in group),
                 "bottom": max(word["bottom"] for word in group),
                 "confidence": round(sum(word["confidence"] for word in group) / len(group), 1),
+                "words": [
+                    {
+                        "text": word["text"],
+                        "left": word["left"],
+                        "top": word["top"],
+                        "right": word["right"],
+                        "bottom": word["bottom"],
+                    }
+                    for word in group
+                ],
             })
         return result
 
@@ -631,10 +644,24 @@ class ScreenshotAnnotator(QDialog):
                         continue
                     center_x = round((x1 + x2) / 2)
                     center_y = round((y1 + y2) / 2)
+                    word_bounds = []
+                    for word in item.get("words", []):
+                        wx1 = max(left, min(right, left + round(word["left"] / scale)))
+                        wy1 = max(top, min(bottom, top + round(word["top"] / scale)))
+                        wx2 = max(wx1, min(right, left + round(word["right"] / scale)))
+                        wy2 = max(wy1, min(bottom, top + round(word["bottom"] / scale)))
+                        if wx2 - wx1 >= 2 and wy2 - wy1 >= 2:
+                            word_bounds.append({
+                                "text": word["text"],
+                                "bounds": {
+                                    "left": wx1, "top": wy1, "right": wx2, "bottom": wy2
+                                },
+                            })
                     self._ocr_elements.append({
                         "name": self.normalize_text(item["text"]),
                         "text": item["text"],
                         "confidence": item["confidence"],
+                        "word_bounds": word_bounds,
                         "bounds": {"left": x1, "top": y1, "right": x2, "bottom": y2},
                         "rect": {"x": x1, "y": y1, "width": width, "height": height},
                         "corners": [
@@ -695,11 +722,35 @@ class ScreenshotAnnotator(QDialog):
 
             if target_normalized:
                 for item in self._ocr_elements:
-                    item["matched"] = target_normalized in item["name"]
+                    item["matched"] = False
+                    item.pop("highlight_bounds", None)
+                    # Match normalized word sequences so punctuation such as "-" or "." is
+                    # treated consistently, then highlight only the matched word(s), not the
+                    # entire OCR line.
+                    words = item.get("word_bounds", [])
+                    for start_index in range(len(words)):
+                        matched_sequence = []
+                        for end_index in range(start_index, len(words)):
+                            matched_sequence.append(words[end_index])
+                            sequence_text = "_".join(
+                                self.normalize_text(word["text"]) for word in matched_sequence
+                            ).strip("_")
+                            if target_normalized in sequence_text:
+                                item["matched"] = True
+                                item["highlight_bounds"] = {
+                                    "left": min(word["bounds"]["left"] for word in matched_sequence),
+                                    "top": min(word["bounds"]["top"] for word in matched_sequence),
+                                    "right": max(word["bounds"]["right"] for word in matched_sequence),
+                                    "bottom": max(word["bounds"]["bottom"] for word in matched_sequence),
+                                }
+                                break
+                        if item["matched"]:
+                            break
                 self.image_view.set_ocr_boxes(self._ocr_elements)
             else:
                 for item in self._ocr_elements:
                     item["matched"] = False
+                    item.pop("highlight_bounds", None)
                 self.image_view.set_ocr_boxes(self._ocr_elements)
 
             items = [item["text"] for item in self._ocr_elements]
