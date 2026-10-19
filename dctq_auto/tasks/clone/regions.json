@@ -4,20 +4,20 @@
       "name": "login",
       "serial": "emulator-5554",
       "recognized_text": "Tên đăng nhập, số điện thoại hoặc email | Mật khẩu | ĐĂNG NHAP",
-      "normalized_text": "ten_dang_nhap_so_dien_thoai_hoac_email | mat_khau | dang_nhap",
+      "normalized_text": "ten_dang_nhap | mat_khau | dang_nhap",
       "recognized_items": [
         "Tên đăng nhập, số điện thoại hoặc email",
         "Mật khẩu",
         "ĐĂNG NHAP"
       ],
       "normalized_items": [
-        "ten_dang_nhap_so_dien_thoai_hoac_email",
+        "ten_dang_nhap",
         "mat_khau",
         "dang_nhap"
       ],
       "elements": [
         {
-          "name": "ten_dang_nhap_so_dien_thoai_hoac_email",
+          "name": "ten_dang_nhap",
           "text": "Tên đăng nhập, số điện thoại hoặc email",
           "confidence": null,
           "bounds": {
