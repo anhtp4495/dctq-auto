@@ -305,7 +305,7 @@ class BotWorker(QThread):
         # OCR boxes were provided from a 1920x1080 reference screenshot.
         reference_width, reference_height = 1920, 1080
         resolution_text = device.shell("wm size")
-        sizes = re.findall(r"(?:Physical|Override) size:\\s*(\\d+)x(\\d+)", resolution_text)
+        sizes = re.findall(r"(?:Physical|Override) size:\s*(\d+)x(\d+)", resolution_text)
         if sizes:
             device_width, device_height = map(int, sizes[-1])
         else:
