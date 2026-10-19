@@ -766,7 +766,11 @@ class MainWindow(QMainWindow):
 
             widgets_to_lock = [
                 widget for widget in central.findChildren(QWidget)
-                if not is_log_or_ancestor(widget) and not is_log_descendant(widget)
+                if (
+                    widget is not self.clear_log_button
+                    and not is_log_or_ancestor(widget)
+                    and not is_log_descendant(widget)
+                )
             ]
 
             # Snapshot every widget's enabled state before disabling any parent.
