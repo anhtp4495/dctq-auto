@@ -279,7 +279,7 @@ class BotWorker(QThread):
         has_password = "mat khau" in normalized
         has_username_hint = any(
             marker in normalized
-            for marker in ("ten dang nhap", "so dien thoai", "email")
+            for marker in ("ten dang nhap", "so dien thoai", "email", "tai khoan")
         )
         has_login_button = "dang nhap" in normalized
         # OCR may miss one field on a frame, so accept the button plus either
@@ -349,6 +349,11 @@ class BotWorker(QThread):
                 break
 
             if not self._is_login_screen(screen_text):
+                normalized_screen = self._normalize_screen_text(screen_text)
+                self.log_message.emit(
+                    f"[{account.username}] OCR màn hình hiện tại: "
+                    f"{normalized_screen[:240] or '(không đọc được chữ)'}"
+                )
                 if success_count:
                     self.log_message.emit(
                         "Đã đăng nhập tài khoản trước đó, nhưng chưa thể chuyển tài khoản "
@@ -363,7 +368,7 @@ class BotWorker(QThread):
                 break
 
             try:
-                ocr_client.tap_ocr_target("ten_dang_nhap_so_dien_thoai_hoac_email")
+                ocr_client.tap_ocr_target("ten_dang_nhap")
                 time.sleep(0.25)
                 device.shell("input keyevent KEYCODE_MOVE_END")
                 device.shell("input keyevent --longpress KEYCODE_DEL")
