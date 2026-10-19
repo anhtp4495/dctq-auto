@@ -607,23 +607,32 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Chưa chọn thiết bị", "Hãy chọn thiết bị ADB trước.")
             return
 
-        # Ẩn cửa sổ chính để không che màn hình cần chụp.
-        self.hide()
-        if serial == "mock":
-            QTimer.singleShot(300, lambda: self._open_screenshot_annotator(None))
-        else:
-            QTimer.singleShot(0, lambda: self._open_screenshot_annotator(str(serial)))
+        # Giữ cửa sổ chính hiển thị; mở cửa sổ chọn tọa độ ở phía trước.
+        self._open_screenshot_annotator(None if serial == "mock" else str(serial))
 
     def _open_screenshot_annotator(self, serial: str | None) -> None:
         try:
             dialog = ScreenshotAnnotator(
-                serial, self, on_ocr_result=self._log_ocr_results
+                serial, self,
+                on_ocr_result=self._log_ocr_results,
+                on_location_result=self._log_coordinate_result,
             )
             dialog.exec()
         finally:
-            self.show()
             self.raise_()
             self.activateWindow()
+
+    def _log_coordinate_result(
+        self, text: str, name: str, x: int, y: int,
+        ratio_x: float, ratio_y: float, message: str | None = None
+    ) -> None:
+        if message:
+            self._log(message)
+            return
+        self._log(
+            f"Đã chọn tọa độ: {text} -> {name}; pixel=({x}, {y}); "
+            f"ratio=({ratio_x:.6f}, {ratio_y:.6f})"
+        )
 
     def _log_ocr_results(
         self, items: list[str], normalized: list[str], locations: list[dict] | None = None
