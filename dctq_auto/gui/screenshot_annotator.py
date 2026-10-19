@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QScrollArea,
+    QSlider,
     QPlainTextEdit,
     QVBoxLayout,
     QWidget,
@@ -241,16 +242,34 @@ class ScreenshotAnnotator(QDialog):
         self.instruction.setWordWrap(True)
         self.instruction.setVisible(False)
 
+        self._zoom_percent = 100
         self.image_view = ClickableImage(
             QPixmap(),
             self._on_image_click,
             lambda: self.mode_combo.currentText() == "Từng vùng",
             self._on_image_rect_selected,
         )
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(self.image_view)
-        root.addWidget(scroll, 1)
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(False)
+        self.scroll_area.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.scroll_area.setWidget(self.image_view)
+        root.addWidget(self.scroll_area, 1)
+
+        zoom_row = QHBoxLayout()
+        zoom_row.addWidget(QLabel("Zoom:"))
+        self.zoom_slider = QSlider(Qt.Orientation.Horizontal)
+        self.zoom_slider.setRange(100, 300)
+        self.zoom_slider.setSingleStep(10)
+        self.zoom_slider.setPageStep(25)
+        self.zoom_slider.setValue(self._zoom_percent)
+        self.zoom_slider.setToolTip("Phóng to ảnh từ 100% đến 300%")
+        self.zoom_slider.valueChanged.connect(self._on_zoom_changed)
+        zoom_row.addWidget(self.zoom_slider, 1)
+        self.zoom_label = QLabel("100%")
+        self.zoom_label.setMinimumWidth(48)
+        self.zoom_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        zoom_row.addWidget(self.zoom_label)
+        root.addLayout(zoom_row)
 
         bottom = QHBoxLayout()
         self.undo_button = QPushButton("Bỏ điểm cuối")
@@ -271,6 +290,23 @@ class ScreenshotAnnotator(QDialog):
 
         if initial_image is not None and initial_image.is_file():
             self._load_screenshot(initial_image)
+
+    def _on_zoom_changed(self, value: int) -> None:
+        self._zoom_percent = value
+        self.zoom_label.setText(f"{value}%")
+        self._apply_zoom()
+
+    def _apply_zoom(self) -> None:
+        """Size the image widget at the selected scale; the scroll area handles panning."""
+        if self._pixmap.isNull():
+            self.image_view.setMinimumSize(480, 270)
+            self.image_view.resize(480, 270)
+            return
+        width = max(1, round(self._pixmap.width() * self._zoom_percent / 100))
+        height = max(1, round(self._pixmap.height() * self._zoom_percent / 100))
+        self.image_view.setMinimumSize(1, 1)
+        self.image_view.resize(width, height)
+        self.image_view.update()
 
     def _on_mode_changed(self, mode: str) -> None:
         """Persist the selected interaction mode and gate OCR to region mode."""
@@ -323,6 +359,7 @@ class ScreenshotAnnotator(QDialog):
         self._ocr_elements = []
         self._ocr_region = None
         self.image_view._pixmap = self._pixmap
+        self._apply_zoom()
         self.image_view.set_points(self._points)
         self.image_view.set_ocr_boxes([])
         self.image_info.setText(
