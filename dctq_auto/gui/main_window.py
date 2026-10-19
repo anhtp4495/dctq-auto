@@ -732,6 +732,7 @@ class MainWindow(QMainWindow):
         )
         dialog.setModal(False)
         dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
+        dialog.finished.connect(self._clear_screenshot_annotator_reference)
         dialog.destroyed.connect(self._clear_screenshot_annotator_reference)
         self._screenshot_annotator = dialog
         self._set_analysis_window_lock(True)
