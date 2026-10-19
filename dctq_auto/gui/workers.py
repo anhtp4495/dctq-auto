@@ -391,13 +391,13 @@ class BotWorker(QThread):
         success_count = 0
         failed_count = 0
         processed_count = 0
+        account_results: list[tuple[str, str]] = []
 
-        def emit_account_progress(status: str) -> None:
+        def emit_account_progress(_status: str = "") -> None:
             self.progress_changed.emit(
                 processed_count,
                 total,
-                f"{success_count} thành công | {failed_count} thất bại | "
-                f"{processed_count}/{total} tài khoản — {status}",
+                f"{success_count} thành công | {failed_count} thất bại",
             )
 
         emit_account_progress("Bắt đầu")
@@ -414,6 +414,7 @@ class BotWorker(QThread):
             except Exception as exc:
                 failed_count += 1
                 processed_count += 1
+                account_results.append((account.username, f"FAILED — lỗi OCR: {exc}"))
                 self.log_message.emit(
                     f"[{account.username}] FAILED — không đọc được màn hình bằng OCR: {exc}. "
                     "Bỏ qua account này và thử account tiếp theo."
@@ -432,6 +433,7 @@ class BotWorker(QThread):
                 )
                 failed_count += 1
                 processed_count += 1
+                account_results.append((account.username, "FAILED — không nhận diện được màn hình đăng nhập"))
                 self.log_message.emit(
                     f"[{account.username}] FAILED — không nhận diện được màn hình đăng nhập; "
                     "bỏ qua account này. Không nhập thông tin vào màn hình chưa xác định."
@@ -476,6 +478,7 @@ class BotWorker(QThread):
             except Exception as exc:
                 failed_count += 1
                 processed_count += 1
+                account_results.append((account.username, f"FAILED — lỗi thao tác đăng nhập: {exc}"))
                 self.log_message.emit(
                     f"[{account.username}] FAILED — không thể nhập thông tin hoặc bấm đăng nhập: "
                     f"{exc}. Bỏ qua account này và thử account tiếp theo."
@@ -553,6 +556,7 @@ class BotWorker(QThread):
                     reason = observed_error
                 else:
                     reason = "không xác nhận được đăng nhập thành công sau 20 giây"
+                account_results.append((account.username, f"FAILED — {reason}"))
                 self.log_message.emit(
                     f"[{account.username}] FAILED — {reason}. "
                     "Bỏ qua account này và chuyển sang account tiếp theo."
@@ -595,6 +599,7 @@ class BotWorker(QThread):
             if not profile_found:
                 failed_count += 1
                 processed_count += 1
+                account_results.append((account.username, "FAILED — không thấy profile quan_chuc sau 60 giây"))
                 self.log_message.emit(
                     f"[{account.username}] FAILED — không thấy profile 'quan_chuc' sau 60 giây; "
                     "bỏ qua account này và thử account tiếp theo."
@@ -650,6 +655,7 @@ class BotWorker(QThread):
 
             success_count += 1
             processed_count += 1
+            account_results.append((account.username, "SUCCESS"))
             self.log_message.emit(
                 f"[{account.username}] SUCCESS — đăng nhập thành công, profile đã tải "
                 f"({success_count} thành công, {failed_count} thất bại)."
@@ -670,6 +676,14 @@ class BotWorker(QThread):
             f"Kết quả Clone: {success_count} thành công, {failed_count} thất bại, "
             f"{max(0, total - processed_count)} chưa xử lý / tổng {total} tài khoản."
         )
+        if account_results:
+            self.log_message.emit("TỔNG KẾT TỪNG ACCOUNT:")
+            for username, result in account_results:
+                self.log_message.emit(f"  {username}: {result}")
+        processed_names = {username for username, _result in account_results}
+        for account in accounts:
+            if account.username not in processed_names:
+                self.log_message.emit(f"  {account.username}: NOT PROCESSED — chưa chạy")
         if self._config.get("clone_daily_check_in") or self._config.get("clone_guild_check_in") or self._config.get("clone_receive_lucky_bag") or self._config.get("clone_logout"):
             self.log_message.emit(
                 "Lưu ý: điểm danh, báo danh quân đoàn, nhận túi phúc và đăng xuất "
