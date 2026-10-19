@@ -14,7 +14,6 @@ import pytesseract
 from PySide6.QtCore import QPoint, Qt
 from PySide6.QtGui import QGuiApplication, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
-    QComboBox,
     QDialog,
     QDialogButtonBox,
     QFormLayout,
@@ -160,9 +159,12 @@ class ClickableImage(QWidget):
 class ScreenshotAnnotator(QDialog):
     """Capture an ADB screenshot and save point/region coordinates from that image."""
 
-    def __init__(self, serial: str | None, parent=None, on_ocr_result=None) -> None:
+    def __init__(
+        self, serial: str | None, parent=None, on_ocr_result=None, on_location_result=None
+    ) -> None:
         super().__init__(parent)
         self._on_ocr_result = on_ocr_result
+        self._on_location_result = on_location_result
         self.serial = serial
         self.capture_desktop = serial is None
         self.setWindowTitle(
@@ -174,6 +176,7 @@ class ScreenshotAnnotator(QDialog):
         self._image_path: Path | None = None
         self._pixmap = QPixmap()
         self._points: list[tuple[int, int, str]] = []
+        self._on_location_result = on_location_result
 
         root = QVBoxLayout(self)
         heading = QLabel(
@@ -196,14 +199,8 @@ class ScreenshotAnnotator(QDialog):
         root.addLayout(toolbar)
 
         settings = QFormLayout()
-        self.mode_combo = QComboBox()
-        self.mode_combo.addItem("Chọn điểm ADB (mỗi lần nhấp đặt tên)", "point")
-        self.mode_combo.addItem("Chọn vùng 4 góc để phân tích ảnh", "region")
         self.screen_name = QLineEdit("captured")
         self.screen_name.setToolTip("Tên màn hình lưu trong locations.json")
-        self.point_name = QLineEdit("button")
-        self.point_name.setToolTip("Tên gợi ý cho điểm kế tiếp")
-        self.region_name = QLineEdit("analysis_region")
         self.ocr_text = QLineEdit()
         self.ocr_text.setPlaceholderText("Text OCR nhận diện được...")
         self.normalized_text = QLineEdit()
@@ -224,10 +221,7 @@ class ScreenshotAnnotator(QDialog):
         self.ocr_locations.setPlaceholderText("Tọa độ 4 góc và trung điểm của từng text OCR")
         self.ocr_locations.setMaximumHeight(110)
         self._ocr_elements: list[dict] = []
-        settings.addRow("Chế độ:", self.mode_combo)
         settings.addRow("Tên màn hình:", self.screen_name)
-        settings.addRow("Tên điểm tiếp theo:", self.point_name)
-        settings.addRow("Tên vùng 4 góc:", self.region_name)
         settings.addRow("Text OCR (gộp):", self.ocr_text)
         settings.addRow("Tên không dấu:", self.normalized_text)
         settings.addRow("Số text cần tách:", self.ocr_item_count)
@@ -243,7 +237,7 @@ class ScreenshotAnnotator(QDialog):
         self.image_view = ClickableImage(
             QPixmap(),
             self._on_image_click,
-            lambda: self.mode_combo.currentData() == "region",
+            lambda: False,
             self._on_image_rect_selected,
         )
         scroll = QScrollArea()
@@ -298,8 +292,8 @@ class ScreenshotAnnotator(QDialog):
                 f"{self._image_path} — ảnh gốc {self._pixmap.width()}×{self._pixmap.height()} px"
             )
             self.instruction.setText(
-                "Chế độ điểm: nhấp để chọn tọa độ. Chế độ vùng 4 góc: kéo chuột từ một góc "
-                "sang góc đối diện để tạo hình chữ nhật; 4 góc sẽ được điền tự động."
+                "Nhấp vào vị trí trên ảnh rồi nhập text/tên cho điểm đó. "
+                "OCR sẽ phân tích toàn bộ ảnh; kết quả và tọa độ được ghi vào nhật ký cửa sổ chính."
             )
             self.image_view.update()
         except Exception as exc:
@@ -308,35 +302,28 @@ class ScreenshotAnnotator(QDialog):
     def _on_image_click(self, x: int, y: int) -> None:
         if self._pixmap.isNull():
             return
-        if self.mode_combo.currentData() == "region":
-            names = ["top_left", "top_right", "bottom_right", "bottom_left"]
-            if len(self._points) >= 4:
-                QMessageBox.information(
-                    self, "Đã đủ 4 điểm", "Hãy lưu vùng hoặc xóa điểm để chọn lại."
-                )
-                return
-            label = names[len(self._points)]
-        else:
-            suggested = self.point_name.text().strip() or f"point_{len(self._points) + 1}"
-            label, accepted = QInputDialog.getText(
-                self, "Đặt tên tọa độ", "Tên điểm (ví dụ guild_check_in):",
-                text=suggested,
-            )
-            if not accepted:
-                return
-            label = label.strip()
-            if not label:
-                QMessageBox.warning(self, "Thiếu tên", "Tên điểm không được để trống.")
-                return
-            self.point_name.setText(label)
+        text, accepted = QInputDialog.getText(
+            self, "Đặt tên tọa độ", "Nhập text/nút tại vị trí này (ví dụ: Đăng nhập):",
+            text="",
+        )
+        if not accepted:
+            return
+        text = text.strip()
+        if not text:
+            QMessageBox.warning(self, "Thiếu text", "Hãy nhập text hoặc tên cho tọa độ.")
+            return
+        label = self.normalize_text(text) or text
         self._points.append((x, y, label))
         self.image_view.set_points(self._points)
         ratio_x = x / self._pixmap.width()
         ratio_y = y / self._pixmap.height()
-        self.instruction.setText(
-            f"Đã chọn {len(self._points)} điểm — {label}: pixel=({x}, {y}), "
+        message = (
+            f"Đã chọn tọa độ: {text} -> {label}; pixel=({x}, {y}); "
             f"ratio=({ratio_x:.6f}, {ratio_y:.6f})"
         )
+        self.instruction.setText(message)
+        if self._on_location_result is not None:
+            self._on_location_result(text, label, x, y, ratio_x, ratio_y)
 
     def _on_image_rect_selected(self, left: int, top: int, right: int, bottom: int) -> None:
         """Convert a dragged rectangle into four consistently aligned corners."""
@@ -440,21 +427,11 @@ class ScreenshotAnnotator(QDialog):
         if self._image_path is None or self._pixmap.isNull():
             QMessageBox.warning(self, "Chưa có ảnh", "Hãy chụp màn hình trước.")
             return
-        if self.mode_combo.currentData() != "region" or len(self._points) != 4:
-            QMessageBox.information(
-                self,
-                "Chưa chọn vùng",
-                "Hãy chọn chế độ vùng 4 góc và kéo chuột tạo hình chữ nhật trước khi chạy OCR.",
-            )
-            return
-
-        left = min(point[0] for point in self._points)
-        top = min(point[1] for point in self._points)
-        right = max(point[0] for point in self._points)
-        bottom = max(point[1] for point in self._points)
         try:
             with Image.open(self._image_path) as screenshot:
-                crop = screenshot.convert("RGB").crop((left, top, right + 1, bottom + 1))
+                full_image = screenshot.convert("RGB")
+                left, top = 0, 0
+                crop = full_image
             try:
                 ocr_data = pytesseract.image_to_data(
                     crop, lang="vie+eng", config="--psm 6",
@@ -525,7 +502,7 @@ class ScreenshotAnnotator(QDialog):
                 )
             else:
                 self.instruction.setText(
-                    f"Đã tách {len(items)} text. Mỗi text có bounding RECT, 4 góc và trung điểm; "
+                    f"Đã tách {len(items)} text trên toàn ảnh. Mỗi text có bounding RECT, 4 góc và trung điểm; "
                     "kiểm tra lại nếu OCR chia cụm chưa đúng."
                 )
             if normalized_items and normalized_items[0]:
@@ -563,18 +540,20 @@ class ScreenshotAnnotator(QDialog):
         if self._pixmap.isNull() or self._image_path is None:
             QMessageBox.warning(self, "Chưa có ảnh", "Hãy chụp màn hình trước.")
             return
-        if not self._points:
-            QMessageBox.warning(self, "Chưa chọn điểm", "Hãy nhấp chọn ít nhất một điểm trên ảnh.")
+        if not self._points and not self._ocr_elements:
+            QMessageBox.warning(self, "Chưa có tọa độ", "Hãy nhấp chọn điểm hoặc chạy OCR trước.")
             return
 
         width, height = self._pixmap.width(), self._pixmap.height()
-        mode = self.mode_combo.currentData()
+        screen = self.screen_name.text().strip()
+        if not screen:
+            QMessageBox.warning(self, "Thiếu tên màn hình", "Tên màn hình không được để trống.")
+            return
         try:
-            if mode == "point":
-                screen = self.screen_name.text().strip()
-                if not screen:
-                    raise ValueError("Tên màn hình không được để trống.")
-                data = self._read_json(LOCATIONS_PATH, {"reference_resolution": [width, height], "screens": {}})
+            if self._points:
+                data = self._read_json(
+                    LOCATIONS_PATH, {"reference_resolution": [width, height], "screens": {}}
+                )
                 data.setdefault("reference_resolution", [width, height])
                 data.setdefault("screens", {})
                 if not isinstance(data["screens"], dict):
@@ -584,26 +563,17 @@ class ScreenshotAnnotator(QDialog):
                     raise ValueError(f"Màn hình {screen!r} trong locations.json không hợp lệ.")
                 for x, y, label in self._points:
                     screen_data[label] = {
-                        "x": round(x / width, 6),
-                        "y": round(y / height, 6),
-                        "x_px": x,
-                        "y_px": y,
+                        "x": round(x / width, 6), "y": round(y / height, 6),
+                        "x_px": x, "y_px": y,
                     }
                 LOCATIONS_PATH.parent.mkdir(parents=True, exist_ok=True)
                 LOCATIONS_PATH.write_text(
-                    json.dumps(data, ensure_ascii=False, indent=2) + "\n",
-                    encoding="utf-8",
+                    json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
                 )
-                message = f"Đã lưu {len(self._points)} điểm vào {LOCATIONS_PATH}"
-            else:
-                if len(self._points) != 4:
-                    raise ValueError(f"Vùng cần đúng 4 góc; hiện có {len(self._points)} điểm.")
-                name = self.region_name.text().strip()
-                if not name:
-                    raise ValueError("Tên vùng không được để trống.")
+
+            if self._ocr_elements:
                 region = {
-                    "name": name,
-                    "serial": self.serial or "desktop",
+                    "name": screen, "serial": self.serial or "desktop",
                     "recognized_text": self.ocr_text.text().strip(),
                     "normalized_text": self.normalized_text.text().strip(),
                     "recognized_items": [
@@ -617,38 +587,28 @@ class ScreenshotAnnotator(QDialog):
                     "elements": self._ocr_elements,
                     "screenshot": str(self._image_path),
                     "image_resolution": [width, height],
-                    "corners_order": ["top_left", "top_right", "bottom_right", "bottom_left"],
-                    "corners": [
-                        {
-                            "name": label,
-                            "x_px": x,
-                            "y_px": y,
-                            "x_ratio": round(x / width, 6),
-                            "y_ratio": round(y / height, 6),
-                        }
-                        for x, y, label in self._points
-                    ],
-                    "bounds": {
-                        "left": min(p[0] for p in self._points),
-                        "top": min(p[1] for p in self._points),
-                        "right": max(p[0] for p in self._points),
-                        "bottom": max(p[1] for p in self._points),
-                    },
                     "saved_at": datetime.now().astimezone().isoformat(timespec="seconds"),
                 }
                 data = self._read_json(REGIONS_PATH, {"regions": {}})
                 data.setdefault("regions", {})
                 if not isinstance(data["regions"], dict):
                     raise ValueError("Khóa 'regions' trong regions.json không hợp lệ.")
-                data["regions"][name] = region
+                data["regions"][screen] = region
                 REGIONS_PATH.parent.mkdir(parents=True, exist_ok=True)
                 REGIONS_PATH.write_text(
-                    json.dumps(data, ensure_ascii=False, indent=2) + "\n",
-                    encoding="utf-8",
+                    json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
                 )
-                message = f"Đã lưu vùng {name!r} vào {REGIONS_PATH}"
+
+            parts = []
+            if self._points:
+                parts.append(f"{len(self._points)} tọa độ vào {LOCATIONS_PATH}")
+            if self._ocr_elements:
+                parts.append(f"{len(self._ocr_elements)} text OCR vào {REGIONS_PATH}")
+            message = "Đã lưu " + " và ".join(parts)
             QMessageBox.information(self, "Đã lưu tọa độ", message)
             self.instruction.setText(message)
+            if self._on_location_result is not None:
+                self._on_location_result("LƯU", screen, 0, 0, 0.0, 0.0, message)
         except (OSError, json.JSONDecodeError, ValueError) as exc:
             QMessageBox.critical(self, "Không lưu được tọa độ", str(exc))
 
