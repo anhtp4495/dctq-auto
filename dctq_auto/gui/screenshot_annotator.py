@@ -219,6 +219,11 @@ class ScreenshotAnnotator(QDialog):
         self.normalized_items = QPlainTextEdit()
         self.normalized_items.setPlaceholderText("moi_dong_la_mot_ten")
         self.normalized_items.setMaximumHeight(76)
+        self.ocr_locations = QPlainTextEdit()
+        self.ocr_locations.setReadOnly(True)
+        self.ocr_locations.setPlaceholderText("Tọa độ 4 góc và trung điểm của từng text OCR")
+        self.ocr_locations.setMaximumHeight(110)
+        self._ocr_elements: list[dict] = []
         settings.addRow("Chế độ:", self.mode_combo)
         settings.addRow("Tên màn hình:", self.screen_name)
         settings.addRow("Tên điểm tiếp theo:", self.point_name)
@@ -228,6 +233,7 @@ class ScreenshotAnnotator(QDialog):
         settings.addRow("Số text cần tách:", self.ocr_item_count)
         settings.addRow("Các text độc lập:", self.ocr_items)
         settings.addRow("Tên chuẩn hóa từng text:", self.normalized_items)
+        settings.addRow("Location từng text:", self.ocr_locations)
         root.addLayout(settings)
 
         self.instruction = QLabel("Chụp màn hình để bắt đầu.")
@@ -358,8 +364,8 @@ class ScreenshotAnnotator(QDialog):
         self.normalized_text.setText(self.normalize_text(text))
 
     @staticmethod
-    def _split_ocr_words(data: dict, target_count: int) -> list[str]:
-        """Split OCR words into independent horizontal groups using the largest gaps."""
+    def _split_ocr_words(data: dict, target_count: int) -> list[dict]:
+        """Group OCR words and retain each group's bounding rectangle."""
         words = []
         count = len(data.get("text", []))
         for i in range(count):
@@ -383,23 +389,32 @@ class ScreenshotAnnotator(QDialog):
             except (ValueError, TypeError, KeyError):
                 continue
             words.append({
-                "text": text, "x": x, "y": y, "right": x + width,
-                "height": height, "line": line_key,
+                "text": text, "left": x, "top": y, "right": x + width,
+                "bottom": y + height, "line": line_key,
             })
         if not words:
             return []
 
+        def combine(group: list[dict]) -> dict:
+            return {
+                "text": " ".join(word["text"] for word in group).strip(),
+                "left": min(word["left"] for word in group),
+                "top": min(word["top"] for word in group),
+                "right": max(word["right"] for word in group),
+                "bottom": max(word["bottom"] for word in group),
+            }
+
         line_keys = sorted(
             {word["line"] for word in words},
-            key=lambda key: min(word["y"] for word in words if word["line"] == key),
+            key=lambda key: min(word["top"] for word in words if word["line"] == key),
         )
         if len(line_keys) == 1:
-            ordered = sorted(words, key=lambda word: word["x"])
+            ordered = sorted(words, key=lambda word: word["left"])
             if target_count <= 1 or len(ordered) < target_count:
-                return [" ".join(word["text"] for word in ordered)]
+                return [combine(ordered)]
             gaps = []
             for i in range(len(ordered) - 1):
-                gap = ordered[i + 1]["x"] - ordered[i]["right"]
+                gap = ordered[i + 1]["left"] - ordered[i]["right"]
                 gaps.append((gap, i))
             split_positions = sorted(
                 index for _gap, index in sorted(gaps, reverse=True)[:target_count - 1]
@@ -410,18 +425,15 @@ class ScreenshotAnnotator(QDialog):
                 groups.append(ordered[start:split_at + 1])
                 start = split_at + 1
             groups.append(ordered[start:])
-            return [
-                " ".join(word["text"] for word in group).strip()
-                for group in groups if group
-            ]
+            return [combine(group) for group in groups if group]
 
         groups = []
         for key in line_keys:
             line_words = sorted(
                 (word for word in words if word["line"] == key),
-                key=lambda word: word["x"],
+                key=lambda word: word["left"],
             )
-            groups.append(" ".join(word["text"] for word in line_words).strip())
+            groups.append(combine(line_words))
         return groups
 
     def recognize_text(self) -> None:
@@ -453,14 +465,59 @@ class ScreenshotAnnotator(QDialog):
                     crop, lang="eng", config="--psm 6",
                     output_type=pytesseract.Output.DICT,
                 )
-            items = self._split_ocr_words(ocr_data, self.ocr_item_count.value())
-            combined = " | ".join(items)
-            self.ocr_text.setText(combined)
-            self.ocr_items.setPlainText("\n".join(items))
+
+            grouped = self._split_ocr_words(ocr_data, self.ocr_item_count.value())
+            items = [item["text"] for item in grouped]
             normalized_items = [self.normalize_text(item) for item in items]
+            self._ocr_elements = []
+            for text, name, item in zip(items, normalized_items, grouped):
+                x1 = left + item["left"]
+                y1 = top + item["top"]
+                x2 = left + item["right"]
+                y2 = top + item["bottom"]
+                center_x = round((x1 + x2) / 2)
+                center_y = round((y1 + y2) / 2)
+                self._ocr_elements.append({
+                    "name": name,
+                    "text": text,
+                    "bounds": {"left": x1, "top": y1, "right": x2, "bottom": y2},
+                    "corners": [
+                        {"name": "top_left", "x_px": x1, "y_px": y1},
+                        {"name": "top_right", "x_px": x2, "y_px": y1},
+                        {"name": "bottom_right", "x_px": x2, "y_px": y2},
+                        {"name": "bottom_left", "x_px": x1, "y_px": y2},
+                    ],
+                    "center": {"x_px": center_x, "y_px": center_y},
+                    "center_ratio": {
+                        "x": round(center_x / self._pixmap.width(), 6),
+                        "y": round(center_y / self._pixmap.height(), 6),
+                    },
+                    "bounds_ratio": {
+                        "left": round(x1 / self._pixmap.width(), 6),
+                        "top": round(y1 / self._pixmap.height(), 6),
+                        "right": round(x2 / self._pixmap.width(), 6),
+                        "bottom": round(y2 / self._pixmap.height(), 6),
+                    },
+                })
+
+            self.ocr_text.setText(" | ".join(items))
+            self.ocr_items.setPlainText("\n".join(items))
             self.normalized_items.setPlainText("\n".join(normalized_items))
+            location_lines = []
+            for item in self._ocr_elements:
+                b = item["bounds"]
+                c = item["center"]
+                location_lines.append(
+                    f'{item["name"]}: TL=({b["left"]},{b["top"]}) '
+                    f'TR=({b["right"]},{b["top"]}) '
+                    f'BR=({b["right"]},{b["bottom"]}) '
+                    f'BL=({b["left"]},{b["bottom"]}) '
+                    f'CENTER=({c["x_px"]},{c["y_px"]})'
+                )
+            self.ocr_locations.setPlainText("\n".join(location_lines))
+
             if self._on_ocr_result is not None:
-                self._on_ocr_result(items, normalized_items)
+                self._on_ocr_result(items, normalized_items, self._ocr_elements)
             if len(items) == 1 and self.ocr_item_count.value() > 1:
                 self.instruction.setText(
                     "OCR chỉ tìm được một cụm chữ. Hãy mở rộng vùng chọn hoặc sửa thủ công "
@@ -468,8 +525,8 @@ class ScreenshotAnnotator(QDialog):
                 )
             else:
                 self.instruction.setText(
-                    f"Đã tách {len(items)} text độc lập. Mỗi dòng có tên chuẩn hóa riêng; "
-                    "hãy kiểm tra và sửa nếu OCR chia cụm chưa đúng."
+                    f"Đã tách {len(items)} text. Mỗi text có bounding RECT, 4 góc và trung điểm; "
+                    "kiểm tra lại nếu OCR chia cụm chưa đúng."
                 )
             if normalized_items and normalized_items[0]:
                 self.normalized_text.setText(normalized_items[0])
@@ -557,6 +614,7 @@ class ScreenshotAnnotator(QDialog):
                         item.strip() for item in self.normalized_items.toPlainText().splitlines()
                         if item.strip()
                     ],
+                    "elements": self._ocr_elements,
                     "screenshot": str(self._image_path),
                     "image_resolution": [width, height],
                     "corners_order": ["top_left", "top_right", "bottom_right", "bottom_left"],
