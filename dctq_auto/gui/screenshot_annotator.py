@@ -16,16 +16,16 @@ from PySide6.QtGui import QGuiApplication, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QDialog,
     QFileDialog,
-    QDialogButtonBox,
     QComboBox,
+    QFormLayout,
     QHBoxLayout,
     QInputDialog,
     QLabel,
+    QLineEdit,
     QMessageBox,
     QPushButton,
     QScrollArea,
     QSlider,
-    QPlainTextEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -58,8 +58,30 @@ class ClickableImage(QWidget):
         self._ocr_boxes: list[dict] = []
         self._drag_start: QPoint | None = None
         self._drag_current: QPoint | None = None
+        self._pan_start: QPoint | None = None
+        self._pan_scroll_start: tuple[int, int] | None = None
+        self._scroll_area: QScrollArea | None = None
+        self._space_pressed = False
         self.setMinimumSize(480, 270)
         self.setMouseTracking(True)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+
+    def set_scroll_area(self, scroll_area: QScrollArea) -> None:
+        self._scroll_area = scroll_area
+
+    def keyPressEvent(self, event) -> None:
+        if event.key() == Qt.Key.Key_Space:
+            self._space_pressed = True
+            event.accept()
+            return
+        super().keyPressEvent(event)
+
+    def keyReleaseEvent(self, event) -> None:
+        if event.key() == Qt.Key.Key_Space:
+            self._space_pressed = False
+            event.accept()
+            return
+        super().keyReleaseEvent(event)
 
     def set_points(self, points: list[tuple[int, int, str]]) -> None:
         self._points = list(points)
@@ -140,10 +162,23 @@ class ClickableImage(QWidget):
             painter.drawRect(QRect(self._drag_start, self._drag_current).normalized())
 
     def mousePressEvent(self, event) -> None:
+        point = event.position().toPoint()
+        pan_requested = (
+            event.button() in (Qt.MouseButton.MiddleButton, Qt.MouseButton.RightButton)
+            or (event.button() == Qt.MouseButton.LeftButton and self._space_pressed)
+        )
+        if pan_requested and self._scroll_area is not None:
+            self._pan_start = point
+            self._pan_scroll_start = (
+                self._scroll_area.horizontalScrollBar().value(),
+                self._scroll_area.verticalScrollBar().value(),
+            )
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
+            event.accept()
+            return
         if event.button() != Qt.MouseButton.LeftButton or self._pixmap.isNull():
             return
         target = self._target_rect()
-        point = event.position().toPoint()
         if not target.contains(point):
             return
         if self._is_region_mode():
@@ -155,8 +190,17 @@ class ClickableImage(QWidget):
         self._on_image_click(x, y)
 
     def mouseMoveEvent(self, event) -> None:
+        point = event.position().toPoint()
+        if self._pan_start is not None and self._pan_scroll_start is not None:
+            delta = point - self._pan_start
+            self._scroll_area.horizontalScrollBar().setValue(
+                self._pan_scroll_start[0] - delta.x()
+            )
+            self._scroll_area.verticalScrollBar().setValue(
+                self._pan_scroll_start[1] - delta.y()
+            )
+            return
         if self._drag_start is not None:
-            point = event.position().toPoint()
             target = self._target_rect()
             x = min(max(point.x(), target.left()), target.right())
             y = min(max(point.y(), target.top()), target.bottom())
@@ -164,6 +208,14 @@ class ClickableImage(QWidget):
             self.update()
 
     def mouseReleaseEvent(self, event) -> None:
+        if self._pan_start is not None and event.button() in (
+            Qt.MouseButton.LeftButton, Qt.MouseButton.MiddleButton, Qt.MouseButton.RightButton
+        ):
+            self._pan_start = None
+            self._pan_scroll_start = None
+            self.unsetCursor()
+            event.accept()
+            return
         if event.button() != Qt.MouseButton.LeftButton or self._drag_start is None:
             return
         start = self._drag_start
@@ -197,6 +249,11 @@ class ScreenshotAnnotator(QDialog):
             if self.capture_desktop
             else "Chụp màn hình LDPlayer và chọn tọa độ"
         )
+        self.setWindowFlags(
+            self.windowFlags()
+            | Qt.WindowType.WindowMinimizeButtonHint
+            | Qt.WindowType.WindowMaximizeButtonHint
+        )
         self.resize(1050, 760)
         self._image_path: Path | None = None
         self._pixmap = QPixmap()
@@ -207,12 +264,26 @@ class ScreenshotAnnotator(QDialog):
         root = QVBoxLayout(self)
 
         toolbar = QHBoxLayout()
-        self.screenshot_dir_label = QLabel("artifacts/screenshots")
-        self.screenshot_dir_label.setToolTip("Thư mục chứa ảnh chụp màn hình")
-        toolbar.addWidget(self.screenshot_dir_label)
-        self.image_info = QLabel("Chưa có ảnh.")
-        self.image_info.setWordWrap(True)
-        toolbar.addWidget(self.image_info, 1)
+        self.capture_button = QPushButton("📂")
+        self.capture_button.setFixedSize(34, 30)
+        self.capture_button.setToolTip("Chọn file ảnh")
+        self.capture_button.clicked.connect(self.choose_screenshot_file)
+        toolbar.addWidget(self.capture_button)
+
+        self.camera_button = QPushButton("📷")
+        self.camera_button.setFixedSize(34, 30)
+        self.camera_button.setToolTip("Chụp màn hình mới từ LDPlayer hoặc desktop")
+        self.camera_button.clicked.connect(self.capture_screenshot)
+        toolbar.addWidget(self.camera_button)
+
+        self.coordinate_input_button = QPushButton("⌖")
+        self.coordinate_input_button.setFixedSize(34, 30)
+        self.coordinate_input_button.setToolTip(
+            "Nhập X, Y, Width, Height theo pixel ảnh gốc"
+        )
+        self.coordinate_input_button.clicked.connect(self.input_coordinates)
+        toolbar.addWidget(self.coordinate_input_button)
+
         self.mode_combo = QComboBox()
         self.mode_combo.addItems(["Từng điểm", "Từng vùng"])
         self.mode_combo.setToolTip(
@@ -224,16 +295,10 @@ class ScreenshotAnnotator(QDialog):
         self.mode_combo.setCurrentText(saved_mode)
         self.mode_combo.currentTextChanged.connect(self._on_mode_changed)
         toolbar.addWidget(self.mode_combo)
-        self.coordinate_input_button = QPushButton("⌖")
-        self.coordinate_input_button.setFixedSize(28, 28)
-        self.coordinate_input_button.setToolTip(
-            "Nhập tọa độ point (x,y) hoặc RECT (x,y,w,h) theo pixel ảnh gốc"
-        )
-        self.coordinate_input_button.clicked.connect(self.input_coordinates)
-        toolbar.addWidget(self.coordinate_input_button)
-        self.capture_button = QPushButton("Chọn file ảnh")
-        self.capture_button.clicked.connect(self.choose_screenshot_file)
-        toolbar.addWidget(self.capture_button)
+
+        self.image_info = QLabel("Chưa có ảnh.")
+        self.image_info.setWordWrap(True)
+        toolbar.addWidget(self.image_info, 1)
         root.addLayout(toolbar)
 
         self._ocr_elements: list[dict] = []
@@ -253,6 +318,7 @@ class ScreenshotAnnotator(QDialog):
         self.scroll_area.setWidgetResizable(False)
         self.scroll_area.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.scroll_area.setWidget(self.image_view)
+        self.image_view.set_scroll_area(self.scroll_area)
         root.addWidget(self.scroll_area, 1)
 
         zoom_row = QHBoxLayout()
@@ -371,32 +437,105 @@ class ScreenshotAnnotator(QDialog):
         self.image_view.update()
 
     def input_coordinates(self) -> None:
-        """Set a point or OCR rectangle by typing original-image pixel coordinates."""
+        """Open a validated X/Y/Width/Height editor in original-image pixels."""
         if self._pixmap.isNull():
             QMessageBox.information(self, "Chưa có ảnh", "Hãy mở ảnh chụp màn hình trước.")
             return
 
-        value, accepted = QInputDialog.getText(
-            self,
-            "Nhập tọa độ",
-            "Nhập point: x,y  hoặc RECT: x,y,w,h (pixel ảnh gốc):",
-            text="",
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Nhập vị trí")
+        form = QFormLayout(dialog)
+        x_input = QLineEdit()
+        y_input = QLineEdit()
+        width_input = QLineEdit()
+        height_input = QLineEdit()
+        for widget, placeholder in (
+            (x_input, "Bắt buộc, từ 0 đến chiều rộng ảnh - 1"),
+            (y_input, "Bắt buộc, từ 0 đến chiều cao ảnh - 1"),
+            (width_input, "Để trống nếu nhập một điểm"),
+            (height_input, "Để trống nếu nhập một điểm"),
+        ):
+            widget.setPlaceholderText(placeholder)
+        form.addRow("X:", x_input)
+        form.addRow("Y:", y_input)
+        form.addRow("Width:", width_input)
+        form.addRow("Height:", height_input)
+        hint = QLabel(
+            f"Ảnh gốc: {self._pixmap.width()} × {self._pixmap.height()} px. "
+            "Width và Height phải cùng để trống hoặc cùng là số lớn hơn 0."
         )
-        if not accepted:
-            return
-        try:
-            parts = [int(part.strip()) for part in value.split(",")]
-            if len(parts) not in (2, 4):
-                raise ValueError
+        hint.setWordWrap(True)
+        form.addRow(hint)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        form.addRow(buttons)
+
+        fields = {
+            "x": x_input, "y": y_input,
+            "width": width_input, "height": height_input,
+        }
+
+        def mark_invalid(names: set[str]) -> None:
+            for name, widget in fields.items():
+                widget.setStyleSheet(
+                    "QLineEdit { border: 1px solid #dc2626; background: #fff1f2; }"
+                    if name in names else ""
+                )
+
+        def accept_coordinates() -> None:
+            invalid: set[str] = set()
+            values: dict[str, int | None] = {}
+            for name in ("x", "y", "width", "height"):
+                raw = fields[name].text().strip()
+                if not raw:
+                    values[name] = None
+                    continue
+                try:
+                    values[name] = int(raw)
+                except ValueError:
+                    values[name] = None
+                    invalid.add(name)
+
+            if values["x"] is None:
+                invalid.add("x")
+            if values["y"] is None:
+                invalid.add("y")
             image_width, image_height = self._pixmap.width(), self._pixmap.height()
-            x, y = parts[0], parts[1]
-            if len(parts) == 2:
-                if not (0 <= x < image_width and 0 <= y < image_height):
-                    raise ValueError
+            if values["x"] is not None and not (0 <= values["x"] < image_width):
+                invalid.add("x")
+            if values["y"] is not None and not (0 <= values["y"] < image_height):
+                invalid.add("y")
+
+            width_empty = not width_input.text().strip()
+            height_empty = not height_input.text().strip()
+            is_point = width_empty and height_empty
+            if width_empty != height_empty:
+                invalid.update(("width", "height"))
+            elif not is_point:
+                for name in ("width", "height"):
+                    if values[name] is None or values[name] <= 0:
+                        invalid.add(name)
+                if not invalid and values["x"] is not None and values["y"] is not None:
+                    if values["x"] + values["width"] > image_width:
+                        invalid.add("width")
+                    if values["y"] + values["height"] > image_height:
+                        invalid.add("height")
+
+            mark_invalid(invalid)
+            if invalid:
+                hint.setText(
+                    "Giá trị chưa hợp lệ: X/Y phải nằm trong ảnh; Width/Height phải cùng để trống "
+                    "hoặc là số nguyên > 0 và vùng RECT phải nằm trọn trong ảnh."
+                )
+                return
+
+            x, y = values["x"], values["y"]
+            self._ocr_elements = []
+            self.image_view.set_ocr_boxes([])
+            if is_point:
                 self.mode_combo.setCurrentText("Từng điểm")
                 self._ocr_region = None
-                self._ocr_elements = []
-                self.image_view.set_ocr_boxes([])
                 self._points = [(x, y, "manual_point")]
                 self.image_view.set_points(self._points)
                 self.instruction.setText(f"Đã nhập point: ({x}, {y}) trên ảnh gốc.")
@@ -405,41 +544,32 @@ class ScreenshotAnnotator(QDialog):
                         "Point nhập tay", "manual_point", x, y,
                         x / image_width, y / image_height,
                     )
-                return
-
-            width, height = parts[2], parts[3]
-            if width <= 0 or height <= 0:
-                raise ValueError
-            right, bottom = x + width, y + height
-            if not (0 <= x < image_width and 0 <= y < image_height
-                    and right <= image_width and bottom <= image_height):
-                raise ValueError
-
-            self.mode_combo.setCurrentText("Từng vùng")
-            self._ocr_region = (x, y, right, bottom)
-            self._ocr_elements = []
-            self.image_view.set_ocr_boxes([])
-            self._points = [
-                (x, y, "manual_rect_top_left"),
-                (right, y, "manual_rect_top_right"),
-                (right, bottom, "manual_rect_bottom_right"),
-                (x, bottom, "manual_rect_bottom_left"),
-            ]
-            self.image_view.set_points(self._points)
-            self.instruction.setText(
-                f"Đã nhập RECT: x={x}, y={y}, w={width}, h={height}. "
-                "Nhấn Phân tích (OCR) để nhận diện chữ trong vùng này."
-            )
-            if self._on_location_result is not None:
-                self._on_location_result(
-                    "RECT nhập tay", "manual_rect", x, y,
-                    x / image_width, y / image_height,
+            else:
+                width, height = values["width"], values["height"]
+                right, bottom = x + width, y + height
+                self.mode_combo.setCurrentText("Từng vùng")
+                self._ocr_region = (x, y, right, bottom)
+                self._points = [
+                    (x, y, "manual_rect_top_left"),
+                    (right, y, "manual_rect_top_right"),
+                    (right, bottom, "manual_rect_bottom_right"),
+                    (x, bottom, "manual_rect_bottom_left"),
+                ]
+                self.image_view.set_points(self._points)
+                self.instruction.setText(
+                    f"Đã nhập RECT: x={x}, y={y}, w={width}, h={height}. "
+                    "Nhấn Phân tích (OCR) để nhận diện chữ trong vùng này."
                 )
-        except (ValueError, TypeError):
-            QMessageBox.warning(
-                self, "Tọa độ không hợp lệ",
-                "Hãy nhập x,y hoặc x,y,w,h bằng số nguyên; tọa độ phải nằm trong kích thước ảnh gốc.",
-            )
+                if self._on_location_result is not None:
+                    self._on_location_result(
+                        "RECT nhập tay", "manual_rect", x, y,
+                        x / image_width, y / image_height,
+                    )
+            dialog.accept()
+
+        buttons.accepted.connect(accept_coordinates)
+        buttons.rejected.connect(dialog.reject)
+        dialog.exec()
 
     def capture_screenshot(self) -> None:
         """Capture a screenshot when invoked programmatically."""
