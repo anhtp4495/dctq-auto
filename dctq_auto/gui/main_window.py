@@ -330,6 +330,9 @@ class MainWindow(QMainWindow):
         self.progress_bar.setValue(0)
         self.progress_bar.setFormat("%p%")
         progress_layout.addWidget(self.progress_bar)
+        self.clone_result_label = QLabel("0 thành công | 0 thất bại")
+        self.clone_result_label.setWordWrap(True)
+        progress_layout.addWidget(self.clone_result_label)
         self.task_progress_layout = QVBoxLayout()
         self.task_progress_layout.setSpacing(2)
         self.task_progress_labels: dict[str, QLabel] = {}
@@ -1015,8 +1018,9 @@ class MainWindow(QMainWindow):
         self._paused_duration = 0.0
         if self._active_clone_mode:
             self.progress_bar.setRange(0, max(1, self._clone_total_accounts))
-            self.progress_bar.setFormat("0 thành công | 0 thất bại | 0/%m tài khoản")
+            self.progress_bar.setFormat("%v/%m tài khoản đã xử lý")
             self.progress_bar.setValue(0)
+            self.clone_result_label.setText("0 thành công | 0 thất bại")
         else:
             self.progress_bar.setRange(0, 100)
             self.progress_bar.setFormat("%p%")
@@ -1085,11 +1089,8 @@ class MainWindow(QMainWindow):
                 widget.deleteLater()
         self.task_progress_labels.clear()
         if config.get("clone_mode"):
-            try:
-                accounts = load_accounts(config.get("clone_account_file", ""))
-            except (OSError, UnicodeError, ValueError):
-                accounts = []
-            task_names = [(f"{account.username} - Đăng nhập", 1) for account in accounts]
+            # Keep account names out of the progress panel; details go to the activity log.
+            task_names = []
         else:
             task_names = self._task_specs(config)
         for name, count in task_names:
@@ -1123,12 +1124,13 @@ class MainWindow(QMainWindow):
 
     def _update_progress(self, completed: int, total: int, status: str) -> None:
         if self._active_clone_mode:
-            # The value tracks processed accounts; the format exposes success/failure counts.
+            # Account totals live beneath the bar; usernames/details remain in the log.
             self.progress_bar.setRange(0, max(1, self._clone_total_accounts))
             self.progress_bar.setValue(
                 max(0, min(self._clone_total_accounts, completed))
             )
-            self.progress_bar.setFormat(status or "%v/%m tài khoản đã xử lý")
+            self.progress_bar.setFormat("%v/%m tài khoản đã xử lý")
+            self.clone_result_label.setText(status or "0 thành công | 0 thất bại")
             return
         percent = int(completed * 100 / total) if total else 0
         self.progress_bar.setRange(0, 100)
