@@ -274,6 +274,47 @@ class BotWorker(QThread):
             return pytesseract.image_to_string(image, lang="eng", config="--psm 6")
 
     @staticmethod
+    def _tap_ocr_word(device, words: tuple[str, ...]) -> bool:
+        """Tap the center of a word detected in the current screenshot by OCR."""
+        image = device.screenshot()
+        image = ImageOps.autocontrast(image.convert("L"))
+        try:
+            data = pytesseract.image_to_data(
+                image, lang="vie+eng", config="--psm 11",
+                output_type=pytesseract.Output.DICT,
+            )
+        except pytesseract.TesseractError:
+            data = pytesseract.image_to_data(
+                image, lang="eng", config="--psm 11",
+                output_type=pytesseract.Output.DICT,
+            )
+
+        wanted = {BotWorker._normalize_screen_text(word) for word in words}
+        candidates = []
+        for i, raw in enumerate(data.get("text", [])):
+            normalized = BotWorker._normalize_screen_text(raw)
+            if normalized not in wanted:
+                continue
+            try:
+                confidence = float(data["conf"][i])
+            except (ValueError, TypeError):
+                confidence = 0.0
+            if confidence < 0:
+                continue
+            x = int(data["left"][i] + data["width"][i] / 2)
+            y = int(data["top"][i] + data["height"][i] / 2)
+            candidates.append((confidence, x, y, normalized))
+
+        if not candidates:
+            return False
+
+        # Prefer the clearest recognized "dong" label. Tap the live screenshot
+        # coordinates directly rather than relying on a possibly missing saved region.
+        confidence, x, y, word = max(candidates)
+        device.shell(f"input tap {x} {y}")
+        return True
+
+    @staticmethod
     def _is_login_screen(text: str) -> bool:
         normalized = BotWorker._normalize_screen_text(text)
         has_password = "mat khau" in normalized
@@ -442,11 +483,19 @@ class BotWorker(QThread):
                         "đang bấm nút Đồng ý để đóng hộp thoại."
                     )
                     try:
-                        ocr_client.tap_ocr_target("dong_y")
-                        time.sleep(0.3)
+                        # The saved dong_y region may not exist, and OCR can read
+                        # only the button text "dong". Locate that word on the live
+                        # screenshot first; use saved coordinates only as fallback.
+                        tapped = self._tap_ocr_word(device, ("dong", "dong y", "dong y!"))
+                        if not tapped:
+                            ocr_client.tap_ocr_target("dong_y")
+                        self.log_message.emit(
+                            f"[{account.username}] Đã gửi thao tác đóng hộp thoại."
+                        )
+                        time.sleep(0.5)
                     except Exception as exc:
                         self.log_message.emit(
-                            f"[{account.username}] Không bấm được nút Đồng ý (dong_y): {exc}"
+                            f"[{account.username}] Không bấm được nút Đồng ý: {exc}"
                         )
                     break
 
