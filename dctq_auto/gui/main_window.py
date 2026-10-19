@@ -79,6 +79,7 @@ class MainWindow(QMainWindow):
         self._paused_duration = 0.0
         self._screenshot_worker = None
         self._screenshot_annotator = None
+        self._analysis_lock_states: dict[QWidget, bool] = {}
         self.last_screen_short: str | None = None
 
         central = QWidget(self)
@@ -733,9 +734,51 @@ class MainWindow(QMainWindow):
         dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
         dialog.destroyed.connect(self._clear_screenshot_annotator_reference)
         self._screenshot_annotator = dialog
+        self._set_analysis_window_lock(True)
         dialog.show()
 
+    def _set_analysis_window_lock(self, locked: bool) -> None:
+        """Disable the main UI while the screenshot analyzer is open, except the activity log."""
+        if locked:
+            if self._analysis_lock_states:
+                return
+            central = self.centralWidget()
+            if central is None:
+                return
+            log_view = self.log_view
+
+            def is_log_or_ancestor(widget: QWidget) -> bool:
+                current = log_view
+                while current is not None:
+                    if current is widget:
+                        return True
+                    current = current.parentWidget()
+                return False
+
+            def is_log_descendant(widget: QWidget) -> bool:
+                current = widget.parentWidget()
+                while current is not None:
+                    if current is log_view:
+                        return True
+                    current = current.parentWidget()
+                return False
+
+            for widget in central.findChildren(QWidget):
+                if is_log_or_ancestor(widget) or is_log_descendant(widget):
+                    continue
+                self._analysis_lock_states[widget] = widget.isEnabled()
+                widget.setEnabled(False)
+            return
+
+        for widget, was_enabled in list(self._analysis_lock_states.items()):
+            try:
+                widget.setEnabled(was_enabled)
+            except RuntimeError:
+                pass
+        self._analysis_lock_states.clear()
+
     def _clear_screenshot_annotator_reference(self, *_args) -> None:
+        self._set_analysis_window_lock(False)
         self._screenshot_annotator = None
 
     def _log_coordinate_result(
