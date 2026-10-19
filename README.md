@@ -99,6 +99,17 @@ Nếu chỉ muốn chạy toàn bộ test không phụ thuộc thiết bị, kh�
 - `dctq_auto/config/`: environment-based settings
 - `tests/`: unit tests
 
+## Chụp screenshot ADB và chọn tọa độ trên ảnh trong app
+
+Trong app DCTQ Auto, chọn đúng thiết bị LDPlayer ở mục **Thiết bị**, sau đó nhấn **Chụp & chọn tọa độ**. App chụp màn hình qua ADB, mở ảnh ngay trong cửa sổ chọn tọa độ và hiển thị kích thước pixel ảnh gốc.
+
+- **Chọn điểm ADB**: nhấp vào tâm nút trên ảnh, đặt tên cho điểm; tọa độ pixel và tỷ lệ 0..1 được lưu vào `dctq_auto/tasks/clone/locations.json` theo nhóm tên màn hình.
+- **Chọn vùng 4 góc**: nhấp lần lượt trên-trái → trên-phải → dưới-phải → dưới-trái; đúng 4 điểm sẽ lưu vào `dctq_auto/tasks/clone/regions.json`.
+- Có thể bỏ điểm cuối, xóa toàn bộ điểm và chụp lại. Ảnh được lưu trong `artifacts/screenshots/`.
+- Việc đánh dấu không gửi click vào game. Tọa độ được quy về ảnh gốc dù ảnh hiển thị được thu phóng trong app.
+
+Các tọa độ cần được kiểm tra trước khi sử dụng cho automation. Chức năng này ghi tọa độ và vùng ảnh; nó chưa tự động thực hiện các thao tác gameplay hoặc tự nhận diện nút.
+
 ## Hotkey ghi tọa độ trực tiếp trên LDPlayer
 
 Công cụ `scripts/capture_ldplayer_coordinates.py` ghi tọa độ chuột và lưu vùng ảnh 4 góc từ cửa sổ LDPlayer đang chạy. Chạy PowerShell/CMD tại thư mục gốc repo sau khi cài dependencies và xác nhận thiết bị trong `adb devices`:
