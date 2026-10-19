@@ -199,7 +199,7 @@ class ScreenshotAnnotator(QDialog):
         self._ocr_elements: list[dict] = []
         self.instruction = QLabel("Chọn ảnh trong artifacts/screenshots để bắt đầu.")
         self.instruction.setWordWrap(True)
-        root.addWidget(self.instruction)
+        self.instruction.setVisible(False)
 
         self.image_view = ClickableImage(
             QPixmap(),
