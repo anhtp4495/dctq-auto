@@ -33,13 +33,24 @@ SCREENSHOT_DIR = Path("artifacts/screenshots")
 
 
 class ClickableImage(QWidget):
-    """Draw a screenshot scaled to fit and report clicks in original-image pixels."""
+    """Show a screenshot and support point clicks or drag-to-select rectangles."""
 
-    def __init__(self, pixmap: QPixmap, on_image_click, parent=None) -> None:
+    def __init__(
+        self,
+        pixmap: QPixmap,
+        on_image_click,
+        is_region_mode,
+        on_image_rect,
+        parent=None,
+    ) -> None:
         super().__init__(parent)
         self._pixmap = pixmap
         self._on_image_click = on_image_click
+        self._is_region_mode = is_region_mode
+        self._on_image_rect = on_image_rect
         self._points: list[tuple[int, int, str]] = []
+        self._drag_start: QPoint | None = None
+        self._drag_current: QPoint | None = None
         self.setMinimumSize(480, 270)
         self.setMouseTracking(True)
 
@@ -55,36 +66,88 @@ class ClickableImage(QWidget):
         from PySide6.QtCore import QRect
         return QRect(x, y, fitted.width(), fitted.height())
 
+    def _to_image_point(self, point: QPoint) -> tuple[int, int]:
+        target = self._target_rect()
+        x = round((point.x() - target.x()) * self._pixmap.width() / target.width())
+        y = round((point.y() - target.y()) * self._pixmap.height() / target.height())
+        return (
+            min(self._pixmap.width() - 1, max(0, x)),
+            min(self._pixmap.height() - 1, max(0, y)),
+        )
+
     def paintEvent(self, _event) -> None:
         painter = QPainter(self)
         painter.fillRect(self.rect(), Qt.GlobalColor.black)
         target = self._target_rect()
-        painter.drawPixmap(target, self._pixmap)
-        if not self._points:
-            return
-        scale_x = target.width() / self._pixmap.width()
-        scale_y = target.height() / self._pixmap.height()
-        pen = QPen(Qt.GlobalColor.green)
-        pen.setWidth(2)
-        painter.setPen(pen)
-        for index, (x, y, label) in enumerate(self._points, start=1):
-            px = target.x() + round(x * scale_x)
-            py = target.y() + round(y * scale_y)
-            painter.drawEllipse(QPoint(px, py), 6, 6)
-            painter.drawText(px + 8, py - 8, f"{index}. {label}")
+        if not self._pixmap.isNull():
+            painter.drawPixmap(target, self._pixmap)
+        if not self._pixmap.isNull() and self._points:
+            scale_x = target.width() / self._pixmap.width()
+            scale_y = target.height() / self._pixmap.height()
+            pen = QPen(Qt.GlobalColor.green)
+            pen.setWidth(2)
+            painter.setPen(pen)
+            for index, (x, y, label) in enumerate(self._points, start=1):
+                px = target.x() + round(x * scale_x)
+                py = target.y() + round(y * scale_y)
+                painter.drawEllipse(QPoint(px, py), 5, 5)
+                painter.drawText(px + 7, py - 7, f"{index}. {label}")
+
+            if len(self._points) == 4:
+                polygon = [
+                    QPoint(target.x() + round(x * scale_x), target.y() + round(y * scale_y))
+                    for x, y, _label in self._points
+                ]
+                for index in range(4):
+                    painter.drawLine(polygon[index], polygon[(index + 1) % 4])
+
+        if self._drag_start is not None and self._drag_current is not None:
+            pen = QPen(Qt.GlobalColor.yellow)
+            pen.setWidth(2)
+            pen.setStyle(Qt.PenStyle.DashLine)
+            painter.setPen(pen)
+            from PySide6.QtCore import QRect
+            painter.drawRect(QRect(self._drag_start, self._drag_current).normalized())
 
     def mousePressEvent(self, event) -> None:
-        if event.button() != Qt.MouseButton.LeftButton:
+        if event.button() != Qt.MouseButton.LeftButton or self._pixmap.isNull():
             return
         target = self._target_rect()
         point = event.position().toPoint()
         if not target.contains(point):
             return
-        x = round((point.x() - target.x()) * self._pixmap.width() / target.width())
-        y = round((point.y() - target.y()) * self._pixmap.height() / target.height())
-        x = min(self._pixmap.width() - 1, max(0, x))
-        y = min(self._pixmap.height() - 1, max(0, y))
+        if self._is_region_mode():
+            self._drag_start = point
+            self._drag_current = point
+            self.update()
+            return
+        x, y = self._to_image_point(point)
         self._on_image_click(x, y)
+
+    def mouseMoveEvent(self, event) -> None:
+        if self._drag_start is not None:
+            point = event.position().toPoint()
+            target = self._target_rect()
+            x = min(max(point.x(), target.left()), target.right())
+            y = min(max(point.y(), target.top()), target.bottom())
+            self._drag_current = QPoint(x, y)
+            self.update()
+
+    def mouseReleaseEvent(self, event) -> None:
+        if event.button() != Qt.MouseButton.LeftButton or self._drag_start is None:
+            return
+        start = self._drag_start
+        end = self._drag_current or event.position().toPoint()
+        self._drag_start = None
+        self._drag_current = None
+        self.update()
+        x1, y1 = self._to_image_point(start)
+        x2, y2 = self._to_image_point(end)
+        left, right = sorted((x1, x2))
+        top, bottom = sorted((y1, y2))
+        if right - left < 2 or bottom - top < 2:
+            return
+        self._on_image_rect(left, top, right, bottom)
 
 
 class ScreenshotAnnotator(QDialog):
@@ -143,7 +206,12 @@ class ScreenshotAnnotator(QDialog):
         self.instruction.setWordWrap(True)
         root.addWidget(self.instruction)
 
-        self.image_view = ClickableImage(QPixmap(), self._on_image_click)
+        self.image_view = ClickableImage(
+            QPixmap(),
+            self._on_image_click,
+            lambda: self.mode_combo.currentData() == "region",
+            self._on_image_rect_selected,
+        )
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setWidget(self.image_view)
@@ -193,8 +261,8 @@ class ScreenshotAnnotator(QDialog):
                 f"{self._image_path} — ảnh gốc {self._pixmap.width()}×{self._pixmap.height()} px"
             )
             self.instruction.setText(
-                "Nhấp vào ảnh để đánh dấu. Chế độ 4 góc yêu cầu thứ tự: "
-                "trên-trái → trên-phải → dưới-phải → dưới-trái."
+                "Chế độ điểm: nhấp để chọn tọa độ. Chế độ vùng 4 góc: kéo chuột từ một góc "
+                "sang góc đối diện để tạo hình chữ nhật; 4 góc sẽ được điền tự động."
             )
             self.image_view.update()
         except Exception as exc:
@@ -233,6 +301,20 @@ class ScreenshotAnnotator(QDialog):
             f"ratio=({ratio_x:.6f}, {ratio_y:.6f})"
         )
 
+    def _on_image_rect_selected(self, left: int, top: int, right: int, bottom: int) -> None:
+        """Convert a dragged rectangle into four consistently aligned corners."""
+        self._points = [
+            (left, top, "top_left"),
+            (right, top, "top_right"),
+            (right, bottom, "bottom_right"),
+            (left, bottom, "bottom_left"),
+        ]
+        self.image_view.set_points(self._points)
+        self.instruction.setText(
+            f"Đã chọn hình chữ nhật: trái={left}, trên={top}, phải={right}, dưới={bottom} "
+            "— có thể kéo lại để chỉnh hoặc lưu vùng."
+        )
+
     def undo_point(self) -> None:
         if self._points:
             self._points.pop()
@@ -242,7 +324,7 @@ class ScreenshotAnnotator(QDialog):
     def clear_points(self) -> None:
         self._points.clear()
         self.image_view.set_points(self._points)
-        self.instruction.setText("Đã xóa các điểm. Có thể chọn lại trên ảnh.")
+        self.instruction.setText("Đã xóa lựa chọn. Có thể nhấp chọn điểm hoặc kéo tạo hình chữ nhật.")
 
     def save_coordinates(self) -> None:
         if self._pixmap.isNull() or self._image_path is None:
