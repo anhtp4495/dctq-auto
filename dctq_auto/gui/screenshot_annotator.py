@@ -16,6 +16,7 @@ from PySide6.QtGui import QGuiApplication, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
+    QComboBox,
     QFormLayout,
     QHBoxLayout,
     QInputDialog,
@@ -199,6 +200,10 @@ class ScreenshotAnnotator(QDialog):
         root.addLayout(toolbar)
 
         settings = QFormLayout()
+        self.mode_combo = QComboBox()
+        self.mode_combo.addItems(["Từng điểm", "RECT"])
+        self.mode_combo.setToolTip("Từng điểm: nhấp để đặt tọa độ. RECT: kéo chuột để chọn hình chữ nhật.")
+        settings.addRow("Chế độ chọn:", self.mode_combo)
         self.screen_name = QLineEdit("captured")
         self.screen_name.setToolTip("Tên màn hình lưu trong locations.json")
         self.ocr_text = QLineEdit()
@@ -237,7 +242,7 @@ class ScreenshotAnnotator(QDialog):
         self.image_view = ClickableImage(
             QPixmap(),
             self._on_image_click,
-            lambda: False,
+            lambda: self.mode_combo.currentText() == "RECT",
             self._on_image_rect_selected,
         )
         scroll = QScrollArea()
@@ -326,18 +331,33 @@ class ScreenshotAnnotator(QDialog):
             self._on_location_result(text, label, x, y, ratio_x, ratio_y)
 
     def _on_image_rect_selected(self, left: int, top: int, right: int, bottom: int) -> None:
-        """Convert a dragged rectangle into four consistently aligned corners."""
+        """Select a named rectangle and represent its four corners as saved coordinates."""
+        text, accepted = QInputDialog.getText(
+            self, "Đặt tên RECT", "Nhập text/tên cho vùng chữ nhật:"
+        )
+        if not accepted:
+            return
+        name = self.normalize_text(text) or "rect"
         self._points = [
-            (left, top, "top_left"),
-            (right, top, "top_right"),
-            (right, bottom, "bottom_right"),
-            (left, bottom, "bottom_left"),
+            (left, top, f"{name}_top_left"),
+            (right, top, f"{name}_top_right"),
+            (right, bottom, f"{name}_bottom_right"),
+            (left, bottom, f"{name}_bottom_left"),
         ]
         self.image_view.set_points(self._points)
         self.instruction.setText(
-            f"Đã chọn hình chữ nhật: trái={left}, trên={top}, phải={right}, dưới={bottom} "
-            "— có thể kéo lại để chỉnh hoặc lưu vùng."
+            f"Đã chọn RECT '{name}': trái={left}, trên={top}, phải={right}, dưới={bottom}."
         )
+        if self._on_location_result is not None:
+            width, height = self._pixmap.width(), self._pixmap.height()
+            self._on_location_result(
+                f"RECT {text.strip()}", name, left, top,
+                left / width, top / height,
+            )
+            self._on_location_result(
+                f"RECT {text.strip()} bounds", name, right, bottom,
+                right / width, bottom / height,
+            )
 
     @staticmethod
     def normalize_text(text: str) -> str:
@@ -507,7 +527,6 @@ class ScreenshotAnnotator(QDialog):
                 )
             if normalized_items and normalized_items[0]:
                 self.normalized_text.setText(normalized_items[0])
-                self.region_name.setText(normalized_items[0])
             if not items:
                 QMessageBox.information(
                     self, "Không nhận diện được chữ",
@@ -534,7 +553,7 @@ class ScreenshotAnnotator(QDialog):
     def clear_points(self) -> None:
         self._points.clear()
         self.image_view.set_points(self._points)
-        self.instruction.setText("Đã xóa lựa chọn. Có thể nhấp chọn điểm hoặc kéo tạo hình chữ nhật.")
+        self.instruction.setText("Đã xóa lựa chọn. Chọn chế độ Từng điểm hoặc RECT rồi thao tác trên ảnh.")
 
     def save_coordinates(self) -> None:
         if self._pixmap.isNull() or self._image_path is None:
