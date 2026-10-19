@@ -3,7 +3,7 @@
 import logging
 import time
 
-from PySide6.QtCore import Qt, QTimer, QSettings
+from PySide6.QtCore import Qt, QTimer, QSettings, QThread, Signal
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
     QAbstractButton,
@@ -35,6 +35,37 @@ from dctq_auto.gui.screenshot_annotator import ScreenshotAnnotator
 from dctq_auto.tasks.clone.accounts import load_accounts
 
 
+SCREENSHOT_DIR = "artifacts/screenshots"
+
+
+class ScreenshotCaptureWorker(QThread):
+    """Capture an ADB screenshot or save a desktop image without blocking the UI."""
+
+    saved = Signal(str)
+    failed = Signal(str)
+
+    def __init__(self, path: str, serial: str | None = None, desktop_image=None, parent=None):
+        super().__init__(parent)
+        self.path = path
+        self.serial = serial
+        self.desktop_image = desktop_image
+
+    def run(self) -> None:
+        try:
+            from pathlib import Path
+            target = Path(self.path)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if self.serial is not None:
+                image = AdbClient(self.serial).connect().screenshot()
+                image.save(str(target))
+            else:
+                if self.desktop_image is None or not self.desktop_image.save(str(target), "PNG"):
+                    raise RuntimeError("Không lưu được ảnh chụp desktop.")
+            self.saved.emit(str(target))
+        except Exception as exc:
+            self.failed.emit(str(exc))
+
+
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
@@ -46,6 +77,7 @@ class MainWindow(QMainWindow):
         self._run_started_at: float | None = None
         self._pause_started_at: float | None = None
         self._paused_duration = 0.0
+        self._screenshot_worker = None
 
         central = QWidget(self)
         root = QVBoxLayout(central)
@@ -71,10 +103,17 @@ class MainWindow(QMainWindow):
         self.capture_annotate_button = QPushButton("📷")
         self.capture_annotate_button.setFixedSize(38, 30)
         self.capture_annotate_button.setToolTip(
-            "Chụp màn hình hiện tại và chọn tọa độ trên ảnh."
+            "Chụp màn hình và lưu một ảnh vào artifacts/screenshots."
         )
-        self.capture_annotate_button.clicked.connect(self.open_screenshot_annotator)
+        self.capture_annotate_button.clicked.connect(self.capture_screenshot_to_file)
         capture_row.addWidget(self.capture_annotate_button)
+        self.choose_position_button = QPushButton("📍")
+        self.choose_position_button.setFixedSize(38, 30)
+        self.choose_position_button.setToolTip(
+            "Mở cửa sổ chọn vị trí trên một ảnh đã chụp."
+        )
+        self.choose_position_button.clicked.connect(self.open_screenshot_annotator)
+        capture_row.addWidget(self.choose_position_button)
         root.addLayout(capture_row)
 
         self.tabs = QTabWidget(central)
@@ -601,13 +640,52 @@ class MainWindow(QMainWindow):
         elif self.device_combo.currentData():
             self._log(f"Đã chọn thiết bị ADB: {self.device_combo.currentData()}")
 
+    def capture_screenshot_to_file(self) -> None:
+        """Save one screenshot per click and disable the camera icon until saving ends."""
+        if self._screenshot_worker is not None and self._screenshot_worker.isRunning():
+            return
+        from datetime import datetime
+        from pathlib import Path
+
+        serial = self.device_combo.currentData()
+        serial = None if serial == "mock" else str(serial)
+        desktop_image = None
+        if serial is None:
+            screen = QGuiApplication.primaryScreen()
+            if screen is None:
+                QMessageBox.warning(self, "Không chụp được ảnh", "Không tìm thấy màn hình desktop.")
+                return
+            desktop_image = screen.grabWindow(0).toImage()
+        Path(SCREENSHOT_DIR).mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        path = str(Path(SCREENSHOT_DIR) / f"screenshot_{timestamp}.png")
+
+        self.capture_annotate_button.setEnabled(False)
+        self.capture_annotate_button.setToolTip("Đang lưu ảnh chụp…")
+        self._log("Đang chụp và lưu ảnh màn hình…")
+        worker = ScreenshotCaptureWorker(path, serial, desktop_image, self)
+        self._screenshot_worker = worker
+        worker.saved.connect(self._on_screenshot_saved)
+        worker.failed.connect(self._on_screenshot_failed)
+        worker.finished.connect(self._on_screenshot_worker_finished)
+        worker.start()
+
+    def _on_screenshot_saved(self, path: str) -> None:
+        self._log(f"Đã lưu ảnh màn hình: {path}")
+
+    def _on_screenshot_failed(self, error: str) -> None:
+        self._log(f"Lỗi chụp/lưu ảnh màn hình: {error}")
+        QMessageBox.warning(self, "Không lưu được ảnh", error)
+
+    def _on_screenshot_worker_finished(self) -> None:
+        self.capture_annotate_button.setEnabled(True)
+        self.capture_annotate_button.setToolTip(
+            "Chụp màn hình và lưu một ảnh vào artifacts/screenshots."
+        )
+        self._screenshot_worker = None
+
     def open_screenshot_annotator(self) -> None:
         serial = self.device_combo.currentData()
-        if serial != "mock" and not serial:
-            QMessageBox.warning(self, "Chưa chọn thiết bị", "Hãy chọn thiết bị ADB trước.")
-            return
-
-        # Giữ cửa sổ chính hiển thị; mở cửa sổ chọn tọa độ ở phía trước.
         self._open_screenshot_annotator(None if serial == "mock" else str(serial))
 
     def _open_screenshot_annotator(self, serial: str | None) -> None:
