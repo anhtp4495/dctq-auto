@@ -610,9 +610,9 @@ class MainWindow(QMainWindow):
         # Ẩn cửa sổ chính để không che màn hình cần chụp.
         self.hide()
         if serial == "mock":
-            QTimer.singleShot(300, self._open_screenshot_annotator, None)
+            QTimer.singleShot(300, lambda: self._open_screenshot_annotator(None))
         else:
-            QTimer.singleShot(0, self._open_screenshot_annotator, str(serial))
+            QTimer.singleShot(0, lambda: self._open_screenshot_annotator(str(serial)))
 
     def _open_screenshot_annotator(self, serial: str | None) -> None:
         try:
