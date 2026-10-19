@@ -735,7 +735,7 @@ class ScreenshotAnnotator(QDialog):
                             sequence_text = "_".join(
                                 self.normalize_text(word["text"]) for word in matched_sequence
                             ).strip("_")
-                            if target_normalized in sequence_text:
+                            if target_normalized == sequence_text:
                                 item["matched"] = True
                                 item["highlight_bounds"] = {
                                     "left": min(word["bounds"]["left"] for word in matched_sequence),
