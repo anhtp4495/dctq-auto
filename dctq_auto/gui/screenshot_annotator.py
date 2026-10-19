@@ -666,13 +666,10 @@ class ScreenshotAnnotator(QDialog):
                 self.region_mode_button.setChecked(True)
                 self._on_mode_changed("Từng vùng")
                 self._ocr_region = (x, y, right, bottom)
-                self._points = [
-                    (x, y, "manual_rect_top_left"),
-                    (right, y, "manual_rect_top_right"),
-                    (right, bottom, "manual_rect_bottom_right"),
-                    (x, bottom, "manual_rect_bottom_left"),
-                ]
+                # RECT được lưu riêng; không tạo các điểm góc manual_*.
+                self._points = []
                 self.image_view.set_points(self._points)
+                self.image_view.set_selected_region(self._ocr_region)
                 self.instruction.setText(
                     f"Đã nhập RECT: x={x}, y={y}, w={width}, h={height}. "
                     "Nhấn Phân tích (OCR) để nhận diện chữ trong vùng này."
