@@ -398,20 +398,21 @@ class ScreenshotAnnotator(QDialog):
         root.addLayout(zoom_row)
 
         bottom = QHBoxLayout()
+        self.clear_button = QPushButton("Làm mới")
+        self.clear_button.setToolTip("Xóa toàn bộ điểm, RECT đã chọn và kết quả OCR trên ảnh.")
+        self.clear_button.clicked.connect(self.clear_points)
+        bottom.addWidget(self.clear_button)
         self.undo_button = QPushButton("Bỏ điểm cuối")
         self.undo_button.clicked.connect(self.undo_point)
         bottom.addWidget(self.undo_button)
-        self.ocr_button = QPushButton("🔎 Phân tích (OCR)")
+        self.ocr_button = QPushButton("🔎 Phân tích OCR")
         self.ocr_button.setToolTip("Chỉ khả dụng ở chế độ Từng vùng")
         self.ocr_button.clicked.connect(self.recognize_text)
         bottom.addWidget(self.ocr_button)
-        self._on_mode_changed(self._current_mode())
-        self.clear_button = QPushButton("Xóa điểm")
-        self.clear_button.clicked.connect(self.clear_points)
-        bottom.addWidget(self.clear_button)
-        self.save_button = QPushButton("Lưu tọa độ")
+        self.save_button = QPushButton("Lưu file")
         self.save_button.clicked.connect(self.save_coordinates)
         bottom.addWidget(self.save_button)
+        self._on_mode_changed(self._current_mode())
         root.addLayout(bottom)
 
         if initial_image is not None and initial_image.is_file():
@@ -943,12 +944,6 @@ class ScreenshotAnnotator(QDialog):
                         "word_bounds": word_bounds,
                         "bounds": {"left": x1, "top": y1, "right": x2, "bottom": y2},
                         "rect": {"x": x1, "y": y1, "width": width, "height": height},
-                        "corners": [
-                            {"name": "top_left", "x_px": x1, "y_px": y1},
-                            {"name": "top_right", "x_px": x2, "y_px": y1},
-                            {"name": "bottom_right", "x_px": x2, "y_px": y2},
-                            {"name": "bottom_left", "x_px": x1, "y_px": y2},
-                        ],
                         "center": {"x_px": center_x, "y_px": center_y},
                         "center_ratio": {
                             "x": round(center_x / image_width, 6),
@@ -980,12 +975,6 @@ class ScreenshotAnnotator(QDialog):
                         "confidence": item["confidence"],
                         "bounds": {"left": x1, "top": y1, "right": x2, "bottom": y2},
                         "rect": {"x": x1, "y": y1, "width": width, "height": height},
-                        "corners": [
-                            {"name": "top_left", "x_px": x1, "y_px": y1},
-                            {"name": "top_right", "x_px": x2, "y_px": y1},
-                            {"name": "bottom_right", "x_px": x2, "y_px": y2},
-                            {"name": "bottom_left", "x_px": x1, "y_px": y2},
-                        ],
                         "center": {"x_px": center_x, "y_px": center_y},
                         "center_ratio": {
                             "x": round(center_x / image_width, 6),
@@ -1077,9 +1066,15 @@ class ScreenshotAnnotator(QDialog):
             self.instruction.setText(f"Còn {len(self._points)} điểm đã chọn.")
 
     def clear_points(self) -> None:
+        """Reset all annotations on the current image, including RECT and OCR results."""
         self._points.clear()
+        self._ocr_elements = []
+        self._ocr_region = None
         self.image_view.set_points(self._points)
-        self.instruction.setText("Đã xóa các điểm đã chọn.")
+        self.image_view.set_ocr_boxes([])
+        self.image_view.set_selected_region(None)
+        self._on_mode_changed(self._current_mode())
+        self.instruction.setText("Đã làm mới: xóa toàn bộ điểm, RECT và kết quả OCR.")
 
     def save_coordinates(self) -> None:
         if self._pixmap.isNull() or self._image_path is None:
