@@ -55,6 +55,7 @@ class CloneTab(QWidget):
         self.clone_guild_check_in.setChecked(True)
         self.clone_receive_lucky_bag = QCheckBox("Nhận túi phúc")
         self.clone_receive_lucky_bag.setChecked(True)
+        self.clone_quoc_chien = QCheckBox("Quốc chiến")
         for checkbox in (
             self.clone_daily_check_in,
             self.clone_guild_check_in,
