@@ -2,6 +2,7 @@
 
 import json
 import re
+import unicodedata
 from pathlib import Path
 
 from adbutils import AdbDevice, adb
@@ -31,7 +32,11 @@ class AdbClient:
         """
         if not self.serial:
             raise RuntimeError("Chưa chọn thiết bị ADB để click OCR.")
-        target_name = re.sub(r"[^a-z0-9]+", "_", name.strip().lower()).strip("_")
+        target_name = unicodedata.normalize("NFD", name.strip().lower())
+        target_name = "".join(
+            char for char in target_name if unicodedata.category(char) != "Mn"
+        ).replace("đ", "d")
+        target_name = re.sub(r"[^a-z0-9]+", "_", target_name).strip("_")
         if not target_name:
             raise ValueError("Tên OCR cần click không được để trống.")
 
@@ -77,7 +82,7 @@ class AdbClient:
 
         device = self.connect()
         resolution_text = device.shell("wm size")
-        sizes = re.findall(r"(?:Physical|Override) size:\\s*(\\d+)x(\\d+)", resolution_text)
+        sizes = re.findall(r"(?:Physical|Override) size:\s*(\d+)x(\d+)", resolution_text)
         if sizes:
             width, height = map(int, sizes[-1])
         else:
