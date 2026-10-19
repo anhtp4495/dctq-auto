@@ -282,9 +282,18 @@ class BotWorker(QThread):
             for marker in ("ten dang nhap", "so dien thoai", "email", "tai khoan")
         )
         has_login_button = "dang nhap" in normalized
-        # OCR may miss one field on a frame, so accept the button plus either
-        # password or username-field text as evidence that the form is still open.
-        return has_login_button and (has_password or has_username_hint)
+
+        # Preferred path: OCR identifies the actual form labels/button.
+        if has_login_button and (has_password or has_username_hint):
+            return True
+
+        # Fallback for the known Vietnamese login page: OCR sometimes misses
+        # the input labels and button but still reads both navigation links.
+        # Requiring BOTH links is more conservative than accepting either one
+        # alone, and lets the caller use the saved, resolution-scaled regions.
+        has_sign_up_link = "dang ky" in normalized
+        has_forgot_password_link = "quen mat khau" in normalized
+        return has_sign_up_link and has_forgot_password_link
 
     @staticmethod
     def _login_error(text: str) -> str | None:
