@@ -247,7 +247,7 @@ def main() -> int:
                     raise ValueError("Khóa 'regions' trong JSON phải là object.")
                 existing["regions"][args.name] = region
                 output_path.write_text(
-                    json.dumps(existing, ensure_ascii=False, indent=2) + "\\n",
+                    json.dumps(existing, ensure_ascii=False, indent=2) + "\n",
                     encoding="utf-8",
                 )
                 message = f"Đã lưu vùng {args.name!r} vào {output_path}"
