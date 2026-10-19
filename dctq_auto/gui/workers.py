@@ -564,6 +564,42 @@ class BotWorker(QThread):
                 )
                 break
 
+            if self._config.get("clone_quoc_chien"):
+                try:
+                    self.log_message.emit(
+                        f"[{account.username}] Đang mở mục Chiến tranh để tìm Quốc chiến."
+                    )
+                    ocr_client.tap_ocr_target("chien_tranh")
+                    time.sleep(1.5)
+                    found_quoc_chien = False
+                    for attempt in range(4):
+                        if not self._wait_if_paused():
+                            self.log_message.emit("Đã dừng theo yêu cầu.")
+                            return
+                        screen = self._normalize_screen_text(self._screen_text(device))
+                        if "quoc chien" in screen or "quoc_chien" in screen:
+                            found_quoc_chien = True
+                            break
+                        self.log_message.emit(
+                            f"[{account.username}] Chưa thấy Quốc chiến; kéo màn hình lần {attempt + 1}/3."
+                        )
+                        # Drag from A to B using the supplied 1920x1080 normalized points.
+                        device.shell("input swipe 524 582 1574 564 500")
+                        time.sleep(1.2)
+                    if found_quoc_chien:
+                        self.log_message.emit(
+                            f"[{account.username}] Đã tìm thấy mục Quốc chiến qua OCR."
+                        )
+                    else:
+                        self.log_message.emit(
+                            f"[{account.username}] Không tìm thấy mục Quốc chiến sau khi kéo."
+                        )
+                except Exception as exc:
+                    self.log_message.emit(
+                        f"[{account.username}] Không thể mở/tìm Quốc chiến: {exc}"
+                    )
+                    break
+
             success_count += 1
             self.log_message.emit(
                 f"[{account.username}] Đăng nhập thành công, profile đã tải ({success_count}/{total})."
