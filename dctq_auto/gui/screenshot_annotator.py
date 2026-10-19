@@ -295,12 +295,14 @@ class ScreenshotAnnotator(QDialog):
             | Qt.WindowType.WindowMinimizeButtonHint
             | Qt.WindowType.WindowMaximizeButtonHint
         )
-        self.resize(1050, 760)
         self._image_path: Path | None = None
         self._pixmap = QPixmap()
         self._points: list[tuple[int, int, str]] = []
         self._on_location_result = on_location_result
         self._ui_settings = QSettings("DCTQAuto", "DCTQAuto")
+        self._saved_window_width = int(
+            self._ui_settings.value("screenshot_annotator/window_width", 1050)
+        )
 
         root = QVBoxLayout(self)
 
@@ -413,6 +415,27 @@ class ScreenshotAnnotator(QDialog):
 
         if initial_image is not None and initial_image.is_file():
             self._load_screenshot(initial_image)
+
+    def showEvent(self, event) -> None:
+        """Dock the annotator to the primary screen's left edge and fill its height."""
+        super().showEvent(event)
+        screen = QGuiApplication.primaryScreen()
+        if screen is None:
+            screen = self.screen()
+        if screen is None:
+            return
+        available = screen.availableGeometry()
+        default_width = min(1050, available.width())
+        width = self._saved_window_width or default_width
+        width = max(480, min(width, available.width()))
+        self.setGeometry(available.left(), available.top(), width, available.height())
+
+    def closeEvent(self, event) -> None:
+        """Persist the annotator width; its left position and full height are defaults."""
+        self._ui_settings.setValue(
+            "screenshot_annotator/window_width", self.width()
+        )
+        super().closeEvent(event)
 
     def _on_zoom_changed(self, value: int) -> None:
         self._zoom_percent = value
