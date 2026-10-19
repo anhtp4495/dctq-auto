@@ -432,6 +432,24 @@ class BotWorker(QThread):
                     )
                     break
 
+                normalized_result = self._normalize_screen_text(result_text)
+                # Some game dialogs show only "khong dung"; OCR may miss the
+                # rest of the message and read the confirmation button as "dong".
+                if "khong dung" in normalized_result:
+                    observed_error = "Thông tin đăng nhập không đúng"
+                    self.log_message.emit(
+                        f"[{account.username}] OCR phát hiện thông báo 'không đúng'; "
+                        "đang bấm nút Đồng ý để đóng hộp thoại."
+                    )
+                    try:
+                        ocr_client.tap_ocr_target("dong_y")
+                        time.sleep(0.3)
+                    except Exception as exc:
+                        self.log_message.emit(
+                            f"[{account.username}] Không bấm được nút Đồng ý (dong_y): {exc}"
+                        )
+                    break
+
                 observed_error = self._login_error(result_text) or observed_error
                 if self._is_login_screen(result_text):
                     previous_screen_text = None
