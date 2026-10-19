@@ -1091,6 +1091,7 @@ class ScreenshotAnnotator(QDialog):
                 data = self._read_json(
                     LOCATIONS_PATH, {"reference_resolution": [width, height], "screens": {}}
                 )
+                data = self._remove_corner_metadata(data)
                 data.setdefault("reference_resolution", [width, height])
                 data.setdefault("screens", {})
                 if not isinstance(data["screens"], dict):
@@ -1120,7 +1121,9 @@ class ScreenshotAnnotator(QDialog):
                     "image_resolution": [width, height],
                     "saved_at": datetime.now().astimezone().isoformat(timespec="seconds"),
                 }
-                data = self._read_json(REGIONS_PATH, {"regions": {}})
+                data = self._remove_corner_metadata(
+                    self._read_json(REGIONS_PATH, {"regions": {}})
+                )
                 data.setdefault("regions", {})
                 if not isinstance(data["regions"], dict):
                     raise ValueError("Khóa 'regions' trong regions.json không hợp lệ.")
@@ -1142,6 +1145,26 @@ class ScreenshotAnnotator(QDialog):
                 self._on_location_result("LƯU", screen, 0, 0, 0.0, 0.0, message)
         except (OSError, json.JSONDecodeError, ValueError) as exc:
             QMessageBox.critical(self, "Không lưu được tọa độ", str(exc))
+
+    @staticmethod
+    def _remove_corner_metadata(value):
+        """Remove legacy manual corner-coordinate fields from nested saved JSON."""
+        corner_keys = {
+            "manual_top_left", "manual_top_right",
+            "manual_bottom_left", "manual_bottom_right",
+            "top_left", "top_right", "bottom_left", "bottom_right",
+            "corners", "corners_order",
+        }
+        if isinstance(value, dict):
+            for key in list(value):
+                if key in corner_keys:
+                    del value[key]
+                else:
+                    ScreenshotAnnotator._remove_corner_metadata(value[key])
+        elif isinstance(value, list):
+            for item in value:
+                ScreenshotAnnotator._remove_corner_metadata(item)
+        return value
 
     @staticmethod
     def _read_json(path: Path, default: dict) -> dict:
