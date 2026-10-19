@@ -15,6 +15,7 @@ from PySide6.QtCore import QPoint, Qt
 from PySide6.QtGui import QGuiApplication, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QDialog,
+    QFileDialog,
     QDialogButtonBox,
     QComboBox,
     QFormLayout,
@@ -191,8 +192,8 @@ class ScreenshotAnnotator(QDialog):
         root.addWidget(heading)
 
         toolbar = QHBoxLayout()
-        self.capture_button = QPushButton("Chụp lại màn hình")
-        self.capture_button.clicked.connect(self.capture_screenshot)
+        self.capture_button = QPushButton("Chọn file ảnh")
+        self.capture_button.clicked.connect(self.choose_screenshot_file)
         toolbar.addWidget(self.capture_button)
         self.image_info = QLabel("Chưa có ảnh.")
         self.image_info.setWordWrap(True)
@@ -269,38 +270,72 @@ class ScreenshotAnnotator(QDialog):
         bottom.addWidget(self.close_button)
         root.addLayout(bottom)
 
-        self.capture_screenshot()
+        self.instruction.setText(
+            "Chọn file ảnh đã chụp trong artifacts/screenshots để bắt đầu chọn tọa độ."
+        )
+
+    def choose_screenshot_file(self) -> None:
+        """Allow selecting only an image directly inside artifacts/screenshots."""
+        SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
+        filename, _ = QFileDialog.getOpenFileName(
+            self,
+            "Chọn ảnh màn hình",
+            str(SCREENSHOT_DIR.resolve()),
+            "Ảnh màn hình (*.png *.jpg *.jpeg *.bmp *.webp)",
+        )
+        if not filename:
+            return
+        selected = Path(filename).resolve()
+        allowed_dir = SCREENSHOT_DIR.resolve()
+        if selected.parent != allowed_dir or selected.suffix.lower() not in {
+            ".png", ".jpg", ".jpeg", ".bmp", ".webp"
+        }:
+            QMessageBox.warning(
+                self,
+                "File không hợp lệ",
+                "Chỉ được chọn file ảnh nằm trực tiếp trong artifacts/screenshots.",
+            )
+            return
+        self._load_screenshot(selected)
+
+    def _load_screenshot(self, path: Path) -> None:
+        pixmap = QPixmap(str(path))
+        if pixmap.isNull():
+            QMessageBox.warning(self, "Không mở được ảnh", f"Không đọc được file ảnh: {path}")
+            return
+        self._image_path = path
+        self._pixmap = pixmap
+        self._points.clear()
+        self._ocr_elements = []
+        self.image_view._pixmap = self._pixmap
+        self.image_view.set_points(self._points)
+        self.image_info.setText(
+            f"{self._image_path} — ảnh gốc {self._pixmap.width()}×{self._pixmap.height()} px"
+        )
+        self.instruction.setText(
+            "Đã mở ảnh. Chọn chế độ Từng điểm hoặc RECT rồi thao tác trên ảnh; "
+            "kết quả OCR và tọa độ sẽ ghi vào nhật ký cửa sổ chính."
+        )
+        self.image_view.update()
 
     def capture_screenshot(self) -> None:
+        """Capture a screenshot when invoked programmatically."""
         try:
             SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
             if self.capture_desktop:
                 screen = QGuiApplication.primaryScreen()
                 if screen is None:
                     raise RuntimeError("Không tìm thấy màn hình desktop.")
-                self._image_path = SCREENSHOT_DIR / f"desktop_{timestamp}.png"
-                if not screen.grabWindow(0).save(str(self._image_path), "PNG"):
+                path = SCREENSHOT_DIR / f"desktop_{timestamp}.png"
+                if not screen.grabWindow(0).save(str(path), "PNG"):
                     raise RuntimeError("Không lưu được ảnh chụp desktop.")
             else:
                 device = AdbClient(self.serial).connect()
                 safe_serial = self.serial.replace(":", "_").replace("/", "_").replace("\\", "_")
-                self._image_path = SCREENSHOT_DIR / f"{safe_serial}_{timestamp}.png"
-                device.screenshot().save(str(self._image_path))
-            self._pixmap = QPixmap(str(self._image_path))
-            if self._pixmap.isNull():
-                raise RuntimeError("Không mở được ảnh screenshot vừa chụp.")
-            self._points.clear()
-            self.image_view._pixmap = self._pixmap
-            self.image_view.set_points(self._points)
-            self.image_info.setText(
-                f"{self._image_path} — ảnh gốc {self._pixmap.width()}×{self._pixmap.height()} px"
-            )
-            self.instruction.setText(
-                "Nhấp vào vị trí trên ảnh rồi nhập text/tên cho điểm đó. "
-                "OCR sẽ phân tích toàn bộ ảnh; kết quả và tọa độ được ghi vào nhật ký cửa sổ chính."
-            )
-            self.image_view.update()
+                path = SCREENSHOT_DIR / f"{safe_serial}_{timestamp}.png"
+                device.screenshot().save(str(path))
+            self._load_screenshot(path)
         except Exception as exc:
             QMessageBox.critical(self, "Không chụp được màn hình", str(exc))
 
