@@ -108,7 +108,7 @@ Công cụ `scripts/capture_ldplayer_coordinates.py` ghi tọa độ chuột và
 ```
 
 - **F8**: ghi tọa độ con trỏ vào nhật ký `artifacts/coordinate_capture.log`. Nếu con trỏ nằm trong viewport Android, nhật ký có tọa độ Windows, tọa độ Android và tỷ lệ 0..1.
-- **F9**: bắt đầu chọn 4 góc; nhấp lần lượt **trên-trái → trên-phải → dưới-phải → dưới-trái** trên vùng game trong LDPlayer. Khi đủ 4 điểm, dữ liệu được lưu vào `dctq_auto/tasks/clone/regions.json`.
+- **F9**: bắt đầu chọn 4 góc; di chuyển con trỏ lần lượt đến **trên-trái → trên-phải → dưới-phải → dưới-trái** trên vùng game trong LDPlayer rồi nhấn **F8** tại mỗi góc. Cách này không click vào game, tránh vô tình bấm nút trong game. Khi đủ 4 điểm, dữ liệu được lưu vào `dctq_auto/tasks/clone/regions.json`.
 - **ESC**: hủy chọn đang dang dở; nếu không ở chế độ chọn thì thoát công cụ.
 - Có thể dùng `--name guild_panel` để đặt tên vùng khác, `--output path\file.json` để đổi file, hoặc `--window-title "LDPlayer"` nếu tiêu đề cửa sổ khác. Nếu tự nhận diện viewport chưa khớp do thanh công cụ/bố cục cửa sổ, dùng `--viewport x,y,width,height` để chỉ định vùng Android tính từ góc trên-trái client area.
 - Script chỉ ghi nhật ký và lưu tọa độ, **không gửi lệnh click ADB**. Để tránh sai số, giữ nguyên kích thước/cách bố trí cửa sổ trong lúc chọn và kiểm tra tọa độ đã lưu trước khi dùng cho automation.
