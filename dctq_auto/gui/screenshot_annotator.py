@@ -11,7 +11,7 @@ from pathlib import Path
 from PIL import Image, ImageOps
 import pytesseract
 
-from PySide6.QtCore import QPoint, Qt
+from PySide6.QtCore import QPoint, Qt, QSettings
 from PySide6.QtGui import QGuiApplication, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QDialog,
@@ -95,18 +95,19 @@ class ClickableImage(QWidget):
             scale_x = target.width() / self._pixmap.width()
             scale_y = target.height() / self._pixmap.height()
             if self._ocr_boxes:
-                pen = QPen(Qt.GlobalColor.red)
-                pen.setWidth(2)
-                painter.setPen(pen)
+                from PySide6.QtCore import QRect
                 for index, item in enumerate(self._ocr_boxes, start=1):
                     bounds = item.get("bounds", {})
                     x1 = target.x() + round(bounds.get("left", 0) * scale_x)
                     y1 = target.y() + round(bounds.get("top", 0) * scale_y)
                     x2 = target.x() + round(bounds.get("right", 0) * scale_x)
                     y2 = target.y() + round(bounds.get("bottom", 0) * scale_y)
-                    from PySide6.QtCore import QRect
+                    pen = QPen(Qt.GlobalColor.red if item.get("matched") else Qt.GlobalColor.cyan)
+                    pen.setWidth(3 if item.get("matched") else 1)
+                    painter.setPen(pen)
                     painter.drawRect(QRect(QPoint(x1, y1), QPoint(x2, y2)).normalized())
-                    painter.drawText(x1, max(target.top() + 12, y1 - 4), f"OCR {index}")
+                    if item.get("matched"):
+                        painter.drawText(x1, max(target.top() + 12, y1 - 4), "MATCH")
 
             if self._points:
                 pen = QPen(Qt.GlobalColor.green)
@@ -197,6 +198,7 @@ class ScreenshotAnnotator(QDialog):
         self._pixmap = QPixmap()
         self._points: list[tuple[int, int, str]] = []
         self._on_location_result = on_location_result
+        self._ui_settings = QSettings("DCTQAuto", "DCTQAuto")
 
         root = QVBoxLayout(self)
 
@@ -208,8 +210,15 @@ class ScreenshotAnnotator(QDialog):
         self.image_info.setWordWrap(True)
         toolbar.addWidget(self.image_info, 1)
         self.mode_combo = QComboBox()
-        self.mode_combo.addItems(["Từng điểm", "RECT"])
-        self.mode_combo.setToolTip("Từng điểm: nhấp để đặt tọa độ. RECT: kéo chuột để chọn hình chữ nhật.")
+        self.mode_combo.addItems(["Từng điểm", "Từng vùng"])
+        self.mode_combo.setToolTip(
+            "Từng điểm: nhấp để lưu nhiều tọa độ. Từng vùng: chọn một RECT để phân tích OCR."
+        )
+        saved_mode = self._ui_settings.value("screenshot_annotator/mode", "Từng điểm")
+        if saved_mode not in ("Từng điểm", "Từng vùng"):
+            saved_mode = "Từng điểm"
+        self.mode_combo.setCurrentText(saved_mode)
+        self.mode_combo.currentTextChanged.connect(self._on_mode_changed)
         toolbar.addWidget(self.mode_combo)
         self.coordinate_input_button = QPushButton("⌖")
         self.coordinate_input_button.setFixedSize(28, 28)
@@ -232,7 +241,7 @@ class ScreenshotAnnotator(QDialog):
         self.image_view = ClickableImage(
             QPixmap(),
             self._on_image_click,
-            lambda: self.mode_combo.currentText() == "RECT",
+            lambda: self.mode_combo.currentText() == "Từng vùng",
             self._on_image_rect_selected,
         )
         scroll = QScrollArea()
@@ -245,9 +254,10 @@ class ScreenshotAnnotator(QDialog):
         self.undo_button.clicked.connect(self.undo_point)
         bottom.addWidget(self.undo_button)
         self.ocr_button = QPushButton("🔎 Phân tích (OCR)")
-        self.ocr_button.setToolTip("Phân tích chữ trên ảnh hiện tại")
+        self.ocr_button.setToolTip("Chỉ khả dụng ở chế độ Từng vùng")
         self.ocr_button.clicked.connect(self.recognize_text)
         bottom.addWidget(self.ocr_button)
+        self._on_mode_changed(self.mode_combo.currentText())
         self.clear_button = QPushButton("Xóa điểm")
         self.clear_button.clicked.connect(self.clear_points)
         bottom.addWidget(self.clear_button)
@@ -258,6 +268,22 @@ class ScreenshotAnnotator(QDialog):
 
         if initial_image is not None and initial_image.is_file():
             self._load_screenshot(initial_image)
+
+    def _on_mode_changed(self, mode: str) -> None:
+        """Persist the selected interaction mode and gate OCR to region mode."""
+        self._ui_settings.setValue("screenshot_annotator/mode", mode)
+        is_region_mode = mode == "Từng vùng"
+        self.ocr_button.setEnabled(is_region_mode)
+        self.ocr_button.setToolTip(
+            "Phân tích OCR trong vùng đã chọn" if is_region_mode
+            else "OCR bị tắt ở chế độ Từng điểm; chế độ này dùng để lưu nhiều điểm click."
+        )
+        self.instruction.setText(
+            "Từng vùng: chọn một vùng RECT rồi phân tích OCR."
+            if is_region_mode
+            else "Từng điểm: nhấp ảnh để thêm nhiều điểm tọa độ."
+        )
+        self.image_view.update()
 
     def choose_screenshot_file(self) -> None:
         """Allow selecting only an image directly inside artifacts/screenshots."""
@@ -300,8 +326,7 @@ class ScreenshotAnnotator(QDialog):
             f"{self._image_path} — ảnh gốc {self._pixmap.width()}×{self._pixmap.height()} px"
         )
         self.instruction.setText(
-            "Đã mở ảnh. Chọn Từng điểm hoặc RECT rồi thao tác trên ảnh; "
-            "kết quả OCR và tọa độ sẽ ghi vào nhật ký cửa sổ chính."
+            "Đã mở ảnh. Chọn Từng điểm để lưu nhiều tọa độ hoặc Từng vùng để phân tích OCR một vùng."
         )
         self.image_view.update()
 
@@ -350,7 +375,7 @@ class ScreenshotAnnotator(QDialog):
                     and right <= image_width and bottom <= image_height):
                 raise ValueError
 
-            self.mode_combo.setCurrentText("RECT")
+            self.mode_combo.setCurrentText("Từng vùng")
             self._ocr_region = (x, y, right, bottom)
             self._ocr_elements = []
             self.image_view.set_ocr_boxes([])
@@ -535,16 +560,28 @@ class ScreenshotAnnotator(QDialog):
             QMessageBox.warning(self, "Chưa có ảnh", "Hãy chọn ảnh trong artifacts/screenshots trước.")
             return
 
-        rect_mode = self.mode_combo.currentText() == "RECT"
-        if rect_mode and self._ocr_region is None:
+        rect_mode = self.mode_combo.currentText() == "Từng vùng"
+        if not rect_mode:
+            return
+        if self._ocr_region is None:
             QMessageBox.information(
                 self, "Chưa chọn RECT",
                 "Hãy kéo chọn một vùng RECT trên ảnh trước khi chạy OCR. OCR sẽ chỉ phân tích vùng đó và trả về hộp tọa độ cho từng dòng chữ nhận diện được.",
             )
             return
 
+        target_text, accepted = QInputDialog.getText(
+            self,
+            "Text cần phát hiện (không bắt buộc)",
+            "Nhập text muốn tìm, ví dụ quan_doan. Để trống để hiển thị toàn bộ kết quả OCR:",
+            text="",
+        )
+        if not accepted:
+            return
+        target_normalized = self.normalize_text(target_text) if target_text.strip() else ""
+
         try:
-            # OCR input is either the explicitly selected RECT or the full image in point mode.
+            # OCR input is the selected region in Từng vùng mode; point mode cannot run OCR.
             with Image.open(self._image_path) as screenshot:
                 original_size = screenshot.size
                 if rect_mode:
@@ -656,6 +693,15 @@ class ScreenshotAnnotator(QDialog):
                         },
                     })
 
+            if target_normalized:
+                for item in self._ocr_elements:
+                    item["matched"] = target_normalized in item["name"]
+                self.image_view.set_ocr_boxes(self._ocr_elements)
+            else:
+                for item in self._ocr_elements:
+                    item["matched"] = False
+                self.image_view.set_ocr_boxes(self._ocr_elements)
+
             items = [item["text"] for item in self._ocr_elements]
             normalized_items = [item["name"] for item in self._ocr_elements]
             if self._on_ocr_result is not None:
@@ -669,11 +715,20 @@ class ScreenshotAnnotator(QDialog):
                     else "Không tìm thấy text có độ tin cậy đủ cao. Hãy thử ảnh rõ hơn.",
                 )
             else:
-                self.instruction.setText(
-                    f"Đã nhận diện {len(items)} cụm chữ trong RECT."
-                    if rect_mode
-                    else f"Đã nhận diện {len(items)} cụm chữ sau khi lọc nhiễu."
-                )
+                if target_normalized:
+                    matches = [item for item in self._ocr_elements if item.get("matched")]
+                    if matches:
+                        self.instruction.setText(
+                            f"Tìm thấy '{target_text.strip()}' trong {len(matches)} vùng chữ. "
+                            "Vùng khớp được viền đỏ; các vùng OCR khác viền xanh."
+                        )
+                    else:
+                        self.instruction.setText(
+                            f"Không tìm thấy '{target_text.strip()}'. Các vùng OCR nhận diện được "
+                            "vẫn hiển thị viền xanh để bạn kiểm tra."
+                        )
+                else:
+                    self.instruction.setText(f"Đã nhận diện {len(items)} cụm chữ trong vùng.")
         except pytesseract.TesseractNotFoundError:
             QMessageBox.critical(
                 self,
