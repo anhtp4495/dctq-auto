@@ -625,14 +625,29 @@ class MainWindow(QMainWindow):
             self.raise_()
             self.activateWindow()
 
-    def _log_ocr_results(self, items: list[str], normalized: list[str]) -> None:
-        self._log("Kết quả phân tích OCR:")
+    def _log_ocr_results(
+        self, items: list[str], normalized: list[str], locations: list[dict] | None = None
+    ) -> None:
+        self._log("Kết quả phân tích OCR (text -> tên chuẩn hóa -> vị trí):")
         if not items:
             self._log("  Không nhận diện được text.")
             return
+        locations = locations or []
         for index, text in enumerate(items):
             name = normalized[index] if index < len(normalized) else ""
             self._log(f"  {index + 1}. {text} -> {name}")
+            if index < len(locations):
+                element = locations[index]
+                bounds = element.get("bounds", {})
+                center = element.get("center", {})
+                self._log(
+                    "     RECT: "
+                    f"TL=({bounds.get('left')},{bounds.get('top')}) "
+                    f"TR=({bounds.get('right')},{bounds.get('top')}) "
+                    f"BR=({bounds.get('right')},{bounds.get('bottom')}) "
+                    f"BL=({bounds.get('left')},{bounds.get('bottom')}); "
+                    f"TÂM=({center.get('x_px')},{center.get('y_px')})"
+                )
 
     def scan_adb_devices(self) -> None:
         current_serial = self.device_combo.currentData()
