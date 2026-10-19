@@ -160,8 +160,9 @@ class ClickableImage(QWidget):
 class ScreenshotAnnotator(QDialog):
     """Capture an ADB screenshot and save point/region coordinates from that image."""
 
-    def __init__(self, serial: str | None, parent=None) -> None:
+    def __init__(self, serial: str | None, parent=None, on_ocr_result=None) -> None:
         super().__init__(parent)
+        self._on_ocr_result = on_ocr_result
         self.serial = serial
         self.capture_desktop = serial is None
         self.setWindowTitle(
@@ -458,6 +459,8 @@ class ScreenshotAnnotator(QDialog):
             self.ocr_items.setPlainText("\n".join(items))
             normalized_items = [self.normalize_text(item) for item in items]
             self.normalized_items.setPlainText("\n".join(normalized_items))
+            if self._on_ocr_result is not None:
+                self._on_ocr_result(items, normalized_items)
             if len(items) == 1 and self.ocr_item_count.value() > 1:
                 self.instruction.setText(
                     "OCR chỉ tìm được một cụm chữ. Hãy mở rộng vùng chọn hoặc sửa thủ công "
