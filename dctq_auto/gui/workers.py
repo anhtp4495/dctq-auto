@@ -506,10 +506,11 @@ class BotWorker(QThread):
                 if not result_text.strip():
                     previous_screen_text = None
                     continue
-                if previous_screen_text is not None:
-                    # A changed, readable screen plus no known error is our generic
-                    # success signal until a game-specific home-screen marker is configured.
-                    if not observed_error:
+
+                # Consider login successful only after the wrong-credentials dialog
+                # is absent and OCR no longer sees the login button on consecutive frames.
+                if "dang nhap" not in normalized_result and not observed_error:
+                    if previous_screen_text is not None:
                         verified = True
                         break
                 previous_screen_text = result_text
@@ -527,9 +528,45 @@ class BotWorker(QThread):
                     )
                 break
 
+            # The game may need extra time to finish loading the profile.
+            # "Quan chức" is the trusted profile marker; OCR can include its level
+            # after it (for example, "Quan chức 4768").
+            profile_found = False
+            self.log_message.emit(
+                f"[{account.username}] Đăng nhập có vẻ thành công; chờ OCR tìm profile 'quan_chuc'."
+            )
+            for profile_attempt in range(30):  # up to ~60 seconds
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng theo yêu cầu.")
+                    return
+                if profile_attempt:
+                    time.sleep(2)
+                try:
+                    profile_text = self._screen_text(device)
+                except Exception as exc:
+                    self.log_message.emit(
+                        f"[{account.username}] Lỗi OCR khi chờ profile: {exc}"
+                    )
+                    continue
+
+                normalized_profile = self._normalize_screen_text(profile_text)
+                if "quan chuc" in normalized_profile or "quan_chuc" in normalized_profile:
+                    profile_found = True
+                    self.log_message.emit(
+                        f"[{account.username}] Đã tìm thấy profile qua OCR: 'quan_chuc'."
+                    )
+                    break
+
+            if not profile_found:
+                self.log_message.emit(
+                    f"[{account.username}] Không thấy text profile 'quan_chuc' sau 60 giây; "
+                    "không đánh dấu tài khoản đăng nhập thành công."
+                )
+                break
+
             success_count += 1
             self.log_message.emit(
-                f"[{account.username}] Đăng nhập thành công ({success_count}/{total})."
+                f"[{account.username}] Đăng nhập thành công, profile đã tải ({success_count}/{total})."
             )
             self.progress_changed.emit(
                 success_count, total,
