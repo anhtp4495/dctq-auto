@@ -197,6 +197,7 @@ class ScreenshotAnnotator(QDialog):
         root.addLayout(toolbar)
 
         self._ocr_elements: list[dict] = []
+        self._ocr_region: tuple[int, int, int, int] | None = None
         self.instruction = QLabel("Chọn ảnh trong artifacts/screenshots để bắt đầu.")
         self.instruction.setWordWrap(True)
         self.instruction.setVisible(False)
@@ -264,6 +265,7 @@ class ScreenshotAnnotator(QDialog):
         self._pixmap = pixmap
         self._points.clear()
         self._ocr_elements = []
+        self._ocr_region = None
         self.image_view._pixmap = self._pixmap
         self.image_view.set_points(self._points)
         self.image_info.setText(
@@ -330,6 +332,9 @@ class ScreenshotAnnotator(QDialog):
         if not accepted:
             return
         name = self.normalize_text(text) or "rect"
+        # Remember the selected rectangle as the OCR input region.
+        self._ocr_region = (left, top, right, bottom)
+        self._ocr_elements = []
         self._points = [
             (left, top, f"{name}_top_left"),
             (right, top, f"{name}_top_right"),
@@ -429,11 +434,32 @@ class ScreenshotAnnotator(QDialog):
         if self._image_path is None or self._pixmap.isNull():
             QMessageBox.warning(self, "Chưa có ảnh", "Hãy chọn ảnh trong artifacts/screenshots trước.")
             return
+
+        rect_mode = self.mode_combo.currentText() == "RECT"
+        if rect_mode and self._ocr_region is None:
+            QMessageBox.information(
+                self, "Chưa chọn RECT",
+                "Hãy kéo chọn một vùng RECT trên ảnh trước khi chạy OCR. OCR sẽ chỉ phân tích vùng đó và trả về một kết quả.",
+            )
+            return
+
         try:
-            # Upscale and improve contrast before OCR; map detected rectangles back to source pixels.
+            # OCR input is either the explicitly selected RECT or the full image in point mode.
             with Image.open(self._image_path) as screenshot:
                 original_size = screenshot.size
-                image = ImageOps.autocontrast(screenshot.convert("L"))
+                if rect_mode:
+                    left, top, right, bottom = self._ocr_region
+                    left = max(0, min(original_size[0], left))
+                    top = max(0, min(original_size[1], top))
+                    right = max(left + 1, min(original_size[0], right))
+                    bottom = max(top + 1, min(original_size[1], bottom))
+                    source_region = screenshot.convert("RGB").crop((left, top, right, bottom))
+                    offset_x, offset_y = left, top
+                else:
+                    source_region = screenshot.convert("RGB")
+                    offset_x, offset_y = 0, 0
+
+                image = ImageOps.autocontrast(source_region.convert("L"))
                 scale = 2
                 image = image.resize(
                     (image.width * scale, image.height * scale),
@@ -442,69 +468,104 @@ class ScreenshotAnnotator(QDialog):
 
             try:
                 ocr_data = pytesseract.image_to_data(
-                    image, lang="vie+eng", config="--psm 11",
+                    image, lang="vie+eng", config="--psm 6",
                     output_type=pytesseract.Output.DICT,
                 )
             except pytesseract.TesseractError:
                 ocr_data = pytesseract.image_to_data(
-                    image, lang="eng", config="--psm 11",
+                    image, lang="eng", config="--psm 6",
                     output_type=pytesseract.Output.DICT,
                 )
 
             grouped = self._split_ocr_words(ocr_data, min_confidence=45.0)
-            items = [item["text"] for item in grouped]
-            normalized_items = [self.normalize_text(item) for item in items]
             self._ocr_elements = []
             image_width, image_height = original_size
-            for text, name, item in zip(items, normalized_items, grouped):
-                x1 = max(0, min(image_width, round(item["left"] / scale)))
-                y1 = max(0, min(image_height, round(item["top"] / scale)))
-                x2 = max(x1, min(image_width, round(item["right"] / scale)))
-                y2 = max(y1, min(image_height, round(item["bottom"] / scale)))
-                width, height = x2 - x1, y2 - y1
-                if width < 3 or height < 3:
-                    continue
-                center_x = round((x1 + x2) / 2)
-                center_y = round((y1 + y2) / 2)
-                self._ocr_elements.append({
-                    "name": name,
-                    "text": text,
-                    "confidence": item["confidence"],
-                    "bounds": {"left": x1, "top": y1, "right": x2, "bottom": y2},
-                    "rect": {"x": x1, "y": y1, "width": width, "height": height},
-                    "corners": [
-                        {"name": "top_left", "x_px": x1, "y_px": y1},
-                        {"name": "top_right", "x_px": x2, "y_px": y1},
-                        {"name": "bottom_right", "x_px": x2, "y_px": y2},
-                        {"name": "bottom_left", "x_px": x1, "y_px": y2},
-                    ],
-                    "center": {"x_px": center_x, "y_px": center_y},
-                    "center_ratio": {
-                        "x": round(center_x / image_width, 6),
-                        "y": round(center_y / image_height, 6),
-                    },
-                    "bounds_ratio": {
-                        "left": round(x1 / image_width, 6),
-                        "top": round(y1 / image_height, 6),
-                        "right": round(x2 / image_width, 6),
-                        "bottom": round(y2 / image_height, 6),
-                    },
-                })
 
-            # The log should reflect only entries that survived bounding-box validation.
+            if rect_mode:
+                # Exactly one result for the selected rectangle, even if it contains multiple lines.
+                text = " ".join(item["text"] for item in sorted(grouped, key=lambda item: (item["top"], item["left"])))
+                text = re.sub(r"\\s+", " ", text).strip()
+                if text:
+                    x1, y1, x2, y2 = left, top, right, bottom
+                    width, height = x2 - x1, y2 - y1
+                    center_x = round((x1 + x2) / 2)
+                    center_y = round((y1 + y2) / 2)
+                    name = self.normalize_text(text)
+                    self._ocr_elements.append({
+                        "name": name,
+                        "text": text,
+                        "confidence": round(sum(item["confidence"] for item in grouped) / len(grouped), 1),
+                        "bounds": {"left": x1, "top": y1, "right": x2, "bottom": y2},
+                        "rect": {"x": x1, "y": y1, "width": width, "height": height},
+                        "corners": [
+                            {"name": "top_left", "x_px": x1, "y_px": y1},
+                            {"name": "top_right", "x_px": x2, "y_px": y1},
+                            {"name": "bottom_right", "x_px": x2, "y_px": y2},
+                            {"name": "bottom_left", "x_px": x1, "y_px": y2},
+                        ],
+                        "center": {"x_px": center_x, "y_px": center_y},
+                        "center_ratio": {
+                            "x": round(center_x / image_width, 6),
+                            "y": round(center_y / image_height, 6),
+                        },
+                        "bounds_ratio": {
+                            "left": round(x1 / image_width, 6),
+                            "top": round(y1 / image_height, 6),
+                            "right": round(x2 / image_width, 6),
+                            "bottom": round(y2 / image_height, 6),
+                        },
+                    })
+            else:
+                # Point mode retains whole-image OCR, but only accepts filtered text lines.
+                for item in grouped:
+                    x1 = max(0, min(image_width, offset_x + round(item["left"] / scale)))
+                    y1 = max(0, min(image_height, offset_y + round(item["top"] / scale)))
+                    x2 = max(x1, min(image_width, offset_x + round(item["right"] / scale)))
+                    y2 = max(y1, min(image_height, offset_y + round(item["bottom"] / scale)))
+                    width, height = x2 - x1, y2 - y1
+                    if width < 3 or height < 3:
+                        continue
+                    center_x = round((x1 + x2) / 2)
+                    center_y = round((y1 + y2) / 2)
+                    self._ocr_elements.append({
+                        "name": self.normalize_text(item["text"]),
+                        "text": item["text"],
+                        "confidence": item["confidence"],
+                        "bounds": {"left": x1, "top": y1, "right": x2, "bottom": y2},
+                        "rect": {"x": x1, "y": y1, "width": width, "height": height},
+                        "corners": [
+                            {"name": "top_left", "x_px": x1, "y_px": y1},
+                            {"name": "top_right", "x_px": x2, "y_px": y1},
+                            {"name": "bottom_right", "x_px": x2, "y_px": y2},
+                            {"name": "bottom_left", "x_px": x1, "y_px": y2},
+                        ],
+                        "center": {"x_px": center_x, "y_px": center_y},
+                        "center_ratio": {
+                            "x": round(center_x / image_width, 6),
+                            "y": round(center_y / image_height, 6),
+                        },
+                        "bounds_ratio": {
+                            "left": round(x1 / image_width, 6),
+                            "top": round(y1 / image_height, 6),
+                            "right": round(x2 / image_width, 6),
+                            "bottom": round(y2 / image_height, 6),
+                        },
+                    })
+
             items = [item["text"] for item in self._ocr_elements]
             normalized_items = [item["name"] for item in self._ocr_elements]
             if self._on_ocr_result is not None:
                 self._on_ocr_result(items, normalized_items, self._ocr_elements)
 
             if not items:
-                self.instruction.setText("Không tìm thấy cụm chữ đủ tin cậy. Hãy thử ảnh rõ hơn hoặc chọn ảnh khác.")
+                self.instruction.setText("Không tìm thấy text đủ tin cậy trong vùng đã chọn." if rect_mode else "Không tìm thấy cụm chữ đủ tin cậy.")
                 QMessageBox.information(
                     self, "Không nhận diện được chữ",
-                    "Không tìm thấy text có độ tin cậy đủ cao. Có thể thử ảnh rõ hơn hoặc cắt gọn ảnh trước khi phân tích.",
+                    "Không tìm thấy text đủ tin cậy trong vùng đã chọn." if rect_mode
+                    else "Không tìm thấy text có độ tin cậy đủ cao. Hãy thử ảnh rõ hơn.",
                 )
             else:
-                self.instruction.setText(f"Đã nhận diện {len(items)} cụm chữ sau khi lọc nhiễu.")
+                self.instruction.setText("Đã nhận diện 1 kết quả trong RECT." if rect_mode else f"Đã nhận diện {len(items)} cụm chữ sau khi lọc nhiễu.")
         except pytesseract.TesseractNotFoundError:
             QMessageBox.critical(
                 self,
