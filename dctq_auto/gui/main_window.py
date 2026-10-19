@@ -753,26 +753,24 @@ class MainWindow(QMainWindow):
     def _log_ocr_results(
         self, items: list[str], normalized: list[str], locations: list[dict] | None = None
     ) -> None:
-        self._log("Kết quả phân tích OCR (text -> tên chuẩn hóa -> vị trí):")
+        self._log("Kết quả OCR:")
         if not items:
-            self._log("  Không nhận diện được text.")
+            self._log("Không nhận diện được text đủ tin cậy.")
             return
         locations = locations or []
         for index, text in enumerate(items):
             name = normalized[index] if index < len(normalized) else ""
-            self._log(f"  {index + 1}. {text} -> {name}")
-            if index < len(locations):
-                element = locations[index]
-                bounds = element.get("bounds", {})
-                center = element.get("center", {})
-                self._log(
-                    "     RECT: "
-                    f"TL=({bounds.get('left')},{bounds.get('top')}) "
-                    f"TR=({bounds.get('right')},{bounds.get('top')}) "
-                    f"BR=({bounds.get('right')},{bounds.get('bottom')}) "
-                    f"BL=({bounds.get('left')},{bounds.get('bottom')}); "
-                    f"TÂM=({center.get('x_px')},{center.get('y_px')})"
-                )
+            element = locations[index] if index < len(locations) else {}
+            bounds = element.get("bounds", {})
+            x = int(bounds.get("left", 0))
+            y = int(bounds.get("top", 0))
+            width = int(bounds.get("right", x)) - x
+            height = int(bounds.get("bottom", y)) - y
+            self._log(f"Rect: ({x}, {y}, {width}, {height})")
+            self._log(f"Text-original: {text}")
+            self._log(f"Text-chuan hoá: {name}")
+            if index < len(items) - 1:
+                self._log("---")
 
     def scan_adb_devices(self) -> None:
         current_serial = self.device_combo.currentData()
