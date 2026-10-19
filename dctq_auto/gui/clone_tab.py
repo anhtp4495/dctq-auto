@@ -5,7 +5,6 @@ from pathlib import Path
 from PySide6.QtWidgets import (
     QFileDialog,
     QCheckBox,
-    QFormLayout,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -50,34 +49,19 @@ class CloneTab(QWidget):
         tasks_label.setStyleSheet("font-weight: 600;")
         layout.addWidget(tasks_label)
 
-        self.clone_login = QCheckBox("Đăng nhập")
-        self.clone_login.setChecked(True)
         self.clone_daily_check_in = QCheckBox("Điểm danh")
         self.clone_daily_check_in.setChecked(True)
         self.clone_guild_check_in = QCheckBox("Báo danh quân đoàn")
         self.clone_guild_check_in.setChecked(True)
         self.clone_receive_lucky_bag = QCheckBox("Nhận túi phúc")
         self.clone_receive_lucky_bag.setChecked(True)
-        self.clone_logout = QCheckBox("Đăng xuất")
-        self.clone_logout.setChecked(True)
-
         for checkbox in (
-            self.clone_login,
             self.clone_daily_check_in,
             self.clone_guild_check_in,
             self.clone_receive_lucky_bag,
-            self.clone_logout,
         ):
             layout.addWidget(checkbox)
 
-        note = QLabel(
-            "Lưu ý: file TXT chứa mật khẩu dạng văn bản thuần; hãy giữ file ở nơi an toàn. "
-            "Phần giao diện và đọc danh sách đã có; thao tác đăng nhập/điểm danh trong game "
-            "cần được nối với logic điều khiển ADB/OCR trước khi chạy thật."
-        )
-        note.setWordWrap(True)
-        note.setStyleSheet("color: #B45309;")
-        layout.addWidget(note)
         layout.addStretch(1)
 
     def _browse_file(self) -> None:
@@ -100,7 +84,7 @@ class CloneTab(QWidget):
         except FileNotFoundError:
             self.account_status.setText("Chưa tìm thấy file. Hãy kiểm tra đường dẫn.")
         except (OSError, UnicodeError, ValueError) as exc:
-            self.account_status.setText(f"Danh sách chưa hợp lệ: {exc}")
+            self.account_status.setText(str(exc))
         else:
             self.account_status.setText(f"Đã đọc {len(accounts)} tài khoản hợp lệ.")
 
@@ -109,9 +93,9 @@ class CloneTab(QWidget):
         return {
             "clone_mode": True,
             "clone_account_file": self.account_file_input.text().strip(),
-            "clone_login": self.clone_login.isChecked(),
+            "clone_login": True,
             "clone_daily_check_in": self.clone_daily_check_in.isChecked(),
             "clone_guild_check_in": self.clone_guild_check_in.isChecked(),
             "clone_receive_lucky_bag": self.clone_receive_lucky_bag.isChecked(),
-            "clone_logout": self.clone_logout.isChecked(),
+            "clone_logout": True,
         }
