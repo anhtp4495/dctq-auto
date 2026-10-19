@@ -286,9 +286,32 @@ class BotWorker(QThread):
         return has_password and has_login_label
 
     @staticmethod
+    def _login_error(text: str) -> str | None:
+        """Return a generic login error category without exposing credentials."""
+        normalized = BotWorker._normalize_screen_text(text)
+        error_phrases = (
+            ("sai mat khau", "Mật khẩu không đúng"),
+            ("mat khau sai", "Mật khẩu không đúng"),
+            ("tai khoan khong ton tai", "Tài khoản không tồn tại"),
+            ("tai khoan hoac mat khau", "Tài khoản hoặc mật khẩu không đúng"),
+            ("dang nhap that bai", "Đăng nhập thất bại"),
+            ("ten dang nhap khong hop le", "Tên đăng nhập không hợp lệ"),
+            ("mat khau khong duoc de trong", "Chưa nhập mật khẩu"),
+            ("vui long nhap mat khau", "Chưa nhập mật khẩu"),
+            ("ket noi that bai", "Kết nối thất bại"),
+            ("connection failed", "Kết nối thất bại"),
+            ("network error", "Lỗi mạng"),
+        )
+        for phrase, message in error_phrases:
+            if phrase in normalized:
+                return message
+        return None
+
+    @staticmethod
     def _input_text(device, value: str) -> None:
         """Send text safely through Android input; spaces use Android's %s syntax."""
-        value = value.replace(" ", "%s")
+        # Android's input command uses %s as the escape sequence for a space.
+        value = value.replace("%", "%25").replace(" ", "%s")
         device.shell(f"input text {shlex.quote(value)}")
 
     def _run_clone_login(self, device) -> None:
@@ -387,7 +410,11 @@ class BotWorker(QThread):
                 break
 
             verified = False
-            for _attempt in range(8):
+            previous_screen_text = None
+            observed_error = None
+            # Allow up to 20 seconds for the game/network to respond. Require two
+            # consecutive non-login OCR readings to avoid counting a transient frame.
+            for _attempt in range(20):
                 if not self._wait_if_paused():
                     self.log_message.emit("Đã dừng theo yêu cầu.")
                     return
@@ -399,15 +426,33 @@ class BotWorker(QThread):
                         f"[{account.username}] Lỗi đọc màn hình khi xác minh: {exc}"
                     )
                     break
-                if result_text.strip() and not self._is_login_screen(result_text):
-                    verified = True
-                    break
+
+                observed_error = self._login_error(result_text) or observed_error
+                if self._is_login_screen(result_text):
+                    previous_screen_text = None
+                    continue
+                if not result_text.strip():
+                    previous_screen_text = None
+                    continue
+                if previous_screen_text is not None:
+                    # A changed, readable screen plus no known error is our generic
+                    # success signal until a game-specific home-screen marker is configured.
+                    if not observed_error:
+                        verified = True
+                        break
+                previous_screen_text = result_text
 
             if not verified:
-                self.log_message.emit(
-                    f"[{account.username}] Chưa xác nhận đăng nhập thành công. "
-                    "Có thể sai thông tin, mạng chậm hoặc màn hình đăng nhập vẫn còn."
-                )
+                if observed_error:
+                    self.log_message.emit(
+                        f"[{account.username}] Đăng nhập chưa thành công: {observed_error}."
+                    )
+                else:
+                    self.log_message.emit(
+                        f"[{account.username}] Chưa xác nhận đăng nhập thành công sau 20 giây. "
+                        "Kiểm tra thông tin, mạng hoặc cung cấp OCR của màn hình vào game "
+                        "để xác minh chính xác hơn."
+                    )
                 break
 
             success_count += 1
