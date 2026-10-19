@@ -76,6 +76,9 @@ class MainWindow(QMainWindow):
         self._paused = False
         self._run_started_at: float | None = None
         self._pause_started_at: float | None = None
+        self._active_clone_mode = False
+        self._active_mock_mode = False
+        self._clone_total_accounts = 0
         self._paused_duration = 0.0
         self._screenshot_worker = None
         self._screenshot_annotator = None
@@ -955,7 +958,10 @@ class MainWindow(QMainWindow):
             return
 
         config = self._current_config()
-        if config.get("clone_mode"):
+        self._active_clone_mode = bool(config.get("clone_mode"))
+        self._active_mock_mode = mock_mode
+        self._clone_total_accounts = 0
+        if self._active_clone_mode:
             account_file = config.get("clone_account_file", "")
             try:
                 accounts = load_accounts(account_file)
@@ -966,6 +972,7 @@ class MainWindow(QMainWindow):
                     str(exc),
                 )
                 return
+            self._clone_total_accounts = len(accounts)
             selected_tasks = [
                 key for key in (
                     "clone_login",
@@ -1006,7 +1013,14 @@ class MainWindow(QMainWindow):
         self._run_started_at = time.monotonic()
         self._pause_started_at = None
         self._paused_duration = 0.0
-        self.progress_bar.setValue(0)
+        if self._active_clone_mode:
+            self.progress_bar.setRange(0, max(1, self._clone_total_accounts))
+            self.progress_bar.setFormat("%v/%m tài khoản thành công")
+            self.progress_bar.setValue(0)
+        else:
+            self.progress_bar.setRange(0, 100)
+            self.progress_bar.setFormat("%p%")
+            self.progress_bar.setValue(0)
         self.elapsed_time_label.setText("Thời gian đã chạy: 00:00:00")
         self.eta_label.setText("Dự kiến kết thúc: Chưa ước tính")
         self.start_button.setEnabled(False)
@@ -1098,7 +1112,21 @@ class MainWindow(QMainWindow):
         self._render_task_progress(name, state, completed, total)
 
     def _update_progress(self, completed: int, total: int, status: str) -> None:
+        if self._active_clone_mode:
+            # Mock mode reports completed accounts. Real Clone actions are not
+            # implemented yet, so connection progress must not count as success.
+            if self._active_mock_mode:
+                self.progress_bar.setRange(0, max(1, self._clone_total_accounts))
+                self.progress_bar.setValue(
+                    max(0, min(self._clone_total_accounts, completed))
+                )
+            else:
+                self.progress_bar.setRange(0, max(1, self._clone_total_accounts))
+                self.progress_bar.setValue(0)
+            return
         percent = int(completed * 100 / total) if total else 0
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setFormat("%p%")
         self.progress_bar.setValue(max(0, min(100, percent)))
 
     @staticmethod
