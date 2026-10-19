@@ -66,13 +66,13 @@ class MainWindow(QMainWindow):
         self.scan_button = QPushButton("Quét ADB")
         self.scan_button.clicked.connect(self.scan_adb_devices)
         adb_layout.addWidget(self.scan_button)
-        self.capture_annotate_button = QPushButton("Chụp & chọn tọa độ")
+        root.addWidget(adb_group)
+        self.capture_annotate_button = QPushButton("Chụp màn hình LDPlayer & chọn tọa độ")
         self.capture_annotate_button.setToolTip(
             "Chụp screenshot qua ADB, sau đó chọn điểm hoặc vùng 4 góc trực tiếp trên ảnh."
         )
         self.capture_annotate_button.clicked.connect(self.open_screenshot_annotator)
-        adb_layout.addWidget(self.capture_annotate_button)
-        root.addWidget(adb_group)
+        root.addWidget(self.capture_annotate_button)
 
         self.tabs = QTabWidget(central)
         root.addWidget(self.tabs)
