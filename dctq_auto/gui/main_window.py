@@ -32,6 +32,7 @@ from dctq_auto.adb.client import AdbClient
 from dctq_auto.config.settings import Settings
 from dctq_auto.gui.workers import BotWorker
 from dctq_auto.gui.clone_tab import CloneTab
+from dctq_auto.gui.screenshot_annotator import ScreenshotAnnotator
 from dctq_auto.tasks.clone.accounts import load_accounts
 
 
@@ -65,6 +66,12 @@ class MainWindow(QMainWindow):
         self.scan_button = QPushButton("Quét ADB")
         self.scan_button.clicked.connect(self.scan_adb_devices)
         adb_layout.addWidget(self.scan_button)
+        self.capture_annotate_button = QPushButton("Chụp & chọn tọa độ")
+        self.capture_annotate_button.setToolTip(
+            "Chụp screenshot qua ADB, sau đó chọn điểm hoặc vùng 4 góc trực tiếp trên ảnh."
+        )
+        self.capture_annotate_button.clicked.connect(self.open_screenshot_annotator)
+        adb_layout.addWidget(self.capture_annotate_button)
         root.addWidget(adb_group)
 
         self.tabs = QTabWidget(central)
@@ -570,6 +577,18 @@ class MainWindow(QMainWindow):
             self._log("Đã chọn chế độ chạy thử, không kết nối ADB.")
         elif self.device_combo.currentData():
             self._log(f"Đã chọn thiết bị ADB: {self.device_combo.currentData()}")
+
+    def open_screenshot_annotator(self) -> None:
+        serial = self.device_combo.currentData()
+        if not serial or serial == "mock":
+            QMessageBox.warning(
+                self,
+                "Chưa chọn thiết bị ADB",
+                "Hãy mở LDPlayer, nhấn Quét ADB và chọn thiết bị đang chạy game trước khi chụp màn hình.",
+            )
+            return
+        dialog = ScreenshotAnnotator(serial, self)
+        dialog.exec()
 
     def scan_adb_devices(self) -> None:
         current_serial = self.device_combo.currentData()
