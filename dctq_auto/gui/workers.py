@@ -311,7 +311,7 @@ class BotWorker(QThread):
     def _input_text(device, value: str) -> None:
         """Send text safely through Android input; spaces use Android's %s syntax."""
         # Android's input command uses %s as the escape sequence for a space.
-        value = value.replace("%", "%25").replace(" ", "%s")
+        value = value.replace(" ", "%s")
         device.shell(f"input text {shlex.quote(value)}")
 
     def _run_clone_login(self, device) -> None:
@@ -325,25 +325,9 @@ class BotWorker(QThread):
             self.progress_changed.emit(0, total, f"0/{total} tài khoản thành công")
             return
 
-        # OCR boxes were provided from a 1920x1080 reference screenshot.
-        reference_width, reference_height = 1920, 1080
-        resolution_text = device.shell("wm size")
-        sizes = re.findall(r"(?:Physical|Override) size:\s*(\d+)x(\d+)", resolution_text)
-        if sizes:
-            device_width, device_height = map(int, sizes[-1])
-        else:
-            device_width, device_height = reference_width, reference_height
-
-        def scaled_point(x: int, y: int) -> tuple[int, int]:
-            return (
-                max(0, min(device_width - 1, round(x * device_width / reference_width))),
-                max(0, min(device_height - 1, round(y * device_height / reference_height))),
-            )
-
-        # Centers of the OCR rectangles supplied for username, password and login button.
-        username_point = scaled_point(round((517 + 445 / 2)), round((388 + 25 / 2)))
-        password_point = scaled_point(round((518 + 101 / 2)), round((469 + 26 / 2)))
-        login_point = scaled_point(round((889 + 143 / 2)), round((586 + 27 / 2)))
+        # Use saved OCR boxes so taps follow the source screenshot resolution.
+        # These normalized names match the three OCR results supplied by the user.
+        ocr_client = AdbClient(serial=self._serial)
 
         success_count = 0
         self.progress_changed.emit(0, total, f"0/{total} tài khoản thành công")
@@ -378,7 +362,7 @@ class BotWorker(QThread):
                 break
 
             try:
-                device.shell(f"input tap {username_point[0]} {username_point[1]}")
+                ocr_client.tap_ocr_target("ten_dang_nhap_so_dien_thoai_hoac_email")
                 time.sleep(0.25)
                 device.shell("input keyevent KEYCODE_MOVE_END")
                 device.shell("input keyevent --longpress KEYCODE_DEL")
@@ -388,7 +372,7 @@ class BotWorker(QThread):
                     self.log_message.emit("Đã dừng theo yêu cầu.")
                     return
 
-                device.shell(f"input tap {password_point[0]} {password_point[1]}")
+                ocr_client.tap_ocr_target("mat_khau")
                 time.sleep(0.25)
                 device.shell("input keyevent KEYCODE_MOVE_END")
                 device.shell("input keyevent --longpress KEYCODE_DEL")
@@ -399,7 +383,7 @@ class BotWorker(QThread):
                     return
 
                 time.sleep(0.3)
-                device.shell(f"input tap {login_point[0]} {login_point[1]}")
+                ocr_client.tap_ocr_target("dang_nhap")
                 self.log_message.emit(
                     f"[{account.username}] Đã gửi yêu cầu đăng nhập; đang xác minh kết quả."
                 )
