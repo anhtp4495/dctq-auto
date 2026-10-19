@@ -823,6 +823,16 @@ class MainWindow(QMainWindow):
             width = int(bounds.get("right", x)) - x
             height = int(bounds.get("bottom", y)) - y
             self._log(f"Rect: ({x}, {y}, {width}, {height})")
+            if element.get("matched") and element.get("highlight_bounds"):
+                red_bounds = element["highlight_bounds"]
+                red_x = int(red_bounds.get("left", 0))
+                red_y = int(red_bounds.get("top", 0))
+                red_width = int(red_bounds.get("right", red_x)) - red_x
+                red_height = int(red_bounds.get("bottom", red_y)) - red_y
+                self._log(
+                    f"RECT đỏ (khớp): ({red_x}, {red_y}, "
+                    f"{red_width}, {red_height})"
+                )
             self._log(f"Text-original: {text}")
             self._log(f"Text-chuan hoá: {name}")
             if index < len(items) - 1:
