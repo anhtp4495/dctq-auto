@@ -328,8 +328,9 @@ class ScreenshotAnnotator(QDialog):
         self.image_view = ClickableImage(
             QPixmap(),
             self._on_image_click,
-            lambda: self.mode_combo.currentText() == "Từng vùng",
+            lambda: self._current_mode() == "Từng vùng",
             self._on_image_rect_selected,
+            lambda: self._current_mode() == "Con trỏ",
         )
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(False)
@@ -362,7 +363,7 @@ class ScreenshotAnnotator(QDialog):
         self.ocr_button.setToolTip("Chỉ khả dụng ở chế độ Từng vùng")
         self.ocr_button.clicked.connect(self.recognize_text)
         bottom.addWidget(self.ocr_button)
-        self._on_mode_changed(self.mode_combo.currentText())
+        self._on_mode_changed(self._current_mode())
         self.clear_button = QPushButton("Xóa điểm")
         self.clear_button.clicked.connect(self.clear_points)
         bottom.addWidget(self.clear_button)
@@ -391,20 +392,32 @@ class ScreenshotAnnotator(QDialog):
         self.image_view.resize(width, height)
         self.image_view.update()
 
+    def _current_mode(self) -> str:
+        if self.region_mode_button.isChecked():
+            return "Từng vùng"
+        if self.cursor_mode_button.isChecked():
+            return "Con trỏ"
+        return "Từng điểm"
+
     def _on_mode_changed(self, mode: str) -> None:
-        """Persist the selected interaction mode and gate OCR to region mode."""
+        """Persist one of the three exclusive interaction modes."""
         self._ui_settings.setValue("screenshot_annotator/mode", mode)
         is_region_mode = mode == "Từng vùng"
         self.ocr_button.setEnabled(is_region_mode)
         self.ocr_button.setToolTip(
             "Phân tích OCR trong vùng đã chọn" if is_region_mode
-            else "OCR bị tắt ở chế độ Từng điểm; chế độ này dùng để lưu nhiều điểm click."
+            else "OCR chỉ khả dụng ở chế độ Từng vùng."
         )
-        self.instruction.setText(
-            "Từng vùng: chọn một vùng RECT rồi phân tích OCR."
-            if is_region_mode
-            else "Từng điểm: nhấp ảnh để thêm nhiều điểm tọa độ."
-        )
+        if mode == "Từng vùng":
+            message = "Từng vùng: kéo chọn một vùng RECT rồi phân tích OCR."
+            self.image_view.setCursor(Qt.CursorShape.CrossCursor)
+        elif mode == "Con trỏ":
+            message = "Con trỏ: giữ chuột trái và kéo ảnh để di chuyển vùng nhìn."
+            self.image_view.setCursor(Qt.CursorShape.OpenHandCursor)
+        else:
+            message = "Từng điểm: nhấp ảnh để thêm nhiều điểm tọa độ."
+            self.image_view.setCursor(Qt.CursorShape.ArrowCursor)
+        self.instruction.setText(message)
         self.image_view.update()
 
     def choose_screenshot_file(self) -> None:
@@ -551,7 +564,8 @@ class ScreenshotAnnotator(QDialog):
             self._ocr_elements = []
             self.image_view.set_ocr_boxes([])
             if is_point:
-                self.mode_combo.setCurrentText("Từng điểm")
+                self.point_mode_button.setChecked(True)
+                self._on_mode_changed("Từng điểm")
                 self._ocr_region = None
                 self._points = [(x, y, "manual_point")]
                 self.image_view.set_points(self._points)
@@ -564,7 +578,8 @@ class ScreenshotAnnotator(QDialog):
             else:
                 width, height = values["width"], values["height"]
                 right, bottom = x + width, y + height
-                self.mode_combo.setCurrentText("Từng vùng")
+                self.region_mode_button.setChecked(True)
+                self._on_mode_changed("Từng vùng")
                 self._ocr_region = (x, y, right, bottom)
                 self._points = [
                     (x, y, "manual_rect_top_left"),
@@ -757,7 +772,7 @@ class ScreenshotAnnotator(QDialog):
             QMessageBox.warning(self, "Chưa có ảnh", "Hãy chọn ảnh trong artifacts/screenshots trước.")
             return
 
-        rect_mode = self.mode_combo.currentText() == "Từng vùng"
+        rect_mode = self._current_mode() == "Từng vùng"
         if not rect_mode:
             return
         if self._ocr_region is None:
