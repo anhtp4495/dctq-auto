@@ -8,7 +8,7 @@ import unicodedata
 from datetime import datetime
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageOps
 import pytesseract
 
 from PySide6.QtCore import QPoint, Qt
@@ -363,19 +363,14 @@ class ScreenshotAnnotator(QDialog):
         self.normalized_text.setText(self.normalize_text(text))
 
     @staticmethod
-    def _split_ocr_words(data: dict, target_count: int) -> list[dict]:
-        """Group OCR words and retain each group's bounding rectangle."""
+    def _split_ocr_words(data: dict, min_confidence: float = 45.0) -> list[dict]:
+        """Group reliable OCR words by their actual Tesseract text line."""
         words = []
         count = len(data.get("text", []))
         for i in range(count):
-            text = str(data["text"][i]).strip()
+            text = re.sub(r"\\s+", " ", str(data["text"][i])).strip()
             try:
                 confidence = float(data["conf"][i])
-            except (ValueError, TypeError, KeyError):
-                confidence = -1
-            if not text or confidence < 0:
-                continue
-            try:
                 x = int(data["left"][i])
                 y = int(data["top"][i])
                 width = int(data["width"][i])
@@ -385,91 +380,98 @@ class ScreenshotAnnotator(QDialog):
                     int(data["par_num"][i]),
                     int(data["line_num"][i]),
                 )
-            except (ValueError, TypeError, KeyError):
+            except (ValueError, TypeError, KeyError, IndexError):
+                continue
+
+            # Discard low-confidence, tiny, punctuation-only and obvious one-character noise.
+            alphanumeric = re.sub(r"[^\\w]", "", text, flags=re.UNICODE)
+            if (
+                not text or confidence < min_confidence or width < 4 or height < 7
+                or len(alphanumeric) < 2
+            ):
                 continue
             words.append({
                 "text": text, "left": x, "top": y, "right": x + width,
-                "bottom": y + height, "line": line_key,
+                "bottom": y + height, "line": line_key, "confidence": confidence,
             })
         if not words:
             return []
 
-        def combine(group: list[dict]) -> dict:
-            return {
-                "text": " ".join(word["text"] for word in group).strip(),
+        groups: dict[tuple[int, int, int], list[dict]] = {}
+        for word in words:
+            groups.setdefault(word["line"], []).append(word)
+
+        result = []
+        for key in sorted(
+            groups,
+            key=lambda k: (
+                min(word["top"] for word in groups[k]),
+                min(word["left"] for word in groups[k]),
+            ),
+        ):
+            group = sorted(groups[key], key=lambda word: word["left"])
+            text = " ".join(word["text"] for word in group).strip()
+            # Reject output that is mostly symbols or OCR artifacts.
+            useful_chars = len(re.findall(r"[\\w]", text, flags=re.UNICODE))
+            if useful_chars < 2:
+                continue
+            result.append({
+                "text": text,
                 "left": min(word["left"] for word in group),
                 "top": min(word["top"] for word in group),
                 "right": max(word["right"] for word in group),
                 "bottom": max(word["bottom"] for word in group),
-            }
-
-        line_keys = sorted(
-            {word["line"] for word in words},
-            key=lambda key: min(word["top"] for word in words if word["line"] == key),
-        )
-        if len(line_keys) == 1:
-            ordered = sorted(words, key=lambda word: word["left"])
-            if target_count <= 1 or len(ordered) < target_count:
-                return [combine(ordered)]
-            gaps = []
-            for i in range(len(ordered) - 1):
-                gap = ordered[i + 1]["left"] - ordered[i]["right"]
-                gaps.append((gap, i))
-            split_positions = sorted(
-                index for _gap, index in sorted(gaps, reverse=True)[:target_count - 1]
-            )
-            groups = []
-            start = 0
-            for split_at in split_positions:
-                groups.append(ordered[start:split_at + 1])
-                start = split_at + 1
-            groups.append(ordered[start:])
-            return [combine(group) for group in groups if group]
-
-        groups = []
-        for key in line_keys:
-            line_words = sorted(
-                (word for word in words if word["line"] == key),
-                key=lambda word: word["left"],
-            )
-            groups.append(combine(line_words))
-        return groups
+                "confidence": round(sum(word["confidence"] for word in group) / len(group), 1),
+            })
+        return result
 
     def recognize_text(self) -> None:
         if self._image_path is None or self._pixmap.isNull():
             QMessageBox.warning(self, "Chưa có ảnh", "Hãy chọn ảnh trong artifacts/screenshots trước.")
             return
         try:
+            # Upscale and improve contrast before OCR; map detected rectangles back to source pixels.
             with Image.open(self._image_path) as screenshot:
-                full_image = screenshot.convert("RGB")
-                left, top = 0, 0
-                crop = full_image
+                original_size = screenshot.size
+                image = ImageOps.autocontrast(screenshot.convert("L"))
+                scale = 2
+                image = image.resize(
+                    (image.width * scale, image.height * scale),
+                    Image.Resampling.LANCZOS,
+                )
+
             try:
                 ocr_data = pytesseract.image_to_data(
-                    crop, lang="vie+eng", config="--psm 6",
+                    image, lang="vie+eng", config="--psm 11",
                     output_type=pytesseract.Output.DICT,
                 )
             except pytesseract.TesseractError:
                 ocr_data = pytesseract.image_to_data(
-                    crop, lang="eng", config="--psm 6",
+                    image, lang="eng", config="--psm 11",
                     output_type=pytesseract.Output.DICT,
                 )
 
-            grouped = self._split_ocr_words(ocr_data, 3)
+            grouped = self._split_ocr_words(ocr_data, min_confidence=45.0)
             items = [item["text"] for item in grouped]
             normalized_items = [self.normalize_text(item) for item in items]
             self._ocr_elements = []
+            image_width, image_height = original_size
             for text, name, item in zip(items, normalized_items, grouped):
-                x1 = left + item["left"]
-                y1 = top + item["top"]
-                x2 = left + item["right"]
-                y2 = top + item["bottom"]
+                x1 = max(0, min(image_width, round(item["left"] / scale)))
+                y1 = max(0, min(image_height, round(item["top"] / scale)))
+                x2 = max(x1, min(image_width, round(item["right"] / scale)))
+                y2 = max(y1, min(image_height, round(item["bottom"] / scale)))
+                width, height = x2 - x1, y2 - y1
+                if width < 3 or height < 3:
+                    continue
                 center_x = round((x1 + x2) / 2)
                 center_y = round((y1 + y2) / 2)
                 self._ocr_elements.append({
                     "name": name,
                     "text": text,
+                    "confidence": item["confidence"],
                     "bounds": {"left": x1, "top": y1, "right": x2, "bottom": y2},
+                    "rect": {"x": x1, "y": y1, "width": width, "height": height},
                     "corners": [
                         {"name": "top_left", "x_px": x1, "y_px": y1},
                         {"name": "top_right", "x_px": x2, "y_px": y1},
@@ -478,35 +480,31 @@ class ScreenshotAnnotator(QDialog):
                     ],
                     "center": {"x_px": center_x, "y_px": center_y},
                     "center_ratio": {
-                        "x": round(center_x / self._pixmap.width(), 6),
-                        "y": round(center_y / self._pixmap.height(), 6),
+                        "x": round(center_x / image_width, 6),
+                        "y": round(center_y / image_height, 6),
                     },
                     "bounds_ratio": {
-                        "left": round(x1 / self._pixmap.width(), 6),
-                        "top": round(y1 / self._pixmap.height(), 6),
-                        "right": round(x2 / self._pixmap.width(), 6),
-                        "bottom": round(y2 / self._pixmap.height(), 6),
+                        "left": round(x1 / image_width, 6),
+                        "top": round(y1 / image_height, 6),
+                        "right": round(x2 / image_width, 6),
+                        "bottom": round(y2 / image_height, 6),
                     },
                 })
 
-
+            # The log should reflect only entries that survived bounding-box validation.
+            items = [item["text"] for item in self._ocr_elements]
+            normalized_items = [item["name"] for item in self._ocr_elements]
             if self._on_ocr_result is not None:
                 self._on_ocr_result(items, normalized_items, self._ocr_elements)
-            if len(items) == 1:
-                self.instruction.setText(
-                    "OCR chỉ tìm được một cụm chữ. Hãy mở rộng vùng chọn hoặc sửa thủ công "
-                    "từng dòng nếu các mục nằm sát nhau."
-                )
-            else:
-                self.instruction.setText(
-                    f"Đã tách {len(items)} text trên toàn ảnh. Mỗi text có bounding RECT, 4 góc và trung điểm; "
-                    "kiểm tra lại nếu OCR chia cụm chưa đúng."
-                )
+
             if not items:
+                self.instruction.setText("Không tìm thấy cụm chữ đủ tin cậy. Hãy thử ảnh rõ hơn hoặc chọn ảnh khác.")
                 QMessageBox.information(
                     self, "Không nhận diện được chữ",
-                    "Hãy chọn sát vùng chữ hơn, chụp ảnh rõ hơn hoặc kiểm tra Tesseract OCR.",
+                    "Không tìm thấy text có độ tin cậy đủ cao. Có thể thử ảnh rõ hơn hoặc cắt gọn ảnh trước khi phân tích.",
                 )
+            else:
+                self.instruction.setText(f"Đã nhận diện {len(items)} cụm chữ sau khi lọc nhiễu.")
         except pytesseract.TesseractNotFoundError:
             QMessageBox.critical(
                 self,
@@ -517,7 +515,6 @@ class ScreenshotAnnotator(QDialog):
             )
         except Exception as exc:
             QMessageBox.critical(self, "OCR thất bại", str(exc))
-
 
     def undo_point(self) -> None:
         if self._points:
