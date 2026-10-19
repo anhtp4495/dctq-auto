@@ -206,7 +206,7 @@ class BotWorker(QThread):
         selected = [
             (key, label) for key, label in task_specs if self._config.get(key)
         ]
-        total = len(accounts) * len(selected)
+        total = len(accounts)
         if total == 0:
             self.log_message.emit("Tab Clone: không có tài khoản hoặc nhiệm vụ để chạy.")
             self.progress_changed.emit(0, 0, "Không có nhiệm vụ được chọn")
@@ -232,15 +232,19 @@ class BotWorker(QThread):
                     f"{task_index}/{len(selected)}."
                 ):
                     return
-                self._progress_completed += 1
                 self.task_progress_changed.emit(
                     f"{account.username} - {label}", "done", 1, 1
                 )
-                self.progress_changed.emit(
-                    self._progress_completed,
-                    self._progress_total,
-                    f"Clone {account_index}/{len(accounts)}: {label}",
-                )
+            self._progress_completed += 1
+            progress_text = (
+                f"Tiến trình tài khoản [{self._progress_completed}/{len(accounts)}]"
+            )
+            self.log_message.emit(progress_text)
+            self.progress_changed.emit(
+                self._progress_completed,
+                self._progress_total,
+                progress_text,
+            )
         self.log_message.emit(
             "Hoàn tất chạy thử Clone. Đây chỉ là mô phỏng; chưa có thao tác trong game."
         )
