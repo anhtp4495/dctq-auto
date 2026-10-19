@@ -60,6 +60,7 @@ class CloneTab(QWidget):
             self.clone_daily_check_in,
             self.clone_guild_check_in,
             self.clone_receive_lucky_bag,
+            self.clone_quoc_chien,
         ):
             layout.addWidget(checkbox)
 
