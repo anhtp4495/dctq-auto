@@ -603,23 +603,36 @@ class MainWindow(QMainWindow):
 
     def open_screenshot_annotator(self) -> None:
         serial = self.device_combo.currentData()
-        if serial == "mock":
-            # Ẩn cửa sổ app trước khi chụp để không che LDPlayer ở phía sau.
-            self.hide()
-            QTimer.singleShot(300, self._open_desktop_screenshot_annotator)
-            return
-        if not serial:
+        if serial != "mock" and not serial:
             QMessageBox.warning(self, "Chưa chọn thiết bị", "Hãy chọn thiết bị ADB trước.")
             return
-        dialog = ScreenshotAnnotator(str(serial), self)
-        dialog.exec()
 
-    def _open_desktop_screenshot_annotator(self) -> None:
-        dialog = ScreenshotAnnotator(None, self)
-        dialog.exec()
-        self.show()
-        self.raise_()
-        self.activateWindow()
+        # Ẩn cửa sổ chính để không che màn hình cần chụp.
+        self.hide()
+        if serial == "mock":
+            QTimer.singleShot(300, self._open_screenshot_annotator, None)
+        else:
+            QTimer.singleShot(0, self._open_screenshot_annotator, str(serial))
+
+    def _open_screenshot_annotator(self, serial: str | None) -> None:
+        try:
+            dialog = ScreenshotAnnotator(
+                serial, self, on_ocr_result=self._log_ocr_results
+            )
+            dialog.exec()
+        finally:
+            self.show()
+            self.raise_()
+            self.activateWindow()
+
+    def _log_ocr_results(self, items: list[str], normalized: list[str]) -> None:
+        self._log("Kết quả phân tích OCR:")
+        if not items:
+            self._log("  Không nhận diện được text.")
+            return
+        for index, text in enumerate(items):
+            name = normalized[index] if index < len(normalized) else ""
+            self._log(f"  {index + 1}. {text} -> {name}")
 
     def scan_adb_devices(self) -> None:
         current_serial = self.device_combo.currentData()
