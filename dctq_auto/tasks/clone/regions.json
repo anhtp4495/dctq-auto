@@ -1,0 +1,103 @@
+{
+  "regions": {
+    "login": {
+      "name": "login",
+      "serial": "emulator-5554",
+      "recognized_text": "Tên đăng nhập, số điện thoại hoặc email | Mật khẩu | ĐĂNG NHAP",
+      "normalized_text": "ten_dang_nhap_so_dien_thoai_hoac_email | mat_khau | dang_nhap",
+      "recognized_items": [
+        "Tên đăng nhập, số điện thoại hoặc email",
+        "Mật khẩu",
+        "ĐĂNG NHAP"
+      ],
+      "normalized_items": [
+        "ten_dang_nhap_so_dien_thoai_hoac_email",
+        "mat_khau",
+        "dang_nhap"
+      ],
+      "elements": [
+        {
+          "name": "ten_dang_nhap_so_dien_thoai_hoac_email",
+          "text": "Tên đăng nhập, số điện thoại hoặc email",
+          "confidence": null,
+          "bounds": {
+            "left": 564,
+            "top": 389,
+            "right": 686,
+            "bottom": 413
+          },
+          "rect": {
+            "x": 564,
+            "y": 389,
+            "width": 122,
+            "height": 24
+          },
+          "center": {
+            "x_px": 625,
+            "y_px": 401
+          },
+          "center_ratio": {
+            "x": 0.325521,
+            "y": 0.371296
+          }
+        },
+        {
+          "name": "mat_khau",
+          "text": "Mật khẩu",
+          "confidence": null,
+          "bounds": {
+            "left": 518,
+            "top": 469,
+            "right": 619,
+            "bottom": 495
+          },
+          "rect": {
+            "x": 518,
+            "y": 469,
+            "width": 101,
+            "height": 26
+          },
+          "center": {
+            "x_px": 568.5,
+            "y_px": 482
+          },
+          "center_ratio": {
+            "x": 0.296094,
+            "y": 0.446296
+          }
+        },
+        {
+          "name": "dang_nhap",
+          "text": "ĐĂNG NHAP",
+          "confidence": null,
+          "bounds": {
+            "left": 889,
+            "top": 586,
+            "right": 1032,
+            "bottom": 613
+          },
+          "rect": {
+            "x": 889,
+            "y": 586,
+            "width": 143,
+            "height": 27
+          },
+          "center": {
+            "x_px": 960.5,
+            "y_px": 599.5
+          },
+          "center_ratio": {
+            "x": 0.50026,
+            "y": 0.555093
+          }
+        }
+      ],
+      "screenshot": "user-provided OCR coordinates",
+      "image_resolution": [
+        1920,
+        1080
+      ],
+      "note": "Resolution 1920x1080 inferred from locations.json reference_resolution; verify against actual screenshot."
+    }
+  }
+}
