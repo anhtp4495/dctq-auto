@@ -603,9 +603,23 @@ class MainWindow(QMainWindow):
 
     def open_screenshot_annotator(self) -> None:
         serial = self.device_combo.currentData()
-        # Chạy thử: chụp màn hình desktop đang hiển thị, không cần ADB.
-        dialog = ScreenshotAnnotator(None if serial == "mock" else str(serial), self)
+        if serial == "mock":
+            # Ẩn cửa sổ app trước khi chụp để không che LDPlayer ở phía sau.
+            self.hide()
+            QTimer.singleShot(300, self._open_desktop_screenshot_annotator)
+            return
+        if not serial:
+            QMessageBox.warning(self, "Chưa chọn thiết bị", "Hãy chọn thiết bị ADB trước.")
+            return
+        dialog = ScreenshotAnnotator(str(serial), self)
         dialog.exec()
+
+    def _open_desktop_screenshot_annotator(self) -> None:
+        dialog = ScreenshotAnnotator(None, self)
+        dialog.exec()
+        self.show()
+        self.raise_()
+        self.activateWindow()
 
     def scan_adb_devices(self) -> None:
         current_serial = self.device_combo.currentData()
