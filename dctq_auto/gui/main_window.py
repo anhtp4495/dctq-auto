@@ -78,6 +78,7 @@ class MainWindow(QMainWindow):
         self._pause_started_at: float | None = None
         self._paused_duration = 0.0
         self._screenshot_worker = None
+        self.last_screen_short: str | None = None
 
         central = QWidget(self)
         root = QVBoxLayout(central)
@@ -107,10 +108,10 @@ class MainWindow(QMainWindow):
         )
         self.capture_annotate_button.clicked.connect(self.capture_screenshot_to_file)
         capture_row.addWidget(self.capture_annotate_button)
-        self.choose_position_button = QPushButton("📍")
+        self.choose_position_button = QPushButton("🔍")
         self.choose_position_button.setFixedSize(38, 30)
         self.choose_position_button.setToolTip(
-            "Mở cửa sổ chọn vị trí trên một ảnh đã chụp."
+            "Phân tích ảnh chụp và chọn tọa độ (Analyze)."
         )
         self.choose_position_button.clicked.connect(self.open_screenshot_annotator)
         capture_row.addWidget(self.choose_position_button)
@@ -671,6 +672,7 @@ class MainWindow(QMainWindow):
         worker.start()
 
     def _on_screenshot_saved(self, path: str) -> None:
+        self.last_screen_short = path
         self._log(f"Đã lưu ảnh màn hình: {path}")
 
     def _on_screenshot_failed(self, error: str) -> None:
@@ -685,15 +687,35 @@ class MainWindow(QMainWindow):
         self._screenshot_worker = None
 
     def open_screenshot_annotator(self) -> None:
-        serial = self.device_combo.currentData()
-        self._open_screenshot_annotator(None if serial == "mock" else str(serial))
+        from pathlib import Path
 
-    def _open_screenshot_annotator(self, serial: str | None) -> None:
+        SCREENSHOT_DIR_PATH = Path(SCREENSHOT_DIR)
+        SCREENSHOT_DIR_PATH.mkdir(parents=True, exist_ok=True)
+        latest = None
+        if self.last_screen_short and Path(self.last_screen_short).is_file():
+            latest = Path(self.last_screen_short)
+        else:
+            candidates = [
+                path for path in SCREENSHOT_DIR_PATH.iterdir()
+                if path.is_file() and path.suffix.lower() in {".png", ".jpg", ".jpeg", ".bmp", ".webp"}
+            ]
+            if candidates:
+                latest = max(candidates, key=lambda path: path.stat().st_mtime)
+                self.last_screen_short = str(latest)
+
+        serial = self.device_combo.currentData()
+        self._open_screenshot_annotator(
+            None if serial == "mock" else str(serial),
+            initial_image=latest,
+        )
+
+    def _open_screenshot_annotator(self, serial: str | None, initial_image=None) -> None:
         try:
             dialog = ScreenshotAnnotator(
                 serial, self,
                 on_ocr_result=self._log_ocr_results,
                 on_location_result=self._log_coordinate_result,
+                initial_image=initial_image,
             )
             dialog.exec()
         finally:
