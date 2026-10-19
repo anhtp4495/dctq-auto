@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QMainWindow,
     QMessageBox,
+    QInputDialog,
     QPlainTextEdit,
     QProgressBar,
     QPushButton,
@@ -66,13 +67,14 @@ class MainWindow(QMainWindow):
         self.scan_button = QPushButton("Quét ADB")
         self.scan_button.clicked.connect(self.scan_adb_devices)
         adb_layout.addWidget(self.scan_button)
-        root.addWidget(adb_group)
-        self.capture_annotate_button = QPushButton("Chụp màn hình LDPlayer & chọn tọa độ")
+        self.capture_annotate_button = QPushButton("📷")
+        self.capture_annotate_button.setFixedWidth(38)
         self.capture_annotate_button.setToolTip(
-            "Chụp screenshot qua ADB, sau đó chọn điểm hoặc vùng 4 góc trực tiếp trên ảnh."
+            "Chụp màn hình LDPlayer và chọn tọa độ trên ảnh (dùng được cả ở chế độ chạy thử)."
         )
         self.capture_annotate_button.clicked.connect(self.open_screenshot_annotator)
-        root.addWidget(self.capture_annotate_button)
+        adb_layout.addWidget(self.capture_annotate_button)
+        root.addWidget(adb_group)
 
         self.tabs = QTabWidget(central)
         root.addWidget(self.tabs)
@@ -318,6 +320,8 @@ class MainWindow(QMainWindow):
         self._restore_settings()
         self._place_window_on_right()
         self._connect_settings_persistence()
+        self.tabs.currentChanged.connect(self._save_settings)
+        self.clone_tab.account_file_input.textChanged.connect(self._save_settings)
         self._on_device_changed()
         self._log(
             "Ứng dụng đã khởi động. Chọn Chạy thử hoặc một thiết bị ADB."
@@ -370,6 +374,18 @@ class MainWindow(QMainWindow):
                 if index >= 0:
                     widget.setCurrentIndex(index)
 
+        tab_index = self._ui_settings.value("ui/selected_tab", 0)
+        try:
+            tab_index = int(tab_index)
+        except (TypeError, ValueError):
+            tab_index = 0
+        if hasattr(self, "tabs") and self.tabs.count():
+            self.tabs.setCurrentIndex(max(0, min(tab_index, self.tabs.count() - 1)))
+
+        account_file = self._ui_settings.value("clone/account_file", "")
+        if hasattr(self, "clone_tab"):
+            self.clone_tab.account_file_input.setText(str(account_file or ""))
+
     def _connect_settings_persistence(self) -> None:
         for widget in self._settings_widgets().values():
             if isinstance(widget, (QCheckBox, QRadioButton, QGroupBox)):
@@ -392,6 +408,12 @@ class MainWindow(QMainWindow):
             else:
                 continue
             self._ui_settings.setValue(f"controls/{name}", value)
+        if hasattr(self, "tabs"):
+            self._ui_settings.setValue("ui/selected_tab", self.tabs.currentIndex())
+        if hasattr(self, "clone_tab"):
+            self._ui_settings.setValue(
+                "clone/account_file", self.clone_tab.account_file_input.text().strip()
+            )
         self._ui_settings.sync()
 
     def closeEvent(self, event) -> None:
@@ -581,13 +603,43 @@ class MainWindow(QMainWindow):
     def open_screenshot_annotator(self) -> None:
         serial = self.device_combo.currentData()
         if not serial or serial == "mock":
-            QMessageBox.warning(
-                self,
-                "Chưa chọn thiết bị ADB",
-                "Hãy mở LDPlayer, nhấn Quét ADB và chọn thiết bị đang chạy game trước khi chụp màn hình.",
-            )
-            return
-        dialog = ScreenshotAnnotator(serial, self)
+            try:
+                online_devices = []
+                for device in AdbClient.list_devices():
+                    try:
+                        if device.get_state() == "device":
+                            online_devices.append(device.serial)
+                    except Exception:
+                        continue
+            except Exception as exc:
+                QMessageBox.warning(
+                    self, "Không tìm thấy thiết bị ADB",
+                    f"Không thể quét thiết bị để chụp màn hình: {exc}",
+                )
+                return
+
+            if not online_devices:
+                QMessageBox.warning(
+                    self,
+                    "Chưa có thiết bị ADB",
+                    "Chế độ chạy thử vẫn hỗ trợ chụp màn hình, nhưng cần mở LDPlayer "
+                    "và bật kết nối ADB trước.",
+                )
+                return
+            if len(online_devices) == 1:
+                serial = online_devices[0]
+            else:
+                serial, accepted = QInputDialog.getItem(
+                    self,
+                    "Chọn thiết bị chụp màn hình",
+                    "Chọn LDPlayer/thiết bị ADB để chụp:",
+                    online_devices,
+                    0,
+                    False,
+                )
+                if not accepted or not serial:
+                    return
+        dialog = ScreenshotAnnotator(str(serial), self)
         dialog.exec()
 
     def scan_adb_devices(self) -> None:
