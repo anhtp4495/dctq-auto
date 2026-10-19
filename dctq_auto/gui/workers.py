@@ -389,7 +389,18 @@ class BotWorker(QThread):
         ocr_client = AdbClient(serial=self._serial)
 
         success_count = 0
-        self.progress_changed.emit(0, total, f"0/{total} tài khoản thành công")
+        failed_count = 0
+        processed_count = 0
+
+        def emit_account_progress(status: str) -> None:
+            self.progress_changed.emit(
+                processed_count,
+                total,
+                f"{success_count} thành công | {failed_count} thất bại | "
+                f"{processed_count}/{total} tài khoản — {status}",
+            )
+
+        emit_account_progress("Bắt đầu")
         for index, account in enumerate(accounts, start=1):
             if not self._wait_if_paused():
                 self.log_message.emit("Đã dừng theo yêu cầu.")
@@ -401,10 +412,17 @@ class BotWorker(QThread):
             try:
                 screen_text = self._screen_text(device)
             except Exception as exc:
+                failed_count += 1
+                processed_count += 1
                 self.log_message.emit(
-                    f"[{account.username}] Không đọc được màn hình bằng OCR: {exc}"
+                    f"[{account.username}] FAILED — không đọc được màn hình bằng OCR: {exc}. "
+                    "Bỏ qua account này và thử account tiếp theo."
                 )
-                break
+                self.task_progress_changed.emit(
+                    f"{account.username} - Đăng nhập", "failed", 0, 1
+                )
+                emit_account_progress(f"FAILED: {account.username}")
+                continue
 
             if not self._is_login_screen(screen_text):
                 normalized_screen = self._normalize_screen_text(screen_text)
@@ -412,18 +430,24 @@ class BotWorker(QThread):
                     f"[{account.username}] OCR màn hình hiện tại: "
                     f"{normalized_screen[:240] or '(không đọc được chữ)'}"
                 )
+                failed_count += 1
+                processed_count += 1
+                self.log_message.emit(
+                    f"[{account.username}] FAILED — không nhận diện được màn hình đăng nhập; "
+                    "bỏ qua account này. Không nhập thông tin vào màn hình chưa xác định."
+                )
+                self.task_progress_changed.emit(
+                    f"{account.username} - Đăng nhập", "failed", 0, 1
+                )
+                emit_account_progress(f"FAILED: {account.username}")
+                # If an earlier account is still logged in, we cannot safely switch users
+                # until logout is implemented. Otherwise try the next account.
                 if success_count:
                     self.log_message.emit(
-                        "Đã đăng nhập tài khoản trước đó, nhưng chưa thể chuyển tài khoản "
-                        "tiếp theo vì tính năng đăng xuất chưa được triển khai."
+                        "Không thể tiếp tục đăng nhập account kế tiếp vì chưa có luồng đăng xuất an toàn."
                     )
-                else:
-                    self.log_message.emit(
-                        "Không nhận diện được màn hình đăng nhập (cần thấy ô tên đăng nhập, "
-                        "ô mật khẩu và nút Đăng nhập). Không nhập thông tin để tránh thao tác "
-                        "nhầm màn hình."
-                    )
-                break
+                    break
+                continue
 
             try:
                 ocr_client.tap_ocr_target("ten_dang_nhap")
@@ -450,10 +474,17 @@ class BotWorker(QThread):
                     f"[{account.username}] Đã gửi yêu cầu đăng nhập; đang xác minh kết quả."
                 )
             except Exception as exc:
+                failed_count += 1
+                processed_count += 1
                 self.log_message.emit(
-                    f"[{account.username}] Không thể nhập thông tin hoặc bấm đăng nhập: {exc}"
+                    f"[{account.username}] FAILED — không thể nhập thông tin hoặc bấm đăng nhập: "
+                    f"{exc}. Bỏ qua account này và thử account tiếp theo."
                 )
-                break
+                self.task_progress_changed.emit(
+                    f"{account.username} - Đăng nhập", "failed", 0, 1
+                )
+                emit_account_progress(f"FAILED: {account.username}")
+                continue
 
             verified = False
             previous_screen_text = None
@@ -516,17 +547,21 @@ class BotWorker(QThread):
                 previous_screen_text = result_text
 
             if not verified:
+                failed_count += 1
+                processed_count += 1
                 if observed_error:
-                    self.log_message.emit(
-                        f"[{account.username}] Đăng nhập chưa thành công: {observed_error}."
-                    )
+                    reason = observed_error
                 else:
-                    self.log_message.emit(
-                        f"[{account.username}] Chưa xác nhận đăng nhập thành công sau 20 giây. "
-                        "Kiểm tra thông tin, mạng hoặc cung cấp OCR của màn hình vào game "
-                        "để xác minh chính xác hơn."
-                    )
-                break
+                    reason = "không xác nhận được đăng nhập thành công sau 20 giây"
+                self.log_message.emit(
+                    f"[{account.username}] FAILED — {reason}. "
+                    "Bỏ qua account này và chuyển sang account tiếp theo."
+                )
+                self.task_progress_changed.emit(
+                    f"{account.username} - Đăng nhập", "failed", 0, 1
+                )
+                emit_account_progress(f"FAILED: {account.username}")
+                continue
 
             # The game may need extra time to finish loading the profile.
             # "Quan chức" is the trusted profile marker; OCR can include its level
@@ -558,11 +593,24 @@ class BotWorker(QThread):
                     break
 
             if not profile_found:
+                failed_count += 1
+                processed_count += 1
                 self.log_message.emit(
-                    f"[{account.username}] Không thấy text profile 'quan_chuc' sau 60 giây; "
-                    "không đánh dấu tài khoản đăng nhập thành công."
+                    f"[{account.username}] FAILED — không thấy profile 'quan_chuc' sau 60 giây; "
+                    "bỏ qua account này và thử account tiếp theo."
                 )
-                break
+                self.task_progress_changed.emit(
+                    f"{account.username} - Đăng nhập", "failed", 0, 1
+                )
+                emit_account_progress(f"FAILED: {account.username}")
+                # Profile may be logged in but not recognized. Avoid entering another
+                # account on an unknown screen unless a safe logout flow exists.
+                if index < total:
+                    self.log_message.emit(
+                        "Tạm dừng chuyển account vì chưa xác nhận được màn hình đăng nhập sau lỗi profile."
+                    )
+                    break
+                continue
 
             if self._config.get("clone_quoc_chien"):
                 try:
@@ -601,26 +649,26 @@ class BotWorker(QThread):
                     break
 
             success_count += 1
+            processed_count += 1
             self.log_message.emit(
-                f"[{account.username}] Đăng nhập thành công, profile đã tải ({success_count}/{total})."
+                f"[{account.username}] SUCCESS — đăng nhập thành công, profile đã tải "
+                f"({success_count} thành công, {failed_count} thất bại)."
             )
-            self.progress_changed.emit(
-                success_count, total,
-                f"{success_count}/{total} tài khoản đăng nhập thành công",
-            )
+            emit_account_progress(f"SUCCESS: {account.username}")
             self.task_progress_changed.emit(
                 f"{account.username} - Đăng nhập", "done", 1, 1
             )
 
             if index < total:
                 self.log_message.emit(
-                    "Dừng sau tài khoản đầu tiên: cần triển khai đăng xuất trước khi "
-                    "có thể đăng nhập an toàn tài khoản kế tiếp."
+                    "Chưa có luồng đăng xuất an toàn; không thể tự chuyển sang account kế tiếp "
+                    "sau khi account hiện tại đã đăng nhập thành công."
                 )
                 break
 
         self.log_message.emit(
-            f"Kết quả đăng nhập Clone: {success_count}/{total} tài khoản đăng nhập thành công."
+            f"Kết quả Clone: {success_count} thành công, {failed_count} thất bại, "
+            f"{max(0, total - processed_count)} chưa xử lý / tổng {total} tài khoản."
         )
         if self._config.get("clone_daily_check_in") or self._config.get("clone_guild_check_in") or self._config.get("clone_receive_lucky_bag") or self._config.get("clone_logout"):
             self.log_message.emit(
