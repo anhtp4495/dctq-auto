@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 from PySide6.QtCore import QPoint, Qt
-from PySide6.QtGui import QImage, QPainter, QPen, QPixmap
+from PySide6.QtGui import QGuiApplication, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
@@ -90,10 +90,15 @@ class ClickableImage(QWidget):
 class ScreenshotAnnotator(QDialog):
     """Capture an ADB screenshot and save point/region coordinates from that image."""
 
-    def __init__(self, serial: str, parent=None) -> None:
+    def __init__(self, serial: str | None, parent=None) -> None:
         super().__init__(parent)
         self.serial = serial
-        self.setWindowTitle("Chụp màn hình và chọn tọa độ")
+        self.capture_desktop = serial is None
+        self.setWindowTitle(
+            "Chụp màn hình hiện tại và chọn tọa độ"
+            if self.capture_desktop
+            else "Chụp màn hình LDPlayer và chọn tọa độ"
+        )
         self.resize(1050, 760)
         self._image_path: Path | None = None
         self._pixmap = QPixmap()
@@ -101,8 +106,11 @@ class ScreenshotAnnotator(QDialog):
 
         root = QVBoxLayout(self)
         heading = QLabel(
-            "Chọn trực tiếp trên ảnh chụp ADB. Tọa độ được tính theo pixel của ảnh gốc, "
+            "Chọn trực tiếp trên ảnh chụp. Tọa độ được tính theo pixel của ảnh gốc, "
             "không phụ thuộc kích thước cửa sổ xem ảnh."
+            if self.capture_desktop
+            else "Chọn trực tiếp trên ảnh chụp ADB. Tọa độ được tính theo pixel của ảnh gốc, "
+                 "không phụ thuộc kích thước cửa sổ xem ảnh."
         )
         heading.setWordWrap(True)
         root.addWidget(heading)
@@ -161,12 +169,20 @@ class ScreenshotAnnotator(QDialog):
 
     def capture_screenshot(self) -> None:
         try:
-            device = AdbClient(self.serial).connect()
             SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
-            safe_serial = self.serial.replace(":", "_").replace("/", "_").replace("\\", "_")
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            self._image_path = SCREENSHOT_DIR / f"{safe_serial}_{timestamp}.png"
-            device.screenshot().save(str(self._image_path))
+            if self.capture_desktop:
+                screen = QGuiApplication.primaryScreen()
+                if screen is None:
+                    raise RuntimeError("Không tìm thấy màn hình desktop.")
+                self._image_path = SCREENSHOT_DIR / f"desktop_{timestamp}.png"
+                if not screen.grabWindow(0).save(str(self._image_path), "PNG"):
+                    raise RuntimeError("Không lưu được ảnh chụp desktop.")
+            else:
+                device = AdbClient(self.serial).connect()
+                safe_serial = self.serial.replace(":", "_").replace("/", "_").replace("\\", "_")
+                self._image_path = SCREENSHOT_DIR / f"{safe_serial}_{timestamp}.png"
+                device.screenshot().save(str(self._image_path))
             self._pixmap = QPixmap(str(self._image_path))
             if self._pixmap.isNull():
                 raise RuntimeError("Không mở được ảnh screenshot vừa chụp.")
@@ -272,7 +288,7 @@ class ScreenshotAnnotator(QDialog):
                     raise ValueError("Tên vùng không được để trống.")
                 region = {
                     "name": name,
-                    "serial": self.serial,
+                    "serial": self.serial or "desktop",
                     "screenshot": str(self._image_path),
                     "image_resolution": [width, height],
                     "corners_order": ["top_left", "top_right", "bottom_right", "bottom_left"],
