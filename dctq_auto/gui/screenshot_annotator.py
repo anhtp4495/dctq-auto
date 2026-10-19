@@ -25,6 +25,8 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QScrollArea,
+    QSpinBox,
+    QPlainTextEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -206,12 +208,25 @@ class ScreenshotAnnotator(QDialog):
         self.normalized_text = QLineEdit()
         self.normalized_text.setPlaceholderText("dang_nhap")
         self.ocr_text.textChanged.connect(self._update_normalized_text)
+        self.ocr_item_count = QSpinBox()
+        self.ocr_item_count.setRange(1, 12)
+        self.ocr_item_count.setValue(3)
+        self.ocr_item_count.setToolTip("Số text độc lập cần tách khi các mục nằm cùng một hàng.")
+        self.ocr_items = QPlainTextEdit()
+        self.ocr_items.setPlaceholderText("Mỗi dòng là một text độc lập...")
+        self.ocr_items.setMaximumHeight(76)
+        self.normalized_items = QPlainTextEdit()
+        self.normalized_items.setPlaceholderText("moi_dong_la_mot_ten")
+        self.normalized_items.setMaximumHeight(76)
         settings.addRow("Chế độ:", self.mode_combo)
         settings.addRow("Tên màn hình:", self.screen_name)
         settings.addRow("Tên điểm tiếp theo:", self.point_name)
         settings.addRow("Tên vùng 4 góc:", self.region_name)
-        settings.addRow("Text OCR:", self.ocr_text)
+        settings.addRow("Text OCR (gộp):", self.ocr_text)
         settings.addRow("Tên không dấu:", self.normalized_text)
+        settings.addRow("Số text cần tách:", self.ocr_item_count)
+        settings.addRow("Các text độc lập:", self.ocr_items)
+        settings.addRow("Tên chuẩn hóa từng text:", self.normalized_items)
         root.addLayout(settings)
 
         self.instruction = QLabel("Chụp màn hình để bắt đầu.")
@@ -341,6 +356,73 @@ class ScreenshotAnnotator(QDialog):
     def _update_normalized_text(self, text: str) -> None:
         self.normalized_text.setText(self.normalize_text(text))
 
+    @staticmethod
+    def _split_ocr_words(data: dict, target_count: int) -> list[str]:
+        """Split OCR words into independent horizontal groups using the largest gaps."""
+        words = []
+        count = len(data.get("text", []))
+        for i in range(count):
+            text = str(data["text"][i]).strip()
+            try:
+                confidence = float(data["conf"][i])
+            except (ValueError, TypeError, KeyError):
+                confidence = -1
+            if not text or confidence < 0:
+                continue
+            try:
+                x = int(data["left"][i])
+                y = int(data["top"][i])
+                width = int(data["width"][i])
+                height = int(data["height"][i])
+                line_key = (
+                    int(data["block_num"][i]),
+                    int(data["par_num"][i]),
+                    int(data["line_num"][i]),
+                )
+            except (ValueError, TypeError, KeyError):
+                continue
+            words.append({
+                "text": text, "x": x, "y": y, "right": x + width,
+                "height": height, "line": line_key,
+            })
+        if not words:
+            return []
+
+        line_keys = sorted(
+            {word["line"] for word in words},
+            key=lambda key: min(word["y"] for word in words if word["line"] == key),
+        )
+        if len(line_keys) == 1:
+            ordered = sorted(words, key=lambda word: word["x"])
+            if target_count <= 1 or len(ordered) < target_count:
+                return [" ".join(word["text"] for word in ordered)]
+            gaps = []
+            for i in range(len(ordered) - 1):
+                gap = ordered[i + 1]["x"] - ordered[i]["right"]
+                gaps.append((gap, i))
+            split_positions = sorted(
+                index for _gap, index in sorted(gaps, reverse=True)[:target_count - 1]
+            )
+            groups = []
+            start = 0
+            for split_at in split_positions:
+                groups.append(ordered[start:split_at + 1])
+                start = split_at + 1
+            groups.append(ordered[start:])
+            return [
+                " ".join(word["text"] for word in group).strip()
+                for group in groups if group
+            ]
+
+        groups = []
+        for key in line_keys:
+            line_words = sorted(
+                (word for word in words if word["line"] == key),
+                key=lambda word: word["x"],
+            )
+            groups.append(" ".join(word["text"] for word in line_words).strip())
+        return groups
+
     def recognize_text(self) -> None:
         if self._image_path is None or self._pixmap.isNull():
             QMessageBox.warning(self, "Chưa có ảnh", "Hãy chụp màn hình trước.")
@@ -361,20 +443,35 @@ class ScreenshotAnnotator(QDialog):
             with Image.open(self._image_path) as screenshot:
                 crop = screenshot.convert("RGB").crop((left, top, right + 1, bottom + 1))
             try:
-                recognized = pytesseract.image_to_string(crop, lang="vie+eng", config="--psm 6")
+                ocr_data = pytesseract.image_to_data(
+                    crop, lang="vie+eng", config="--psm 6",
+                    output_type=pytesseract.Output.DICT,
+                )
             except pytesseract.TesseractError:
-                # Allow OCR to remain useful when the Vietnamese traineddata is not installed.
-                recognized = pytesseract.image_to_string(crop, lang="eng", config="--psm 6")
-            recognized = " ".join(recognized.split())
-            self.ocr_text.setText(recognized)
-            normalized = self.normalize_text(recognized)
-            self.normalized_text.setText(normalized)
-            if normalized:
-                self.region_name.setText(normalized)
-            self.instruction.setText(
-                f"OCR: {recognized!r} → tên chuẩn hóa: {normalized or '(không nhận diện được chữ)'}"
-            )
-            if not recognized:
+                ocr_data = pytesseract.image_to_data(
+                    crop, lang="eng", config="--psm 6",
+                    output_type=pytesseract.Output.DICT,
+                )
+            items = self._split_ocr_words(ocr_data, self.ocr_item_count.value())
+            combined = " | ".join(items)
+            self.ocr_text.setText(combined)
+            self.ocr_items.setPlainText("\n".join(items))
+            normalized_items = [self.normalize_text(item) for item in items]
+            self.normalized_items.setPlainText("\n".join(normalized_items))
+            if len(items) == 1 and self.ocr_item_count.value() > 1:
+                self.instruction.setText(
+                    "OCR chỉ tìm được một cụm chữ. Hãy mở rộng vùng chọn hoặc sửa thủ công "
+                    "từng dòng nếu các mục nằm sát nhau."
+                )
+            else:
+                self.instruction.setText(
+                    f"Đã tách {len(items)} text độc lập. Mỗi dòng có tên chuẩn hóa riêng; "
+                    "hãy kiểm tra và sửa nếu OCR chia cụm chưa đúng."
+                )
+            if normalized_items and normalized_items[0]:
+                self.normalized_text.setText(normalized_items[0])
+                self.region_name.setText(normalized_items[0])
+            if not items:
                 QMessageBox.information(
                     self, "Không nhận diện được chữ",
                     "Hãy chọn sát vùng chữ hơn, chụp ảnh rõ hơn hoặc kiểm tra Tesseract OCR.",
@@ -389,6 +486,7 @@ class ScreenshotAnnotator(QDialog):
             )
         except Exception as exc:
             QMessageBox.critical(self, "OCR thất bại", str(exc))
+
 
     def undo_point(self) -> None:
         if self._points:
@@ -448,6 +546,14 @@ class ScreenshotAnnotator(QDialog):
                     "serial": self.serial or "desktop",
                     "recognized_text": self.ocr_text.text().strip(),
                     "normalized_text": self.normalized_text.text().strip(),
+                    "recognized_items": [
+                        item.strip() for item in self.ocr_items.toPlainText().splitlines()
+                        if item.strip()
+                    ],
+                    "normalized_items": [
+                        item.strip() for item in self.normalized_items.toPlainText().splitlines()
+                        if item.strip()
+                    ],
                     "screenshot": str(self._image_path),
                     "image_resolution": [width, height],
                     "corners_order": ["top_left", "top_right", "bottom_right", "bottom_left"],
