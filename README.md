@@ -73,6 +73,23 @@ The shared **Bắt đầu**, **Tạm dừng**, **Dừng hẳn** controls and act
 
 **Important:** Các nhiệm vụ Clone hiện mới có giao diện, đọc/kiểm tra danh sách tài khoản và mô phỏng thứ tự chạy. Trong chế độ ADB, ứng dụng chưa tự đăng nhập, điểm danh, báo danh quân đoàn, nhận túi phúc hoặc đăng xuất. ADB mode của các tab hiện tại cũng chỉ kiểm tra kết nối và chụp screenshot; chưa thực hiện gameplay thật. Chế độ chạy thử không điều khiển game thật. The **Dừng hẳn** button requests a cooperative stop at the next check point and does not forcibly terminate a running thread.
 
+
+## Test ADB thật (không điều khiển game)
+
+Bộ test `tests/integration/test_adb_live.py` kiểm tra thiết bị ADB đang online và có thể chụp screenshot. Test dùng **ADB thật**, nhưng không chạm, kéo, nhập liệu hoặc thay đổi trạng thái game. Mặc định bộ test được skip để chạy `pytest` thông thường không cần mở LDPlayer.
+
+Mở LDPlayer, kiểm tra serial bằng `adb devices`, rồi chạy từ PowerShell ở thư mục gốc repo:
+
+```powershell
+$env:DCTQ_RUN_REAL_ADB = "1"
+$env:DCTQ_ADB_SERIAL = "emulator-5554"
+.venv\Scripts\python.exe -m pytest tests\integration\test_adb_live.py -v
+```
+
+Thay `emulator-5554` bằng serial thực tế của thiết bị. Có thể bỏ `DCTQ_ADB_SERIAL` nếu muốn dùng biến môi trường `ADB_SERIAL`; nếu cả hai đều không có, test mặc định dùng `emulator-5554`.
+
+Nếu chỉ muốn chạy toàn bộ test không phụ thuộc thiết bị, không đặt `DCTQ_RUN_REAL_ADB=1`. Lưu ý: đây là **smoke test kết nối/chụp ảnh**, chưa phải test luồng Báo danh và nhận Túi phúc trên game thật; luồng gameplay Clone chưa được triển khai.
+
 ## Layout
 
 - `dctq_auto/gui/`: PySide6 main window and background worker
