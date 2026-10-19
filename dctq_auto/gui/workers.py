@@ -318,6 +318,14 @@ class BotWorker(QThread):
         return None
 
     @staticmethod
+    def _clear_focused_text(device) -> None:
+        """Select and delete all text in the currently focused input field."""
+        # Ctrl+A is preferable to long-pressing Delete, which may remove only
+        # part of a long existing username depending on the Android keyboard.
+        device.shell("input keycombination KEYCODE_CTRL_LEFT KEYCODE_A")
+        device.shell("input keyevent KEYCODE_DEL")
+
+    @staticmethod
     def _input_text(device, value: str) -> None:
         """Send text safely through Android input; spaces use Android's %s syntax."""
         # Android's input command uses %s as the escape sequence for a space.
@@ -379,8 +387,7 @@ class BotWorker(QThread):
             try:
                 ocr_client.tap_ocr_target("ten_dang_nhap")
                 time.sleep(0.25)
-                device.shell("input keyevent KEYCODE_MOVE_END")
-                device.shell("input keyevent --longpress KEYCODE_DEL")
+                self._clear_focused_text(device)
                 self._input_text(device, account.username)
 
                 if not self._wait_if_paused():
@@ -389,8 +396,7 @@ class BotWorker(QThread):
 
                 ocr_client.tap_ocr_target("mat_khau")
                 time.sleep(0.25)
-                device.shell("input keyevent KEYCODE_MOVE_END")
-                device.shell("input keyevent --longpress KEYCODE_DEL")
+                self._clear_focused_text(device)
                 self._input_text(device, account.password)
 
                 if not self._wait_if_paused():
