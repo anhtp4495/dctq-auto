@@ -15,6 +15,7 @@ from PySide6.QtCore import QPoint, Qt, QSettings
 from PySide6.QtGui import QGuiApplication, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QDialog,
+    QDialogButtonBox,
     QFileDialog,
     QButtonGroup,
     QFormLayout,
@@ -324,7 +325,7 @@ class ScreenshotAnnotator(QDialog):
         self.camera_button.clicked.connect(self.capture_screenshot)
         toolbar.addWidget(self.camera_button)
 
-        self.coordinate_input_button = QPushButton("⌖")
+        self.coordinate_input_button = QPushButton("⌨")
         self.coordinate_input_button.setFixedSize(34, 30)
         self.coordinate_input_button.setToolTip("Nhập X, Y, Width, Height theo pixel ảnh gốc")
         self.coordinate_input_button.clicked.connect(self.input_coordinates)
