@@ -955,15 +955,23 @@ class BotWorker(QThread):
                         f"[{account.username}] Mở profile để vào Cài đặt người dùng; thử tối đa 3 lần."
                     )
 
-                    # Tap profile up to three times, checking OCR after each tap.
-                    # Do not tap the screen center; that did not reliably open profile.
+                    # Tap the saved profile location directly through ADB (scaled to the
+                    # current screenshot size), rather than relying on OCR target lookup.
+                    # Retry up to three times and check whether the options screen appears.
                     options_text = ""
                     options_found = False
                     for profile_attempt in range(3):
                         if not self._wait_if_paused():
                             self.log_message.emit("Đã dừng theo yêu cầu.")
                             return
-                        ocr_client.tap_ocr_target("profile_tuy_chon")
+                        screen_image = device.screenshot()
+                        tap_x = int(screen_image.width * 0.944271)
+                        tap_y = int(screen_image.height * 0.937963)
+                        self.log_message.emit(
+                            f"[{account.username}] Bấm trực tiếp profile tại ({tap_x}, {tap_y}), "
+                            f"lần {profile_attempt + 1}/3 (ảnh {screen_image.width}x{screen_image.height})."
+                        )
+                        device.shell(f"input tap {tap_x} {tap_y}")
                         time.sleep(1)
                         options_text = self._normalize_screen_text(self._screen_text(device))
                         if "tuy chon" in options_text or "cai dat nguoi dung" in options_text:
