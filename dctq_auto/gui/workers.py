@@ -626,9 +626,9 @@ class BotWorker(QThread):
                 0.450926, 0.460185, 0.450926, 0.460185,
             )
             row_y_ratios = {
-                1: first_row_y_ratios,
-                2: (0.580556,) * 9,
-                3: (0.725000,) * 9,
+                0: first_row_y_ratios,
+                1: (0.580556,) * 9,
+                2: (0.725000,) * 9,
             }
             # Keep the measured coordinates for the last row's first 3 cells.
             last_row_ratios = {
