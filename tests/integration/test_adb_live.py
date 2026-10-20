@@ -1,7 +1,6 @@
 """Smoke tests dùng ADB thật, chỉ kết nối và chụp ảnh; không chạm vào game.
 
-Mặc định các test bị skip để pytest thông thường không phụ thuộc LDPlayer.
-Chỉ chạy khi người dùng chủ động đặt DCTQ_RUN_REAL_ADB=1.
+Chỉ chạy khi DCTQ_ADB_SERIAL được thiết lập; nếu không, pytest sẽ skip.
 """
 from __future__ import annotations
 
@@ -15,15 +14,11 @@ from dctq_auto.adb.client import AdbClient
 
 
 def _connect_real_device():
-    """Kết nối thiết bị thật sau khi người dùng bật cờ opt-in."""
-    if os.getenv("DCTQ_RUN_REAL_ADB") != "1":
-        pytest.skip("Đặt DCTQ_RUN_REAL_ADB=1 để chạy test ADB thật.")
+    """Kết nối thiết bị ADB được chỉ định bằng DCTQ_ADB_SERIAL."""
+    serial = os.getenv("DCTQ_ADB_SERIAL", "").strip()
+    if not serial:
+        pytest.skip("Đặt DCTQ_ADB_SERIAL để chạy test ADB thật.")
 
-    serial = (
-        os.getenv("DCTQ_ADB_SERIAL")
-        or os.getenv("ADB_SERIAL")
-        or "emulator-5554"
-    )
     try:
         return AdbClient(serial=serial).connect()
     except Exception as exc:
