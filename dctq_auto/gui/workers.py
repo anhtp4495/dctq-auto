@@ -4,6 +4,7 @@ import re
 import shlex
 import time
 import unicodedata
+from types import SimpleNamespace
 from pathlib import Path
 from threading import Event
 
@@ -125,6 +126,20 @@ class BotWorker(QThread):
 
     def _run_mock(self) -> None:
         """Simulate configured tasks and update progress without connecting to ADB."""
+        if self._config.get("utility_tasks_mode"):
+            selected = []
+            if self._config.get("task_close_guild"):
+                selected.append("Thoát màn hình Quân đoàn")
+            if self._config.get("task_switch_account"):
+                selected.append("Đổi tài khoản")
+            self.progress_changed.emit(0, max(1, len(selected)), "Bắt đầu tác vụ")
+            for index, task in enumerate(selected, start=1):
+                if not self._mock_tick(f"[Chạy thử] Thực hiện: {task}"):
+                    return
+                self.progress_changed.emit(index, max(1, len(selected)), task)
+            if not selected:
+                self.log_message.emit("Tab Tác vụ: chưa chọn tác vụ nào.")
+            return
         if self._config.get("clone_mode"):
             self._run_clone_mock()
             return
@@ -408,6 +423,72 @@ class BotWorker(QThread):
 
         run_clone_flow(self, device)
 
+    def _run_utility_tasks(self, device) -> None:
+        """Run standalone actions on the currently logged-in game account."""
+        from dctq_auto.tasks.common.logout import run_logout_flow
+
+        from dctq_auto.adb.client import AdbClient
+
+        ocr_client = AdbClient(serial=self._serial)
+        total = int(bool(self._config.get("task_close_guild"))) + int(
+            bool(self._config.get("task_switch_account"))
+        )
+        completed = 0
+        self.progress_changed.emit(0, max(1, total), "Bắt đầu tác vụ")
+
+        if self._config.get("task_close_guild"):
+            if not self._wait_if_paused():
+                self.log_message.emit("Đã dừng theo yêu cầu.")
+                return
+            try:
+                self.log_message.emit(
+                    "Tác vụ: đóng giao diện Quân đoàn bằng tọa độ đã lưu."
+                )
+                ocr_client.tap_ocr_target("close_quan_doan")
+                time.sleep(0.8)
+                completed += 1
+                self.progress_changed.emit(
+                    completed, max(1, total), "Đã gửi thao tác đóng Quân đoàn"
+                )
+                self.log_message.emit(
+                    "Đã gửi thao tác đóng giao diện Quân đoàn. "
+                    "Đây không phải thao tác rời bang hội."
+                )
+            except Exception as exc:
+                self.log_message.emit(
+                    f"Không đóng được giao diện Quân đoàn: {exc}"
+                )
+                self.task_progress_changed.emit(
+                    "Thoát màn hình Quân đoàn", "failed", 0, 1
+                )
+
+        if self._config.get("task_switch_account"):
+            if not self._wait_if_paused():
+                self.log_message.emit("Đã dừng theo yêu cầu.")
+                return
+            self.log_message.emit(
+                "Tác vụ: bắt đầu quy trình Đổi tài khoản; "
+                "chỉ xác nhận khi OCR nhận diện đúng hộp thoại."
+            )
+            account = SimpleNamespace(username="Tác vụ")
+            result = run_logout_flow(self, account, device, ocr_client)
+            if result:
+                completed += 1
+                self.log_message.emit(
+                    "Tác vụ Đổi tài khoản đã hoàn tất và đã xác minh màn hình đăng nhập."
+                )
+            elif result is None:
+                self.log_message.emit("Tác vụ Đổi tài khoản đã dừng theo yêu cầu.")
+                return
+            else:
+                self.log_message.emit(
+                    "Tác vụ Đổi tài khoản chưa xác minh hoàn tất; kiểm tra nhật ký OCR."
+                )
+                self.task_progress_changed.emit("Đổi tài khoản", "failed", 0, 1)
+            self.progress_changed.emit(
+                completed, max(1, total), "Đổi tài khoản đã xử lý"
+            )
+
     def run(self) -> None:
         if self._mock_mode:
             self.progress_changed.emit(0, 1, "Đang chuẩn bị chạy thử")
@@ -428,6 +509,9 @@ class BotWorker(QThread):
             client = AdbClient(serial=self._serial)
             device = client.connect()
             self.log_message.emit(f"Đã kết nối ADB: {self._serial}")
+            if self._config.get("utility_tasks_mode"):
+                self._run_utility_tasks(device)
+                return
             if self._config.get("clone_mode"):
                 self._run_clone_login(device)
                 return
