@@ -964,10 +964,12 @@ class BotWorker(QThread):
                         self.log_message.emit("Đã dừng theo yêu cầu.")
                         return
                     self.log_message.emit(
-                        f"[{account.username}] Mở profile để đăng xuất."
+                        f"[{account.username}] Mở profile để vào Cài đặt người dùng."
                     )
                     ocr_client.tap_ocr_target("profile_tuy_chon")
                     time.sleep(1)
+
+                    # Identify the profile/options screen before opening user settings.
                     options_text = ""
                     options_found = False
                     for options_attempt in range(10):
@@ -975,79 +977,79 @@ class BotWorker(QThread):
                             self.log_message.emit("Đã dừng theo yêu cầu.")
                             return
                         options_text = self._normalize_screen_text(self._screen_text(device))
-                        if "tuy chon" in options_text or "thoat game" in options_text:
+                        if "tuy chon" in options_text or "cai dat nguoi dung" in options_text:
                             options_found = True
                             break
                         time.sleep(1)
-                    if options_found:
+                    if not options_found:
+                        logout_ok = False
+                        self.log_message.emit(
+                            f"[{account.username}] Không nhận diện được màn hình tùy chọn; "
+                            f"không bấm tiếp để tránh thao tác nhầm. OCR: "
+                            f"{options_text[:180] or '(trống)'}"
+                        )
+                    else:
                         self.log_message.emit(
                             f"[{account.username}] Đã nhận diện màn hình tùy chọn: "
                             f"{options_text[:180]}"
                         )
-                    else:
-                        self.log_message.emit(
-                            f"[{account.username}] Chưa nhận diện được màn hình tùy chọn; "
-                            f"vẫn thử bấm nút Thoát game theo tọa độ. OCR: "
-                            f"{options_text[:180] or '(trống)'}"
-                        )
-
-                    # Use the OCR target when the label is visible; otherwise use
-                    # the same saved coordinate as a deliberate fallback.
-                    ocr_client.tap_ocr_target("thoat_game")
-                    time.sleep(1)
-                    confirm_text = ""
-                    confirm_found = False
-                    for confirm_attempt in range(10):
-                        if not self._wait_if_paused():
-                            self.log_message.emit("Đã dừng theo yêu cầu.")
-                            return
-                        confirm_text = self._normalize_screen_text(self._screen_text(device))
-                        if any(marker in confirm_text for marker in (
-                            "thoat game", "quoc gia", "chua cong"
-                        )):
-                            confirm_found = True
-                            break
+                        # Open Cài đặt người dùng using the supplied saved coordinate.
+                        ocr_client.tap_ocr_target("cai_dat_nguoi_dung")
                         time.sleep(1)
-                    if confirm_found:
-                        self.log_message.emit(
-                            f"[{account.username}] Đã nhận diện hộp thoại xác nhận thoát: "
-                            f"{confirm_text[:180]}"
-                        )
-                    else:
-                        self.log_message.emit(
-                            f"[{account.username}] Chưa nhận diện được hộp thoại xác nhận; "
-                            "vẫn bấm xác nhận theo tọa độ đã lưu."
-                        )
-                    ocr_client.tap_ocr_target("thoat_game_xac_nhan")
-                    time.sleep(1.5)
 
-                    login_screen_found = False
-                    login_text = ""
-                    for login_attempt in range(30):
-                        if not self._wait_if_paused():
-                            self.log_message.emit("Đã dừng theo yêu cầu.")
-                            return
-                        login_text = self._screen_text(device)
-                        if self._is_login_screen(login_text):
-                            login_screen_found = True
-                            break
-                        time.sleep(1)
-                    if login_screen_found:
-                        self.log_message.emit(
-                            f"[{account.username}] Đã quay về màn hình đăng nhập; "
-                            "sẵn sàng xử lý account tiếp theo."
-                        )
-                    else:
-                        logout_ok = False
-                        self.log_message.emit(
-                            f"[{account.username}] Không xác nhận được màn hình đăng nhập "
-                            f"sau khi thoát game. OCR: "
-                            f"{self._normalize_screen_text(login_text)[:180] or '(trống)'}"
-                        )
+                        settings_text = ""
+                        settings_found = False
+                        for settings_attempt in range(10):
+                            if not self._wait_if_paused():
+                                self.log_message.emit("Đã dừng theo yêu cầu.")
+                                return
+                            settings_text = self._normalize_screen_text(self._screen_text(device))
+                            if "cai dat nguoi dung" in settings_text:
+                                settings_found = True
+                                break
+                            time.sleep(1)
+
+                        if not settings_found:
+                            logout_ok = False
+                            self.log_message.emit(
+                                f"[{account.username}] Không nhận diện được giao diện Cài đặt người dùng; "
+                                f"không bấm Đổi tài khoản. OCR: "
+                                f"{settings_text[:220] or '(trống)'}"
+                            )
+                        else:
+                            self.log_message.emit(
+                                f"[{account.username}] Đã xác nhận giao diện Cài đặt người dùng."
+                            )
+                            ocr_client.tap_ocr_target("doi_tai_khoan")
+                            time.sleep(1.5)
+
+                            # Wait for the login form after switching accounts.
+                            login_screen_found = False
+                            login_text = ""
+                            for login_attempt in range(30):
+                                if not self._wait_if_paused():
+                                    self.log_message.emit("Đã dừng theo yêu cầu.")
+                                    return
+                                login_text = self._screen_text(device)
+                                if self._is_login_screen(login_text):
+                                    login_screen_found = True
+                                    break
+                                time.sleep(1)
+                            if login_screen_found:
+                                self.log_message.emit(
+                                    f"[{account.username}] Đã quay về màn hình đăng nhập sau Đổi tài khoản; "
+                                    "sẵn sàng xử lý account tiếp theo."
+                                )
+                            else:
+                                logout_ok = False
+                                self.log_message.emit(
+                                    f"[{account.username}] Không xác nhận được màn hình đăng nhập sau Đổi tài khoản. "
+                                    f"OCR: {self._normalize_screen_text(login_text)[:180] or '(trống)'}"
+                                )
                 except Exception as exc:
                     logout_ok = False
                     self.log_message.emit(
-                        f"[{account.username}] Lỗi trong quy trình đăng xuất: {exc}"
+                        f"[{account.username}] Lỗi trong quy trình đổi tài khoản: {exc}"
                     )
 
             if not logout_ok:
