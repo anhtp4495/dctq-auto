@@ -750,7 +750,17 @@ class MainWindow(QMainWindow):
                 "Đánh đến khi chắc chắn thắng và đạt đủ 3 cờ mới kết thúc."
             )
 
-    def _toggle_task_battle_merit_mode(self, enabled: bool) -> None:
+    def _toggle_task_battle_options(self, enabled: bool) -> None:
+        self.task_battle_lower_merit.setEnabled(enabled)
+        self.task_battle_merit_target.setEnabled(
+            enabled and self.task_battle_lower_merit.isChecked()
+        )
+        self._toggle_task_battle_merit_mode(
+            self.task_battle_lower_merit.isChecked()
+        )
+
+    def _toggle_task_battle_merit_mode(self, lower_merit: bool) -> None:
+        battle_enabled = self.task_battle.isChecked()
         for widget in (
             self.task_battle_npc_house,
             self.task_battle_use_bazhen,
@@ -758,9 +768,11 @@ class MainWindow(QMainWindow):
             self.task_battle_three_flags,
             self.task_battle_time_mode,
         ):
-            widget.setEnabled(not enabled)
+            widget.setEnabled(battle_enabled and not lower_merit)
         self.task_battle_time_limit.setEnabled(
-            not enabled and self.task_battle_time_mode.isChecked()
+            battle_enabled
+            and not lower_merit
+            and self.task_battle_time_mode.isChecked()
         )
 
     def _toggle_task_championship_options(self, enabled: bool) -> None:
@@ -1116,6 +1128,7 @@ class MainWindow(QMainWindow):
         self.task_battle_count.setEnabled(False)
         self.task_battle_count.setKeyboardTracking(False)
         self.task_battle.toggled.connect(self.task_battle_count.setEnabled)
+        self.task_battle.toggled.connect(self._toggle_task_battle_options)
 
         # Giao tranh options are independent from the Daily tab settings.
         self.task_battle_lower_merit = QCheckBox("Hạ chiến công")
