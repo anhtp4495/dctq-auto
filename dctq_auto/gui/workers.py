@@ -719,7 +719,7 @@ class BotWorker(QThread):
             }
 
             self.log_message.emit(
-                f"BƯỚC 5/7: Màn hình chọn ngày {calendar_width}x{calendar_height}; "
+                f"BƯỚC 5/6: Màn hình chọn ngày {calendar_width}x{calendar_height}; "
                 "bắt đầu chọn ngược từ ô ngày 32 đến ô ngày 1."
             )
             for day in range(32, 0, -1):
@@ -746,27 +746,15 @@ class BotWorker(QThread):
                 time.sleep(0.15)
 
             self.log_message.emit(
-                "Đã chọn xong 32/32 ô ngày; chuẩn bị bấm xac_nhan đúng 1 lần."
+                "Đã chọn xong 32/32 ô ngày; bỏ qua xac_nhan_diem_danh_bu vì không còn cần thiết."
             )
-            if not self._wait_if_paused():
-                self.log_message.emit("Điểm danh đã dừng theo yêu cầu trước khi xác nhận.")
-                return False
-            confirm_x = round(0.616667 * calendar_width)
-            confirm_y = round(0.631481 * calendar_height)
-            self.log_message.emit(
-                f"BƯỚC 6/7: Bấm xac_nhan một lần duy nhất tại "
-                f"({confirm_x}, {confirm_y})."
-            )
-            device.shell(f"input tap {confirm_x} {confirm_y}")
-            self.log_message.emit("Đã bấm xac_nhan 1/1; chờ game xử lý.")
-            time.sleep(0.5)
             if not self._wait_if_paused():
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu trước khi thoát màn hình.")
                 return False
             close_x = round(0.972396 * calendar_width)
             close_y = round(0.119444 * calendar_height)
             self.log_message.emit(
-                f"BƯỚC 7/7: Đóng màn hình Điểm danh tại ({close_x}, {close_y})."
+                f"BƯỚC 6/6: Đóng màn hình Điểm danh tại ({close_x}, {close_y})."
             )
             device.shell(f"input tap {close_x} {close_y}")
             self.log_message.emit("Đã đóng màn hình Điểm danh.")
