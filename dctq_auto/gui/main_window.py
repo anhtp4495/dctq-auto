@@ -394,7 +394,6 @@ class MainWindow(QMainWindow):
         # Restoring before show() can shift the outer frame vertically by the
         # title-bar height on some DPI settings.
         QTimer.singleShot(0, self._restore_window_geometry_after_show)
-        QTimer.singleShot(0, self._print_window_geometry)
         self._connect_settings_persistence()
         self.tabs.currentChanged.connect(self._save_settings)
         self.clone_tab.account_file_input.textChanged.connect(self._save_settings)
