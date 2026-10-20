@@ -1057,9 +1057,9 @@ class MainWindow(QMainWindow):
         territory_row.addWidget(self.task_territory)
         territory_row.addWidget(QLabel("Số lần:"))
         territory_row.addWidget(self.task_territory_count)
+        territory_row.addWidget(self.task_territory_knb)
         territory_row.addStretch(1)
         daily_layout.addLayout(territory_row)
-        daily_layout.addWidget(self.task_territory_knb)
 
         for task_checkbox in (
             self.task_glass_tower,
