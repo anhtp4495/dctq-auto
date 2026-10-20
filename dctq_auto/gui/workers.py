@@ -940,6 +940,18 @@ class BotWorker(QThread):
                     self.log_message.emit(
                         f"[{account.username}] Đã gửi thao tác đóng màn hình quân đoàn."
                     )
+                    # Close the chat overlay with two taps at the actual screen center
+                    # before opening the profile menu.
+                    screen_image = device.screenshot()
+                    center_x = screen_image.width // 2
+                    center_y = screen_image.height // 2
+                    device.shell(f"input tap {center_x} {center_y}")
+                    time.sleep(0.3)
+                    device.shell(f"input tap {center_x} {center_y}")
+                    time.sleep(0.8)
+                    self.log_message.emit(
+                        f"[{account.username}] Đã bấm giữa màn hình 2 lần để đóng chat."
+                    )
                 except Exception as exc:
                     self.log_message.emit(
                         f"[{account.username}] Không bấm được nút đóng quân đoàn: {exc}; "
