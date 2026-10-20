@@ -1254,8 +1254,10 @@ class MainWindow(QMainWindow):
         daily_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         daily_layout.setSpacing(6)
 
+        # Keep account session actions adjacent at the top of the task list.
         for task_checkbox in (
             self.task_login,
+            self.doi_tai_khoan_task,
             self.task_daily_checkin,
             self.task_guild_checkin,
         ):
@@ -1344,7 +1346,6 @@ class MainWindow(QMainWindow):
         group = QGroupBox("Thao tác tài khoản")
         group_layout = QVBoxLayout(group)
         group_layout.addWidget(self.thoat_quan_doan_task)
-        group_layout.addWidget(self.doi_tai_khoan_task)
         layout.addWidget(group)
 
         coordinate_group = QGroupBox("Click theo tọa độ")
