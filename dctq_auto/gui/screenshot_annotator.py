@@ -34,8 +34,8 @@ from PySide6.QtWidgets import (
 from dctq_auto.adb.client import AdbClient
 
 
-LOCATIONS_PATH = Path("dctq_auto/tasks/clone/locations.json")
-REGIONS_PATH = Path("dctq_auto/tasks/clone/regions.json")
+LOCATIONS_PATH = Path("dctq_auto/tasks/common/locations.json")
+REGIONS_PATH = Path("dctq_auto/tasks/common/regions.json")
 SCREENSHOT_DIR = Path("artifacts/screenshots")
 
 
