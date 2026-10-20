@@ -685,21 +685,54 @@ class BotWorker(QThread):
                             self.log_message.emit("Đã dừng theo yêu cầu.")
                             return
                         last_guild_text = self._normalize_screen_text(self._screen_text(device))
-                        trusted_guild_labels = ("quoc chien", "su do", "quoc chien do")
+                        trusted_guild_labels = (
+                            "quoc chien", "su do", "quoc chien do",
+                            "doan truong", "doan pho", "quan su",
+                            "thanh vien", "tinh anh", "toi can tang vien",
+                        )
                         if any(label in last_guild_text for label in trusted_guild_labels):
                             guild_entry_found = True
                             self.log_message.emit(
-                                f"[{account.username}] OCR xác nhận mục quân đoàn/Quốc Chiến: "
-                                f"{last_guild_text[:180]}"
+                                f"[{account.username}] OCR xác nhận giao diện chat/quân đoàn: "
+                                f"{last_guild_text[:220]}"
                             )
                             break
                         if guild_attempt < 4:
                             time.sleep(1)
-                    if guild_entry_found:
-                        ocr_client.tap_ocr_target("vao_quan_doan")
-                        time.sleep(2)
+                    if not guild_entry_found:
+                        # OCR can miss the trusted labels on the chat screen. The user
+                        # confirmed that the game is already showing the guild chat, so
+                        # cautiously try the known entry button once, then inspect again.
                         self.log_message.emit(
-                            f"[{account.username}] Đã bấm 'Vào quân đoàn'; đang thực hiện báo danh."
+                            f"[{account.username}] Chưa thấy từ khóa tin cậy; thử bấm "
+                            "'Vào quân đoàn' một lần và kiểm tra màn hình sau đó."
+                        )
+                    ocr_client.tap_ocr_target("vao_quan_doan")
+                    time.sleep(2)
+                    try:
+                        after_entry_text = self._normalize_screen_text(self._screen_text(device))
+                    except Exception as ocr_exc:
+                        after_entry_text = ""
+                        self.log_message.emit(
+                            f"[{account.username}] Lỗi OCR sau khi bấm Vào quân đoàn: {ocr_exc}"
+                        )
+                    guild_screen_markers = (
+                        "doan truong", "doan pho", "quan su", "thanh vien",
+                        "tinh anh", "toi can tang vien", "tin he thong",
+                    )
+                    if any(marker in after_entry_text for marker in guild_screen_markers):
+                        self.log_message.emit(
+                            f"[{account.username}] Đã xác nhận giao diện quân đoàn sau khi bấm: "
+                            f"{after_entry_text[:220]}"
+                        )
+                    else:
+                        self.log_message.emit(
+                            f"[{account.username}] Đã gửi thao tác Vào quân đoàn; chưa thấy "
+                            f"từ khóa xác nhận rõ. OCR: {after_entry_text[:220] or '(trống)'}"
+                        )
+                    if True:
+                        self.log_message.emit(
+                            f"[{account.username}] Đang thực hiện báo danh quân đoàn."
                         )
                         ocr_client.tap_ocr_target("bao_danh_nhan_thuong")
                         time.sleep(1.5)
@@ -716,15 +749,7 @@ class BotWorker(QThread):
                         )
                         # A tap alone does not prove that the server granted the reward.
                         # Keep this task running until a reliable success marker is known.
-                    else:
-                        self.log_message.emit(
-                            f"[{account.username}] Không thấy text tin cậy "
-                            "'quoc_chien', 'su_do' hoặc 'quoc_chien_do'; không bấm Vào quân đoàn. "
-                            f"OCR hiện tại: {last_guild_text[:180] or '(trống)'}"
-                        )
-                        self.task_progress_changed.emit(
-                            f"{account.username} - Báo danh quân đoàn", "failed", 0, 1
-                        )
+
                 except Exception as exc:
                     self.log_message.emit(
                         f"[{account.username}] Không mở được mục quân đoàn: {exc}"
