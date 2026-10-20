@@ -526,6 +526,22 @@ class MainWindow(QMainWindow):
         self._ui_settings.sync()
 
     def closeEvent(self, event) -> None:
+        screen = self.screen() or QGuiApplication.primaryScreen()
+        area = screen.availableGeometry() if screen is not None else None
+        frame = self.frameGeometry()
+        client = self.geometry()
+        print(
+            "\n[DCTQ Auto window geometry on close]"
+            f"\n  screen: {screen.name() if screen is not None else 'None'}"
+            f"\n  availableGeometry: {area.getRect() if area is not None else 'None'}"
+            f"\n  geometry (client): {client.getRect()}"
+            f"\n  frameGeometry (outer): {frame.getRect()}"
+            f"\n  pos: ({self.x()}, {self.y()})"
+            f"\n  size: ({self.width()}, {self.height()})"
+            f"\n  frameSize: ({frame.width()}, {frame.height()})"
+            f"\n  devicePixelRatio: {screen.devicePixelRatio() if screen is not None else 'None'}",
+            flush=True,
+        )
         self._save_settings()
         super().closeEvent(event)
 
