@@ -1058,7 +1058,21 @@ class MainWindow(QMainWindow):
             self.task_glass_tower_knb.setEnabled
         )
         self.task_battle = QCheckBox("Giao tranh")
+        self.task_battle_count = QSpinBox()
+        self.task_battle_count.setRange(1, 60)
+        self.task_battle_count.setValue(15)
+        self.task_battle_count.setEnabled(False)
+        self.task_battle_count.setKeyboardTracking(False)
+        self.task_battle.toggled.connect(self.task_battle_count.setEnabled)
         self.task_championship = QCheckBox("Tranh bá")
+        self.task_championship_count = QSpinBox()
+        self.task_championship_count.setRange(1, 15)
+        self.task_championship_count.setValue(6)
+        self.task_championship_count.setEnabled(False)
+        self.task_championship_count.setKeyboardTracking(False)
+        self.task_championship.toggled.connect(
+            self.task_championship_count.setEnabled
+        )
         self.task_strategy = QCheckBox("Mưu binh")
 
         daily_group = QGroupBox("Nhiệm vụ")
@@ -1096,12 +1110,21 @@ class MainWindow(QMainWindow):
         glass_tower_row.addStretch(1)
         daily_layout.addLayout(glass_tower_row)
 
-        for task_checkbox in (
-            self.task_battle,
-            self.task_championship,
-            self.task_strategy,
-        ):
-            daily_layout.addWidget(task_checkbox)
+        battle_row = QHBoxLayout()
+        battle_row.addWidget(self.task_battle)
+        battle_row.addWidget(QLabel("Số trận:"))
+        battle_row.addWidget(self.task_battle_count)
+        battle_row.addStretch(1)
+        daily_layout.addLayout(battle_row)
+
+        championship_row = QHBoxLayout()
+        championship_row.addWidget(self.task_championship)
+        championship_row.addWidget(QLabel("Số trận:"))
+        championship_row.addWidget(self.task_championship_count)
+        championship_row.addStretch(1)
+        daily_layout.addLayout(championship_row)
+
+        daily_layout.addWidget(self.task_strategy)
 
         layout.addWidget(daily_group)
 
@@ -1142,7 +1165,9 @@ class MainWindow(QMainWindow):
                 "so_lan_luu_ly_thap": self.task_glass_tower_count.value(),
                 "luu_ly_thap_knb": self.task_glass_tower_knb.isChecked(),
                 "thuc_hien_giao_tranh": self.task_battle.isChecked(),
+                "giao_tranh": self.task_battle_count.value(),
                 "thuc_hien_tranh_ba": self.task_championship.isChecked(),
+                "tranh_ba": self.task_championship_count.value(),
                 "thiet_lap_muu_binh": self.task_strategy.isChecked(),
             })
             return config
