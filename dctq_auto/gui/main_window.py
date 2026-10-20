@@ -114,7 +114,8 @@ class MainWindow(QMainWindow):
         self.device_list.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.device_list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         device_layout.addWidget(self.device_list)
-        top_row.addWidget(device_panel, 1)
+        # Keep the device list compact; don't let it stretch and create a gap above the buttons.
+        top_row.addWidget(device_panel, 0)
 
         # Keep the combo as the settings-compatible source of the selected serial.
         # The visible QListWidget provides a compact, scrollable device list.
