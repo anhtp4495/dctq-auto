@@ -153,8 +153,11 @@ class BotWorker(QThread):
                 selected.append("Đổi tài khoản")
             self.progress_changed.emit(0, max(1, len(selected)), "Bắt đầu tác vụ")
             for index, task in enumerate(selected, start=1):
+                self.task_progress_changed.emit(task, "running", 0, 1)
                 if not self._mock_tick(f"[Chạy thử] Thực hiện: {task}"):
+                    self.task_progress_changed.emit(task, "stopped", 0, 1)
                     return
+                self.task_progress_changed.emit(task, "done", 1, 1)
                 self.progress_changed.emit(index, max(1, len(selected)), task)
             if not selected:
                 self.log_message.emit("Tab Tác vụ: chưa chọn tác vụ nào.")
@@ -547,6 +550,9 @@ class BotWorker(QThread):
                 self.progress_changed.emit(
                     completed, max(1, total), "Đã gửi thao tác đóng Quân đoàn"
                 )
+                self.task_progress_changed.emit(
+                    "Thoát màn hình Quân đoàn", "done", 1, 1
+                )
                 self.log_message.emit(
                     "Đã gửi thao tác đóng giao diện Quân đoàn. "
                     "Đây không phải thao tác rời bang hội."
@@ -571,6 +577,7 @@ class BotWorker(QThread):
             result = run_logout_flow(self, account, device, ocr_client)
             if result:
                 completed += 1
+                self.task_progress_changed.emit("Đổi tài khoản", "done", 1, 1)
                 self.log_message.emit(
                     "Tác vụ Đổi tài khoản đã hoàn tất và đã xác minh màn hình đăng nhập."
                 )
