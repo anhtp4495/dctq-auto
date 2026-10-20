@@ -128,6 +128,24 @@ class BotWorker(QThread):
         """Simulate configured tasks and update progress without connecting to ADB."""
         if self._config.get("utility_tasks_mode"):
             selected = []
+            if self._config.get("task_login"):
+                selected.append("Đăng nhập")
+            if self._config.get("diem_danh"):
+                selected.append("Điểm danh")
+            if self._config.get("bao_danh_quan_doan"):
+                selected.append("Báo danh quân đoàn")
+            if self._config.get("dong_gop_knb"):
+                selected.append("Đóng góp KNB")
+            if self._config.get("tham_do_lanh_dia"):
+                selected.append("Thăm dò lãnh địa")
+            if self._config.get("nhiem_vu_luu_ly_thap"):
+                selected.append("Lưu Ly Tháp")
+            if self._config.get("thuc_hien_giao_tranh"):
+                selected.append("Giao tranh")
+            if self._config.get("thuc_hien_tranh_ba"):
+                selected.append("Tranh bá")
+            if self._config.get("thiet_lap_muu_binh"):
+                selected.append("Mưu binh")
             if self._config.get("task_close_guild"):
                 selected.append("Thoát màn hình Quân đoàn")
             if self._config.get("task_switch_account"):
@@ -430,11 +448,57 @@ class BotWorker(QThread):
         from dctq_auto.adb.client import AdbClient
 
         ocr_client = AdbClient(serial=self._serial)
-        total = int(bool(self._config.get("task_close_guild"))) + int(
-            bool(self._config.get("task_switch_account"))
-        )
+        total = sum(bool(self._config.get(key)) for key in (
+            "task_login", "task_close_guild", "task_switch_account"
+        ))
         completed = 0
         self.progress_changed.emit(0, max(1, total), "Bắt đầu tác vụ")
+
+        if self._config.get("task_login"):
+            if not self._wait_if_paused():
+                self.log_message.emit("Đã dừng theo yêu cầu.")
+                return
+            username = self._config.get("login_username", "")
+            password = self._config.get("login_password", "")
+            if not username or not password:
+                self.log_message.emit("Đăng nhập bị bỏ qua: thiếu username hoặc password.")
+                self.task_progress_changed.emit("Đăng nhập", "failed", 0, 1)
+                return
+            account = SimpleNamespace(username=username, password=password)
+            try:
+                screen_text = self._screen_text(device)
+                if not self._is_login_screen(screen_text):
+                    self.log_message.emit(
+                        "Không nhập thông tin vì OCR chưa xác nhận màn hình đăng nhập. "
+                        "Hãy mở màn hình đăng nhập trong game rồi thử lại."
+                    )
+                    self.task_progress_changed.emit("Đăng nhập", "failed", 0, 1)
+                    return
+                from dctq_auto.tasks.common.login import submit_login_form, verify_login
+                self.log_message.emit(f"Đang đăng nhập tài khoản {username}.")
+                if not submit_login_form(self, account, device, ocr_client):
+                    return
+                verified, observed_error = verify_login(self, account, device, ocr_client)
+                if verified is None:
+                    return
+                if not verified:
+                    self.log_message.emit(
+                        "Đăng nhập chưa được xác minh thành công"
+                        + (f": {observed_error}" if observed_error else ".")
+                    )
+                    self.task_progress_changed.emit("Đăng nhập", "failed", 0, 1)
+                    return
+                completed += 1
+                self.task_progress_changed.emit("Đăng nhập", "done", 1, 1)
+                self.progress_changed.emit(completed, max(1, total), "Đăng nhập thành công")
+                self.log_message.emit(f"Đăng nhập tài khoản {username} đã được xác minh.")
+            except Exception as exc:
+                self.log_message.emit(f"Không thể thực hiện đăng nhập: {exc}")
+                self.task_progress_changed.emit("Đăng nhập", "failed", 0, 1)
+                return
+            finally:
+                # Do not retain the password in the worker configuration after use.
+                self._config.pop("login_password", None)
 
         if self._config.get("task_close_guild"):
             if not self._wait_if_paused():
@@ -492,7 +556,7 @@ class BotWorker(QThread):
     def run(self) -> None:
         if self._mock_mode:
             self.progress_changed.emit(0, 1, "Đang chuẩn bị chạy thử")
-            self.log_message.emit(f"Bắt đầu với cấu hình: {self._config}")
+            self.log_message.emit("Bắt đầu với cấu hình đã chọn.")
             try:
                 self._run_mock()
             except Exception as exc:
