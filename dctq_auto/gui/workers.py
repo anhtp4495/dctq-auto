@@ -699,9 +699,23 @@ class BotWorker(QThread):
                         ocr_client.tap_ocr_target("vao_quan_doan")
                         time.sleep(2)
                         self.log_message.emit(
-                            f"[{account.username}] Đã bấm 'Vào quân đoàn'. "
-                            "Cần tọa độ OCR của nút Báo danh trên màn hình kế tiếp để hoàn tất nhiệm vụ."
+                            f"[{account.username}] Đã bấm 'Vào quân đoàn'; đang thực hiện báo danh."
                         )
+                        ocr_client.tap_ocr_target("bao_danh_nhan_thuong")
+                        time.sleep(1.5)
+                        try:
+                            check_in_text = self._normalize_screen_text(self._screen_text(device))
+                        except Exception as ocr_exc:
+                            check_in_text = ""
+                            self.log_message.emit(
+                                f"[{account.username}] Không đọc được OCR sau khi bấm Báo danh: {ocr_exc}"
+                            )
+                        self.log_message.emit(
+                            f"[{account.username}] Đã gửi thao tác 'Báo danh nhận thưởng'. "
+                            f"OCR sau thao tác: {check_in_text[:220] or '(trống)'}"
+                        )
+                        # A tap alone does not prove that the server granted the reward.
+                        # Keep this task running until a reliable success marker is known.
                     else:
                         self.log_message.emit(
                             f"[{account.username}] Không thấy text tin cậy "
@@ -786,10 +800,13 @@ class BotWorker(QThread):
         for account in accounts:
             if account.username not in processed_names:
                 self.log_message.emit(f"  {account.username}: NOT PROCESSED — chưa chạy")
-        if self._config.get("clone_daily_check_in") or self._config.get("clone_guild_check_in") or self._config.get("clone_receive_lucky_bag") or self._config.get("clone_logout"):
+        if self._config.get("clone_daily_check_in") or self._config.get("clone_receive_lucky_bag") or self._config.get("clone_logout"):
             self.log_message.emit(
-                "Lưu ý: điểm danh, báo danh quân đoàn, nhận túi phúc và đăng xuất "
-                "chưa được triển khai; hiện chỉ thực hiện đăng nhập."
+                "Lưu ý: điểm danh hằng ngày, nhận túi phúc và đăng xuất chưa được triển khai."
+            )
+        if self._config.get("clone_guild_check_in"):
+            self.log_message.emit(
+                "Lưu ý: đã thêm thao tác bấm Báo danh quân đoàn; chưa xác minh được trạng thái nhận thưởng thành công."
             )
 
     def run(self) -> None:
