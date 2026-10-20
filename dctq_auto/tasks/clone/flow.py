@@ -419,6 +419,8 @@ def run_clone_flow(self, device) -> None:
         from dctq_auto.tasks.common.logout import run_logout_flow
 
         logout_ok = run_logout_flow(self, account, device, ocr_client)
+        if logout_ok is None:
+            return
 
         if not logout_ok:
             failed_count += 1
