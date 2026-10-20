@@ -90,9 +90,15 @@ class MainWindow(QMainWindow):
         central = QWidget(self)
         root = QVBoxLayout(central)
 
-        device_panel = QWidget()
+        root.setContentsMargins(8, 8, 8, 8)
+        root.setSpacing(6)
+
+        top_row = QHBoxLayout()
+        top_row.setSpacing(8)
+
+        device_panel = QGroupBox("Quét thiết bị")
         device_layout = QVBoxLayout(device_panel)
-        device_layout.setContentsMargins(0, 0, 0, 0)
+        device_layout.setContentsMargins(8, 8, 8, 8)
         self.scan_button = QPushButton("Quét thiết bị")
         self.scan_button.clicked.connect(self.scan_adb_devices)
         device_layout.addWidget(self.scan_button)
@@ -103,7 +109,7 @@ class MainWindow(QMainWindow):
         self.device_list.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.device_list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         device_layout.addWidget(self.device_list)
-        root.addWidget(device_panel)
+        top_row.addWidget(device_panel, 1)
 
         # Keep the combo as the settings-compatible source of the selected serial.
         # The visible QListWidget provides a compact, scrollable device list.
@@ -113,8 +119,10 @@ class MainWindow(QMainWindow):
         self.device_combo.currentIndexChanged.connect(self._on_device_changed)
         self.device_list.currentItemChanged.connect(self._on_device_list_selection_changed)
         self._sync_device_list_from_combo()
-        capture_row = QHBoxLayout()
-        capture_row.addStretch(1)
+        controls_panel = QGroupBox("Điều khiển")
+        capture_row = QHBoxLayout(controls_panel)
+        capture_row.setContentsMargins(8, 8, 8, 8)
+        capture_row.setSpacing(5)
         self.start_button = QPushButton("▶")
         self.start_button.setFixedSize(38, 30)
         self.start_button.setToolTip("Bắt đầu")
@@ -152,10 +160,11 @@ class MainWindow(QMainWindow):
         )
         self.choose_position_button.clicked.connect(self.open_screenshot_annotator)
         capture_row.addWidget(self.choose_position_button)
-        root.addLayout(capture_row)
+        top_row.addWidget(controls_panel, 0)
+        root.addLayout(top_row)
 
         self.tabs = QTabWidget(central)
-        root.addWidget(self.tabs)
+        root.addWidget(self.tabs, 1)
 
         self.giao_tranh = QSpinBox()
         self.giao_tranh.setRange(1, 60)
@@ -361,7 +370,7 @@ class MainWindow(QMainWindow):
         timing_layout.addStretch(1)
         timing_layout.addWidget(self.eta_label)
         progress_layout.addLayout(timing_layout)
-        root.addWidget(progress_group)
+        root.addWidget(progress_group, 0)
 
         self.elapsed_timer = QTimer(self)
         self.elapsed_timer.setInterval(1000)
