@@ -379,6 +379,16 @@ class BotWorker(QThread):
         BotWorker._clear_focused_text(device)
         BotWorker._input_text(device, value)
 
+    @staticmethod
+    def _replace_password_text(device, value: str) -> None:
+        """Clear password fields even when their widget ignores Ctrl+A."""
+        # First try select-all. Some password widgets do not select their contents
+        # with Ctrl+A, so also move to the end and send repeated Backspace events.
+        BotWorker._clear_focused_text(device)
+        device.shell("input keyevent KEYCODE_MOVE_END")
+        device.shell("input keyevent " + " ".join(["KEYCODE_DEL"] * 64))
+        BotWorker._input_text(device, value)
+
     def _run_clone_login(self, device) -> None:
         """Log in clone accounts using the confirmed login-screen OCR coordinates."""
         accounts = load_accounts(self._config.get("clone_account_file", ""))
@@ -468,7 +478,7 @@ class BotWorker(QThread):
 
                 ocr_client.tap_ocr_target("mat_khau")
                 time.sleep(0.25)
-                self._replace_focused_text(device, account.password)
+                self._replace_password_text(device, account.password)
 
                 if not self._wait_if_paused():
                     self.log_message.emit("Đã dừng theo yêu cầu.")
