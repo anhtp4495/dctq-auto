@@ -1220,6 +1220,8 @@ class MainWindow(QMainWindow):
         was_at_bottom = scrollbar.value() >= scrollbar.maximum() - 1
         previous_value = scrollbar.value()
         self.log_view.appendPlainText(message)
+        # Keep at most 1,000 lines; Qt automatically discards the oldest lines.
+        self.log_view.setMaximumBlockCount(1000)
         if not was_at_bottom:
             # Keep the reader's position when new log lines arrive.
             scrollbar.setValue(previous_value)
