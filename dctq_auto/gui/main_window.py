@@ -1346,6 +1346,27 @@ class MainWindow(QMainWindow):
         group_layout.addWidget(self.doi_tai_khoan_task)
         layout.addWidget(group)
 
+        coordinate_group = QGroupBox("Click theo tọa độ")
+        coordinate_layout = QHBoxLayout(coordinate_group)
+        self.task_click_coordinates = QCheckBox("Click")
+        self.task_click_x = QSpinBox()
+        self.task_click_x.setRange(0, 10000)
+        self.task_click_x.setPrefix("X: ")
+        self.task_click_x.setKeyboardTracking(False)
+        self.task_click_y = QSpinBox()
+        self.task_click_y.setRange(0, 10000)
+        self.task_click_y.setPrefix("Y: ")
+        self.task_click_y.setKeyboardTracking(False)
+        self.task_click_x.setEnabled(False)
+        self.task_click_y.setEnabled(False)
+        self.task_click_coordinates.toggled.connect(self.task_click_x.setEnabled)
+        self.task_click_coordinates.toggled.connect(self.task_click_y.setEnabled)
+        coordinate_layout.addWidget(self.task_click_coordinates)
+        coordinate_layout.addWidget(self.task_click_x)
+        coordinate_layout.addWidget(self.task_click_y)
+        coordinate_layout.addStretch(1)
+        layout.addWidget(coordinate_group)
+
         note = QLabel(
             "Chọn một hoặc nhiều tác vụ rồi nhấn ▶ Bắt đầu. "
             "Cần chọn đúng thiết bị ADB và đang ở trong game. "
@@ -1366,6 +1387,9 @@ class MainWindow(QMainWindow):
                 "task_login": self.task_login.isChecked(),
                 "task_close_guild": self.thoat_quan_doan_task.isChecked(),
                 "task_switch_account": self.doi_tai_khoan_task.isChecked(),
+                "task_click_coordinates": self.task_click_coordinates.isChecked(),
+                "task_click_x": self.task_click_x.value(),
+                "task_click_y": self.task_click_y.value(),
                 "diem_danh": self.task_daily_checkin.isChecked(),
                 "bao_danh_quan_doan": self.task_guild_checkin.isChecked(),
                 "dong_gop_knb": self.task_knb_contribution.isChecked(),
@@ -1548,7 +1572,7 @@ class MainWindow(QMainWindow):
                 "diem_danh", "bao_danh_quan_doan", "dong_gop_knb",
                 "tham_do_lanh_dia", "nhiem_vu_luu_ly_thap",
                 "thuc_hien_giao_tranh", "thuc_hien_tranh_ba",
-                "thiet_lap_muu_binh",
+                "thiet_lap_muu_binh", "task_click_coordinates",
             )
         ):
             QMessageBox.warning(
@@ -1697,6 +1721,7 @@ class MainWindow(QMainWindow):
                 ("thiet_lap_muu_binh", "Mưu binh"),
                 ("task_close_guild", "Thoát màn hình Quân đoàn"),
                 ("task_switch_account", "Đổi tài khoản"),
+                ("task_click_coordinates", "Click theo tọa độ"),
             )
             return [(label, 1) for key, label in task_labels if config.get(key)]
         from dctq_auto.tasks.registry import get_enabled_tasks
