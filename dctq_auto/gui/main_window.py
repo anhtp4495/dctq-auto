@@ -370,13 +370,22 @@ class MainWindow(QMainWindow):
         self.progress_bar.setValue(0)
         self.progress_bar.setFormat("%p%")
         progress_layout.addWidget(self.progress_bar)
-        self.clone_result_label = QLabel("0 thành công | 0 thất bại")
-        self.clone_result_label.setWordWrap(True)
-        progress_layout.addWidget(self.clone_result_label)
-        self.task_progress_layout = QVBoxLayout()
-        self.task_progress_layout.setSpacing(2)
-        self.task_progress_labels: dict[str, QLabel] = {}
-        progress_layout.addLayout(self.task_progress_layout)
+        self.clone_result_list = QListWidget()
+        self.clone_result_list.setObjectName("cloneAccountResults")
+        self.clone_result_list.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.clone_result_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.clone_result_list.setUniformItemSizes(True)
+        self.clone_result_list.setFixedHeight(5 * 24 + 4)
+        self.clone_result_list.hide()
+        progress_layout.addWidget(self.clone_result_list)
+        self.task_progress_list = QListWidget()
+        self.task_progress_list.setObjectName("taskProgressList")
+        self.task_progress_list.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.task_progress_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.task_progress_list.setUniformItemSizes(True)
+        self.task_progress_list.setFixedHeight(5 * 24 + 4)
+        progress_layout.addWidget(self.task_progress_list)
+        self.task_progress_labels: dict[str, QListWidgetItem] = {}
         timing_layout = QHBoxLayout()
         self.elapsed_time_label = QLabel("Thời gian đã chạy: 00:00:00")
         self.eta_label = QLabel("Dự kiến kết thúc: Chưa ước tính")
@@ -1261,6 +1270,7 @@ class MainWindow(QMainWindow):
         self._worker.log_message.connect(self._log)
         self._worker.progress_changed.connect(self._update_progress)
         self._worker.task_progress_changed.connect(self._update_task_progress)
+        self._worker.clone_account_result.connect(self._update_clone_account_result)
         self._init_task_progress(config)
         self._worker.finished.connect(self._on_worker_finished)
         self._set_settings_enabled(False)
@@ -1274,7 +1284,7 @@ class MainWindow(QMainWindow):
             self.progress_bar.setRange(0, max(1, self._clone_total_accounts))
             self.progress_bar.setFormat("%v/%m tài khoản đã xử lý")
             self.progress_bar.setValue(0)
-            self.clone_result_label.setText("0 thành công | 0 thất bại")
+            self.clone_result_list.clear()
         else:
             self.progress_bar.setRange(0, 100)
             self.progress_bar.setFormat("%p%")
@@ -1339,42 +1349,51 @@ class MainWindow(QMainWindow):
         return [(spec.label, count) for spec, count in get_enabled_tasks(config)]
 
     def _init_task_progress(self, config: dict) -> None:
-        while self.task_progress_layout.count():
-            item = self.task_progress_layout.takeAt(0)
-            widget = item.widget()
-            if widget is not None:
-                widget.deleteLater()
+        self.task_progress_list.clear()
         self.task_progress_labels.clear()
-        if config.get("clone_mode"):
-            # Keep account names out of the progress panel; details go to the activity log.
-            task_names = []
-        else:
-            task_names = self._task_specs(config)
-        for name, count in task_names:
-            label = QLabel()
-            label.setStyleSheet("color: #808080;")
-            self.task_progress_layout.addWidget(label)
-            self.task_progress_labels[name] = label
+        is_clone = bool(config.get("clone_mode"))
+        self.clone_result_list.clear()
+        self.clone_result_list.setVisible(is_clone)
+        self.task_progress_list.setVisible(not is_clone)
+        if is_clone:
+            return
+        for name, count in self._task_specs(config):
+            item = QListWidgetItem()
+            self.task_progress_list.addItem(item)
+            self.task_progress_labels[name] = item
             self._render_task_progress(name, "pending", 0, count)
 
     def _render_task_progress(self, name: str, state: str, completed: int, total: int) -> None:
-        label = self.task_progress_labels.get(name)
-        if label is None:
+        item = self.task_progress_labels.get(name)
+        if item is None:
             return
         if state == "running":
-            prefix, color = "→", "#D97706"
+            prefix, color = "→", Qt.GlobalColor.darkYellow
         elif state == "done":
-            prefix, color = "✓", "#16A34A"
+            prefix, color = "✓", Qt.GlobalColor.green
         elif state == "failed":
-            prefix, color = "✗", "#DC2626"
+            prefix, color = "✗", Qt.GlobalColor.red
         elif state == "stopped":
-            prefix, color = "■", "#DC2626"
+            prefix, color = "■", Qt.GlobalColor.red
         else:
-            prefix, color = "·", "#808080"
+            prefix, color = "·", Qt.GlobalColor.gray
         show_count = total > 1 or name == "Thăm dò lãnh địa"
         detail = f" {completed}/{total}" if show_count else ""
-        label.setText(f"{prefix} {name}{detail}")
-        label.setStyleSheet("color: " + color + ";")
+        item.setText(f"{prefix} {name}{detail}")
+        item.setForeground(color)
+
+    def _update_clone_account_result(self, username: str, success: bool) -> None:
+        for index in range(self.clone_result_list.count()):
+            item = self.clone_result_list.item(index)
+            if item.data(Qt.ItemDataRole.UserRole) == username:
+                item.setText(f"{'✓' if success else '✗'} {username}")
+                item.setForeground(Qt.GlobalColor.green if success else Qt.GlobalColor.red)
+                return
+        item = QListWidgetItem(f"{'✓' if success else '✗'} {username}")
+        item.setData(Qt.ItemDataRole.UserRole, username)
+        item.setForeground(Qt.GlobalColor.green if success else Qt.GlobalColor.red)
+        self.clone_result_list.addItem(item)
+        self.clone_result_list.scrollToBottom()
 
     def _update_task_progress(self, name: str, state: str, completed: int, total: int) -> None:
         self._render_task_progress(name, state, completed, total)
@@ -1387,7 +1406,7 @@ class MainWindow(QMainWindow):
                 max(0, min(self._clone_total_accounts, completed))
             )
             self.progress_bar.setFormat("%v/%m tài khoản đã xử lý")
-            self.clone_result_label.setText(status or "0 thành công | 0 thất bại")
+            # Per-account results are shown in the scrollable list.
             return
         percent = int(completed * 100 / total) if total else 0
         self.progress_bar.setRange(0, 100)
