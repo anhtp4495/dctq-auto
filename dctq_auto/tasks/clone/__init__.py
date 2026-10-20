@@ -1,6 +1,6 @@
 """Các nhiệm vụ thao tác lần lượt trên danh sách tài khoản clone."""
 
-from dctq_auto.tasks.clone.accounts import CloneAccount, load_accounts
+from dctq_auto.tasks.common.accounts import GameAccount as CloneAccount, load_accounts
 from dctq_auto.tasks.clone.login import SPEC as LOGIN
 from dctq_auto.tasks.clone.logout import SPEC as LOGOUT
 from dctq_auto.tasks.clone.daily_check_in import SPEC as DAILY_CHECK_IN
