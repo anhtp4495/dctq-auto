@@ -14,7 +14,7 @@ from PySide6.QtCore import QThread, Signal
 from dctq_auto.adb.client import AdbClient
 from dctq_auto.automation.battle_testkit import BattleSnapshot, run_mock_battle
 from dctq_auto.tasks.registry import get_enabled_tasks
-from dctq_auto.tasks.clone.accounts import load_accounts
+from dctq_auto.tasks.common.accounts import load_accounts
 
 
 class BotWorker(QThread):
