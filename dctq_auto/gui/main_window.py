@@ -1038,17 +1038,33 @@ class MainWindow(QMainWindow):
         self.task_strategy = QCheckBox("Mưu binh")
 
         daily_group = QGroupBox("Nhiệm vụ")
-        daily_layout = QGridLayout(daily_group)
-        daily_layout.addWidget(self.task_login, 0, 0)
-        daily_layout.addWidget(self.task_daily_checkin, 0, 1)
-        daily_layout.addWidget(self.task_guild_checkin, 1, 0)
-        daily_layout.addWidget(self.task_knb_contribution, 1, 1)
-        daily_layout.addWidget(self.task_territory, 2, 0)
-        daily_layout.addWidget(self.task_territory_count, 2, 1)
-        daily_layout.addWidget(self.task_glass_tower, 3, 0)
-        daily_layout.addWidget(self.task_battle, 3, 1)
-        daily_layout.addWidget(self.task_championship, 4, 0)
-        daily_layout.addWidget(self.task_strategy, 4, 1)
+        daily_layout = QVBoxLayout(daily_group)
+        daily_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        daily_layout.setSpacing(6)
+
+        for task_checkbox in (
+            self.task_login,
+            self.task_daily_checkin,
+            self.task_guild_checkin,
+            self.task_knb_contribution,
+        ):
+            daily_layout.addWidget(task_checkbox)
+
+        territory_row = QHBoxLayout()
+        territory_row.addWidget(self.task_territory)
+        territory_row.addWidget(QLabel("Số lần:"))
+        territory_row.addWidget(self.task_territory_count)
+        territory_row.addStretch(1)
+        daily_layout.addLayout(territory_row)
+
+        for task_checkbox in (
+            self.task_glass_tower,
+            self.task_battle,
+            self.task_championship,
+            self.task_strategy,
+        ):
+            daily_layout.addWidget(task_checkbox)
+
         layout.addWidget(daily_group)
 
         group = QGroupBox("Thao tác tài khoản")
