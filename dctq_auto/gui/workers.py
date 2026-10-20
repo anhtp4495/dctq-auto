@@ -551,9 +551,13 @@ class BotWorker(QThread):
                     )
                     break
                 if attempt == 5:
-                    raise RuntimeError(
-                        "Đã click Hoạt động nhưng OCR không xác nhận được màn hình. "
-                        f"Văn bản nhận diện: {normalized[:240]!r}"
+                    # OCR is unreliable on this game screen and may misread
+                    # labels even when the fixed Hoạt động tap succeeded.
+                    # Do not abort here; continue the known navigation flow.
+                    self.log_message.emit(
+                        "OCR chưa xác nhận đủ dấu hiệu màn hình Hoạt động; "
+                        "tiếp tục luồng theo tọa độ đã cấu hình. Văn bản OCR: "
+                        f"{normalized[:240]!r}"
                     )
 
             if not self._wait_if_paused():
