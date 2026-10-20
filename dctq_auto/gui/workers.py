@@ -637,13 +637,14 @@ class BotWorker(QThread):
                 round(474 / 1920 * screen_width),
                 round(1002 / 1080 * screen_height),
             )
-            # Dùng đúng vùng Phúc lợi người dùng đã xác định:
-            # góc trái-trên (199, 125), góc phải-dưới (471, 995) ở 1920x1080.
+            # Nút Điểm danh nằm ngay phía trên nhãn Tranh bá.
+            # OCR người dùng cung cấp: Tranh bá ở khoảng y=610 trên màn hình 1920x1080,
+            # nên quét vùng ngay phía trên nhãn đó thay vì toàn bộ danh sách Phúc lợi.
             diem_danh_rect = (
                 round(199 / 1920 * screen_width),
-                round(125 / 1080 * screen_height),
+                round(500 / 1080 * screen_height),
                 round(471 / 1920 * screen_width),
-                round(995 / 1080 * screen_height),
+                round(610 / 1080 * screen_height),
             )
             activity_rect = diem_danh_rect
 
