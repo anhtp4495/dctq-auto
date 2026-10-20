@@ -534,26 +534,52 @@ class BotWorker(QThread):
                 f"({hoat_dong_x}, {hoat_dong_y}); không dùng OCR để click nút này."
             )
 
-            self.log_message.emit("BƯỚC 2/7: Kiểm tra màn hình Hoạt động bằng OCR.")
+            self.log_message.emit(
+                "BƯỚC 2/7: Thử 3 vị trí button_phuc_loi; sau mỗi lần click quét OCR "
+                "và chọn vị trí làm xuất hiện 'Điểm danh'."
+            )
             if not self._wait_if_paused():
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
                 return False
-            time.sleep(0.7)
-            screen_text = self._screen_text(device)
-            normalized = self._normalize_screen_text(screen_text)
-            activity_markers = ("phuc loi", "le bao", "diem danh", "hoat dong")
-            matched = [marker for marker in activity_markers if marker in normalized]
-            if len(matched) >= 2:
+            screenshot = device.screenshot()
+            screen_width, screen_height = screenshot.size
+            phuc_loi_candidates = (
+                ("button_1", 143 / 1920, 358 / 1080),
+                ("button_2", 135 / 1920, 495 / 1080),
+                ("button_3", 123 / 1920, 613 / 1080),
+            )
+            phuc_loi_found = False
+            for attempt, (button_name, x_ratio, y_ratio) in enumerate(
+                phuc_loi_candidates, start=1
+            ):
+                if not self._wait_if_paused():
+                    self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
+                    return False
+                phuc_loi_x = round(x_ratio * screen_width)
+                phuc_loi_y = round(y_ratio * screen_height)
                 self.log_message.emit(
-                    "OCR xác nhận màn hình Hoạt động: " + ", ".join(matched)
+                    f"OCR dò button_phuc_loi lần {attempt}/3: click {button_name} "
+                    f"tại ({phuc_loi_x}, {phuc_loi_y})."
                 )
-            else:
-                # OCR can be noisy on this game screen. Check only once, warn,
-                # then continue with the configured navigation flow.
+                device.shell(f"input tap {phuc_loi_x} {phuc_loi_y}")
+                time.sleep(0.7)
+                screen_text = self._screen_text(device)
+                normalized = self._normalize_screen_text(screen_text)
+                if "diem danh" in normalized:
+                    phuc_loi_found = True
+                    self.log_message.emit(
+                        f"Xác định button_phuc_loi là {button_name} tại "
+                        f"({phuc_loi_x}, {phuc_loi_y}); OCR thấy 'diem danh'."
+                    )
+                    break
                 self.log_message.emit(
-                    "CẢNH BÁO: OCR chưa xác nhận được màn hình Hoạt động sau 1 lần; "
-                    "tiếp tục luồng theo tọa độ đã cấu hình. Văn bản OCR: "
-                    f"{normalized[:240]!r}"
+                    f"{button_name} chưa mở đúng mục (OCR lần {attempt}/3): "
+                    f"{normalized[:180]!r}"
+                )
+            if not phuc_loi_found:
+                raise RuntimeError(
+                    "Đã thử OCR sau cả 3 vị trí button_1/button_2/button_3 "
+                    "nhưng không vị trí nào làm xuất hiện 'Điểm danh'."
                 )
 
             if not self._wait_if_paused():
@@ -562,8 +588,6 @@ class BotWorker(QThread):
 
             # User-provided RECT bounds are normalized to screenshot ratios:
             # x=0..473 / 1920, y=119..996 / 1080.
-            screenshot = device.screenshot()
-            screen_width, screen_height = screenshot.size
             activity_rect = (
                 round(0.0 * screen_width),
                 round(0.110185 * screen_height),
@@ -571,16 +595,9 @@ class BotWorker(QThread):
                 round(0.922222 * screen_height),
             )
 
-            # BƯỚC 3: Luôn mở Phúc lợi và nhận lễ bao miễn phí trước khi vào Điểm danh.
-            self.log_message.emit("BƯỚC 3/7: Mở Phúc lợi và nhận lễ bao miễn phí.")
-            phuc_loi_x = round(0.077604 * screen_width)
-            phuc_loi_y = round(0.325000 * screen_height)
-            self.log_message.emit(
-                "Click button_phuc_loi "
-                f"tại ({phuc_loi_x}, {phuc_loi_y})."
-            )
-            device.shell(f"input tap {phuc_loi_x} {phuc_loi_y}")
-            self.log_message.emit("Đã click Phúc lợi; click tiếp lễ bao miễn phí.")
+            # BƯỚC 3: Nhận lễ bao miễn phí sau khi xác định đúng nút Phúc lợi.
+            self.log_message.emit("BƯỚC 3/7: Nhận lễ bao miễn phí.")
+            self.log_message.emit("Đã xác định vị trí Phúc lợi; click lễ bao miễn phí.")
             le_bao_x = round(0.366667 * screen_width)
             le_bao_y = round(0.202778 * screen_height)
             device.shell(f"input tap {le_bao_x} {le_bao_y}")
