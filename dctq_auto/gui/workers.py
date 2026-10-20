@@ -265,6 +265,9 @@ class BotWorker(QThread):
             self.log_message.emit(
                 f"Đang xử lý tài khoản: {account.username}"
             )
+            # In mock mode, record one result per account just like the real
+            # Clone flow so the Clone result list is populated during a run.
+            self.clone_account_result.emit(account.username, True)
             for task_index, (_key, label) in enumerate(selected, start=1):
                 if not self._mock_tick(
                     f"[{account.username}] {label}: chạy thử bước "
