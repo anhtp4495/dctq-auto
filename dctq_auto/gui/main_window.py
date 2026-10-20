@@ -1215,6 +1215,9 @@ class MainWindow(QMainWindow):
             self._toggle_task_championship_options
         )
         self._update_task_championship_mode_description()
+        self._toggle_task_championship_options(
+            self.task_championship.isChecked()
+        )
         self.task_strategy = QCheckBox("Mưu binh")
 
         daily_group = QGroupBox("Nhiệm vụ")
