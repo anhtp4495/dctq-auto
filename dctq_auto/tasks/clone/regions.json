@@ -590,6 +590,56 @@
             "x": 0.607292,
             "y": 0.641667
           }
+        },
+        {
+          "name": "cai_dat_nguoi_dung",
+          "text": "Mở Cài đặt người dùng",
+          "confidence": null,
+          "bounds": {
+            "left": 910,
+            "top": 724,
+            "right": 950,
+            "bottom": 764
+          },
+          "rect": {
+            "x": 910,
+            "y": 724,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 930,
+            "y_px": 744
+          },
+          "center_ratio": {
+            "x": 0.484375,
+            "y": 0.688889
+          }
+        },
+        {
+          "name": "doi_tai_khoan",
+          "text": "Nút Đổi tài khoản",
+          "confidence": null,
+          "bounds": {
+            "left": 931,
+            "top": 784,
+            "right": 971,
+            "bottom": 824
+          },
+          "rect": {
+            "x": 931,
+            "y": 784,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 951,
+            "y_px": 804
+          },
+          "center_ratio": {
+            "x": 0.495312,
+            "y": 0.744444
+          }
         }
       ],
       "screenshot": "user-provided OCR coordinates",
