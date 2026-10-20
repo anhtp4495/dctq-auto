@@ -998,10 +998,8 @@ class BotWorker(QThread):
                             "không chuyển sang Tùy chọn để tránh thao tác nhầm."
                         )
                     else:
-                        # Close the verified "Thông tin của tôi" panel using its saved target.
-                        ocr_client.tap_ocr_target("close_thong_tin_cua_toi")
-                        time.sleep(0.7)
-                        # This is a toggle button: click exactly once, then only observe OCR.
+                        # The Tùy chọn button is INSIDE the verified "Thông tin của tôi" profile.
+                        # Keep the profile panel open and click this toggle exactly once.
                         ocr_client.tap_ocr_target("button_tuy_chon")
                         time.sleep(1.5)
                         for options_attempt in range(10):
