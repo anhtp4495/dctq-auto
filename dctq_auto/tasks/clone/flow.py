@@ -116,6 +116,8 @@ def run_clone_flow(self, device) -> None:
         from dctq_auto.tasks.common.login import verify_login
 
         verified, observed_error = verify_login(self, account, device, ocr_client)
+        if verified is None:
+            return
 
         if not verified:
             failed_count += 1
