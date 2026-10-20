@@ -7,6 +7,7 @@ from PySide6.QtCore import Qt, QTimer, QSettings, QThread, Signal
 from PySide6.QtGui import QColor, QFont, QGuiApplication, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import (
     QAbstractButton,
+    QAbstractItemView,
     QButtonGroup,
     QCheckBox,
     QComboBox,
@@ -1386,17 +1387,19 @@ class MainWindow(QMainWindow):
         elif state == "failed":
             item.setIcon(self._status_icon("✗", "#d1242f"))
             prefix = ""
+        elif state == "running":
+            item.setIcon(self._status_icon("→", "#0969da"))
+            prefix = ""
         else:
             item.setIcon(QIcon())
-            if state == "running":
-                prefix = "→ "
-            elif state == "stopped":
-                prefix = "■ "
-            else:
-                prefix = "· "
+            prefix = "■ " if state == "stopped" else "· "
         show_count = total > 1 or name == "Thăm dò lãnh địa"
         detail = f" {completed}/{total}" if show_count else ""
         item.setText(f"{prefix}{name}{detail}")
+        if state == "running":
+            self.task_progress_list.scrollToItem(
+                item, QAbstractItemView.ScrollHint.PositionAtCenter
+            )
 
     def _update_clone_account_result(self, username: str, success: bool) -> None:
         icon = self._status_icon("✓", "#22863a") if success else self._status_icon("✗", "#d1242f")
