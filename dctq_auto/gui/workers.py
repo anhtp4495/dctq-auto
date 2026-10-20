@@ -928,6 +928,130 @@ class BotWorker(QThread):
                     )
                     break
 
+            # Close the guild panel after all selected guild-related actions,
+            # then log out so the next account starts from the login screen.
+            logout_ok = True
+            if any(self._config.get(key) for key in (
+                "clone_guild_check_in", "clone_receive_lucky_bag", "clone_guild_fortune"
+            )):
+                try:
+                    ocr_client.tap_ocr_target("close_quan_doan")
+                    time.sleep(0.8)
+                    self.log_message.emit(
+                        f"[{account.username}] Đã gửi thao tác đóng màn hình quân đoàn."
+                    )
+                except Exception as exc:
+                    self.log_message.emit(
+                        f"[{account.username}] Không bấm được nút đóng quân đoàn: {exc}; "
+                        "vẫn tiếp tục quy trình đăng xuất."
+                    )
+
+            if self._config.get("clone_logout", True):
+                try:
+                    if not self._wait_if_paused():
+                        self.log_message.emit("Đã dừng theo yêu cầu.")
+                        return
+                    self.log_message.emit(
+                        f"[{account.username}] Mở profile để đăng xuất."
+                    )
+                    ocr_client.tap_ocr_target("profile_tuy_chon")
+                    time.sleep(1)
+                    options_text = ""
+                    options_found = False
+                    for options_attempt in range(10):
+                        if not self._wait_if_paused():
+                            self.log_message.emit("Đã dừng theo yêu cầu.")
+                            return
+                        options_text = self._normalize_screen_text(self._screen_text(device))
+                        if "tuy chon" in options_text or "thoat game" in options_text:
+                            options_found = True
+                            break
+                        time.sleep(1)
+                    if options_found:
+                        self.log_message.emit(
+                            f"[{account.username}] Đã nhận diện màn hình tùy chọn: "
+                            f"{options_text[:180]}"
+                        )
+                    else:
+                        self.log_message.emit(
+                            f"[{account.username}] Chưa nhận diện được màn hình tùy chọn; "
+                            f"vẫn thử bấm nút Thoát game theo tọa độ. OCR: "
+                            f"{options_text[:180] or '(trống)'}"
+                        )
+
+                    # Use the OCR target when the label is visible; otherwise use
+                    # the same saved coordinate as a deliberate fallback.
+                    ocr_client.tap_ocr_target("thoat_game")
+                    time.sleep(1)
+                    confirm_text = ""
+                    confirm_found = False
+                    for confirm_attempt in range(10):
+                        if not self._wait_if_paused():
+                            self.log_message.emit("Đã dừng theo yêu cầu.")
+                            return
+                        confirm_text = self._normalize_screen_text(self._screen_text(device))
+                        if any(marker in confirm_text for marker in (
+                            "thoat game", "quoc gia", "chua cong"
+                        )):
+                            confirm_found = True
+                            break
+                        time.sleep(1)
+                    if confirm_found:
+                        self.log_message.emit(
+                            f"[{account.username}] Đã nhận diện hộp thoại xác nhận thoát: "
+                            f"{confirm_text[:180]}"
+                        )
+                    else:
+                        self.log_message.emit(
+                            f"[{account.username}] Chưa nhận diện được hộp thoại xác nhận; "
+                            "vẫn bấm xác nhận theo tọa độ đã lưu."
+                        )
+                    ocr_client.tap_ocr_target("thoat_game_xac_nhan")
+                    time.sleep(1.5)
+
+                    login_screen_found = False
+                    login_text = ""
+                    for login_attempt in range(30):
+                        if not self._wait_if_paused():
+                            self.log_message.emit("Đã dừng theo yêu cầu.")
+                            return
+                        login_text = self._screen_text(device)
+                        if self._is_login_screen(login_text):
+                            login_screen_found = True
+                            break
+                        time.sleep(1)
+                    if login_screen_found:
+                        self.log_message.emit(
+                            f"[{account.username}] Đã quay về màn hình đăng nhập; "
+                            "sẵn sàng xử lý account tiếp theo."
+                        )
+                    else:
+                        logout_ok = False
+                        self.log_message.emit(
+                            f"[{account.username}] Không xác nhận được màn hình đăng nhập "
+                            f"sau khi thoát game. OCR: "
+                            f"{self._normalize_screen_text(login_text)[:180] or '(trống)'}"
+                        )
+                except Exception as exc:
+                    logout_ok = False
+                    self.log_message.emit(
+                        f"[{account.username}] Lỗi trong quy trình đăng xuất: {exc}"
+                    )
+
+            if not logout_ok:
+                failed_count += 1
+                processed_count += 1
+                account_results.append((account.username, "FAILED — đăng xuất không xác nhận được"))
+                emit_account_progress(f"FAILED: {account.username}")
+                self.task_progress_changed.emit(
+                    f"{account.username} - Đăng nhập", "failed", 0, 1
+                )
+                self.log_message.emit(
+                    f"[{account.username}] Dừng vòng lặp Clone để tránh đăng nhập account kế tiếp "
+                    "khi game chưa về màn hình đăng nhập."
+                )
+                break
+
             success_count += 1
             processed_count += 1
             account_results.append((account.username, "SUCCESS"))
@@ -939,13 +1063,6 @@ class BotWorker(QThread):
             self.task_progress_changed.emit(
                 f"{account.username} - Đăng nhập", "done", 1, 1
             )
-
-            if index < total:
-                self.log_message.emit(
-                    "Chưa có luồng đăng xuất an toàn; không thể tự chuyển sang account kế tiếp "
-                    "sau khi account hiện tại đã đăng nhập thành công."
-                )
-                break
 
         self.log_message.emit(
             f"Kết quả Clone: {success_count} thành công, {failed_count} thất bại, "
