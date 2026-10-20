@@ -581,32 +581,52 @@ class BotWorker(QThread):
                     f"tại ({phuc_loi_x}, {phuc_loi_y})."
                 )
                 device.shell(f"input tap {phuc_loi_x} {phuc_loi_y}")
-                time.sleep(0.8)
+                self.log_message.emit("Đã click Phúc lợi; click tiếp lễ bao miễn phí.")
+                le_bao_x = round(0.366667 * screen_width)
+                le_bao_y = round(0.202778 * screen_height)
+                device.shell(f"input tap {le_bao_x} {le_bao_y}")
+                self.log_message.emit(
+                    f"Đã click le_bao_mien_phi tại ({le_bao_x}, {le_bao_y}); chờ 3 giây."
+                )
+                time.sleep(3.0)
                 if not self._wait_if_paused():
                     self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
                     return False
-                self.log_message.emit(
-                    "Quét OCR lại một lần trong RECT để tìm button_diem_danh."
-                )
             else:
                 self.log_message.emit(
                     "Lần OCR xác nhận đã thấy Điểm danh; tìm nút trong RECT và click trực tiếp."
                 )
 
-            self.log_message.emit(
-                "Tìm button_diem_danh trong RECT "
-                f"({activity_rect[0]}, {activity_rect[1]}, "
-                f"{activity_rect[2]}, {activity_rect[3]})."
-            )
-            if not self._tap_ocr_phrase_in_rect(
-                device, ("diem danh",), activity_rect
-            ):
-                raise RuntimeError(
-                    "OCR không tìm thấy button_diem_danh trong RECT sau lần quét mới."
+            clicked_diem_danh = False
+            for attempt in range(1, 4):
+                if not self._wait_if_paused():
+                    self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
+                    return False
+                self.log_message.emit(
+                    f"Lần {attempt}/3: tìm và click button_diem_danh trong RECT "
+                    f"({activity_rect[0]}, {activity_rect[1]}, "
+                    f"{activity_rect[2]}, {activity_rect[3]})."
                 )
-            time.sleep(1.2)
+                if self._tap_ocr_phrase_in_rect(
+                    device, ("diem danh",), activity_rect
+                ):
+                    clicked_diem_danh = True
+                    self.log_message.emit(
+                        f"Đã click button_diem_danh lần {attempt}/3."
+                    )
+                    time.sleep(1.0)
+                    # The reward-success dialog can remain above the activity
+                    # page; retry the button so the game advances to the calendar.
+                    if attempt < 3:
+                        continue
+                    break
+                time.sleep(0.7)
+            if not clicked_diem_danh:
+                raise RuntimeError(
+                    "OCR không tìm thấy button_diem_danh trong RECT sau 3 lần thử."
+                )
             self.log_message.emit(
-                "Đã click button_diem_danh bằng OCR; chờ màn hình chọn ngày."
+                "Đã thử click button_diem_danh tối đa 3 lần; chờ màn hình chọn ngày."
             )
             if not self._wait_if_paused():
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
@@ -661,6 +681,14 @@ class BotWorker(QThread):
                 device.shell(f"input tap {day_x} {day_y}")
                 self.log_message.emit(
                     f"Đã click ô ngày {day}/32 tại ({day_x}, {day_y})."
+                )
+                time.sleep(0.15)
+                confirm_x = round(0.616667 * calendar_width)
+                confirm_y = round(0.631481 * calendar_height)
+                device.shell(f"input tap {confirm_x} {confirm_y}")
+                self.log_message.emit(
+                    f"Đã click xac_nhan sau ngày {day}/32 tại "
+                    f"({confirm_x}, {confirm_y})."
                 )
                 time.sleep(0.15)
 
