@@ -124,7 +124,7 @@ class MainWindow(QMainWindow):
         self.device_combo.currentIndexChanged.connect(self._on_device_changed)
         self.device_list.currentItemChanged.connect(self._on_device_list_selection_changed)
         self._sync_device_list_from_combo()
-        controls_panel = QGroupBox("Điều khiển")
+        controls_panel = QGroupBox()
         capture_row = QHBoxLayout(controls_panel)
         capture_row.setContentsMargins(8, 8, 8, 8)
         capture_row.setSpacing(5)
