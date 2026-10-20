@@ -10,6 +10,9 @@ from PySide6.QtWidgets import (
     QButtonGroup,
     QCheckBox,
     QComboBox,
+    QDialog,
+    QFormLayout,
+    QLineEdit,
     QGroupBox,
     QGridLayout,
     QHBoxLayout,
@@ -1024,7 +1027,27 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(page)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        group = QGroupBox("Thao tác trên tài khoản đang đăng nhập")
+        self.task_login = QCheckBox("Đăng nhập (nhập tài khoản khi bắt đầu)")
+        self.task_daily_checkin = QCheckBox("Điểm danh")
+        self.task_guild_checkin = QCheckBox("Báo danh quân đoàn")
+        self.task_knb_contribution = QCheckBox("Đóng góp KNB")
+        self.task_territory = QCheckBox("Thăm dò lãnh địa")
+        self.task_glass_tower = QCheckBox("Lưu Ly Tháp")
+        self.task_battle = QCheckBox("Giao tranh")
+        self.task_championship = QCheckBox("Tranh bá")
+        self.task_strategy = QCheckBox("Mưu binh")
+
+        daily_group = QGroupBox("Nhiệm vụ")
+        daily_layout = QGridLayout(daily_group)
+        for index, checkbox in enumerate((
+            self.task_login, self.task_daily_checkin, self.task_guild_checkin,
+            self.task_knb_contribution, self.task_territory, self.task_glass_tower,
+            self.task_battle, self.task_championship, self.task_strategy,
+        )):
+            daily_layout.addWidget(checkbox, index // 2, index % 2)
+        layout.addWidget(daily_group)
+
+        group = QGroupBox("Thao tác tài khoản")
         group_layout = QVBoxLayout(group)
         group_layout.addWidget(self.thoat_quan_doan_task)
         group_layout.addWidget(self.doi_tai_khoan_task)
@@ -1044,11 +1067,25 @@ class MainWindow(QMainWindow):
         if self.tabs.currentWidget() is self.clone_tab:
             return self.clone_tab.current_config()
         if self.tabs.tabText(self.tabs.currentIndex()) == "Tác vụ":
-            return {
+            config = self._game_config()
+            config.update({
                 "utility_tasks_mode": True,
+                "task_login": self.task_login.isChecked(),
                 "task_close_guild": self.thoat_quan_doan_task.isChecked(),
                 "task_switch_account": self.doi_tai_khoan_task.isChecked(),
-            }
+                "diem_danh": self.task_daily_checkin.isChecked(),
+                "bao_danh_quan_doan": self.task_guild_checkin.isChecked(),
+                "dong_gop_knb": self.task_knb_contribution.isChecked(),
+                "tham_do_lanh_dia": self.task_territory.isChecked(),
+                "nhiem_vu_luu_ly_thap": self.task_glass_tower.isChecked(),
+                "thuc_hien_giao_tranh": self.task_battle.isChecked(),
+                "thuc_hien_tranh_ba": self.task_championship.isChecked(),
+                "thiet_lap_muu_binh": self.task_strategy.isChecked(),
+            })
+            return config
+        return self._game_config()
+
+    def _game_config(self) -> dict:
         if self.ha_chien_cong.isChecked():
             giao_tranh_mode = {
                 "ha_chien_cong": True,
@@ -1105,6 +1142,33 @@ class MainWindow(QMainWindow):
             "thiet_lap_muu_binh": self.thiet_lap_muu_binh.isChecked(),
         }
 
+    def _prompt_login_credentials(self) -> tuple[str, str] | None:
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Đăng nhập")
+        form = QFormLayout(dialog)
+        username = QLineEdit(dialog)
+        username.setPlaceholderText("Nhập username")
+        password = QLineEdit(dialog)
+        password.setEchoMode(QLineEdit.EchoMode.Password)
+        password.setPlaceholderText("Nhập password")
+        form.addRow("Username:", username)
+        form.addRow("Password:", password)
+        buttons = QHBoxLayout()
+        ok_button = QPushButton("Đăng nhập", dialog)
+        cancel_button = QPushButton("Hủy", dialog)
+        ok_button.clicked.connect(dialog.accept)
+        cancel_button.clicked.connect(dialog.reject)
+        buttons.addWidget(ok_button)
+        buttons.addWidget(cancel_button)
+        form.addRow(buttons)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return None
+        user, secret = username.text().strip(), password.text()
+        if not user or not secret:
+            QMessageBox.warning(self, "Thiếu thông tin", "Vui lòng nhập cả username và password.")
+            return None
+        return user, secret
+
     def _set_settings_enabled(self, enabled: bool) -> None:
         """Lock configuration controls and prevent tab switching while a run is active."""
         self.tabs.tabBar().setEnabled(enabled)
@@ -1131,8 +1195,19 @@ class MainWindow(QMainWindow):
             return
 
         config = self._current_config()
+        if config.get("task_login"):
+            credentials = self._prompt_login_credentials()
+            if credentials is None:
+                return
+            config["login_username"], config["login_password"] = credentials
         if config.get("utility_tasks_mode") and not any(
-            config.get(key) for key in ("task_close_guild", "task_switch_account")
+            config.get(key) for key in (
+                "task_login", "task_close_guild", "task_switch_account",
+                "diem_danh", "bao_danh_quan_doan", "dong_gop_knb",
+                "tham_do_lanh_dia", "nhiem_vu_luu_ly_thap",
+                "thuc_hien_giao_tranh", "thuc_hien_tranh_ba",
+                "thiet_lap_muu_binh",
+            )
         ):
             QMessageBox.warning(
                 self, "Chưa chọn tác vụ",
