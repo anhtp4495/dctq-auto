@@ -1267,12 +1267,17 @@ class MainWindow(QMainWindow):
         self._paused_duration = 0.0
         if self._active_clone_mode:
             self.progress_bar.setRange(0, max(1, self._clone_total_accounts))
-            self.progress_bar.setFormat("%v/%m tài khoản đã xử lý")
+            self.progress_bar.setFormat("%v/%m (%p%)")
             self.progress_bar.setValue(0)
             self.clone_result_list.clear()
+            for account in accounts:
+                item = QListWidgetItem(account.username)
+                item.setIcon(self._status_icon("·", "#6e7781"))
+                item.setData(Qt.ItemDataRole.UserRole, account.username)
+                self.clone_result_list.addItem(item)
         else:
             self.progress_bar.setRange(0, 100)
-            self.progress_bar.setFormat("%p%")
+            self.progress_bar.setFormat("%v/%m (%p%)")
             self.progress_bar.setValue(0)
         self.elapsed_time_label.setText("Thời gian đã chạy: 00:00:00")
         self.eta_label.setText("Dự kiến kết thúc: Chưa ước tính")
@@ -1402,7 +1407,10 @@ class MainWindow(QMainWindow):
             )
 
     def _update_clone_account_result(self, username: str, success: bool) -> None:
-        icon = self._status_icon("✓", "#22863a") if success else self._status_icon("✗", "#d1242f")
+        icon = (
+            self._status_icon("✓", "#22863a")
+            if success else self._status_icon("✗", "#d1242f")
+        )
         for index in range(self.clone_result_list.count()):
             item = self.clone_result_list.item(index)
             if item.data(Qt.ItemDataRole.UserRole) == username:
@@ -1422,16 +1430,16 @@ class MainWindow(QMainWindow):
         if self._active_clone_mode:
             # Account totals live beneath the bar; usernames/details remain in the log.
             self.progress_bar.setRange(0, max(1, self._clone_total_accounts))
+            self.progress_bar.setFormat("%v/%m (%p%)")
             self.progress_bar.setValue(
                 max(0, min(self._clone_total_accounts, completed))
             )
             self.progress_bar.setFormat("%v/%m tài khoản đã xử lý")
             # Per-account results are shown in the scrollable list.
             return
-        percent = int(completed * 100 / total) if total else 0
-        self.progress_bar.setRange(0, 100)
-        self.progress_bar.setFormat("%p%")
-        self.progress_bar.setValue(max(0, min(100, percent)))
+        self.progress_bar.setRange(0, max(1, total))
+        self.progress_bar.setFormat("%v/%m (%p%)")
+        self.progress_bar.setValue(max(0, min(max(1, total), completed)))
 
     @staticmethod
     def _format_duration(seconds: float) -> str:
