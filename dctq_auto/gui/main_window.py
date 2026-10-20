@@ -4,7 +4,7 @@ import logging
 import time
 
 from PySide6.QtCore import Qt, QTimer, QSettings, QThread, Signal
-from PySide6.QtGui import QColor, QFont, QGuiApplication, QIcon, QPainter, QPixmap
+from PySide6.QtGui import QColor, QFont, QGuiApplication, QIcon, QPainter, QPixmap, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QAbstractButton,
     QAbstractItemView,
@@ -143,6 +143,10 @@ class MainWindow(QMainWindow):
         self.pause_button.setToolTip("Tạm dừng")
         self.pause_button.setEnabled(False)
         self.pause_button.clicked.connect(self.toggle_pause_bot)
+        self.pause_shortcut = QShortcut(QKeySequence("F8"), self)
+        self.pause_shortcut.setContext(Qt.ShortcutContext.WindowShortcut)
+        self.pause_shortcut.activated.connect(self.toggle_pause_bot)
+        self.pause_button.setToolTip("Tạm dừng / tiếp tục (F8)")
         capture_row.addWidget(self.pause_button)
 
         self.stop_button = QPushButton("⏹")
