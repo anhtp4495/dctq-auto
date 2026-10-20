@@ -435,6 +435,26 @@ class MainWindow(QMainWindow):
         account_file = self._ui_settings.value("clone/account_file", "")
         if hasattr(self, "clone_tab"):
             self.clone_tab.account_file_input.setText(str(account_file or ""))
+            for name, widget in self._clone_settings_widgets().items():
+                key = f"clone/controls/{name}"
+                if self._ui_settings.contains(key):
+                    value = self._ui_settings.value(key)
+                    widget.setChecked(str(value).lower() in {"true", "1", "yes"})
+
+    def _clone_settings_widgets(self) -> dict[str, QCheckBox]:
+        """Return Clone tab task toggles that must survive app restarts."""
+        if not hasattr(self, "clone_tab"):
+            return {}
+        return {
+            name: getattr(self.clone_tab, name)
+            for name in (
+                "clone_daily_check_in",
+                "clone_guild_check_in",
+                "clone_receive_lucky_bag",
+                "clone_guild_fortune",
+                "clone_quoc_chien",
+            )
+        }
 
     def _connect_settings_persistence(self) -> None:
         for widget in self._settings_widgets().values():
@@ -444,6 +464,8 @@ class MainWindow(QMainWindow):
                 widget.valueChanged.connect(self._save_settings)
             elif isinstance(widget, QComboBox):
                 widget.currentIndexChanged.connect(self._save_settings)
+        for widget in self._clone_settings_widgets().values():
+            widget.toggled.connect(self._save_settings)
 
     def _save_settings(self, *_args) -> None:
         for name, widget in self._settings_widgets().items():
@@ -464,6 +486,8 @@ class MainWindow(QMainWindow):
             self._ui_settings.setValue(
                 "clone/account_file", self.clone_tab.account_file_input.text().strip()
             )
+            for name, widget in self._clone_settings_widgets().items():
+                self._ui_settings.setValue(f"clone/controls/{name}", widget.isChecked())
         self._ui_settings.sync()
 
     def closeEvent(self, event) -> None:
