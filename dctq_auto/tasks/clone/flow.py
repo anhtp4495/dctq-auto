@@ -58,6 +58,7 @@ def run_clone_flow(self, device) -> None:
             failed_count += 1
             processed_count += 1
             account_results.append((account.username, f"FAILED — lỗi OCR: {exc}"))
+            self.clone_account_result.emit(account.username, False)
             self.log_message.emit(
                 f"[{account.username}] FAILED — không đọc được màn hình bằng OCR: {exc}. "
                 "Bỏ qua account này và thử account tiếp theo."
@@ -77,6 +78,7 @@ def run_clone_flow(self, device) -> None:
             failed_count += 1
             processed_count += 1
             account_results.append((account.username, "FAILED — không nhận diện được màn hình đăng nhập"))
+            self.clone_account_result.emit(account.username, False)
             self.log_message.emit(
                 f"[{account.username}] FAILED — không nhận diện được màn hình đăng nhập; "
                 "bỏ qua account này. Không nhập thông tin vào màn hình chưa xác định."
@@ -103,6 +105,7 @@ def run_clone_flow(self, device) -> None:
             failed_count += 1
             processed_count += 1
             account_results.append((account.username, f"FAILED — lỗi thao tác đăng nhập: {exc}"))
+            self.clone_account_result.emit(account.username, False)
             self.log_message.emit(
                 f"[{account.username}] FAILED — không thể nhập thông tin hoặc bấm đăng nhập: "
                 f"{exc}. Bỏ qua account này và thử account tiếp theo."
@@ -127,6 +130,7 @@ def run_clone_flow(self, device) -> None:
             else:
                 reason = "không xác nhận được đăng nhập thành công sau 20 giây"
             account_results.append((account.username, f"FAILED — {reason}"))
+            self.clone_account_result.emit(account.username, False)
             self.log_message.emit(
                 f"[{account.username}] FAILED — {reason}. "
                 "Bỏ qua account này và chuyển sang account tiếp theo."
@@ -188,6 +192,7 @@ def run_clone_flow(self, device) -> None:
             failed_count += 1
             processed_count += 1
             account_results.append((account.username, "FAILED — không thấy profile quan_chuc sau 60 giây"))
+            self.clone_account_result.emit(account.username, False)
             self.log_message.emit(
                 f"[{account.username}] FAILED — không thấy profile 'quan_chuc' sau 60 giây; "
                 "bỏ qua account này và thử account tiếp theo."
@@ -426,6 +431,7 @@ def run_clone_flow(self, device) -> None:
             failed_count += 1
             processed_count += 1
             account_results.append((account.username, "FAILED — đăng xuất không xác nhận được"))
+            self.clone_account_result.emit(account.username, False)
             emit_account_progress(f"FAILED: {account.username}")
             self.task_progress_changed.emit(
                 f"{account.username} - Đăng nhập", "failed", 0, 1
@@ -439,6 +445,7 @@ def run_clone_flow(self, device) -> None:
         success_count += 1
         processed_count += 1
         account_results.append((account.username, "SUCCESS"))
+        self.clone_account_result.emit(account.username, True)
         self.log_message.emit(
             f"[{account.username}] SUCCESS — đăng nhập thành công, profile đã tải "
             f"({success_count} thành công, {failed_count} thất bại)."
