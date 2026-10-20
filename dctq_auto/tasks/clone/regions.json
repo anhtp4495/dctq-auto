@@ -215,6 +215,106 @@
             "x": 0.732292,
             "y": 0.919444
           }
+        },
+        {
+          "name": "bao_danh_nhan_thuong",
+          "text": "Nút Báo danh nhận thưởng",
+          "confidence": null,
+          "bounds": {
+            "left": 1656,
+            "top": 880,
+            "right": 1696,
+            "bottom": 920
+          },
+          "rect": {
+            "x": 1656,
+            "y": 880,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 1676,
+            "y_px": 900
+          },
+          "center_ratio": {
+            "x": 0.872917,
+            "y": 0.833333
+          }
+        },
+        {
+          "name": "tui_phuc",
+          "text": "Nút Túi phúc",
+          "confidence": null,
+          "bounds": {
+            "left": 1422,
+            "top": 587,
+            "right": 1462,
+            "bottom": 627
+          },
+          "rect": {
+            "x": 1422,
+            "y": 587,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 1442,
+            "y_px": 607
+          },
+          "center_ratio": {
+            "x": 0.751042,
+            "y": 0.562037
+          }
+        },
+        {
+          "name": "dong_gop_knb",
+          "text": "Nút Đóng góp KNB",
+          "confidence": null,
+          "bounds": {
+            "left": 1459,
+            "top": 922,
+            "right": 1499,
+            "bottom": 962
+          },
+          "rect": {
+            "x": 1459,
+            "y": 922,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 1479,
+            "y_px": 942
+          },
+          "center_ratio": {
+            "x": 0.770312,
+            "y": 0.872222
+          }
+        },
+        {
+          "name": "cau_van_quan_doan",
+          "text": "Nút Cầu vận quân đoàn",
+          "confidence": null,
+          "bounds": {
+            "left": 655,
+            "top": 557,
+            "right": 695,
+            "bottom": 597
+          },
+          "rect": {
+            "x": 655,
+            "y": 557,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 675,
+            "y_px": 577
+          },
+          "center_ratio": {
+            "x": 0.351562,
+            "y": 0.534259
+          }
         }
       ],
       "screenshot": "user-provided OCR coordinates",
