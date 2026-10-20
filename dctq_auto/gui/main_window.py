@@ -379,6 +379,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central)
         self._restore_settings()
         self._place_window_on_right()
+        QTimer.singleShot(0, self._print_window_geometry)
         self._connect_settings_persistence()
         self.tabs.currentChanged.connect(self._save_settings)
         self.clone_tab.account_file_input.textChanged.connect(self._save_settings)
@@ -402,6 +403,27 @@ class MainWindow(QMainWindow):
         self.setMinimumWidth(min(300, width))
         self.resize(width, height)
         self.move(area.right() - width + 1, area.top())
+
+    def _print_window_geometry(self) -> None:
+        """Print actual window and screen geometry to the console for layout debugging."""
+        screen = self.screen() or QGuiApplication.primaryScreen()
+        area = screen.availableGeometry() if screen is not None else None
+        frame = self.frameGeometry()
+        client = self.geometry()
+        details = (
+            "\n[DCTQ Auto window geometry]"
+            f"\n  screen: {screen.name() if screen is not None else 'None'}"
+            f"\n  availableGeometry: {area.getRect() if area is not None else 'None'}"
+            f"\n  geometry (client): {client.getRect()}"
+            f"\n  frameGeometry (outer): {frame.getRect()}"
+            f"\n  pos: ({self.x()}, {self.y()})"
+            f"\n  size: ({self.width()}, {self.height()})"
+            f"\n  frameSize: ({frame.width()}, {frame.height()})"
+            f"\n  devicePixelRatio: {screen.devicePixelRatio() if screen is not None else 'None'}"
+            f"\n  visible: {self.isVisible()}"
+            f"\n  windowState: {self.windowState()}"
+        )
+        print(details, flush=True)
 
     def _settings_widgets(self) -> dict[str, QWidget]:
         """Return named controls whose values should persist between launches."""
