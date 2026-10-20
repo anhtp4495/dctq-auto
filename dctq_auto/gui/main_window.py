@@ -104,7 +104,7 @@ class MainWindow(QMainWindow):
 
         device_panel = QGroupBox("Quét thiết bị")
         device_layout = QVBoxLayout(device_panel)
-        device_layout.setContentsMargins(8, 8, 8, 0)
+        device_layout.setContentsMargins(8, 8, 8, 6)
         self.scan_button = QPushButton("Quét thiết bị")
         self.scan_button.clicked.connect(self.scan_adb_devices)
         device_layout.addWidget(self.scan_button)
