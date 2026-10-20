@@ -695,9 +695,7 @@ class BotWorker(QThread):
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
                 return False
 
-            # The calendar is a 9-column grid. Use the measured ratios for
-            # days 1-9 and the measured first-column row positions for days
-            # 10, 20, and 30. Fill days 11-19 and 21-29 by column/row.
+            # Chọn các ô ngày theo thứ tự ngược: 32 -> 1.
             calendar_image = device.screenshot()
             calendar_width, calendar_height = calendar_image.size
             column_x_ratios = (
@@ -713,7 +711,7 @@ class BotWorker(QThread):
                 1: (0.580556,) * 9,
                 2: (0.725000,) * 9,
             }
-            # Keep the measured coordinates for the last row's first 3 cells.
+            # Giữ nguyên tọa độ đã đo riêng cho các ô 30, 31, 32.
             last_row_ratios = {
                 30: (0.288021, 0.858333),
                 31: (0.368229, 0.882407),
@@ -722,9 +720,9 @@ class BotWorker(QThread):
 
             self.log_message.emit(
                 f"BƯỚC 5/7: Màn hình chọn ngày {calendar_width}x{calendar_height}; "
-                "bắt đầu chọn lần lượt 32 ô ngày."
+                "bắt đầu chọn ngược từ ô ngày 32 đến ô ngày 1."
             )
-            for day in range(1, 33):
+            for day in range(32, 0, -1):
                 if not self._wait_if_paused():
                     self.log_message.emit(
                         f"Điểm danh đã dừng theo yêu cầu tại ngày {day}."
