@@ -783,15 +783,15 @@ class BotWorker(QThread):
                     self.log_message.emit(
                         f"[{account.username}] Đã tìm thấy mục Quốc chiến qua OCR."
                     )
-                    else:
-                        self.log_message.emit(
-                            f"[{account.username}] Không tìm thấy mục Quốc chiến sau khi kéo."
-                        )
-                except Exception as exc:
+                else:
                     self.log_message.emit(
-                        f"[{account.username}] Không thể mở/tìm Quốc chiến: {exc}"
+                        f"[{account.username}] Không tìm thấy mục Quốc chiến sau khi kéo."
                     )
-                    break
+            except Exception as exc:
+                self.log_message.emit(
+                    f"[{account.username}] Không thể mở/tìm Quốc chiến: {exc}"
+                )
+                break
 
             success_count += 1
             processed_count += 1
