@@ -416,7 +416,7 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(0, self._restore_window_geometry_after_show)
         self._connect_settings_persistence()
         self.tabs.currentChanged.connect(self._save_settings)
-        self.clone_tab.account_file_input.textChanged.connect(self._save_settings)
+        self.clone_tab.account_file_combo.currentIndexChanged.connect(self._save_settings)
         self._on_device_changed()
         self._log(
             "Ứng dụng đã khởi động. Chọn Chạy thử hoặc một thiết bị ADB."
@@ -539,9 +539,12 @@ class MainWindow(QMainWindow):
         if hasattr(self, "tabs") and self.tabs.count():
             self.tabs.setCurrentIndex(max(0, min(tab_index, self.tabs.count() - 1)))
 
-        account_file = self._ui_settings.value("clone/account_file", "")
         if hasattr(self, "clone_tab"):
-            self.clone_tab.account_file_input.setText(str(account_file or ""))
+            account_files = self._ui_settings.value("clone/account_files", [])
+            if isinstance(account_files, str):
+                account_files = [account_files] if account_files else []
+            account_file = self._ui_settings.value("clone/account_file", "")
+            self.clone_tab.set_account_files(list(account_files or []), str(account_file or ""))
             for name, widget in self._clone_settings_widgets().items():
                 key = f"clone/controls/{name}"
                 if self._ui_settings.contains(key):
@@ -591,7 +594,10 @@ class MainWindow(QMainWindow):
             self._ui_settings.setValue("ui/selected_tab", self.tabs.currentIndex())
         if hasattr(self, "clone_tab"):
             self._ui_settings.setValue(
-                "clone/account_file", self.clone_tab.account_file_input.text().strip()
+                "clone/account_file", self.clone_tab.account_file()
+            )
+            self._ui_settings.setValue(
+                "clone/account_files", self.clone_tab.account_files()
             )
             for name, widget in self._clone_settings_widgets().items():
                 self._ui_settings.setValue(f"clone/controls/{name}", widget.isChecked())
