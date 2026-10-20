@@ -753,12 +753,13 @@ class ScreenshotAnnotator(QDialog):
         if self._on_location_result is not None:
             width, height = self._pixmap.width(), self._pixmap.height()
             self._on_location_result(
-                f"RECT {text.strip()}", name, left, top,
-                left / width, top / height,
-            )
-            self._on_location_result(
-                f"RECT {text.strip()} bounds", name, right, bottom,
-                right / width, bottom / height,
+                f"RECT {text.strip()}",
+                name,
+                left,
+                top,
+                left / width,
+                top / height,
+                f"Đã chọn RECT {name}: ({left}, {top}, {right}, {bottom})",
             )
 
     @staticmethod
