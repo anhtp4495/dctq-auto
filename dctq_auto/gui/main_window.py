@@ -1099,7 +1099,7 @@ class MainWindow(QMainWindow):
         self._pause_started_at = None
         self._paused = False
         self._worker.resume()
-        self.pause_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPause))
+        self.pause_button.setText("⏸")
         self.pause_button.setToolTip("Tạm dừng")
         self._log("Tiếp tục tác vụ.")
 
