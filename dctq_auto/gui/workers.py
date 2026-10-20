@@ -695,66 +695,52 @@ class BotWorker(QThread):
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
                 return False
 
-            # Chọn các ô ngày theo thứ tự ngược: 32 -> 1.
+            # RECT bao toàn bộ lưới 36 ô: 4 hàng x 9 cột.
+            # Hai góc người dùng cung cấp trên màn hình 1920x1080:
+            # trái-trên (484, 402), phải-dưới (1822, 998).
+            # Dùng tỷ lệ để tự co giãn theo độ phân giải, sau đó click tâm từng ô.
             calendar_image = device.screenshot()
             calendar_width, calendar_height = calendar_image.size
-            column_x_ratios = (
-                0.290104, 0.364063, 0.446354, 0.502604, 0.590104,
-                0.675521, 0.750000, 0.829688, 0.901042,
-            )
-            first_row_y_ratios = (
-                0.443519, 0.469444, 0.435185, 0.459259, 0.462963,
-                0.450926, 0.460185, 0.450926, 0.460185,
-            )
-            row_y_ratios = {
-                0: first_row_y_ratios,
-                1: (0.580556,) * 9,
-                2: (0.725000,) * 9,
-            }
-            # Hàng cuối có 5 ô (28-32); các ô 30-32 dùng tọa độ đã đo.
-            # 28-29 nằm tiếp về bên trái theo cùng khoảng cách của hàng này.
-            last_row_ratios = {
-                28: (0.128646, 0.858333),
-                29: (0.208333, 0.882407),
-                30: (0.288021, 0.858333),
-                31: (0.368229, 0.882407),
-                32: (0.447917, 0.858333),
-            }
+            rect_left = 484 / 1920
+            rect_top = 402 / 1080
+            rect_right = 1822 / 1920
+            rect_bottom = 998 / 1080
+            grid_left = rect_left * calendar_width
+            grid_top = rect_top * calendar_height
+            grid_width = (rect_right - rect_left) * calendar_width
+            grid_height = (rect_bottom - rect_top) * calendar_height
 
-            # Duyệt đủ mọi ngày theo thứ tự 32, 31, ..., 2, 1; không lọc/bỏ qua ngày nào.
-            days_reverse = tuple(range(32, 0, -1))
-            if len(days_reverse) != 32 or set(days_reverse) != set(range(1, 33)):
-                raise RuntimeError("Danh sách ngày điểm danh không đủ 32 ngày.")
+            # Duyệt đủ 36 ô theo thứ tự 36, 35, ..., 2, 1; không bỏ qua ô nào.
+            cells_reverse = tuple(range(36, 0, -1))
+            if len(cells_reverse) != 36 or set(cells_reverse) != set(range(1, 37)):
+                raise RuntimeError("Danh sách ô điểm danh không đủ 36 ô.")
 
             self.log_message.emit(
-                f"BƯỚC 5/6: Màn hình chọn ngày {calendar_width}x{calendar_height}; "
-                "sẽ click đủ 32/32 ô theo thứ tự 32 → 1, không bỏ qua ngày nào."
+                f"BƯỚC 5/6: Lưới điểm danh {calendar_width}x{calendar_height}, "
+                f"RECT=({round(grid_left)}, {round(grid_top)}, "
+                f"{round(grid_left + grid_width)}, {round(grid_top + grid_height)}); "
+                "sẽ click đủ 36/36 ô theo thứ tự 36 → 1 (4 hàng x 9 cột)."
             )
-            for day in days_reverse:
+            for cell in cells_reverse:
                 if not self._wait_if_paused():
                     self.log_message.emit(
-                        f"Điểm danh đã dừng theo yêu cầu tại ngày {day}."
+                        f"Điểm danh đã dừng theo yêu cầu tại ô {cell}."
                     )
                     return False
 
-                if day in last_row_ratios:
-                    x_ratio, y_ratio = last_row_ratios[day]
-                else:
-                    row = (day - 1) // 9
-                    column = (day - 1) % 9
-                    x_ratio = column_x_ratios[column]
-                    y_ratio = row_y_ratios[row][column]
-
-                day_x = round(x_ratio * calendar_width)
-                day_y = round(y_ratio * calendar_height)
+                row = (cell - 1) // 9
+                column = (cell - 1) % 9
+                day_x = round(grid_left + (column + 0.5) * grid_width / 9)
+                day_y = round(grid_top + (row + 0.5) * grid_height / 4)
                 device.shell(f"input tap {day_x} {day_y}")
                 self.log_message.emit(
-                    f"Đã click ô ngày {day}/32 tại ({day_x}, {day_y})."
+                    f"Đã click ô {cell}/36 (hàng {row + 1}, cột {column + 1}) "
+                    f"tại ({day_x}, {day_y})."
                 )
                 time.sleep(0.15)
 
             self.log_message.emit(
-                "Đã chọn xong 32/32 ô ngày; bỏ qua xac_nhan_diem_danh_bu vì không còn cần thiết."
+                "Đã chọn xong 36/36 ô; bỏ qua xac_nhan_diem_danh_bu vì không còn cần thiết."
             )
             if not self._wait_if_paused():
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu trước khi thoát màn hình.")
