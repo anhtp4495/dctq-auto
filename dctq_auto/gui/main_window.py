@@ -106,6 +106,26 @@ class MainWindow(QMainWindow):
         root.addWidget(adb_group)
         capture_row = QHBoxLayout()
         capture_row.addStretch(1)
+        self.start_button = QPushButton("▶")
+        self.start_button.setFixedSize(38, 30)
+        self.start_button.setToolTip("Bắt đầu")
+        self.start_button.clicked.connect(self.start_bot)
+        capture_row.addWidget(self.start_button)
+
+        self.pause_button = QPushButton("⏸")
+        self.pause_button.setFixedSize(38, 30)
+        self.pause_button.setToolTip("Tạm dừng")
+        self.pause_button.setEnabled(False)
+        self.pause_button.clicked.connect(self.toggle_pause_bot)
+        capture_row.addWidget(self.pause_button)
+
+        self.stop_button = QPushButton("⏹")
+        self.stop_button.setFixedSize(38, 30)
+        self.stop_button.setToolTip("Dừng hẳn")
+        self.stop_button.setEnabled(False)
+        self.stop_button.clicked.connect(self.stop_bot)
+        capture_row.addWidget(self.stop_button)
+
         self.capture_annotate_button = QPushButton("📷")
         self.capture_annotate_button.setFixedSize(38, 30)
         self.capture_annotate_button.setToolTip(
@@ -307,21 +327,6 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self._build_war_tab(), "Quốc chiến")
         self.clone_tab = CloneTab()
         self.tabs.addTab(self.clone_tab, "Clone")
-
-        controls = QHBoxLayout()
-        self.start_button = QPushButton("Bắt đầu")
-        self.pause_button = QPushButton("Tạm dừng")
-        self.stop_button = QPushButton("Dừng hẳn")
-        self.pause_button.setEnabled(False)
-        self.stop_button.setEnabled(False)
-        self.start_button.clicked.connect(self.start_bot)
-        self.pause_button.clicked.connect(self.toggle_pause_bot)
-        self.stop_button.clicked.connect(self.stop_bot)
-        controls.addWidget(self.start_button)
-        controls.addWidget(self.pause_button)
-        controls.addWidget(self.stop_button)
-        controls.addStretch(1)
-        root.addLayout(controls)
 
         progress_group = QGroupBox("Tiến trình")
         progress_layout = QVBoxLayout(progress_group)
@@ -1054,7 +1059,8 @@ class MainWindow(QMainWindow):
         self.eta_label.setText("Dự kiến kết thúc: Chưa ước tính")
         self.start_button.setEnabled(False)
         self.pause_button.setEnabled(True)
-        self.pause_button.setText("Tạm dừng")
+        self.pause_button.setText("⏸")
+        self.pause_button.setToolTip("Tạm dừng")
         self.stop_button.setEnabled(True)
         self.elapsed_timer.start()
         if mock_mode:
@@ -1077,7 +1083,8 @@ class MainWindow(QMainWindow):
         self._worker.pause()
         self._paused = True
         self._pause_started_at = time.monotonic()
-        self.pause_button.setText("Tiếp tục")
+        self.pause_button.setText("▶")
+        self.pause_button.setToolTip("Tiếp tục")
         self._log("Đã tạm dừng tại điểm an toàn; nhấn Tiếp tục để chạy tiếp.")
 
     def resume_bot(self) -> None:
