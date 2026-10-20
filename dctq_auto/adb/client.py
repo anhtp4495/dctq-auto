@@ -41,7 +41,7 @@ class AdbClient:
             raise ValueError("Tên OCR cần click không được để trống.")
 
         if regions_path is None:
-            regions_path = Path("dctq_auto/tasks/clone/regions.json")
+            regions_path = Path("dctq_auto/tasks/common/regions.json")
         if not regions_path.exists():
             raise FileNotFoundError(f"Chưa có file tọa độ OCR: {regions_path}")
         try:
