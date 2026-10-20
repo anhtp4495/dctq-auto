@@ -757,6 +757,82 @@ class BotWorker(QThread):
                         f"{account.username} - Báo danh quân đoàn", "failed", 0, 1
                     )
 
+            if self._config.get("clone_receive_lucky_bag"):
+                try:
+                    self.log_message.emit(
+                        f"[{account.username}] Đang kiểm tra cửa hàng quân đoàn để mở Túi phúc."
+                    )
+                    shop_text = ""
+                    shop_markers = (
+                        "cua hang quan doan", "tui phuc", "anh hung",
+                        "cau van quan doan", "lanh tui phuc",
+                    )
+                    for shop_attempt in range(3):
+                        if not self._wait_if_paused():
+                            self.log_message.emit("Đã dừng theo yêu cầu.")
+                            return
+                        shop_text = self._normalize_screen_text(self._screen_text(device))
+                        if any(marker in shop_text for marker in shop_markers):
+                            break
+                        if shop_attempt < 2:
+                            time.sleep(1)
+                    if any(marker in shop_text for marker in shop_markers):
+                        self.log_message.emit(
+                            f"[{account.username}] Đã nhận diện mục Túi phúc/cửa hàng quân đoàn: "
+                            f"{shop_text[:220]}"
+                        )
+                        ocr_client.tap_ocr_target("tui_phuc")
+                        time.sleep(1.5)
+                        bag_text = ""
+                        bag_screen_found = False
+                        for bag_attempt in range(5):
+                            if not self._wait_if_paused():
+                                self.log_message.emit("Đã dừng theo yêu cầu.")
+                                return
+                            bag_text = self._normalize_screen_text(self._screen_text(device))
+                            has_count = re.search(r"\\b\\d+\\s+30\\b", bag_text) is not None
+                            bag_markers = (
+                                "tui phuc tuong", "tui phuc truong thanh",
+                                "tui phuc knb", "co so",
+                            )
+                            if has_count or any(marker in bag_text for marker in bag_markers):
+                                bag_screen_found = True
+                                break
+                            if bag_attempt < 4:
+                                time.sleep(1)
+                        if bag_screen_found:
+                            self.log_message.emit(
+                                f"[{account.username}] Đã xác nhận màn hình Túi phúc: {bag_text[:220]}"
+                            )
+                            for target in ("tui_phuc_thuong", "tui_phuc_truong_thanh", "tui_phuc_knb"):
+                                if not self._wait_if_paused():
+                                    self.log_message.emit("Đã dừng theo yêu cầu.")
+                                    return
+                                ocr_client.tap_ocr_target(target)
+                                time.sleep(1)
+                            ocr_client.tap_ocr_target("close_tui_phuc")
+                            time.sleep(0.8)
+                            self.log_message.emit(
+                                f"[{account.username}] Đã bấm lần lượt 3 mục Túi phúc và đóng cửa sổ."
+                            )
+                        else:
+                            self.log_message.emit(
+                                f"[{account.username}] Đã bấm Túi phúc nhưng OCR chưa xác nhận "
+                                f"đúng màn hình; không bấm các vị trí nhận. OCR: {bag_text[:220] or '(trống)'}"
+                            )
+                    else:
+                        self.log_message.emit(
+                            f"[{account.username}] Chưa nhận diện được cửa hàng/Túi phúc; bỏ qua để tránh bấm nhầm. "
+                            f"OCR: {shop_text[:220] or '(trống)'}"
+                        )
+                except Exception as exc:
+                    self.log_message.emit(
+                        f"[{account.username}] Lỗi thao tác nhận Túi phúc: {exc}"
+                    )
+                    self.task_progress_changed.emit(
+                        f"{account.username} - Nhận Túi phúc", "failed", 0, 1
+                    )
+
             if self._config.get("clone_quoc_chien"):
                 try:
                     self.log_message.emit(
