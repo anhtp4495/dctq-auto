@@ -763,6 +763,29 @@ class MainWindow(QMainWindow):
             not enabled and self.task_battle_time_mode.isChecked()
         )
 
+    def _toggle_task_championship_options(self, enabled: bool) -> None:
+        self.task_championship_knb.setEnabled(enabled)
+        self.task_championship_fast_one_flag.setEnabled(enabled)
+        self.task_championship_four_flags.setEnabled(enabled)
+        self.task_championship_time_mode.setEnabled(enabled)
+        self.task_championship_time_limit.setEnabled(
+            enabled and self.task_championship_time_mode.isChecked()
+        )
+
+    def _update_task_championship_mode_description(self, *_args) -> None:
+        if self.task_championship_time_mode.isChecked():
+            self.task_championship_mode_description.setText(
+                "Kết thúc trận khi đạt giới hạn thời gian đã chọn, dù đã thắng hay chưa."
+            )
+        elif self.task_championship_fast_one_flag.isChecked():
+            self.task_championship_mode_description.setText(
+                "Chỉ cần thắng trận là kết thúc, không cần đủ 4 cờ."
+            )
+        else:
+            self.task_championship_mode_description.setText(
+                "Đánh đến khi chắc chắn thắng và đạt đủ 4 cờ mới kết thúc."
+            )
+
     def _toggle_chien_cong_mode(self, enabled: bool) -> None:
         self.chon_nha_npc.setEnabled(not enabled)
         self.giao_tranh_nhanh_1_co.setEnabled(not enabled)
@@ -1148,6 +1171,50 @@ class MainWindow(QMainWindow):
         self.task_championship.toggled.connect(
             self.task_championship_count.setEnabled
         )
+        self.task_championship_knb = QCheckBox("Mua lượt bằng KNB")
+        self.task_championship_knb.setEnabled(False)
+        self.task_championship.toggled.connect(
+            self.task_championship_knb.setEnabled
+        )
+        self.task_championship_fast_one_flag = QCheckBox("Nhanh 1 cờ")
+        self.task_championship_four_flags = QCheckBox("Bình thường 4 cờ")
+        self.task_championship_time_mode = QCheckBox("Thời gian tối đa:")
+        self.task_championship_mode_group = QButtonGroup(self)
+        self.task_championship_mode_group.setExclusive(True)
+        self.task_championship_mode_group.addButton(
+            self.task_championship_fast_one_flag
+        )
+        self.task_championship_mode_group.addButton(
+            self.task_championship_four_flags
+        )
+        self.task_championship_mode_group.addButton(
+            self.task_championship_time_mode
+        )
+        self.task_championship_four_flags.setChecked(True)
+        self.task_championship_time_limit = QSpinBox()
+        self.task_championship_time_limit.setRange(15, 180)
+        self.task_championship_time_limit.setValue(15)
+        self.task_championship_time_limit.setSuffix(" giây")
+        self.task_championship_time_limit.setKeyboardTracking(False)
+        self.task_championship_time_limit.setEnabled(False)
+        self.task_championship_time_mode.toggled.connect(
+            self.task_championship_time_limit.setEnabled
+        )
+        self.task_championship_mode_description = QLabel()
+        self.task_championship_mode_description.setWordWrap(True)
+        self.task_championship_fast_one_flag.toggled.connect(
+            self._update_task_championship_mode_description
+        )
+        self.task_championship_four_flags.toggled.connect(
+            self._update_task_championship_mode_description
+        )
+        self.task_championship_time_mode.toggled.connect(
+            self._update_task_championship_mode_description
+        )
+        self.task_championship.toggled.connect(
+            self._toggle_task_championship_options
+        )
+        self._update_task_championship_mode_description()
         self.task_strategy = QCheckBox("Mưu binh")
 
         daily_group = QGroupBox("Nhiệm vụ")
@@ -1218,8 +1285,25 @@ class MainWindow(QMainWindow):
         championship_row.addWidget(self.task_championship)
         championship_row.addWidget(QLabel("Số trận:"))
         championship_row.addWidget(self.task_championship_count)
+        championship_row.addWidget(self.task_championship_knb)
         championship_row.addStretch(1)
         daily_layout.addLayout(championship_row)
+
+        championship_options = QGridLayout()
+        championship_options.setContentsMargins(20, 0, 0, 0)
+        championship_options.setHorizontalSpacing(12)
+        championship_options.setVerticalSpacing(4)
+        championship_mode_row = self._build_mode_row(
+            self.task_championship_fast_one_flag,
+            self.task_championship_four_flags,
+            self.task_championship_time_mode,
+            self.task_championship_time_limit,
+        )
+        championship_options.addWidget(championship_mode_row, 0, 0, 1, 4)
+        championship_options.addWidget(
+            self.task_championship_mode_description, 1, 0, 1, 4
+        )
+        daily_layout.addLayout(championship_options)
 
         daily_layout.addWidget(self.task_strategy)
 
@@ -1291,6 +1375,22 @@ class MainWindow(QMainWindow):
                 ),
                 "thuc_hien_tranh_ba": self.task_championship.isChecked(),
                 "tranh_ba": self.task_championship_count.value(),
+                "mua_luot_knb": (
+                    self.task_championship_knb.isChecked()
+                    and self.task_championship.isChecked()
+                ),
+                "tranh_ba_fast_mode": (
+                    1 if self.task_championship_fast_one_flag.isChecked()
+                    else 4
+                ),
+                "thoi_gian_tranh_ba": (
+                    self.task_championship_time_limit.value()
+                    if (
+                        self.task_championship_time_mode.isChecked()
+                        and self.task_championship.isChecked()
+                    )
+                    else None
+                ),
                 "thiet_lap_muu_binh": self.task_strategy.isChecked(),
             })
             return config
