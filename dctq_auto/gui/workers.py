@@ -24,6 +24,7 @@ class BotWorker(QThread):
     log_message = Signal(str)
     progress_changed = Signal(int, int, str)
     task_progress_changed = Signal(str, str, int, int)
+    clone_account_result = Signal(str, bool)
 
     def __init__(
         self,
