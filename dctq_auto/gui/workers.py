@@ -265,13 +265,26 @@ class BotWorker(QThread):
 
     @staticmethod
     def _screen_text(device) -> str:
-        """Read visible game text from a device screenshot using Tesseract."""
-        image = device.screenshot()
-        image = ImageOps.autocontrast(image.convert("L"))
-        try:
-            return pytesseract.image_to_string(image, lang="vie+eng", config="--psm 6")
-        except pytesseract.TesseractError:
-            return pytesseract.image_to_string(image, lang="eng", config="--psm 6")
+        """Read visible game text using multiple Tesseract layouts for small UI labels."""
+        image = ImageOps.autocontrast(device.screenshot().convert("L"))
+        recognized: list[str] = []
+        for language in ("vie+eng", "eng"):
+            language_failed = False
+            for page_mode in (6, 11):
+                try:
+                    text = pytesseract.image_to_string(
+                        image, lang=language, config=f"--psm {page_mode}"
+                    ).strip()
+                except pytesseract.TesseractError:
+                    language_failed = True
+                    break
+                if text and text not in recognized:
+                    recognized.append(text)
+            if not language_failed and recognized:
+                break
+        # Combine layout passes so a label missed by block-oriented OCR can still
+        # contribute to the conservative login-screen checks.
+        return "\\n".join(recognized)
 
     @staticmethod
     def _tap_ocr_word(device, words: tuple[str, ...]) -> bool:
