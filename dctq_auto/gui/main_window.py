@@ -367,22 +367,6 @@ class MainWindow(QMainWindow):
         self.elapsed_timer.setInterval(1000)
         self.elapsed_timer.timeout.connect(self._update_elapsed_time)
 
-        log_group = QGroupBox("Nhật ký hoạt động")
-        log_layout = QVBoxLayout(log_group)
-        log_header = QHBoxLayout()
-        log_header.addStretch(1)
-        self.clear_log_button = QPushButton("Xóa nhật ký")
-        self.clear_log_button.clicked.connect(self.clear_log)
-        log_header.addWidget(self.clear_log_button)
-        log_layout.addLayout(log_header)
-        self.log_view = QPlainTextEdit()
-        self.log_view.setReadOnly(True)
-        self.log_view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        self.log_view.setPlaceholderText("Nhật ký sẽ hiển thị tại đây.")
-        log_layout.addWidget(self.log_view)
-        log_group.setFixedHeight(210)
-        root.addWidget(log_group)
-
         self.setCentralWidget(central)
         self._restore_settings()
         self._place_window_on_right()
@@ -803,32 +787,7 @@ class MainWindow(QMainWindow):
             central = self.centralWidget()
             if central is None:
                 return
-            log_view = self.log_view
-
-            def is_log_or_ancestor(widget: QWidget) -> bool:
-                current = log_view
-                while current is not None:
-                    if current is widget:
-                        return True
-                    current = current.parentWidget()
-                return False
-
-            def is_log_descendant(widget: QWidget) -> bool:
-                current = widget.parentWidget()
-                while current is not None:
-                    if current is log_view:
-                        return True
-                    current = current.parentWidget()
-                return False
-
-            widgets_to_lock = [
-                widget for widget in central.findChildren(QWidget)
-                if (
-                    widget is not self.clear_log_button
-                    and not is_log_or_ancestor(widget)
-                    and not is_log_descendant(widget)
-                )
-            ]
+            widgets_to_lock = list(central.findChildren(QWidget))
 
             # Snapshot every widget's enabled state before disabling any parent.
             # QWidget.isEnabled() reports effective state, so recording it while
@@ -1260,17 +1219,6 @@ class MainWindow(QMainWindow):
                     break
         self._log("Worker đã kết thúc.")
 
-    def clear_log(self) -> None:
-        self.log_view.clear()
-
     def _log(self, message: str) -> None:
-        scrollbar = self.log_view.verticalScrollBar()
-        was_at_bottom = scrollbar.value() >= scrollbar.maximum() - 1
-        previous_value = scrollbar.value()
-        self.log_view.appendPlainText(message)
-        # Keep at most 1,000 lines; Qt automatically discards the oldest lines.
-        self.log_view.setMaximumBlockCount(1000)
-        if not was_at_bottom:
-            # Keep the reader's position when new log lines arrive.
-            scrollbar.setValue(previous_value)
+        """Send activity messages to the console/logger; the GUI has no log panel."""
         logging.getLogger(__name__).info(message)
