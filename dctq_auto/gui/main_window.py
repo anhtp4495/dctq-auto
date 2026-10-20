@@ -379,6 +379,10 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central)
         self._restore_settings()
         self._place_window_on_right()
+        # Restore saved geometry after the native Windows frame has been created.
+        # Restoring before show() can shift the outer frame vertically by the
+        # title-bar height on some DPI settings.
+        QTimer.singleShot(0, self._restore_window_geometry_after_show)
         QTimer.singleShot(0, self._print_window_geometry)
         self._connect_settings_persistence()
         self.tabs.currentChanged.connect(self._save_settings)
@@ -390,7 +394,7 @@ class MainWindow(QMainWindow):
 
 
     def _place_window_on_right(self) -> None:
-        """Restore the last saved window geometry, or use a safe initial placement."""
+        """Use a safe initial placement; saved geometry is restored after show()."""
         screen = QGuiApplication.primaryScreen()
         if screen is None:
             self.resize(333, 760)
@@ -401,25 +405,46 @@ class MainWindow(QMainWindow):
         self.setMinimumWidth(min(300, width))
 
         saved_geometry = self._ui_settings.value("ui/window_geometry")
-        if saved_geometry and self.restoreGeometry(saved_geometry):
-            # Keep the restored window inside the current usable screen area.
-            frame = self.frameGeometry()
-            if frame.width() > area.width() or frame.height() > area.height():
-                self.resize(
-                    min(self.width(), area.width()),
-                    max(1, min(self.height(), area.height() - 30)),
-                )
-                frame = self.frameGeometry()
-            x = min(max(frame.x(), area.left()), area.right() - frame.width() + 1)
-            y = min(max(frame.y(), area.top()), area.bottom() - frame.height() + 1)
-            self.move(x, y)
+        if saved_geometry:
+            # Defer restoreGeometry until the native window frame exists.
+            self._has_saved_window_geometry = True
+            self.resize(width, max(1, area.height() - 48))
+            self.move(area.right() - width + 1, area.top())
             return
 
-        # QWidget.resize() sets the client size; the native title bar/frame adds
-        # extra height. Leave room for that frame so the window stays on-screen.
+        self._has_saved_window_geometry = False
+        # QWidget.resize() sets the client size; the native frame adds height.
         height = max(1, area.height() - 48)
         self.resize(width, height)
         self.move(area.right() - width + 1, area.top())
+
+    def _restore_window_geometry_after_show(self) -> None:
+        """Restore saved geometry once Windows has initialized the native frame."""
+        if not getattr(self, "_has_saved_window_geometry", False):
+            return
+
+        saved_geometry = self._ui_settings.value("ui/window_geometry")
+        if not saved_geometry or not self.restoreGeometry(saved_geometry):
+            return
+
+        screen = self.screen() or QGuiApplication.primaryScreen()
+        if screen is None:
+            return
+
+        area = screen.availableGeometry()
+        frame = self.frameGeometry()
+        if frame.width() > area.width() or frame.height() > area.height():
+            self.resize(
+                min(self.width(), area.width()),
+                max(1, min(self.height(), area.height() - 30)),
+            )
+            frame = self.frameGeometry()
+
+        # Clamp the outer frame, not the client rectangle, to avoid title-bar
+        # offsets causing the window to drift on each launch.
+        x = min(max(frame.x(), area.left()), area.right() - frame.width() + 1)
+        y = min(max(frame.y(), area.top()), area.bottom() - frame.height() + 1)
+        self.move(x, y)
 
     def _print_window_geometry(self) -> None:
         """Print actual window and screen geometry to the console for layout debugging."""
