@@ -448,11 +448,41 @@ class BotWorker(QThread):
         from dctq_auto.adb.client import AdbClient
 
         ocr_client = AdbClient(serial=self._serial)
-        total = sum(bool(self._config.get(key)) for key in (
-            "task_login", "task_close_guild", "task_switch_account"
-        ))
+        # Count every selected task, including gameplay tasks that do not yet
+        # have a real ADB implementation. Those tasks must be visible as failures
+        # in the progress panel instead of silently being skipped.
+        task_labels = (
+            ("task_login", "Đăng nhập"),
+            ("diem_danh", "Điểm danh"),
+            ("bao_danh_quan_doan", "Báo danh quân đoàn"),
+            ("dong_gop_knb", "Đóng góp KNB"),
+            ("tham_do_lanh_dia", "Thăm dò lãnh địa"),
+            ("nhiem_vu_luu_ly_thap", "Lưu Ly Tháp"),
+            ("thuc_hien_giao_tranh", "Giao tranh"),
+            ("thuc_hien_tranh_ba", "Tranh bá"),
+            ("thiet_lap_muu_binh", "Mưu binh"),
+            ("task_close_guild", "Thoát màn hình Quân đoàn"),
+            ("task_switch_account", "Đổi tài khoản"),
+        )
+        selected = [(key, label) for key, label in task_labels if self._config.get(key)]
+        total = len(selected)
         completed = 0
         self.progress_changed.emit(0, max(1, total), "Bắt đầu tác vụ")
+
+        # Gameplay automation for these actions is not implemented in the real
+        # ADB flow yet. Report an explicit failed status for each selected task.
+        implemented = {"task_login", "task_close_guild", "task_switch_account"}
+        for key, label in selected:
+            if key in implemented:
+                continue
+            self.log_message.emit(
+                f"{label}: LỖI — tác vụ gameplay chưa được triển khai cho ADB thật."
+            )
+            self.task_progress_changed.emit(label, "failed", 0, 1)
+            completed += 1
+            self.progress_changed.emit(
+                completed, max(1, total), f"Lỗi: {label} chưa triển khai"
+            )
 
         if self._config.get("task_login"):
             if not self._wait_if_paused():
