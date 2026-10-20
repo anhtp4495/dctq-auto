@@ -749,13 +749,13 @@ class BotWorker(QThread):
                     # A tap alone does not prove that the server granted the reward.
                     # Keep this task running until a reliable success marker is known.
 
-            except Exception as exc:
-                self.log_message.emit(
-                    f"[{account.username}] Không mở được mục quân đoàn: {exc}"
-                )
-                self.task_progress_changed.emit(
-                    f"{account.username} - Báo danh quân đoàn", "failed", 0, 1
-                )
+                except Exception as exc:
+                    self.log_message.emit(
+                        f"[{account.username}] Không mở được mục quân đoàn: {exc}"
+                    )
+                    self.task_progress_changed.emit(
+                        f"{account.username} - Báo danh quân đoàn", "failed", 0, 1
+                    )
 
         if self._config.get("clone_quoc_chien"):
             try:
