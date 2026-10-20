@@ -630,13 +630,13 @@ class BotWorker(QThread):
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
                 return False
 
-            # Ưu tiên OCR tìm chữ "Điểm danh" trong vùng phía trên nhãn Tranh bá.
-            # Nếu OCR không tìm thấy sau 3 lần, dùng cách 2: tap ngay phía trên Tranh bá.
+            # RECT button_diem_danh đã đo thực tế trên màn hình 1920x1080:
+            # (201, 726, 474, 871). Dùng đúng vùng này để OCR và click fallback.
             diem_danh_rect = (
-                round(199 / 1920 * screen_width),
-                round(500 / 1080 * screen_height),
-                round(471 / 1920 * screen_width),
-                round(610 / 1080 * screen_height),
+                round(201 / 1920 * screen_width),
+                round(726 / 1080 * screen_height),
+                round(474 / 1920 * screen_width),
+                round(871 / 1080 * screen_height),
             )
 
             # BƯỚC 3: Nhận lễ bao miễn phí sau khi xác định đúng nút Phúc lợi.
@@ -658,7 +658,7 @@ class BotWorker(QThread):
             time.sleep(0.5)
 
             self.log_message.emit(
-                "BƯỚC 4/7: Ưu tiên OCR tìm Điểm danh; nếu không thấy sẽ tap phía trên Tranh bá."
+                "BƯỚC 4/7: Ưu tiên OCR tìm Điểm danh trong RECT button_diem_danh đã đo thực tế."
             )
             clicked_diem_danh = False
             for attempt in range(1, 4):
@@ -682,13 +682,12 @@ class BotWorker(QThread):
                     time.sleep(0.7)
 
             if not clicked_diem_danh:
-                # Fallback based on OCR sample: label "Tranh Ba" is around (337, 622)
-                # on 1920x1080, so tap the row immediately above it.
-                fallback_x = round(337 / 1920 * screen_width)
-                fallback_y = round(565 / 1080 * screen_height)
+                # OCR không nhận được chữ thì tap tâm RECT button_diem_danh đã đo thực tế.
+                fallback_x = round(((201 + 474) / 2) / 1920 * screen_width)
+                fallback_y = round(((726 + 871) / 2) / 1080 * screen_height)
                 self.log_message.emit(
-                    "OCR không thấy 'Điểm danh' sau 3 lần; dùng cách 2, "
-                    f"tap phía trên Tranh bá tại ({fallback_x}, {fallback_y})."
+                    "OCR không thấy 'Điểm danh' sau 3 lần; dùng tâm RECT "
+                    f"button_diem_danh tại ({fallback_x}, {fallback_y})."
                 )
                 if not self._wait_if_paused():
                     self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
