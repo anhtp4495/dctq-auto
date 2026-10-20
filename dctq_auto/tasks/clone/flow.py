@@ -49,6 +49,10 @@ def run_clone_flow(self, device) -> None:
             self.log_message.emit("Đã dừng theo yêu cầu.")
             return
 
+        self.progress_changed.emit(
+            processed_count, total,
+            f"Tài khoản {index}/{total}: {account.username} — Đăng nhập",
+        )
         self.log_message.emit(
             f"[{account.username}] Kiểm tra màn hình đăng nhập ({index}/{total})."
         )
