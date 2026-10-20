@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
+    QComboBox,
     QPushButton,
     QScrollArea,
     QVBoxLayout,
@@ -44,11 +44,14 @@ class CloneTab(QWidget):
         layout.addWidget(intro)
 
         file_row = QHBoxLayout()
-        self.account_file_input = QLineEdit()
-        self.account_file_input.setPlaceholderText("Chọn file tài khoản .txt")
-        self.account_file_input.setClearButtonEnabled(True)
-        self.account_file_input.textChanged.connect(self._update_account_status)
-        file_row.addWidget(self.account_file_input, 1)
+        self.account_file_combo = QComboBox()
+        self.account_file_combo.setMinimumContentsLength(12)
+        self.account_file_combo.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+        )
+        self.account_file_combo.setToolTip("Chọn file tài khoản đã dùng trước đây")
+        self.account_file_combo.currentIndexChanged.connect(self._update_account_status)
+        file_row.addWidget(self.account_file_combo, 1)
         self.browse_button = QPushButton("Chọn file…")
         self.browse_button.clicked.connect(self._browse_file)
         file_row.addWidget(self.browse_button)
@@ -91,10 +94,53 @@ class CloneTab(QWidget):
             "Text files (*.txt);;All files (*)",
         )
         if filename:
-            self.account_file_input.setText(filename)
+            self.add_account_file(filename)
+
+    def add_account_file(self, filename: str) -> None:
+        """Add a selected account file to the dropdown, keeping paths unique."""
+        filename = str(Path(filename).expanduser().resolve())
+        index = self.account_file_combo.findData(filename)
+        if index < 0:
+            self.account_file_combo.addItem(filename, filename)
+            index = self.account_file_combo.count() - 1
+        self.account_file_combo.setCurrentIndex(index)
+
+    def set_account_files(self, filenames: list[str], selected: str = "") -> None:
+        """Restore previously used file paths from application settings."""
+        self.account_file_combo.blockSignals(True)
+        self.account_file_combo.clear()
+        seen = set()
+        for filename in filenames:
+            if not filename:
+                continue
+            path = str(Path(filename).expanduser())
+            if path not in seen:
+                self.account_file_combo.addItem(path, path)
+                seen.add(path)
+        if selected:
+            path = str(Path(selected).expanduser())
+            index = self.account_file_combo.findData(path)
+            if index < 0:
+                self.account_file_combo.addItem(path, path)
+                index = self.account_file_combo.count() - 1
+            self.account_file_combo.setCurrentIndex(index)
+        elif self.account_file_combo.count():
+            self.account_file_combo.setCurrentIndex(0)
+        self.account_file_combo.blockSignals(False)
+        self._update_account_status()
+
+    def account_file(self) -> str:
+        value = self.account_file_combo.currentData()
+        return str(value or self.account_file_combo.currentText()).strip()
+
+    def account_files(self) -> list[str]:
+        return [
+            str(self.account_file_combo.itemData(index) or self.account_file_combo.itemText(index))
+            for index in range(self.account_file_combo.count())
+        ]
 
     def _update_account_status(self, *_args) -> None:
-        filename = self.account_file_input.text().strip()
+        filename = self.account_file()
         if not filename:
             self.account_status.setText("Chưa chọn file tài khoản.")
             return
@@ -111,7 +157,7 @@ class CloneTab(QWidget):
         """Lấy cấu hình clone; không đưa mật khẩu vào cấu hình hoặc nhật ký."""
         return {
             "clone_mode": True,
-            "clone_account_file": self.account_file_input.text().strip(),
+            "clone_account_file": self.account_file(),
             "clone_login": True,
             "clone_daily_check_in": self.clone_daily_check_in.isChecked(),
             "clone_guild_check_in": self.clone_guild_check_in.isChecked(),
