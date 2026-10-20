@@ -1054,7 +1054,7 @@ class MainWindow(QMainWindow):
         note.setWordWrap(True)
         layout.addWidget(note)
         layout.addStretch(1)
-        return page
+        return self._make_scrollable_tab(page)
 
     def _current_config(self) -> dict:
         if self.tabs.currentWidget() is self.clone_tab:
