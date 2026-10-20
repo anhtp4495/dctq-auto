@@ -492,28 +492,28 @@
           }
         },
         {
-          "name": "profile_tuy_chon",
-          "text": "Mở mục profile/tùy chọn",
+          "name": "button_tuy_chon",
+          "text": "Nút Tùy chọn",
           "confidence": null,
           "bounds": {
-            "left": 1793,
-            "top": 993,
-            "right": 1833,
-            "bottom": 1033
+            "left": 1768,
+            "top": 980,
+            "right": 1808,
+            "bottom": 1020
           },
           "rect": {
-            "x": 1793,
-            "y": 993,
+            "x": 1768,
+            "y": 980,
             "width": 40,
             "height": 40
           },
           "center": {
-            "x_px": 1813,
-            "y_px": 1013
+            "x_px": 1788,
+            "y_px": 1000
           },
           "center_ratio": {
-            "x": 0.944271,
-            "y": 0.937963
+            "x": 0.93125,
+            "y": 0.925926
           }
         },
         {
