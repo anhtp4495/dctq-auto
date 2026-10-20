@@ -376,6 +376,9 @@ class MainWindow(QMainWindow):
         self.progress_bar.setValue(0)
         self.progress_bar.setFormat("%p%")
         progress_layout.addWidget(self.progress_bar)
+        self.current_activity_label = QLabel("Đang xử lý: Chưa chạy")
+        self.current_activity_label.setWordWrap(True)
+        progress_layout.addWidget(self.current_activity_label)
         self.clone_result_list = QListWidget()
         self.clone_result_list.setObjectName("cloneAccountResults")
         self.clone_result_list.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
@@ -1609,6 +1612,7 @@ class MainWindow(QMainWindow):
         self._run_started_at = time.monotonic()
         self._pause_started_at = None
         self._paused_duration = 0.0
+        self.current_activity_label.setText("Đang xử lý: Chuẩn bị…")
         if self._active_clone_mode:
             self.progress_bar.setRange(0, max(1, self._clone_total_accounts))
             self.progress_bar.setFormat("%v/%m (%p%)")
@@ -1772,6 +1776,7 @@ class MainWindow(QMainWindow):
 
     def _update_progress(self, completed: int, total: int, status: str) -> None:
         if self._active_clone_mode:
+            self.current_activity_label.setText(f"Đang xử lý: {status}")
             # Account totals live beneath the bar; usernames/details remain in the log.
             self.progress_bar.setRange(0, max(1, self._clone_total_accounts))
             self.progress_bar.setFormat("%v/%m (%p%)")
