@@ -1367,15 +1367,15 @@ class MainWindow(QMainWindow):
         if item is None:
             return
         if state == "running":
-            prefix, color = "→", Qt.GlobalColor.darkYellow
+            prefix = "→"
         elif state == "done":
-            prefix, color = "✓", Qt.GlobalColor.green
+            prefix = "✓"
         elif state == "failed":
-            prefix, color = "✗", Qt.GlobalColor.red
+            prefix = "✗"
         elif state == "stopped":
-            prefix, color = "■", Qt.GlobalColor.red
+            prefix = "■"
         else:
-            prefix, color = "·", Qt.GlobalColor.gray
+            prefix = "·"
         show_count = total > 1 or name == "Thăm dò lãnh địa"
         detail = f" {completed}/{total}" if show_count else ""
         item.setText(f"{prefix} {name}{detail}")
