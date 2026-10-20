@@ -1044,8 +1044,6 @@ class MainWindow(QMainWindow):
     def _current_config(self) -> dict:
         if self.tabs.currentWidget() is self.clone_tab:
             return self.clone_tab.current_config()
-        if self.tabs.currentWidget().widget() if False else False:
-            pass
         if self.tabs.tabText(self.tabs.currentIndex()) == "Tác vụ":
             return {
                 "utility_tasks_mode": True,
