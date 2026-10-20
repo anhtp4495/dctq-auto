@@ -148,6 +148,8 @@ class BotWorker(QThread):
                 selected.append("Thoát màn hình Quân đoàn")
             if self._config.get("task_switch_account"):
                 selected.append("Đổi tài khoản")
+            if self._config.get("task_click_coordinates"):
+                selected.append("Click theo tọa độ")
             self.progress_changed.emit(0, max(1, len(selected)), "Bắt đầu tác vụ")
             for index, task in enumerate(selected, start=1):
                 self.task_progress_changed.emit(task, "running", 0, 1)
@@ -473,6 +475,7 @@ class BotWorker(QThread):
             ("thiet_lap_muu_binh", "Mưu binh"),
             ("task_close_guild", "Thoát màn hình Quân đoàn"),
             ("task_switch_account", "Đổi tài khoản"),
+            ("task_click_coordinates", "Click theo tọa độ"),
         )
         selected = [(key, label) for key, label in task_labels if self._config.get(key)]
         total = len(selected)
@@ -481,7 +484,7 @@ class BotWorker(QThread):
 
         # Gameplay automation for these actions is not implemented in the real
         # ADB flow yet. Report an explicit failed status for each selected task.
-        implemented = {"task_login", "task_close_guild", "task_switch_account"}
+        implemented = {"task_login", "task_close_guild", "task_switch_account", "task_click_coordinates"}
         for key, label in selected:
             if key in implemented:
                 continue
@@ -596,6 +599,27 @@ class BotWorker(QThread):
             self.progress_changed.emit(
                 completed, max(1, total), "Đổi tài khoản đã xử lý"
             )
+
+        if self._config.get("task_click_coordinates"):
+            if not self._wait_if_paused():
+                self.log_message.emit("Đã dừng theo yêu cầu.")
+                return
+            x = int(self._config.get("task_click_x", 0))
+            y = int(self._config.get("task_click_y", 0))
+            try:
+                device.shell(f"input tap {x} {y}")
+                completed += 1
+                self.task_progress_changed.emit("Click theo tọa độ", "done", 1, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), f"Đã click tọa độ ({x}, {y})"
+                )
+                self.log_message.emit(f"Đã click theo tọa độ X={x}, Y={y}.")
+            except Exception as exc:
+                self.task_progress_changed.emit("Click theo tọa độ", "failed", 0, 1)
+                self.progress_changed.emit(
+                    completed + 1, max(1, total), "Lỗi: Click theo tọa độ"
+                )
+                self.log_message.emit(f"Không thể click tọa độ ({x}, {y}): {exc}")
 
     def run(self) -> None:
         if self._mock_mode:
