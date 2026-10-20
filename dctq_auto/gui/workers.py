@@ -517,7 +517,7 @@ class BotWorker(QThread):
         return True
 
     def _run_daily_checkin(self, device, ocr_client) -> bool:
-        """Open Hoạt động and select Điểm danh only after OCR verifies the page."""
+        """Open Hoạt động, then locate and tap Điểm danh using live OCR."""
         if not self._wait_if_paused():
             self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
             return False
@@ -539,6 +539,7 @@ class BotWorker(QThread):
                     ) from saved_target_error
 
             screen_text = ""
+            normalized = ""
             activity_markers = ("phuc loi", "le bao", "diem danh", "hoat dong")
             for attempt in range(6):
                 if not self._wait_if_paused():
@@ -562,6 +563,7 @@ class BotWorker(QThread):
             if not self._wait_if_paused():
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
                 return False
+
             # User-provided RECT bounds are normalized to screenshot ratios:
             # x=0..473 / 1920, y=119..996 / 1080.
             screenshot = device.screenshot()
@@ -572,8 +574,31 @@ class BotWorker(QThread):
                 round(0.246354 * screen_width),
                 round(0.922222 * screen_height),
             )
+
+            # If Điểm danh was already detected on the verified screen, tap it
+            # directly. Otherwise open Phúc lợi first, then do one fresh OCR scan.
+            if "diem danh" not in normalized:
+                phuc_loi_x = round(0.077604 * screen_width)
+                phuc_loi_y = round(0.325000 * screen_height)
+                self.log_message.emit(
+                    "Chưa thấy Điểm danh ở lần OCR xác nhận; click button_phuc_loi "
+                    f"tại ({phuc_loi_x}, {phuc_loi_y})."
+                )
+                device.shell(f"input tap {phuc_loi_x} {phuc_loi_y}")
+                time.sleep(0.8)
+                if not self._wait_if_paused():
+                    self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
+                    return False
+                self.log_message.emit(
+                    "Quét OCR lại một lần trong RECT để tìm button_diem_danh."
+                )
+            else:
+                self.log_message.emit(
+                    "Lần OCR xác nhận đã thấy Điểm danh; tìm nút trong RECT và click trực tiếp."
+                )
+
             self.log_message.emit(
-                "Tìm chữ Điểm danh trong RECT Hoạt động "
+                "Tìm button_diem_danh trong RECT "
                 f"({activity_rect[0]}, {activity_rect[1]}, "
                 f"{activity_rect[2]}, {activity_rect[3]})."
             )
@@ -581,11 +606,11 @@ class BotWorker(QThread):
                 device, ("diem danh",), activity_rect
             ):
                 raise RuntimeError(
-                    "OCR không tìm thấy mục Điểm danh bên trong RECT Hoạt động."
+                    "OCR không tìm thấy button_diem_danh trong RECT sau lần quét mới."
                 )
             time.sleep(1.2)
             self.log_message.emit(
-                "Đã mở mục Điểm danh bằng OCR. Chưa xác nhận đã nhận thưởng; "
+                "Đã click button_diem_danh bằng OCR. Chưa xác nhận đã nhận thưởng; "
                 "cần nhận diện nút thao tác trên màn hình Điểm danh."
             )
             return True
