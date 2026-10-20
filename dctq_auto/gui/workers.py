@@ -971,7 +971,9 @@ class BotWorker(QThread):
                             f"lần {profile_attempt + 1}/3 (ảnh {screen_image.width}x{screen_image.height})."
                         )
                         device.shell(f"input tap {tap_x} {tap_y}")
-                        time.sleep(1)
+                        # Let the game UI animation finish before OCR; retry attempts
+                        # are deliberately spaced out to avoid rapid repeated taps.
+                        time.sleep(2.5)
                         profile_panel_text = self._normalize_screen_text(self._screen_text(device))
                         if "thong tin cua toi" in profile_panel_text:
                             profile_panel_found = True
@@ -985,7 +987,7 @@ class BotWorker(QThread):
                             f"thử lại {profile_attempt + 1}/3. OCR: "
                             f"{profile_panel_text[:160] or '(trống)'}"
                         )
-                        time.sleep(0.5)
+                        time.sleep(1.5)
 
                     options_text = ""
                     options_found = False
