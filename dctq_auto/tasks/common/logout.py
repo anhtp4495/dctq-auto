@@ -3,7 +3,7 @@
 import time
 
 
-def run_logout_flow(worker, account, device, ocr_client) -> bool:
+def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
     """Đăng xuất an toàn; False nếu không thể xác minh trạng thái cuối."""
     logout_ok = True
     if any(worker._config.get(key) for key in (
