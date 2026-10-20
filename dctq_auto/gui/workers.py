@@ -111,15 +111,11 @@ class BotWorker(QThread):
                     f"{'thắng' if won else 'chưa thắng'}, {flags} cờ."
                 ):
                     return False
-                expected_seconds = self._estimated_task_seconds(task, self._config)
-                partial = min(expected_seconds - 1, elapsed)
-                self._emit_mock_progress(
-                    partial, f"{task}: trận {number}/{count}"
-                )
+                # Overall progress counts task groups; battle progress is shown separately.
+                self._emit_mock_progress(0, f"{task}: trận {number}/{count}")
                 if finished:
                     if not self._mock_tick(f"Kết thúc {task} {number}: {reason}."):
                         return False
-                    self._progress_completed += expected_seconds
                     self.task_progress_changed.emit(task, "running", number, count)
                     self._emit_mock_progress(0, f"{task}: hoàn thành {number}/{count}")
                     break
@@ -167,7 +163,7 @@ class BotWorker(QThread):
             return
         tasks = [(spec.label, count) for spec, count in get_enabled_tasks(self._config)]
 
-        total = sum(count * self._estimated_task_seconds(task, self._config) for task, count in tasks)
+        total = len(tasks)  # Count selected task groups, not estimated seconds.
         if total == 0:
             self.log_message.emit("Không có nhiệm vụ nào được chọn.")
             self.progress_changed.emit(0, 0, "Không có nhiệm vụ được chọn")
@@ -227,12 +223,10 @@ class BotWorker(QThread):
                     suffix = f" ({', '.join(extras)})" if extras else ""
                     if not self._mock_tick(f"{task}: chạy thử hoàn tất{suffix}."):
                         return
-                    self._progress_completed += self._estimated_task_seconds(task, self._config)
                     self.task_progress_changed.emit(task, "running", number, count)
-                    self._emit_mock_progress(
-                        0, f"Đã hoàn thành {self._progress_completed // 100}/{total} lượt"
-                    )
             self.task_progress_changed.emit(task, "done", count, count)
+            self._progress_completed += 1
+            self._emit_mock_progress(0, f"Hoàn thành tác vụ {self._progress_completed}/{total}: {task}")
         self.log_message.emit("Hoàn tất chạy thử tất cả nhiệm vụ.")
 
     def _run_clone_mock(self) -> None:
