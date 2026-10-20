@@ -400,6 +400,122 @@ class BotWorker(QThread):
         device.shell(f"input tap {x} {y}")
         return True
 
+    @staticmethod
+    def _ocr_words_in_rect(device, rect: tuple[int, int, int, int]) -> list[dict]:
+        """Recognize words only inside a screenshot rectangle; return full-screen boxes."""
+        image = device.screenshot().convert("RGB")
+        screen_width, screen_height = image.size
+        left, top, right, bottom = rect
+        left = max(0, min(screen_width - 1, left))
+        top = max(0, min(screen_height - 1, top))
+        right = max(left + 1, min(screen_width, right))
+        bottom = max(top + 1, min(screen_height, bottom))
+        crop = ImageOps.autocontrast(image.crop((left, top, right, bottom)).convert("L"))
+        try:
+            data = pytesseract.image_to_data(
+                crop, lang="vie+eng", config="--psm 11",
+                output_type=pytesseract.Output.DICT,
+            )
+        except pytesseract.TesseractError:
+            data = pytesseract.image_to_data(
+                crop, lang="eng", config="--psm 11",
+                output_type=pytesseract.Output.DICT,
+            )
+        words = []
+        for i, raw in enumerate(data.get("text", [])):
+            normalized = BotWorker._normalize_screen_text(raw)
+            if not normalized:
+                continue
+            try:
+                confidence = float(data["conf"][i])
+            except (ValueError, TypeError):
+                confidence = 0.0
+            if confidence < 0:
+                continue
+            x = left + int(data["left"][i])
+            y = top + int(data["top"][i])
+            width = int(data["width"][i])
+            height = int(data["height"][i])
+            words.append({
+                "text": normalized, "confidence": confidence,
+                "left": x, "top": y, "width": width, "height": height,
+            })
+        return words
+
+    @staticmethod
+    def _tap_ocr_phrase_in_rect(device, words: tuple[str, ...], rect: tuple[int, int, int, int]) -> bool:
+        """Find and tap a word or contiguous phrase inside a specified rectangle."""
+        wanted = {BotWorker._normalize_screen_text(word) for word in words}
+        detected = BotWorker._ocr_words_in_rect(device, rect)
+        matches = [
+            word for word in detected if word["text"] in wanted
+        ]
+        # OCR often separates multi-word Vietnamese labels; join adjacent words on a line.
+        image = device.screenshot().convert("RGB")
+        screen_width, screen_height = image.size
+        left, top, right, bottom = rect
+        left, top = max(0, left), max(0, top)
+        right, bottom = min(screen_width, right), min(screen_height, bottom)
+        crop = ImageOps.autocontrast(image.crop((left, top, right, bottom)).convert("L"))
+        try:
+            data = pytesseract.image_to_data(
+                crop, lang="vie+eng", config="--psm 11",
+                output_type=pytesseract.Output.DICT,
+            )
+        except pytesseract.TesseractError:
+            data = pytesseract.image_to_data(
+                crop, lang="eng", config="--psm 11",
+                output_type=pytesseract.Output.DICT,
+            )
+        count = len(data.get("text", []))
+        blocks = data.get("block_num", [0] * count)
+        paragraphs = data.get("par_num", [0] * count)
+        line_numbers = data.get("line_num", [0] * count)
+        lines = {}
+        for i, raw in enumerate(data.get("text", [])):
+            normalized = BotWorker._normalize_screen_text(raw)
+            if not normalized:
+                continue
+            try:
+                confidence = float(data["conf"][i])
+            except (ValueError, TypeError):
+                confidence = 0.0
+            if confidence < 0:
+                continue
+            x = left + int(data["left"][i])
+            y = top + int(data["top"][i])
+            width = int(data["width"][i])
+            height = int(data["height"][i])
+            lines.setdefault((blocks[i], paragraphs[i], line_numbers[i]), []).append(
+                (x, y, width, height, confidence, normalized)
+            )
+        for line in lines.values():
+            line.sort(key=lambda item: item[0])
+            for start in range(len(line)):
+                phrase_parts = []
+                for end in range(start, min(len(line), start + 4)):
+                    phrase_parts.append(line[end][5])
+                    if " ".join(phrase_parts) in wanted:
+                        group = line[start:end + 1]
+                        x1 = min(item[0] for item in group)
+                        y1 = min(item[1] for item in group)
+                        x2 = max(item[0] + item[2] for item in group)
+                        y2 = max(item[1] + item[3] for item in group)
+                        matches.append({
+                            "text": " ".join(phrase_parts),
+                            "confidence": sum(item[4] for item in group) / len(group),
+                            "left": x1, "top": y1,
+                            "width": x2 - x1, "height": y2 - y1,
+                        })
+        if not matches:
+            return False
+        # Prefer multiword label matches when confidence is comparable.
+        match = max(matches, key=lambda item: (item["confidence"], item["width"]))
+        x = match["left"] + match["width"] // 2
+        y = match["top"] + match["height"] // 2
+        device.shell(f"input tap {x} {y}")
+        return True
+
     def _run_daily_checkin(self, device, ocr_client) -> bool:
         """Open Hoạt động and select Điểm danh only after OCR verifies the page."""
         if not self._wait_if_paused():
@@ -446,9 +562,26 @@ class BotWorker(QThread):
             if not self._wait_if_paused():
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
                 return False
-            if not self._tap_ocr_word(device, ("diem danh",)):
+            # User-provided RECT bounds are normalized to screenshot ratios:
+            # x=0..473 / 1920, y=119..996 / 1080.
+            screenshot = device.screenshot()
+            screen_width, screen_height = screenshot.size
+            activity_rect = (
+                round(0.0 * screen_width),
+                round(0.110185 * screen_height),
+                round(0.246354 * screen_width),
+                round(0.922222 * screen_height),
+            )
+            self.log_message.emit(
+                "Tìm chữ Điểm danh trong RECT Hoạt động "
+                f"({activity_rect[0]}, {activity_rect[1]}, "
+                f"{activity_rect[2]}, {activity_rect[3]})."
+            )
+            if not self._tap_ocr_phrase_in_rect(
+                device, ("diem danh",), activity_rect
+            ):
                 raise RuntimeError(
-                    "Đã mở màn hình Hoạt động nhưng OCR không tìm thấy mục Điểm danh."
+                    "OCR không tìm thấy mục Điểm danh bên trong RECT Hoạt động."
                 )
             time.sleep(1.2)
             self.log_message.emit(
