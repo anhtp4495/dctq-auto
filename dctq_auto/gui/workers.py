@@ -603,8 +603,17 @@ class BotWorker(QThread):
             # after it (for example, "Quan chức 4768").
             profile_found = False
             self.log_message.emit(
-                f"[{account.username}] Đăng nhập có vẻ thành công; chờ OCR tìm profile 'quan_chuc'."
+                f"[{account.username}] Đăng nhập có vẻ thành công; xác minh bằng cách mở mục profile."
             )
+            # Tap the profile icon, then check for the "Thông tin của tôi" panel.
+            try:
+                ocr_client.tap_ocr_target("profile")
+                time.sleep(1)
+            except Exception as exc:
+                self.log_message.emit(
+                    f"[{account.username}] Không mở được mục profile bằng tọa độ OCR: {exc}"
+                )
+
             for profile_attempt in range(30):  # up to ~60 seconds
                 if not self._wait_if_paused():
                     self.log_message.emit("Đã dừng theo yêu cầu.")
@@ -620,11 +629,20 @@ class BotWorker(QThread):
                     continue
 
                 normalized_profile = self._normalize_screen_text(profile_text)
-                if "quan chuc" in normalized_profile or "quan_chuc" in normalized_profile:
-                    profile_found = True
-                    self.log_message.emit(
-                        f"[{account.username}] Đã tìm thấy profile qua OCR: 'quan_chuc'."
-                    )
+                # The opened profile panel is identified by its title, then closed
+                # with the saved top-right close target so the game returns to normal.
+                if "thong tin cua toi" in normalized_profile:
+                    try:
+                        ocr_client.tap_ocr_target("close_thong_tin_cua_toi")
+                        time.sleep(0.7)
+                        profile_found = True
+                        self.log_message.emit(
+                            f"[{account.username}] Đã xác minh profile qua tiêu đề 'Thông tin của tôi' và đóng bảng profile."
+                        )
+                    except Exception as exc:
+                        self.log_message.emit(
+                            f"[{account.username}] Nhận diện được profile nhưng không đóng được bảng thông tin: {exc}"
+                        )
                     break
 
             if not profile_found:
