@@ -51,6 +51,7 @@ class CloneTab(QWidget):
         )
         self.account_file_combo.setToolTip("Chọn file tài khoản đã dùng trước đây")
         self.account_file_combo.currentIndexChanged.connect(self._update_account_status)
+        self.account_file_combo.activated.connect(self._show_selected_file_path)
         file_row.addWidget(self.account_file_combo, 1)
         self.browse_button = QPushButton("Chọn file…")
         self.browse_button.clicked.connect(self._browse_file)
@@ -101,7 +102,7 @@ class CloneTab(QWidget):
         filename = str(Path(filename).expanduser().resolve())
         index = self.account_file_combo.findData(filename)
         if index < 0:
-            self.account_file_combo.addItem(filename, filename)
+            self.account_file_combo.addItem(Path(filename).name, filename)
             index = self.account_file_combo.count() - 1
         self.account_file_combo.setCurrentIndex(index)
 
@@ -115,7 +116,7 @@ class CloneTab(QWidget):
                 continue
             path = str(Path(filename).expanduser())
             if path not in seen:
-                self.account_file_combo.addItem(path, path)
+                self.account_file_combo.addItem(Path(path).name, path)
                 seen.add(path)
         if selected:
             path = str(Path(selected).expanduser())
@@ -128,6 +129,10 @@ class CloneTab(QWidget):
             self.account_file_combo.setCurrentIndex(0)
         self.account_file_combo.blockSignals(False)
         self._update_account_status()
+
+    def _show_selected_file_path(self, *_args) -> None:
+        filename = self.account_file()
+        self.account_file_combo.setToolTip(filename or "Chọn file tài khoản đã dùng trước đây")
 
     def account_file(self) -> str:
         value = self.account_file_combo.currentData()
