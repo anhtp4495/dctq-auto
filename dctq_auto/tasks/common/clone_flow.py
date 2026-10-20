@@ -95,27 +95,10 @@ def run_clone_flow(self, device) -> None:
             continue
 
         try:
-            ocr_client.tap_ocr_target("ten_dang_nhap")
-            time.sleep(0.25)
-            self._replace_focused_text(device, account.username)
+            from dctq_auto.tasks.common.login import submit_login_form
 
-            if not self._wait_if_paused():
-                self.log_message.emit("Đã dừng theo yêu cầu.")
+            if not submit_login_form(self, account, device, ocr_client):
                 return
-
-            ocr_client.tap_ocr_target("mat_khau")
-            time.sleep(0.25)
-            self._replace_password_text(device, account.password)
-
-            if not self._wait_if_paused():
-                self.log_message.emit("Đã dừng theo yêu cầu.")
-                return
-
-            time.sleep(0.3)
-            ocr_client.tap_ocr_target("dang_nhap")
-            self.log_message.emit(
-                f"[{account.username}] Đã gửi yêu cầu đăng nhập; đang xác minh kết quả."
-            )
         except Exception as exc:
             failed_count += 1
             processed_count += 1
