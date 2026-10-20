@@ -49,6 +49,7 @@ class CloneTab(QWidget):
         self.account_file_combo.setSizeAdjustPolicy(
             QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
         )
+        self.account_file_combo.setToolTip("Chọn file tài khoản đã dùng trước đây")
         self.account_file_combo.currentIndexChanged.connect(self._update_account_status)
         self.account_file_combo.currentIndexChanged.connect(self._show_selected_file_path)
         self.account_file_combo.activated.connect(self._show_selected_file_path)
@@ -57,11 +58,6 @@ class CloneTab(QWidget):
         self.browse_button.clicked.connect(self._browse_file)
         file_row.addWidget(self.browse_button)
         layout.addLayout(file_row)
-
-        self.account_path_label = QLabel("Đường dẫn: chưa chọn file.")
-        self.account_path_label.setWordWrap(True)
-        self.account_path_label.setStyleSheet("color: #777; font-size: 11px;")
-        layout.addWidget(self.account_path_label)
 
         self.account_status = QLabel("Chưa chọn file tài khoản.")
         self.account_status.setWordWrap(True)
@@ -137,8 +133,6 @@ class CloneTab(QWidget):
 
     def _show_selected_file_path(self, *_args) -> None:
         filename = self.account_file()
-        if hasattr(self, "account_path_label"):
-            self.account_path_label.setText(f"Đường dẫn: {filename}" if filename else "Đường dẫn: chưa chọn file.")
 
     def account_file(self) -> str:
         value = self.account_file_combo.currentData()
