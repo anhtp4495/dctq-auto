@@ -116,6 +116,9 @@ class MainWindow(QMainWindow):
         self.pause_button.setFixedSize(38, 30)
         self.pause_button.setToolTip("Tạm dừng")
         self.pause_button.setEnabled(False)
+        self.pause_button.setStyleSheet(
+            "QPushButton:disabled { color: #808080; background-color: #E5E7EB; }"
+        )
         self.pause_button.clicked.connect(self.toggle_pause_bot)
         capture_row.addWidget(self.pause_button)
 
@@ -123,6 +126,9 @@ class MainWindow(QMainWindow):
         self.stop_button.setFixedSize(38, 30)
         self.stop_button.setToolTip("Dừng hẳn")
         self.stop_button.setEnabled(False)
+        self.stop_button.setStyleSheet(
+            "QPushButton:disabled { color: #808080; background-color: #E5E7EB; }"
+        )
         self.stop_button.clicked.connect(self.stop_bot)
         capture_row.addWidget(self.stop_button)
 
