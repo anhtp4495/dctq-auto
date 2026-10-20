@@ -90,6 +90,7 @@ class MainWindow(QMainWindow):
         self._screenshot_worker = None
         self._screenshot_annotator = None
         self._analysis_lock_states: dict[QWidget, bool] = {}
+        self._settings_lock_states: dict[QWidget, bool] = {}
         self.last_screen_short: str | None = None
 
         central = QWidget(self)
@@ -1536,14 +1537,30 @@ class MainWindow(QMainWindow):
         return user, secret
 
     def _set_settings_enabled(self, enabled: bool) -> None:
-        """Lock configuration controls and prevent tab switching while a run is active."""
+        """Lock settings during a run, then restore each control's prior enabled state."""
         self.tabs.tabBar().setEnabled(enabled)
-        for widget_type in (QCheckBox, QSpinBox, QComboBox, QRadioButton, QAbstractButton):
-            for widget in self.tabs.findChildren(widget_type):
-                widget.setEnabled(enabled)
-        for group in self.tabs.findChildren(QGroupBox):
-            if group.isCheckable():
-                group.setEnabled(enabled)
+        widget_types = (QCheckBox, QSpinBox, QComboBox, QRadioButton, QAbstractButton)
+        widgets = set()
+        for widget_type in widget_types:
+            widgets.update(self.tabs.findChildren(widget_type))
+        widgets.update(
+            group for group in self.tabs.findChildren(QGroupBox)
+            if group.isCheckable()
+        )
+
+        if not enabled:
+            # Capture explicit enabled states before disabling anything. This keeps
+            # dependent controls disabled after a run if their parent task is off.
+            self._settings_lock_states = {
+                widget: widget.isEnabled() for widget in widgets
+            }
+            for widget in widgets:
+                widget.setEnabled(False)
+            return
+
+        for widget in widgets:
+            widget.setEnabled(self._settings_lock_states.get(widget, True))
+        self._settings_lock_states.clear()
 
     def start_bot(self) -> None:
         if self._worker is not None and self._worker.isRunning():
