@@ -49,7 +49,6 @@ class CloneTab(QWidget):
         self.account_file_combo.setSizeAdjustPolicy(
             QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
         )
-        self.account_file_combo.setToolTip("Chọn file tài khoản đã dùng trước đây")
         self.account_file_combo.currentIndexChanged.connect(self._update_account_status)
         self.account_file_combo.currentIndexChanged.connect(self._show_selected_file_path)
         self.account_file_combo.activated.connect(self._show_selected_file_path)
@@ -138,7 +137,6 @@ class CloneTab(QWidget):
 
     def _show_selected_file_path(self, *_args) -> None:
         filename = self.account_file()
-        self.account_file_combo.setToolTip(filename or "Chọn file tài khoản đã dùng trước đây")
         if hasattr(self, "account_path_label"):
             self.account_path_label.setText(f"Đường dẫn: {filename}" if filename else "Đường dẫn: chưa chọn file.")
 
