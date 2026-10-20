@@ -547,6 +547,23 @@ class BotWorker(QThread):
                         )
                     break
 
+                # A first-login profile update dialog may appear instead of the
+                # wrong-credentials dialog. Close it so the profile can finish loading.
+                if "cap nhat thong tin ca nhan" in normalized_result:
+                    self.log_message.emit(
+                        f"[{account.username}] Phát hiện hộp thoại cập nhật thông tin cá nhân; đang đóng hộp thoại."
+                    )
+                    try:
+                        ocr_client.tap_ocr_target("close_cap_nhat_thong_tin_ca_nhan")
+                        time.sleep(1)
+                        previous_screen_text = None
+                        continue
+                    except Exception as exc:
+                        self.log_message.emit(
+                            f"[{account.username}] Không đóng được hộp thoại cập nhật thông tin cá nhân: {exc}"
+                        )
+                        break
+
                 observed_error = self._login_error(result_text) or observed_error
                 if self._is_login_screen(result_text):
                     previous_screen_text = None
