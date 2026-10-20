@@ -710,16 +710,31 @@ class BotWorker(QThread):
             grid_width = (rect_right - rect_left) * calendar_width
             grid_height = (rect_bottom - rect_top) * calendar_height
 
-            # Duyệt đủ 36 ô theo thứ tự 36, 35, ..., 2, 1; không bỏ qua ô nào.
-            cells_reverse = tuple(range(36, 0, -1))
-            if len(cells_reverse) != 36 or set(cells_reverse) != set(range(1, 37)):
-                raise RuntimeError("Danh sách ô điểm danh không đủ 36 ô.")
+            # Lưới có 30 ô theo cách đánh số người dùng cung cấp:
+            # hàng 1: 1-9, hàng 2: 10-18, hàng 3: 19-26, hàng 4: 27-30.
+            # Tọa độ mỗi ô lấy theo tâm cột/hàng trong RECT; hàng ngắn hơn
+            # được căn trái theo các cột đầu tiên của lưới 9 cột.
+            cells_reverse = tuple(range(30, 0, -1))
+            if len(cells_reverse) != 30 or set(cells_reverse) != set(range(1, 31)):
+                raise RuntimeError("Danh sách ô điểm danh không đủ 30 ô.")
+
+            row_ranges = (
+                (1, 9),
+                (10, 18),
+                (19, 26),
+                (27, 30),
+            )
+            cell_positions = {}
+            for row_index, (first_cell, last_cell) in enumerate(row_ranges):
+                for cell in range(first_cell, last_cell + 1):
+                    column_index = cell - first_cell
+                    cell_positions[cell] = (row_index, column_index)
 
             self.log_message.emit(
                 f"BƯỚC 5/6: Lưới điểm danh {calendar_width}x{calendar_height}, "
                 f"RECT=({round(grid_left)}, {round(grid_top)}, "
                 f"{round(grid_left + grid_width)}, {round(grid_top + grid_height)}); "
-                "sẽ click đủ 36/36 ô theo thứ tự 36 → 1 (4 hàng x 9 cột)."
+                "sẽ click đủ 30/30 ô theo thứ tự 30 → 1."
             )
             for cell in cells_reverse:
                 if not self._wait_if_paused():
@@ -728,19 +743,18 @@ class BotWorker(QThread):
                     )
                     return False
 
-                row = (cell - 1) // 9
-                column = (cell - 1) % 9
+                row, column = cell_positions[cell]
                 day_x = round(grid_left + (column + 0.5) * grid_width / 9)
                 day_y = round(grid_top + (row + 0.5) * grid_height / 4)
                 device.shell(f"input tap {day_x} {day_y}")
                 self.log_message.emit(
-                    f"Đã click ô {cell}/36 (hàng {row + 1}, cột {column + 1}) "
+                    f"Đã click ô {cell}/30 (hàng {row + 1}, cột {column + 1}) "
                     f"tại ({day_x}, {day_y})."
                 )
                 time.sleep(0.15)
 
             self.log_message.emit(
-                "Đã chọn xong 36/36 ô; bỏ qua xac_nhan_diem_danh_bu vì không còn cần thiết."
+                "Đã chọn xong 30/30 ô; bỏ qua xac_nhan_diem_danh_bu vì không còn cần thiết."
             )
             if not self._wait_if_paused():
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu trước khi thoát màn hình.")
