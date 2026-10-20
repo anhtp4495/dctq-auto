@@ -67,6 +67,31 @@
           }
         },
         {
+          "name": "close_cap_nhat_thong_tin_ca_nhan",
+          "text": "Nút đóng hộp thoại Cập nhật thông tin cá nhân",
+          "confidence": null,
+          "bounds": {
+            "left": 1572,
+            "top": 397,
+            "right": 1612,
+            "bottom": 437
+          },
+          "rect": {
+            "x": 1572,
+            "y": 397,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 1592,
+            "y_px": 417
+          },
+          "center_ratio": {
+            "x": 0.829167,
+            "y": 0.386111
+          }
+        },
+        {
           "name": "dang_nhap",
           "text": "ĐĂNG NHAP",
           "confidence": null,
