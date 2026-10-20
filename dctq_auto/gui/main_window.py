@@ -94,7 +94,7 @@ class MainWindow(QMainWindow):
         root.setContentsMargins(8, 8, 8, 8)
         root.setSpacing(6)
 
-        top_row = QHBoxLayout()
+        top_row = QVBoxLayout()
         top_row.setSpacing(8)
 
         device_panel = QGroupBox("Quét thiết bị")
