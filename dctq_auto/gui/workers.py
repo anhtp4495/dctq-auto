@@ -940,18 +940,6 @@ class BotWorker(QThread):
                     self.log_message.emit(
                         f"[{account.username}] Đã gửi thao tác đóng màn hình quân đoàn."
                     )
-                    # Close the chat overlay with two taps at the actual screen center
-                    # before opening the profile menu.
-                    screen_image = device.screenshot()
-                    center_x = screen_image.width // 2
-                    center_y = screen_image.height // 2
-                    device.shell(f"input tap {center_x} {center_y}")
-                    time.sleep(0.3)
-                    device.shell(f"input tap {center_x} {center_y}")
-                    time.sleep(0.8)
-                    self.log_message.emit(
-                        f"[{account.username}] Đã bấm giữa màn hình 2 lần để đóng chat."
-                    )
                 except Exception as exc:
                     self.log_message.emit(
                         f"[{account.username}] Không bấm được nút đóng quân đoàn: {exc}; "
@@ -964,23 +952,31 @@ class BotWorker(QThread):
                         self.log_message.emit("Đã dừng theo yêu cầu.")
                         return
                     self.log_message.emit(
-                        f"[{account.username}] Mở profile để vào Cài đặt người dùng."
+                        f"[{account.username}] Mở profile để vào Cài đặt người dùng; thử tối đa 3 lần."
                     )
-                    ocr_client.tap_ocr_target("profile_tuy_chon")
-                    time.sleep(1)
 
-                    # Identify the profile/options screen before opening user settings.
+                    # Tap profile up to three times, checking OCR after each tap.
+                    # Do not tap the screen center; that did not reliably open profile.
                     options_text = ""
                     options_found = False
-                    for options_attempt in range(10):
+                    for profile_attempt in range(3):
                         if not self._wait_if_paused():
                             self.log_message.emit("Đã dừng theo yêu cầu.")
                             return
+                        ocr_client.tap_ocr_target("profile_tuy_chon")
+                        time.sleep(1)
                         options_text = self._normalize_screen_text(self._screen_text(device))
                         if "tuy chon" in options_text or "cai dat nguoi dung" in options_text:
                             options_found = True
+                            self.log_message.emit(
+                                f"[{account.username}] Đã mở profile ở lần thử {profile_attempt + 1}/3."
+                            )
                             break
-                        time.sleep(1)
+                        self.log_message.emit(
+                            f"[{account.username}] Chưa mở được profile, thử lại "
+                            f"{profile_attempt + 1}/3. OCR: {options_text[:140] or '(trống)'}"
+                        )
+                        time.sleep(0.5)
                     if not options_found:
                         logout_ok = False
                         self.log_message.emit(
