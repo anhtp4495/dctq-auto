@@ -640,6 +640,31 @@
             "x": 0.495312,
             "y": 0.744444
           }
+        },
+        {
+          "name": "button_xac_nhan",
+          "text": "Nút xác nhận đổi tài khoản",
+          "confidence": null,
+          "bounds": {
+            "left": 1136,
+            "top": 686,
+            "right": 1176,
+            "bottom": 726
+          },
+          "rect": {
+            "x": 1136,
+            "y": 686,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 1156,
+            "y_px": 706
+          },
+          "center_ratio": {
+            "x": 0.602083,
+            "y": 0.653704
+          }
         }
       ],
       "screenshot": "user-provided OCR coordinates",
