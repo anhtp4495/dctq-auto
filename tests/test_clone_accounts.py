@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from dctq_auto.tasks.clone.accounts import load_accounts
+from dctq_auto.tasks.common.accounts import load_accounts
 
 
 def test_load_accounts_skips_blank_and_comment_lines(tmp_path: Path) -> None:
