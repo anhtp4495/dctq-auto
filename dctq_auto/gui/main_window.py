@@ -99,7 +99,8 @@ class MainWindow(QMainWindow):
         root.setSpacing(6)
 
         top_row = QVBoxLayout()
-        top_row.setSpacing(8)
+        top_row.setContentsMargins(0, 0, 0, 0)
+        top_row.setSpacing(0)
 
         device_panel = QGroupBox("Quét thiết bị")
         device_layout = QVBoxLayout(device_panel)
@@ -170,6 +171,7 @@ class MainWindow(QMainWindow):
         capture_row.addWidget(self.choose_position_button)
         top_row.addWidget(controls_panel, 0)
         root.addLayout(top_row)
+        root.setSpacing(0)
 
         self.tabs = QTabWidget(central)
         root.addWidget(self.tabs, 1)
