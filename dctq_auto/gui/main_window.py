@@ -104,7 +104,7 @@ class MainWindow(QMainWindow):
 
         device_panel = QGroupBox("Quét thiết bị")
         device_layout = QVBoxLayout(device_panel)
-        device_layout.setContentsMargins(8, 8, 8, 8)
+        device_layout.setContentsMargins(8, 8, 8, 0)
         self.scan_button = QPushButton("Quét thiết bị")
         self.scan_button.clicked.connect(self.scan_adb_devices)
         device_layout.addWidget(self.scan_button)
@@ -126,9 +126,9 @@ class MainWindow(QMainWindow):
         self.device_combo.currentIndexChanged.connect(self._on_device_changed)
         self.device_list.currentItemChanged.connect(self._on_device_list_selection_changed)
         self._sync_device_list_from_combo()
-        controls_panel = QGroupBox()
+        controls_panel = QWidget()
         capture_row = QHBoxLayout(controls_panel)
-        capture_row.setContentsMargins(8, 8, 8, 8)
+        capture_row.setContentsMargins(8, 0, 8, 8)
         capture_row.setSpacing(5)
         # Keep the control icons anchored to the right edge as the window resizes.
         capture_row.addStretch(1)
