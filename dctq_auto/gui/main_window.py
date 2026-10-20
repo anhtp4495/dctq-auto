@@ -1199,7 +1199,7 @@ class MainWindow(QMainWindow):
         self._run_started_at = None
         self.start_button.setEnabled(True)
         self.pause_button.setEnabled(False)
-        self.pause_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPause))
+        self.pause_button.setText("⏸")
         self.pause_button.setToolTip("Tạm dừng")
         self.stop_button.setEnabled(False)
         self._set_settings_enabled(True)
