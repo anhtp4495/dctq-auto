@@ -107,7 +107,8 @@ class MainWindow(QMainWindow):
 
         # Keep the combo as the settings-compatible source of the selected serial.
         # The visible QListWidget provides a compact, scrollable device list.
-        self.device_combo = QComboBox()
+        self.device_combo = QComboBox(self)
+        self.device_combo.hide()
         self.device_combo.addItem("Mock-Adb", "mock")
         self.device_combo.currentIndexChanged.connect(self._on_device_changed)
         self.device_list.currentItemChanged.connect(self._on_device_list_selection_changed)
