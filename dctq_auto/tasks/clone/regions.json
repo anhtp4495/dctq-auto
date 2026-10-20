@@ -165,6 +165,56 @@
             "x": 0.50026,
             "y": 0.555093
           }
+        },
+        {
+          "name": "button_chat_quan_doan",
+          "text": "Nút chat quân đoàn",
+          "confidence": null,
+          "bounds": {
+            "left": 1881,
+            "top": 537,
+            "right": 1921,
+            "bottom": 577
+          },
+          "rect": {
+            "x": 1881,
+            "y": 537,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 1901,
+            "y_px": 557
+          },
+          "center_ratio": {
+            "x": 0.990104,
+            "y": 0.515741
+          }
+        },
+        {
+          "name": "vao_quan_doan",
+          "text": "Vào quân đoàn",
+          "confidence": null,
+          "bounds": {
+            "left": 1386,
+            "top": 973,
+            "right": 1426,
+            "bottom": 1013
+          },
+          "rect": {
+            "x": 1386,
+            "y": 973,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 1406,
+            "y_px": 993
+          },
+          "center_ratio": {
+            "x": 0.732292,
+            "y": 0.919444
+          }
         }
       ],
       "screenshot": "user-provided OCR coordinates",
