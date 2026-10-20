@@ -666,6 +666,59 @@ class BotWorker(QThread):
                     break
                 continue
 
+            if self._config.get("clone_guild_check_in"):
+                # Open the guild chat/entry panel, then only enter the guild when
+                # OCR confirms one of the trusted labels supplied by the user.
+                self.task_progress_changed.emit(
+                    f"{account.username} - Báo danh quân đoàn", "running", 0, 1
+                )
+                try:
+                    self.log_message.emit(
+                        f"[{account.username}] Đang mở mục Quân đoàn qua nút chat quân đoàn."
+                    )
+                    ocr_client.tap_ocr_target("button_chat_quan_doan")
+                    time.sleep(1.5)
+                    guild_entry_found = False
+                    last_guild_text = ""
+                    for guild_attempt in range(5):
+                        if not self._wait_if_paused():
+                            self.log_message.emit("Đã dừng theo yêu cầu.")
+                            return
+                        last_guild_text = self._normalize_screen_text(self._screen_text(device))
+                        trusted_guild_labels = ("quoc chien", "su do", "quoc chien do")
+                        if any(label in last_guild_text for label in trusted_guild_labels):
+                            guild_entry_found = True
+                            self.log_message.emit(
+                                f"[{account.username}] OCR xác nhận mục quân đoàn/Quốc Chiến: "
+                                f"{last_guild_text[:180]}"
+                            )
+                            break
+                        if guild_attempt < 4:
+                            time.sleep(1)
+                    if guild_entry_found:
+                        ocr_client.tap_ocr_target("vao_quan_doan")
+                        time.sleep(2)
+                        self.log_message.emit(
+                            f"[{account.username}] Đã bấm 'Vào quân đoàn'. "
+                            "Cần tọa độ OCR của nút Báo danh trên màn hình kế tiếp để hoàn tất nhiệm vụ."
+                        )
+                    else:
+                        self.log_message.emit(
+                            f"[{account.username}] Không thấy text tin cậy "
+                            "'quoc_chien', 'su_do' hoặc 'quoc_chien_do'; không bấm Vào quân đoàn. "
+                            f"OCR hiện tại: {last_guild_text[:180] or '(trống)'}"
+                        )
+                        self.task_progress_changed.emit(
+                            f"{account.username} - Báo danh quân đoàn", "failed", 0, 1
+                        )
+                except Exception as exc:
+                    self.log_message.emit(
+                        f"[{account.username}] Không mở được mục quân đoàn: {exc}"
+                    )
+                    self.task_progress_changed.emit(
+                        f"{account.username} - Báo danh quân đoàn", "failed", 0, 1
+                    )
+
             if self._config.get("clone_quoc_chien"):
                 try:
                     self.log_message.emit(
