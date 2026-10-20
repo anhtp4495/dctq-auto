@@ -1136,6 +1136,7 @@ class MainWindow(QMainWindow):
         self.task_battle_lower_merit.toggled.connect(
             self._toggle_task_battle_merit_mode
         )
+        self._update_task_battle_mode_description()
         self.task_championship = QCheckBox("Tranh bá")
         self.task_championship_count = QSpinBox()
         self.task_championship_count.setRange(1, 15)
