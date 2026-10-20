@@ -1076,9 +1076,9 @@ class BotWorker(QThread):
         for account in accounts:
             if account.username not in processed_names:
                 self.log_message.emit(f"  {account.username}: NOT PROCESSED — chưa chạy")
-        if self._config.get("clone_daily_check_in") or self._config.get("clone_receive_lucky_bag") or self._config.get("clone_logout"):
+        if self._config.get("clone_daily_check_in"):
             self.log_message.emit(
-                "Lưu ý: điểm danh hằng ngày, nhận túi phúc và đăng xuất chưa được triển khai."
+                "Lưu ý: điểm danh hằng ngày hiện chưa có thao tác gameplay hoàn chỉnh."
             )
         if self._config.get("clone_guild_check_in"):
             self.log_message.emit(
