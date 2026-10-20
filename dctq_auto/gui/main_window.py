@@ -1032,6 +1032,9 @@ class MainWindow(QMainWindow):
         self.task_territory_count.setEnabled(False)
         self.task_territory_count.setKeyboardTracking(False)
         self.task_territory.toggled.connect(self.task_territory_count.setEnabled)
+        self.task_territory_knb = QCheckBox("Mua lượt thiếu bằng KNB")
+        self.task_territory_knb.setEnabled(False)
+        self.task_territory.toggled.connect(self.task_territory_knb.setEnabled)
         self.task_glass_tower = QCheckBox("Lưu Ly Tháp")
         self.task_battle = QCheckBox("Giao tranh")
         self.task_championship = QCheckBox("Tranh bá")
@@ -1056,6 +1059,7 @@ class MainWindow(QMainWindow):
         territory_row.addWidget(self.task_territory_count)
         territory_row.addStretch(1)
         daily_layout.addLayout(territory_row)
+        daily_layout.addWidget(self.task_territory_knb)
 
         for task_checkbox in (
             self.task_glass_tower,
@@ -1098,6 +1102,7 @@ class MainWindow(QMainWindow):
                 "dong_gop_knb": self.task_knb_contribution.isChecked(),
                 "tham_do_lanh_dia": self.task_territory.isChecked(),
                 "so_lan_tham_do_lanh_dia": self.task_territory_count.value(),
+                "tham_do_lanh_dia_knb": self.task_territory_knb.isChecked(),
                 "nhiem_vu_luu_ly_thap": self.task_glass_tower.isChecked(),
                 "thuc_hien_giao_tranh": self.task_battle.isChecked(),
                 "thuc_hien_tranh_ba": self.task_championship.isChecked(),
