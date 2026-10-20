@@ -9,6 +9,8 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QPushButton,
+    QScrollArea,
+    Qt,
     QVBoxLayout,
     QWidget,
 )
@@ -21,7 +23,18 @@ class CloneTab(QWidget):
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
-        layout = QVBoxLayout(self)
+        outer_layout = QVBoxLayout(self)
+        outer_layout.setContentsMargins(0, 0, 0, 0)
+
+        scroll_area = QScrollArea(self)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setFrameShape(QScrollArea.Shape.NoFrame)
+
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         intro = QLabel(
             "Chạy các nhiệm vụ đã chọn lần lượt trên từng tài khoản trong file TXT. "
@@ -67,6 +80,8 @@ class CloneTab(QWidget):
             layout.addWidget(checkbox)
 
         layout.addStretch(1)
+        scroll_area.setWidget(page)
+        outer_layout.addWidget(scroll_area)
 
     def _browse_file(self) -> None:
         filename, _ = QFileDialog.getOpenFileName(
