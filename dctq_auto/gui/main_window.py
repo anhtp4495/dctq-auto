@@ -349,6 +349,16 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self._build_war_tab(), "Quốc chiến")
         self.clone_tab = CloneTab()
         self.tabs.addTab(self.clone_tab, "Clone")
+        self.thoat_quan_doan_task = QCheckBox("Thoát màn hình Quân đoàn")
+        self.thoat_quan_doan_task.setToolTip(
+            "Đóng giao diện Quân đoàn đang mở, không rời khỏi bang hội."
+        )
+        self.doi_tai_khoan_task = QCheckBox("Đổi tài khoản")
+        self.doi_tai_khoan_task.setToolTip(
+            "Mở hồ sơ → Tùy chọn → Cài đặt người dùng → Đổi tài khoản; "
+            "chỉ xác nhận khi nhận diện đúng hộp thoại."
+        )
+        self.tabs.addTab(self._build_tasks_tab(), "Tác vụ")
 
         progress_group = QGroupBox("Tiến trình")
         progress_layout = QVBoxLayout(progress_group)
@@ -1010,9 +1020,38 @@ class MainWindow(QMainWindow):
             self.device_list.setEnabled(True)
             self.device_combo.setEnabled(True)
 
+    def _build_tasks_tab(self) -> QWidget:
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        group = QGroupBox("Thao tác trên tài khoản đang đăng nhập")
+        group_layout = QVBoxLayout(group)
+        group_layout.addWidget(self.thoat_quan_doan_task)
+        group_layout.addWidget(self.doi_tai_khoan_task)
+        layout.addWidget(group)
+
+        note = QLabel(
+            "Chọn một hoặc nhiều tác vụ rồi nhấn ▶ Bắt đầu. "
+            "Cần chọn đúng thiết bị ADB và đang ở trong game. "
+            "“Thoát màn hình Quân đoàn” chỉ đóng giao diện, không rời quân đoàn."
+        )
+        note.setWordWrap(True)
+        layout.addWidget(note)
+        layout.addStretch(1)
+        return page
+
     def _current_config(self) -> dict:
         if self.tabs.currentWidget() is self.clone_tab:
             return self.clone_tab.current_config()
+        if self.tabs.currentWidget().widget() if False else False:
+            pass
+        if self.tabs.tabText(self.tabs.currentIndex()) == "Tác vụ":
+            return {
+                "utility_tasks_mode": True,
+                "task_close_guild": self.thoat_quan_doan_task.isChecked(),
+                "task_switch_account": self.doi_tai_khoan_task.isChecked(),
+            }
         if self.ha_chien_cong.isChecked():
             giao_tranh_mode = {
                 "ha_chien_cong": True,
@@ -1095,6 +1134,14 @@ class MainWindow(QMainWindow):
             return
 
         config = self._current_config()
+        if config.get("utility_tasks_mode") and not any(
+            config.get(key) for key in ("task_close_guild", "task_switch_account")
+        ):
+            QMessageBox.warning(
+                self, "Chưa chọn tác vụ",
+                "Hãy chọn ít nhất một tác vụ trong tab Tác vụ.",
+            )
+            return
         self._active_clone_mode = bool(config.get("clone_mode"))
         self._active_mock_mode = mock_mode
         self._clone_total_accounts = 0
