@@ -55,11 +55,13 @@ class CloneTab(QWidget):
         self.clone_guild_check_in.setChecked(True)
         self.clone_receive_lucky_bag = QCheckBox("Nhận túi phúc")
         self.clone_receive_lucky_bag.setChecked(True)
+        self.clone_guild_fortune = QCheckBox("Cầu vận quân đoàn (5 lần)")
         self.clone_quoc_chien = QCheckBox("Quốc chiến")
         for checkbox in (
             self.clone_daily_check_in,
             self.clone_guild_check_in,
             self.clone_receive_lucky_bag,
+            self.clone_guild_fortune,
             self.clone_quoc_chien,
         ):
             layout.addWidget(checkbox)
@@ -99,6 +101,7 @@ class CloneTab(QWidget):
             "clone_daily_check_in": self.clone_daily_check_in.isChecked(),
             "clone_guild_check_in": self.clone_guild_check_in.isChecked(),
             "clone_receive_lucky_bag": self.clone_receive_lucky_bag.isChecked(),
+            "clone_guild_fortune": self.clone_guild_fortune.isChecked(),
             "clone_quoc_chien": self.clone_quoc_chien.isChecked(),
             "clone_logout": True,
         }
