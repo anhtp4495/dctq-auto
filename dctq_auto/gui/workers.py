@@ -524,19 +524,15 @@ class BotWorker(QThread):
 
         self.log_message.emit("Điểm danh: mở mục Hoạt động từ màn hình chính.")
         try:
-            try:
-                x, y = ocr_client.tap_ocr_target("buttons_hoat_dong")
-                self.log_message.emit(
-                    f"Đã click Hoạt động theo tọa độ đã lưu ({x}, {y})."
-                )
-            except (KeyError, FileNotFoundError, ValueError) as saved_target_error:
-                self.log_message.emit(
-                    "Không dùng được tọa độ buttons_hoat_dong đã lưu; thử nhận diện OCR trực tiếp."
-                )
-                if not self._tap_ocr_word(device, ("hoat dong",)):
-                    raise RuntimeError(
-                        "Không tìm thấy chữ Hoạt động trên màn hình chính qua OCR."
-                    ) from saved_target_error
+            screenshot = device.screenshot()
+            screen_width, screen_height = screenshot.size
+            hoat_dong_x = round(0.035937 * screen_width)
+            hoat_dong_y = round(0.732407 * screen_height)
+            device.shell(f"input tap {hoat_dong_x} {hoat_dong_y}")
+            self.log_message.emit(
+                "Đã click button_hoat_dong theo tọa độ tỷ lệ "
+                f"({hoat_dong_x}, {hoat_dong_y}); không dùng OCR để click nút này."
+            )
 
             screen_text = ""
             normalized = ""
