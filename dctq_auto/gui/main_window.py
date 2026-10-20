@@ -128,6 +128,8 @@ class MainWindow(QMainWindow):
         capture_row = QHBoxLayout(controls_panel)
         capture_row.setContentsMargins(8, 8, 8, 8)
         capture_row.setSpacing(5)
+        # Keep the control icons anchored to the right edge as the window resizes.
+        capture_row.addStretch(1)
         self.start_button = QPushButton("▶")
         self.start_button.setFixedSize(38, 30)
         self.start_button.setToolTip("Bắt đầu")
