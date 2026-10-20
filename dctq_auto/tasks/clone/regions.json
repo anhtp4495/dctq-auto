@@ -92,6 +92,56 @@
           }
         },
         {
+          "name": "profile",
+          "text": "Thông tin của tôi",
+          "confidence": null,
+          "bounds": {
+            "left": 36,
+            "top": 57,
+            "right": 76,
+            "bottom": 97
+          },
+          "rect": {
+            "x": 36,
+            "y": 57,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 56,
+            "y_px": 77
+          },
+          "center_ratio": {
+            "x": 0.029167,
+            "y": 0.071296
+          }
+        },
+        {
+          "name": "close_thong_tin_cua_toi",
+          "text": "Nút đóng cửa sổ Thông tin của tôi",
+          "confidence": null,
+          "bounds": {
+            "left": 1848,
+            "top": 54,
+            "right": 1888,
+            "bottom": 94
+          },
+          "rect": {
+            "x": 1848,
+            "y": 54,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 1868,
+            "y_px": 74
+          },
+          "center_ratio": {
+            "x": 0.972917,
+            "y": 0.068519
+          }
+        },
+        {
           "name": "dang_nhap",
           "text": "ĐĂNG NHAP",
           "confidence": null,
