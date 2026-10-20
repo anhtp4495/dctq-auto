@@ -465,6 +465,131 @@
             "x": 0.925521,
             "y": 0.081481
           }
+        },
+        {
+          "name": "close_quan_doan",
+          "text": "Nút đóng màn hình quân đoàn",
+          "confidence": null,
+          "bounds": {
+            "left": 1853,
+            "top": 31,
+            "right": 1893,
+            "bottom": 71
+          },
+          "rect": {
+            "x": 1853,
+            "y": 31,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 1873,
+            "y_px": 51
+          },
+          "center_ratio": {
+            "x": 0.975521,
+            "y": 0.047222
+          }
+        },
+        {
+          "name": "profile_tuy_chon",
+          "text": "Mở mục profile/tùy chọn",
+          "confidence": null,
+          "bounds": {
+            "left": 1793,
+            "top": 993,
+            "right": 1833,
+            "bottom": 1033
+          },
+          "rect": {
+            "x": 1793,
+            "y": 993,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 1813,
+            "y_px": 1013
+          },
+          "center_ratio": {
+            "x": 0.944271,
+            "y": 0.937963
+          }
+        },
+        {
+          "name": "man_hinh_tuy_chon",
+          "text": "Vùng nhận diện màn hình tùy chọn",
+          "confidence": null,
+          "bounds": {
+            "left": 541,
+            "top": 59,
+            "right": 581,
+            "bottom": 99
+          },
+          "rect": {
+            "x": 541,
+            "y": 59,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 561,
+            "y_px": 79
+          },
+          "center_ratio": {
+            "x": 0.292187,
+            "y": 0.073148
+          }
+        },
+        {
+          "name": "thoat_game",
+          "text": "Nút thoát game",
+          "confidence": null,
+          "bounds": {
+            "left": 983,
+            "top": 866,
+            "right": 1023,
+            "bottom": 906
+          },
+          "rect": {
+            "x": 983,
+            "y": 866,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 1003,
+            "y_px": 886
+          },
+          "center_ratio": {
+            "x": 0.522396,
+            "y": 0.82037
+          }
+        },
+        {
+          "name": "thoat_game_xac_nhan",
+          "text": "Nút xác nhận thoát game",
+          "confidence": null,
+          "bounds": {
+            "left": 1146,
+            "top": 673,
+            "right": 1186,
+            "bottom": 713
+          },
+          "rect": {
+            "x": 1146,
+            "y": 673,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 1166,
+            "y_px": 693
+          },
+          "center_ratio": {
+            "x": 0.607292,
+            "y": 0.641667
+          }
         }
       ],
       "screenshot": "user-provided OCR coordinates",
