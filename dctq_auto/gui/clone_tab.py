@@ -51,6 +51,7 @@ class CloneTab(QWidget):
         )
         self.account_file_combo.setToolTip("Chọn file tài khoản đã dùng trước đây")
         self.account_file_combo.currentIndexChanged.connect(self._update_account_status)
+        self.account_file_combo.currentIndexChanged.connect(self._show_selected_file_path)
         self.account_file_combo.activated.connect(self._show_selected_file_path)
         file_row.addWidget(self.account_file_combo, 1)
         self.browse_button = QPushButton("Chọn file…")
