@@ -17,6 +17,8 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QInputDialog,
+    QListWidget,
+    QListWidgetItem,
     QPlainTextEdit,
     QProgressBar,
     QPushButton,
@@ -88,22 +90,28 @@ class MainWindow(QMainWindow):
         central = QWidget(self)
         root = QVBoxLayout(central)
 
-        adb_group = QGroupBox("Thiết bị")
-        adb_layout = QHBoxLayout(adb_group)
-        adb_layout.addWidget(QLabel("Thiết bị:"))
-        self.device_combo = QComboBox()
-        self.device_combo.setMinimumWidth(0)
-        self.device_combo.setSizeAdjustPolicy(
-            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
-        )
-        self.device_combo.setMinimumContentsLength(10)
-        self.device_combo.addItem("Chạy thử (không cần thiết bị)", "mock")
-        self.device_combo.currentIndexChanged.connect(self._on_device_changed)
-        adb_layout.addWidget(self.device_combo, 1)
-        self.scan_button = QPushButton("Quét ADB")
+        device_panel = QWidget()
+        device_layout = QVBoxLayout(device_panel)
+        device_layout.setContentsMargins(0, 0, 0, 0)
+        self.scan_button = QPushButton("Quét thiết bị")
         self.scan_button.clicked.connect(self.scan_adb_devices)
-        adb_layout.addWidget(self.scan_button)
-        root.addWidget(adb_group)
+        device_layout.addWidget(self.scan_button)
+
+        self.device_list = QListWidget()
+        self.device_list.setMinimumHeight(66)
+        self.device_list.setMaximumHeight(72)
+        self.device_list.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.device_list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        device_layout.addWidget(self.device_list)
+        root.addWidget(device_panel)
+
+        # Keep the combo as the settings-compatible source of the selected serial.
+        # The visible QListWidget provides a compact, scrollable device list.
+        self.device_combo = QComboBox()
+        self.device_combo.addItem("Mock-Adb", "mock")
+        self.device_combo.currentIndexChanged.connect(self._on_device_changed)
+        self.device_list.currentItemChanged.connect(self._on_device_list_selection_changed)
+        self._sync_device_list_from_combo()
         capture_row = QHBoxLayout()
         capture_row.addStretch(1)
         self.start_button = QPushButton("▶")
@@ -876,14 +884,38 @@ class MainWindow(QMainWindow):
             if index < len(items) - 1:
                 self._log("---")
 
+    def _selected_device_serial(self):
+        return self.device_combo.currentData()
+
+    def _sync_device_list_from_combo(self) -> None:
+        self.device_list.blockSignals(True)
+        self.device_list.clear()
+        for index in range(self.device_combo.count()):
+            serial = self.device_combo.itemData(index)
+            label = self.device_combo.itemText(index)
+            item = QListWidgetItem(label)
+            item.setData(Qt.ItemDataRole.UserRole, serial)
+            self.device_list.addItem(item)
+            if index == self.device_combo.currentIndex():
+                self.device_list.setCurrentItem(item)
+        self.device_list.blockSignals(False)
+
+    def _on_device_list_selection_changed(self, current, _previous=None) -> None:
+        if current is None:
+            return
+        index = self.device_combo.findData(current.data(Qt.ItemDataRole.UserRole))
+        if index >= 0 and index != self.device_combo.currentIndex():
+            self.device_combo.setCurrentIndex(index)
+
     def scan_adb_devices(self) -> None:
         current_serial = self.device_combo.currentData()
         self.scan_button.setEnabled(False)
+        self.device_list.setEnabled(False)
         self.device_combo.setEnabled(False)
         try:
             devices = AdbClient.list_devices()
             self.device_combo.clear()
-            self.device_combo.addItem("Chạy thử (không cần thiết bị)", "mock")
+            self.device_combo.addItem("Mock-Adb", "mock")
             online_count = 0
             for device in devices:
                 serial = device.serial
@@ -891,21 +923,26 @@ class MainWindow(QMainWindow):
                     state = device.get_state()
                 except Exception:
                     state = "unavailable"
-                if state == "device":
-                    self.device_combo.addItem(serial, serial)
+                online = state == "device"
+                status = "online" if online else "mất kết nối"
+                self.device_combo.addItem(f"{serial} ({status})", serial)
+                if online:
                     online_count += 1
 
             preferred = current_serial or self._settings.adb_serial or "mock"
             index = self.device_combo.findData(preferred)
             self.device_combo.setCurrentIndex(index if index >= 0 else 0)
-            self._log(f"Quét ADB: tìm thấy {online_count} thiết bị online.")
+            self._sync_device_list_from_combo()
+            self._log(f"Quét thiết bị: tìm thấy {online_count} thiết bị online.")
         except Exception as exc:
             self.device_combo.clear()
-            self.device_combo.addItem("Chạy thử (không cần thiết bị)", "mock")
+            self.device_combo.addItem("Mock-Adb", "mock")
             self.device_combo.setCurrentIndex(0)
+            self._sync_device_list_from_combo()
             self._log(f"Lỗi quét ADB: {exc}. Vẫn có thể chạy thử.")
         finally:
             self.scan_button.setEnabled(True)
+            self.device_list.setEnabled(True)
             self.device_combo.setEnabled(True)
 
     def _current_config(self) -> dict:
