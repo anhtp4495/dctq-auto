@@ -404,6 +404,8 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(central)
         self._restore_settings()
+        # Sync dependent controls after persisted checkbox states are restored.
+        self._toggle_task_battle_options(self.task_battle.isChecked())
         self._place_window_on_right()
         # Restore saved geometry after the native Windows frame has been created.
         # Restoring before show() can shift the outer frame vertically by the
