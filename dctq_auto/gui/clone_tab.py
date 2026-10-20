@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from dctq_auto.tasks.clone.accounts import load_accounts
+from dctq_auto.tasks.common.accounts import load_accounts
 
 
 class CloneTab(QWidget):
