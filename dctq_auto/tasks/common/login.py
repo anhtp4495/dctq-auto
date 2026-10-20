@@ -29,7 +29,7 @@ def submit_login_form(worker, account, device, ocr_client) -> bool:
     return True
 
 
-def verify_login(worker, account, device, ocr_client) -> tuple[bool, str | None]:
+def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str | None]:
     """Xác minh đăng nhập qua OCR và xử lý hộp thoại lỗi thường gặp."""
     verified = False
     previous_screen_text = None
@@ -39,7 +39,7 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool, str | None]
     for _attempt in range(20):
         if not worker._wait_if_paused():
             worker.log_message.emit("Đã dừng theo yêu cầu.")
-            return False, observed_error
+            return None, observed_error
         time.sleep(1)
         try:
             result_text = worker._screen_text(device)
