@@ -261,10 +261,18 @@ class BotWorker(QThread):
             if not self._wait_if_paused():
                 self.log_message.emit("Đã dừng theo yêu cầu.")
                 return
+            self.progress_changed.emit(
+                self._progress_completed, self._progress_total,
+                f"Tài khoản {account_index}/{len(accounts)}: {account.username}",
+            )
             self.log_message.emit(
                 f"Đang xử lý tài khoản: {account.username}"
             )
             for task_index, (_key, label) in enumerate(selected, start=1):
+                self.progress_changed.emit(
+                    self._progress_completed, self._progress_total,
+                    f"{account.username} — {label} ({task_index}/{len(selected)})",
+                )
                 if not self._mock_tick(
                     f"[{account.username}] {label}: chạy thử bước "
                     f"{task_index}/{len(selected)}."
