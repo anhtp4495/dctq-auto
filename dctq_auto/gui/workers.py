@@ -630,23 +630,14 @@ class BotWorker(QThread):
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
                 return False
 
-            # Vị trí button_diem_danh nằm ngay phía trên mục Tranh bá.
-            tranh_ba_rect = (
-                round(0 / 1920 * screen_width),
-                round(874 / 1080 * screen_height),
-                round(474 / 1920 * screen_width),
-                round(1002 / 1080 * screen_height),
-            )
-            # Nút Điểm danh nằm ngay phía trên nhãn Tranh bá.
-            # OCR người dùng cung cấp: Tranh bá ở khoảng y=610 trên màn hình 1920x1080,
-            # nên quét vùng ngay phía trên nhãn đó thay vì toàn bộ danh sách Phúc lợi.
+            # Ưu tiên OCR tìm chữ "Điểm danh" trong vùng phía trên nhãn Tranh bá.
+            # Nếu OCR không tìm thấy sau 3 lần, dùng cách 2: tap ngay phía trên Tranh bá.
             diem_danh_rect = (
                 round(199 / 1920 * screen_width),
                 round(500 / 1080 * screen_height),
                 round(471 / 1920 * screen_width),
                 round(610 / 1080 * screen_height),
             )
-            activity_rect = diem_danh_rect
 
             # BƯỚC 3: Nhận lễ bao miễn phí sau khi xác định đúng nút Phúc lợi.
             self.log_message.emit("BƯỚC 3/7: Nhận lễ bao miễn phí.")
@@ -666,38 +657,47 @@ class BotWorker(QThread):
             self.log_message.emit("Đã gửi phím Enter để đóng/xác nhận dialog lễ bao.")
             time.sleep(0.5)
 
-            self.log_message.emit("BƯỚC 4/7: Tìm nút Điểm danh bằng OCR, thử tối đa 3 lần.")
+            self.log_message.emit(
+                "BƯỚC 4/7: Ưu tiên OCR tìm Điểm danh; nếu không thấy sẽ tap phía trên Tranh bá."
+            )
             clicked_diem_danh = False
             for attempt in range(1, 4):
                 if not self._wait_if_paused():
                     self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
                     return False
                 self.log_message.emit(
-                    f"Lần {attempt}/3: tìm và click button_diem_danh trong RECT "
-                    f"({activity_rect[0]}, {activity_rect[1]}, "
-                    f"{activity_rect[2]}, {activity_rect[3]})."
+                    f"Lần OCR {attempt}/3 tìm 'diem danh' trong RECT "
+                    f"({diem_danh_rect[0]}, {diem_danh_rect[1]}, "
+                    f"{diem_danh_rect[2]}, {diem_danh_rect[3]})."
                 )
                 if self._tap_ocr_phrase_in_rect(
-                    device, ("diem danh",), activity_rect
+                    device, ("diem danh",), diem_danh_rect
                 ):
                     clicked_diem_danh = True
                     self.log_message.emit(
-                        f"Đã click button_diem_danh lần {attempt}/3."
+                        f"OCR đã tìm thấy và click Điểm danh ở lần {attempt}/3."
                     )
-                    time.sleep(1.0)
-                    # The reward-success dialog can remain above the activity
-                    # page; retry the button so the game advances to the calendar.
-                    if attempt < 3:
-                        continue
                     break
-                time.sleep(0.7)
+                if attempt < 3:
+                    time.sleep(0.7)
+
             if not clicked_diem_danh:
-                raise RuntimeError(
-                    "OCR không tìm thấy button_diem_danh trong RECT sau 3 lần thử."
+                # Fallback based on OCR sample: label "Tranh Ba" is around (337, 622)
+                # on 1920x1080, so tap the row immediately above it.
+                fallback_x = round(337 / 1920 * screen_width)
+                fallback_y = round(565 / 1080 * screen_height)
+                self.log_message.emit(
+                    "OCR không thấy 'Điểm danh' sau 3 lần; dùng cách 2, "
+                    f"tap phía trên Tranh bá tại ({fallback_x}, {fallback_y})."
                 )
-            self.log_message.emit(
-                "Đã thử click button_diem_danh tối đa 3 lần; chờ màn hình chọn ngày."
-            )
+                if not self._wait_if_paused():
+                    self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
+                    return False
+                device.shell(f"input tap {fallback_x} {fallback_y}")
+                clicked_diem_danh = True
+                time.sleep(1.0)
+
+
             if not self._wait_if_paused():
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
                 return False
