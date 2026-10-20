@@ -578,26 +578,25 @@ class BotWorker(QThread):
 
             # BƯỚC 3: Luôn mở Phúc lợi và nhận lễ bao miễn phí trước khi vào Điểm danh.
             self.log_message.emit("BƯỚC 3/6: Mở Phúc lợi và nhận lễ bao miễn phí.")
-            if True:
-                phuc_loi_x = round(0.077604 * screen_width)
-                phuc_loi_y = round(0.325000 * screen_height)
-                self.log_message.emit(
-                    "Chưa thấy Điểm danh ở lần OCR xác nhận; click button_phuc_loi "
-                    f"tại ({phuc_loi_x}, {phuc_loi_y})."
-                )
-                device.shell(f"input tap {phuc_loi_x} {phuc_loi_y}")
-                self.log_message.emit("Đã click Phúc lợi; click tiếp lễ bao miễn phí.")
-                le_bao_x = round(0.366667 * screen_width)
-                le_bao_y = round(0.202778 * screen_height)
-                device.shell(f"input tap {le_bao_x} {le_bao_y}")
-                self.log_message.emit(
-                    f"Đã click le_bao_mien_phi tại ({le_bao_x}, {le_bao_y}); chờ 3 giây."
-                )
-                time.sleep(3.0)
-                if not self._wait_if_paused():
-                    self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
-                    return False
-            
+            phuc_loi_x = round(0.077604 * screen_width)
+            phuc_loi_y = round(0.325000 * screen_height)
+            self.log_message.emit(
+                "Chưa thấy Điểm danh ở lần OCR xác nhận; click button_phuc_loi "
+                f"tại ({phuc_loi_x}, {phuc_loi_y})."
+            )
+            device.shell(f"input tap {phuc_loi_x} {phuc_loi_y}")
+            self.log_message.emit("Đã click Phúc lợi; click tiếp lễ bao miễn phí.")
+            le_bao_x = round(0.366667 * screen_width)
+            le_bao_y = round(0.202778 * screen_height)
+            device.shell(f"input tap {le_bao_x} {le_bao_y}")
+            self.log_message.emit(
+                f"Đã click le_bao_mien_phi tại ({le_bao_x}, {le_bao_y}); chờ 3 giây."
+            )
+            time.sleep(3.0)
+            if not self._wait_if_paused():
+                self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
+                return False
+        
             self.log_message.emit("BƯỚC 4/6: Tìm nút Điểm danh bằng OCR, thử tối đa 3 lần.")
             clicked_diem_danh = False
             for attempt in range(1, 4):
@@ -707,7 +706,7 @@ class BotWorker(QThread):
             close_x = round(0.972396 * calendar_width)
             close_y = round(0.119444 * calendar_height)
             self.log_message.emit(
-                f"Đang đóng màn hình Điểm danh tại ({close_x}, {close_y})."
+                f"BƯỚC 7/7: Đóng màn hình Điểm danh tại ({close_x}, {close_y})."
             )
             device.shell(f"input tap {close_x} {close_y}")
             self.log_message.emit("Đã đóng màn hình Điểm danh.")
