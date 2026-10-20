@@ -390,17 +390,34 @@ class MainWindow(QMainWindow):
 
 
     def _place_window_on_right(self) -> None:
-        """Open as a narrow, full-height utility window on the right side."""
+        """Restore the last saved window geometry, or use a safe initial placement."""
         screen = QGuiApplication.primaryScreen()
         if screen is None:
             self.resize(333, 760)
             return
+
         area = screen.availableGeometry()
         width = min(333, area.width())
+        self.setMinimumWidth(min(300, width))
+
+        saved_geometry = self._ui_settings.value("ui/window_geometry")
+        if saved_geometry and self.restoreGeometry(saved_geometry):
+            # Keep the restored window inside the current usable screen area.
+            frame = self.frameGeometry()
+            if frame.width() > area.width() or frame.height() > area.height():
+                self.resize(
+                    min(self.width(), area.width()),
+                    max(1, min(self.height(), area.height() - 30)),
+                )
+                frame = self.frameGeometry()
+            x = min(max(frame.x(), area.left()), area.right() - frame.width() + 1)
+            y = min(max(frame.y(), area.top()), area.bottom() - frame.height() + 1)
+            self.move(x, y)
+            return
+
         # QWidget.resize() sets the client size; the native title bar/frame adds
         # extra height. Leave room for that frame so the window stays on-screen.
-        height = max(400, area.height() - 48)
-        self.setMinimumWidth(min(300, width))
+        height = max(1, area.height() - 48)
         self.resize(width, height)
         self.move(area.right() - width + 1, area.top())
 
@@ -526,6 +543,8 @@ class MainWindow(QMainWindow):
         self._ui_settings.sync()
 
     def closeEvent(self, event) -> None:
+        self._ui_settings.setValue("ui/window_geometry", self.saveGeometry())
+        self._ui_settings.sync()
         screen = self.screen() or QGuiApplication.primaryScreen()
         area = screen.availableGeometry() if screen is not None else None
         frame = self.frameGeometry()
