@@ -1434,7 +1434,6 @@ class MainWindow(QMainWindow):
             self.progress_bar.setValue(
                 max(0, min(self._clone_total_accounts, completed))
             )
-            self.progress_bar.setFormat("%v/%m tài khoản đã xử lý")
             # Per-account results are shown in the scrollable list.
             return
         self.progress_bar.setRange(0, max(1, total))
