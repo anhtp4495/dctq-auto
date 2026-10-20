@@ -1,6 +1,15 @@
-"""Các thao tác dùng chung để gửi thông tin đăng nhập vào game."""
+"""Các thao tác và khai báo task đăng nhập dùng chung."""
 
 import time
+
+from dctq_auto.tasks.base import TaskSpec
+
+SPEC = TaskSpec(
+    key="clone_login",
+    label="Đăng nhập",
+    description="Đăng nhập vào tài khoản đang được xử lý.",
+    category="clone",
+)
 
 
 def submit_login_form(worker, account, device, ocr_client) -> bool:
@@ -50,8 +59,6 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
             break
 
         normalized_result = worker._normalize_screen_text(result_text)
-        # Some game dialogs show only "khong dung"; OCR may miss the
-        # rest of the message and read the confirmation button as "dong".
         if "khong dung" in normalized_result:
             observed_error = "Thông tin đăng nhập không đúng"
             worker.log_message.emit(
@@ -59,9 +66,6 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
                 "đang bấm nút Đồng ý để đóng hộp thoại."
             )
             try:
-                # The saved dong_y region may not exist, and OCR can read
-                # only the button text "dong". Locate that word on the live
-                # screenshot first; use saved coordinates only as fallback.
                 tapped = worker._tap_ocr_word(device, ("dong", "dong y", "dong y!"))
                 if not tapped:
                     ocr_client.tap_ocr_target("dong_y")
@@ -75,8 +79,6 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
                 )
             break
 
-        # A first-login profile update dialog may appear instead of the
-        # wrong-credentials dialog. Close it so the profile can finish loading.
         if "cap nhat thong tin ca nhan" in normalized_result:
             worker.log_message.emit(
                 f"[{account.username}] Phát hiện hộp thoại cập nhật thông tin cá nhân; đang đóng hộp thoại."
@@ -100,13 +102,10 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
             previous_screen_text = None
             continue
 
-        # Consider login successful only after the wrong-credentials dialog
-        # is absent and OCR no longer sees the login button on consecutive frames.
         if "dang nhap" not in normalized_result and not observed_error:
             if previous_screen_text is not None:
                 verified = True
                 break
         previous_screen_text = result_text
-
 
     return verified, observed_error
