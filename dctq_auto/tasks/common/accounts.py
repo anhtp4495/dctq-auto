@@ -13,13 +13,13 @@ class GameAccount:
     password: str
 
 
-def load_accounts(path: str | Path) -> list[CloneAccount]:
+def load_accounts(path: str | Path) -> list[GameAccount]:
     """Đọc và kiểm tra danh sách tài khoản từ file UTF-8/UTF-8-BOM."""
     account_file = Path(path).expanduser()
     if not account_file.is_file():
         raise FileNotFoundError(f"Không tìm thấy file tài khoản: {account_file}")
 
-    accounts: list[CloneAccount] = []
+    accounts: list[GameAccount] = []
     for line_number, raw_line in enumerate(
         account_file.read_text(encoding="utf-8-sig").splitlines(), start=1
     ):
@@ -35,7 +35,7 @@ def load_accounts(path: str | Path) -> list[CloneAccount]:
             raise ValueError(
                 f"Dòng {line_number} thiếu username hoặc password."
             )
-        accounts.append(CloneAccount(username=username, password=password))
+        accounts.append(GameAccount(username=username, password=password))
 
     if not accounts:
         raise ValueError("File TXT chưa có tài khoản hợp lệ.")
