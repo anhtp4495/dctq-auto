@@ -4,7 +4,7 @@ import logging
 import time
 
 from PySide6.QtCore import Qt, QTimer, QSettings, QThread, Signal
-from PySide6.QtGui import QGuiApplication
+from PySide6.QtGui import QColor, QFont, QGuiApplication, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import (
     QAbstractButton,
     QButtonGroup,
@@ -1362,31 +1362,52 @@ class MainWindow(QMainWindow):
             self.task_progress_labels[name] = item
             self._render_task_progress(name, "pending", 0, count)
 
+    @staticmethod
+    def _status_icon(glyph: str, color: str) -> QIcon:
+        pixmap = QPixmap(18, 18)
+        pixmap.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(pixmap)
+        painter.setPen(QColor(color))
+        font = QFont()
+        font.setBold(True)
+        font.setPixelSize(16)
+        painter.setFont(font)
+        painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, glyph)
+        painter.end()
+        return QIcon(pixmap)
+
     def _render_task_progress(self, name: str, state: str, completed: int, total: int) -> None:
         item = self.task_progress_labels.get(name)
         if item is None:
             return
-        if state == "running":
-            prefix = "→"
-        elif state == "done":
-            prefix = "✓"
+        if state == "done":
+            item.setIcon(self._status_icon("✓", "#22863a"))
+            prefix = ""
         elif state == "failed":
-            prefix = "✗"
-        elif state == "stopped":
-            prefix = "■"
+            item.setIcon(self._status_icon("✗", "#d1242f"))
+            prefix = ""
         else:
-            prefix = "·"
+            item.setIcon(QIcon())
+            if state == "running":
+                prefix = "→ "
+            elif state == "stopped":
+                prefix = "■ "
+            else:
+                prefix = "· "
         show_count = total > 1 or name == "Thăm dò lãnh địa"
         detail = f" {completed}/{total}" if show_count else ""
-        item.setText(f"{prefix} {name}{detail}")
+        item.setText(f"{prefix}{name}{detail}")
 
     def _update_clone_account_result(self, username: str, success: bool) -> None:
+        icon = self._status_icon("✓", "#22863a") if success else self._status_icon("✗", "#d1242f")
         for index in range(self.clone_result_list.count()):
             item = self.clone_result_list.item(index)
             if item.data(Qt.ItemDataRole.UserRole) == username:
-                item.setText(f"{'✓' if success else '✗'} {username}")
+                item.setIcon(icon)
+                item.setText(username)
                 return
-        item = QListWidgetItem(f"{'✓' if success else '✗'} {username}")
+        item = QListWidgetItem(username)
+        item.setIcon(icon)
         item.setData(Qt.ItemDataRole.UserRole, username)
         self.clone_result_list.addItem(item)
         self.clone_result_list.scrollToBottom()
