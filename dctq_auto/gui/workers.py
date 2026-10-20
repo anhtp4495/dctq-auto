@@ -955,11 +955,10 @@ class BotWorker(QThread):
                         f"[{account.username}] Mở profile để vào Cài đặt người dùng; thử tối đa 3 lần."
                     )
 
-                    # Tap the saved profile location directly through ADB (scaled to the
-                    # current screenshot size), rather than relying on OCR target lookup.
-                    # Retry up to three times and check whether the options screen appears.
-                    options_text = ""
-                    options_found = False
+                    # First open and verify the profile panel ("Thông tin của tôi").
+                    # Only after this succeeds, close it and open the options/profile menu.
+                    profile_panel_found = False
+                    profile_panel_text = ""
                     for profile_attempt in range(3):
                         if not self._wait_if_paused():
                             self.log_message.emit("Đã dừng theo yêu cầu.")
@@ -968,35 +967,61 @@ class BotWorker(QThread):
                         tap_x = int(screen_image.width * 0.029167)
                         tap_y = int(screen_image.height * 0.071296)
                         self.log_message.emit(
-                            f"[{account.username}] Bấm trực tiếp profile tại ({tap_x}, {tap_y}), "
+                            f"[{account.username}] Bấm profile tại ({tap_x}, {tap_y}), "
                             f"lần {profile_attempt + 1}/3 (ảnh {screen_image.width}x{screen_image.height})."
                         )
                         device.shell(f"input tap {tap_x} {tap_y}")
                         time.sleep(1)
-                        options_text = self._normalize_screen_text(self._screen_text(device))
-                        if "tuy chon" in options_text or "cai dat nguoi dung" in options_text:
-                            options_found = True
+                        profile_panel_text = self._normalize_screen_text(self._screen_text(device))
+                        if "thong tin cua toi" in profile_panel_text:
+                            profile_panel_found = True
                             self.log_message.emit(
-                                f"[{account.username}] Đã mở profile ở lần thử {profile_attempt + 1}/3."
+                                f"[{account.username}] Đã xác minh profile qua tiêu đề "
+                                f"'Thông tin của tôi' ở lần thử {profile_attempt + 1}/3."
                             )
                             break
                         self.log_message.emit(
-                            f"[{account.username}] Chưa mở được profile, thử lại "
-                            f"{profile_attempt + 1}/3. OCR: {options_text[:140] or '(trống)'}"
+                            f"[{account.username}] Chưa thấy tiêu đề 'Thông tin của tôi', "
+                            f"thử lại {profile_attempt + 1}/3. OCR: "
+                            f"{profile_panel_text[:160] or '(trống)'}"
                         )
                         time.sleep(0.5)
-                    if not options_found:
+
+                    options_text = ""
+                    options_found = False
+                    if not profile_panel_found:
                         logout_ok = False
                         self.log_message.emit(
-                            f"[{account.username}] Không nhận diện được màn hình tùy chọn; "
-                            f"không bấm tiếp để tránh thao tác nhầm. OCR: "
-                            f"{options_text[:180] or '(trống)'}"
+                            f"[{account.username}] Không xác minh được profile sau 3 lần; "
+                            "không chuyển sang Tùy chọn để tránh thao tác nhầm."
                         )
                     else:
-                        self.log_message.emit(
-                            f"[{account.username}] Đã nhận diện màn hình tùy chọn: "
-                            f"{options_text[:180]}"
-                        )
+                        # Close the verified "Thông tin của tôi" panel using its saved target.
+                        ocr_client.tap_ocr_target("close_thong_tin_cua_toi")
+                        time.sleep(0.7)
+                        # Now tap the separate options/profile button.
+                        ocr_client.tap_ocr_target("profile_tuy_chon")
+                        time.sleep(1)
+                        for options_attempt in range(10):
+                            if not self._wait_if_paused():
+                                self.log_message.emit("Đã dừng theo yêu cầu.")
+                                return
+                            options_text = self._normalize_screen_text(self._screen_text(device))
+                            if "tuy chon" in options_text or "cai dat nguoi dung" in options_text:
+                                options_found = True
+                                break
+                            time.sleep(1)
+                        if options_found:
+                            self.log_message.emit(
+                                f"[{account.username}] Đã xác nhận màn hình Tùy chọn: "
+                                f"{options_text[:180]}"
+                            )
+                        else:
+                            logout_ok = False
+                            self.log_message.emit(
+                                f"[{account.username}] Đã xác minh profile nhưng không nhận diện được "
+                                f"màn hình Tùy chọn. OCR: {options_text[:180] or '(trống)'}"
+                            )
                         # Open Cài đặt người dùng using the supplied saved coordinate.
                         ocr_client.tap_ocr_target("cai_dat_nguoi_dung")
                         time.sleep(1)
