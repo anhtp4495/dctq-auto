@@ -415,6 +415,56 @@
             "x": 0.913542,
             "y": 0.05463
           }
+        },
+        {
+          "name": "cau_van",
+          "text": "Nút Cầu vận",
+          "confidence": null,
+          "bounds": {
+            "left": 575,
+            "top": 887,
+            "right": 615,
+            "bottom": 927
+          },
+          "rect": {
+            "x": 575,
+            "y": 887,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 595,
+            "y_px": 907
+          },
+          "center_ratio": {
+            "x": 0.309896,
+            "y": 0.839815
+          }
+        },
+        {
+          "name": "close_cau_van",
+          "text": "Nút đóng cửa sổ Cầu vận",
+          "confidence": null,
+          "bounds": {
+            "left": 1757,
+            "top": 68,
+            "right": 1797,
+            "bottom": 108
+          },
+          "rect": {
+            "x": 1757,
+            "y": 68,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 1777,
+            "y_px": 88
+          },
+          "center_ratio": {
+            "x": 0.925521,
+            "y": 0.081481
+          }
         }
       ],
       "screenshot": "user-provided OCR coordinates",
