@@ -1026,6 +1026,12 @@ class MainWindow(QMainWindow):
         self.task_guild_checkin = QCheckBox("Báo danh quân đoàn")
         self.task_knb_contribution = QCheckBox("Đóng góp KNB")
         self.task_territory = QCheckBox("Thăm dò lãnh địa")
+        self.task_territory_count = QSpinBox()
+        self.task_territory_count.setRange(1, 10)
+        self.task_territory_count.setValue(1)
+        self.task_territory_count.setEnabled(False)
+        self.task_territory_count.setKeyboardTracking(False)
+        self.task_territory.toggled.connect(self.task_territory_count.setEnabled)
         self.task_glass_tower = QCheckBox("Lưu Ly Tháp")
         self.task_battle = QCheckBox("Giao tranh")
         self.task_championship = QCheckBox("Tranh bá")
@@ -1033,12 +1039,16 @@ class MainWindow(QMainWindow):
 
         daily_group = QGroupBox("Nhiệm vụ")
         daily_layout = QGridLayout(daily_group)
-        for index, checkbox in enumerate((
-            self.task_login, self.task_daily_checkin, self.task_guild_checkin,
-            self.task_knb_contribution, self.task_territory, self.task_glass_tower,
-            self.task_battle, self.task_championship, self.task_strategy,
-        )):
-            daily_layout.addWidget(checkbox, index // 2, index % 2)
+        daily_layout.addWidget(self.task_login, 0, 0)
+        daily_layout.addWidget(self.task_daily_checkin, 0, 1)
+        daily_layout.addWidget(self.task_guild_checkin, 1, 0)
+        daily_layout.addWidget(self.task_knb_contribution, 1, 1)
+        daily_layout.addWidget(self.task_territory, 2, 0)
+        daily_layout.addWidget(self.task_territory_count, 2, 1)
+        daily_layout.addWidget(self.task_glass_tower, 3, 0)
+        daily_layout.addWidget(self.task_battle, 3, 1)
+        daily_layout.addWidget(self.task_championship, 4, 0)
+        daily_layout.addWidget(self.task_strategy, 4, 1)
         layout.addWidget(daily_group)
 
         group = QGroupBox("Thao tác tài khoản")
@@ -1071,6 +1081,7 @@ class MainWindow(QMainWindow):
                 "bao_danh_quan_doan": self.task_guild_checkin.isChecked(),
                 "dong_gop_knb": self.task_knb_contribution.isChecked(),
                 "tham_do_lanh_dia": self.task_territory.isChecked(),
+                "so_lan_tham_do_lanh_dia": self.task_territory_count.value(),
                 "nhiem_vu_luu_ly_thap": self.task_glass_tower.isChecked(),
                 "thuc_hien_giao_tranh": self.task_battle.isChecked(),
                 "thuc_hien_tranh_ba": self.task_championship.isChecked(),
