@@ -925,7 +925,7 @@ class MainWindow(QMainWindow):
                 except Exception:
                     state = "unavailable"
                 online = state == "device"
-                status = "online" if online else "mất kết nối"
+                status = "đang hoạt động" if online else "mất kết nối"
                 self.device_combo.addItem(f"{serial} ({status})", serial)
                 if online:
                     online_count += 1
