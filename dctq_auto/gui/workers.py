@@ -693,9 +693,18 @@ class BotWorker(QThread):
                 time.sleep(0.15)
 
             self.log_message.emit(
-                "Đã gửi thao tác click cho đủ 32 ô ngày. "
-                "Cần kiểm tra trên LDPlayer xem game có yêu cầu xác nhận/nhận thưởng riêng không."
+                "Đã gửi thao tác click cho đủ 32 ô ngày và xác nhận từng ô."
             )
+            if not self._wait_if_paused():
+                self.log_message.emit("Điểm danh đã dừng theo yêu cầu trước khi thoát màn hình.")
+                return False
+            close_x = round(0.972396 * calendar_width)
+            close_y = round(0.119444 * calendar_height)
+            device.shell(f"input tap {close_x} {close_y}")
+            self.log_message.emit(
+                f"Đã click close_diem_danh sau ngày 32/32 tại ({close_x}, {close_y})."
+            )
+            time.sleep(0.5)
             return True
         except Exception as exc:
             self.log_message.emit(f"Điểm danh thất bại: {exc}")
