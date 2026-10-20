@@ -27,3 +27,86 @@ def submit_login_form(worker, account, device, ocr_client) -> bool:
         f"[{account.username}] Đã gửi yêu cầu đăng nhập; đang xác minh kết quả."
     )
     return True
+
+
+def verify_login(worker, account, device, ocr_client) -> tuple[bool, str | None]:
+    """Xác minh đăng nhập qua OCR và xử lý hộp thoại lỗi thường gặp."""
+    verified = False
+    previous_screen_text = None
+    observed_error = None
+    # Allow up to 20 seconds for the game/network to respond. Require two
+    # consecutive non-login OCR readings to avoid counting a transient frame.
+    for _attempt in range(20):
+        if not worker._wait_if_paused():
+            worker.log_message.emit("Đã dừng theo yêu cầu.")
+            return False, observed_error
+        time.sleep(1)
+        try:
+            result_text = worker._screen_text(device)
+        except Exception as exc:
+            worker.log_message.emit(
+                f"[{account.username}] Lỗi đọc màn hình khi xác minh: {exc}"
+            )
+            break
+
+        normalized_result = worker._normalize_screen_text(result_text)
+        # Some game dialogs show only "khong dung"; OCR may miss the
+        # rest of the message and read the confirmation button as "dong".
+        if "khong dung" in normalized_result:
+            observed_error = "Thông tin đăng nhập không đúng"
+            worker.log_message.emit(
+                f"[{account.username}] OCR phát hiện thông báo 'không đúng'; "
+                "đang bấm nút Đồng ý để đóng hộp thoại."
+            )
+            try:
+                # The saved dong_y region may not exist, and OCR can read
+                # only the button text "dong". Locate that word on the live
+                # screenshot first; use saved coordinates only as fallback.
+                tapped = worker._tap_ocr_word(device, ("dong", "dong y", "dong y!"))
+                if not tapped:
+                    ocr_client.tap_ocr_target("dong_y")
+                worker.log_message.emit(
+                    f"[{account.username}] Đã gửi thao tác đóng hộp thoại."
+                )
+                time.sleep(0.5)
+            except Exception as exc:
+                worker.log_message.emit(
+                    f"[{account.username}] Không bấm được nút Đồng ý: {exc}"
+                )
+            break
+
+        # A first-login profile update dialog may appear instead of the
+        # wrong-credentials dialog. Close it so the profile can finish loading.
+        if "cap nhat thong tin ca nhan" in normalized_result:
+            worker.log_message.emit(
+                f"[{account.username}] Phát hiện hộp thoại cập nhật thông tin cá nhân; đang đóng hộp thoại."
+            )
+            try:
+                ocr_client.tap_ocr_target("close_cap_nhat_thong_tin_ca_nhan")
+                time.sleep(1)
+                previous_screen_text = None
+                continue
+            except Exception as exc:
+                worker.log_message.emit(
+                    f"[{account.username}] Không đóng được hộp thoại cập nhật thông tin cá nhân: {exc}"
+                )
+                break
+
+        observed_error = worker._login_error(result_text) or observed_error
+        if worker._is_login_screen(result_text):
+            previous_screen_text = None
+            continue
+        if not result_text.strip():
+            previous_screen_text = None
+            continue
+
+        # Consider login successful only after the wrong-credentials dialog
+        # is absent and OCR no longer sees the login button on consecutive frames.
+        if "dang nhap" not in normalized_result and not observed_error:
+            if previous_screen_text is not None:
+                verified = True
+                break
+        previous_screen_text = result_text
+
+
+    return verified, observed_error
