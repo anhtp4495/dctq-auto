@@ -23,7 +23,6 @@ from PySide6.QtWidgets import (
     QRadioButton,
     QScrollArea,
     QSpinBox,
-    QStyle,
     QTabWidget,
     QVBoxLayout,
     QWidget,
@@ -107,45 +106,28 @@ class MainWindow(QMainWindow):
         root.addWidget(adb_group)
         capture_row = QHBoxLayout()
         capture_row.addStretch(1)
-        self.start_button = QPushButton()
+        self.start_button = QPushButton("▶")
         self.start_button.setFixedSize(38, 30)
-        self.start_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay))
         self.start_button.setToolTip("Bắt đầu")
         self.start_button.clicked.connect(self.start_bot)
         capture_row.addWidget(self.start_button)
 
-        self.pause_button = QPushButton()
+        self.pause_button = QPushButton("⏸")
         self.pause_button.setFixedSize(38, 30)
-        self.pause_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPause))
         self.pause_button.setToolTip("Tạm dừng")
         self.pause_button.setEnabled(False)
         self.pause_button.clicked.connect(self.toggle_pause_bot)
         capture_row.addWidget(self.pause_button)
 
-        self.stop_button = QPushButton()
+        self.stop_button = QPushButton("⏹")
         self.stop_button.setFixedSize(38, 30)
-        self.stop_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaStop))
         self.stop_button.setToolTip("Dừng hẳn")
         self.stop_button.setEnabled(False)
         self.stop_button.clicked.connect(self.stop_bot)
         capture_row.addWidget(self.stop_button)
 
-        # Blue icon-button styling inspired by the supplied HTML example.
-        self.start_button.setStyleSheet(
-            "QPushButton { background-color: #2563EB; color: white; border: none; border-radius: 8px; }"
-            "QPushButton:hover:enabled { background-color: #1D4ED8; }"
-            "QPushButton:disabled { background-color: #CBD5E1; color: #94A3B8; }"
-        )
-        self.pause_button.setStyleSheet(
-            "QPushButton { background-color: #0284C7; color: white; border: none; border-radius: 8px; }"
-            "QPushButton:hover:enabled { background-color: #0369A1; }"
-            "QPushButton:disabled { background-color: #F1F5F9; color: #CBD5E1; }"
-        )
-        self.stop_button.setStyleSheet(
-            "QPushButton { background-color: #3B82F6; color: white; border: none; border-radius: 8px; }"
-            "QPushButton:hover:enabled { background-color: #1D4ED8; }"
-            "QPushButton:disabled { background-color: #F1F5F9; color: #CBD5E1; }"
-        )
+        # Use the same native button appearance as the screenshot/analyze controls.
+        # Qt handles the disabled appearance automatically.
 
         self.capture_annotate_button = QPushButton("📷")
         self.capture_annotate_button.setFixedSize(38, 30)
@@ -1080,7 +1062,7 @@ class MainWindow(QMainWindow):
         self.eta_label.setText("Dự kiến kết thúc: Chưa ước tính")
         self.start_button.setEnabled(False)
         self.pause_button.setEnabled(True)
-        self.pause_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPause))
+        self.pause_button.setText("⏸")
         self.pause_button.setToolTip("Tạm dừng")
         self.stop_button.setEnabled(True)
         self.elapsed_timer.start()
@@ -1104,7 +1086,7 @@ class MainWindow(QMainWindow):
         self._worker.pause()
         self._paused = True
         self._pause_started_at = time.monotonic()
-        self.pause_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay))
+        self.pause_button.setText("▶")
         self.pause_button.setToolTip("Tiếp tục")
         self._log("Đã tạm dừng tại điểm an toàn; nhấn Tiếp tục để chạy tiếp.")
 
