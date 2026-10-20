@@ -790,7 +790,7 @@ class BotWorker(QThread):
                                 self.log_message.emit("Đã dừng theo yêu cầu.")
                                 return
                             bag_text = self._normalize_screen_text(self._screen_text(device))
-                            has_count = re.search(r"\\b\\d+\\s+30\\b", bag_text) is not None
+                            has_count = re.search(r"\b\d+\s+30\b", bag_text) is not None
                             bag_markers = (
                                 "tui phuc tuong", "tui phuc truong thanh",
                                 "tui phuc knb", "co so",
