@@ -965,8 +965,8 @@ class BotWorker(QThread):
                             self.log_message.emit("Đã dừng theo yêu cầu.")
                             return
                         screen_image = device.screenshot()
-                        tap_x = int(screen_image.width * 0.944271)
-                        tap_y = int(screen_image.height * 0.937963)
+                        tap_x = int(screen_image.width * 0.029167)
+                        tap_y = int(screen_image.height * 0.071296)
                         self.log_message.emit(
                             f"[{account.username}] Bấm trực tiếp profile tại ({tap_x}, {tap_y}), "
                             f"lần {profile_attempt + 1}/3 (ảnh {screen_image.width}x{screen_image.height})."
