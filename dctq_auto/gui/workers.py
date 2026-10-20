@@ -535,12 +535,13 @@ class BotWorker(QThread):
             )
 
             self.log_message.emit(
-                "BƯỚC 2/7: Quét OCR trong RECT ocr_phuc_loi trước; nếu chưa thấy "
-                "nhãn mục Hoạt động thì mới thử 3 vị trí Phúc lợi."
+                "BƯỚC 2/7: Sau khi mở Hoạt động, chờ 5 giây rồi quét OCR 3 lần; "
+                "chỉ khi cả 3 lần đều không thấy nhãn Phúc lợi mới thử 3 vị trí."
             )
             if not self._wait_if_paused():
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
                 return False
+            time.sleep(5.0)
             screenshot = device.screenshot()
             screen_width, screen_height = screenshot.size
             phuc_loi_rect = (
@@ -564,15 +565,30 @@ class BotWorker(QThread):
                 ]
                 return bool(found), ", ".join(found) if found else normalized_text[:180]
 
-            phuc_loi_found, initial_ocr = phuc_loi_screen_matches()
-            if phuc_loi_found:
+            phuc_loi_found = False
+            initial_ocr = ""
+            for ocr_attempt in range(1, 4):
+                if not self._wait_if_paused():
+                    self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
+                    return False
+                phuc_loi_found, initial_ocr = phuc_loi_screen_matches()
+                if phuc_loi_found:
+                    self.log_message.emit(
+                        f"OCR kiểm tra {ocr_attempt}/3 đã thấy nội dung Phúc lợi "
+                        f"({initial_ocr}); không cần click thử button_1/2/3."
+                    )
+                    break
                 self.log_message.emit(
-                    "OCR ban đầu đã thấy nội dung của mục Phúc lợi "
-                    f"({initial_ocr}); giữ nguyên vị trí hiện tại, không click thử."
+                    f"OCR kiểm tra {ocr_attempt}/3 chưa thấy nhãn Phúc lợi: "
+                    f"{initial_ocr!r}"
                 )
-            else:
+                if ocr_attempt < 3:
+                    time.sleep(1.0)
+
+            if not phuc_loi_found:
                 self.log_message.emit(
-                    "OCR ban đầu chưa thấy các nhãn Phúc lợi; bắt đầu thử 3 vị trí."
+                    "Cả 3 lần quét OCR đều chưa thấy nhãn Phúc lợi; "
+                    "bắt đầu thử 3 vị trí button_1/2/3."
                 )
                 phuc_loi_candidates = (
                     ("button_1", 143 / 1920, 358 / 1080),
@@ -606,7 +622,8 @@ class BotWorker(QThread):
                     )
                 if not phuc_loi_found:
                     raise RuntimeError(
-                        "OCR không thấy nhãn Phúc lợi sau khi thử cả 3 vị trí."
+                        "OCR không thấy nhãn Phúc lợi sau 3 lần quét ban đầu "
+                        "và 3 vị trí click thử."
                     )
 
             if not self._wait_if_paused():
