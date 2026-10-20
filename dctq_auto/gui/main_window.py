@@ -660,6 +660,17 @@ class MainWindow(QMainWindow):
         self.su_dung_canh_bat_tran.setEnabled(not enabled)
         self.chien_cong.setEnabled(enabled)
 
+    @staticmethod
+    def _make_scrollable_tab(page: QWidget) -> QScrollArea:
+        """Keep feature tabs aligned and scrollable like the daily-task tab."""
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setFrameShape(QScrollArea.Shape.NoFrame)
+        scroll_area.setWidget(page)
+        return scroll_area
+
     def _build_strategy_tab(self) -> QWidget:
         page = QWidget()
         layout = QVBoxLayout(page)
@@ -669,10 +680,9 @@ class MainWindow(QMainWindow):
         group_layout.addWidget(self.thiet_lap_muu_binh)
         layout.addWidget(group)
         layout.addStretch(1)
-        return page
+        return self._make_scrollable_tab(page)
 
-    @staticmethod
-    def _build_war_tab() -> QWidget:
+    def _build_war_tab(self) -> QWidget:
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -681,7 +691,7 @@ class MainWindow(QMainWindow):
         group_layout.addWidget(QLabel("Sẽ bổ sung cấu hình sau."))
         layout.addWidget(group)
         layout.addStretch(1)
-        return page
+        return self._make_scrollable_tab(page)
 
     def _on_device_changed(self, *_args) -> None:
         mock_mode = self.device_combo.currentData() == "mock"
