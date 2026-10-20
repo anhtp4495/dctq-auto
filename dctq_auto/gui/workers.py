@@ -721,11 +721,16 @@ class BotWorker(QThread):
                 32: (0.447917, 0.858333),
             }
 
+            # Duyệt đủ mọi ngày theo thứ tự 32, 31, ..., 2, 1; không lọc/bỏ qua ngày nào.
+            days_reverse = tuple(range(32, 0, -1))
+            if len(days_reverse) != 32 or set(days_reverse) != set(range(1, 33)):
+                raise RuntimeError("Danh sách ngày điểm danh không đủ 32 ngày.")
+
             self.log_message.emit(
                 f"BƯỚC 5/6: Màn hình chọn ngày {calendar_width}x{calendar_height}; "
-                "bắt đầu chọn ngược từ ô ngày 32 đến ô ngày 1."
+                "sẽ click đủ 32/32 ô theo thứ tự 32 → 1, không bỏ qua ngày nào."
             )
-            for day in range(32, 0, -1):
+            for day in days_reverse:
                 if not self._wait_if_paused():
                     self.log_message.emit(
                         f"Điểm danh đã dừng theo yêu cầu tại ngày {day}."
