@@ -214,6 +214,33 @@ def run_clone_flow(self, device) -> None:
                 break
             continue
 
+        if self._config.get("clone_daily_check_in"):
+            task_label = f"{account.username} - Điểm danh"
+            self.task_progress_changed.emit(task_label, "running", 0, 1)
+            if not self._wait_if_paused():
+                self.log_message.emit("Đã dừng theo yêu cầu.")
+                return
+            self.log_message.emit(
+                f"[{account.username}] Bắt đầu điểm danh hằng ngày."
+            )
+            try:
+                check_in_ok = self._run_daily_checkin(device, ocr_client)
+            except Exception as exc:
+                check_in_ok = False
+                self.log_message.emit(
+                    f"[{account.username}] Lỗi khi chạy điểm danh hằng ngày: {exc}"
+                )
+            if check_in_ok:
+                self.task_progress_changed.emit(task_label, "done", 1, 1)
+                self.log_message.emit(
+                    f"[{account.username}] Đã chạy xong luồng điểm danh hằng ngày."
+                )
+            else:
+                self.task_progress_changed.emit(task_label, "failed", 0, 1)
+                self.log_message.emit(
+                    f"[{account.username}] Điểm danh hằng ngày thất bại; tiếp tục các tác vụ Clone khác."
+                )
+
         if self._config.get("clone_guild_check_in"):
             # Open the guild chat/entry panel, then only enter the guild when
             # OCR confirms one of the trusted labels supplied by the user.
