@@ -658,6 +658,11 @@ class BotWorker(QThread):
             if not self._wait_if_paused():
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
                 return False
+            # Click lại đúng vị trí lễ bao miễn phí để đóng/thoát dialog sau khi chờ.
+            device.shell(f"input tap {le_bao_x} {le_bao_y}")
+            self.log_message.emit(
+                f"Đã click lại le_bao_mien_phi tại ({le_bao_x}, {le_bao_y}) để thoát dialog."
+            )
         
             self.log_message.emit("BƯỚC 4/7: Tìm nút Điểm danh bằng OCR, thử tối đa 3 lần.")
             clicked_diem_danh = False
