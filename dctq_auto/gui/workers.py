@@ -1002,7 +1002,7 @@ class BotWorker(QThread):
                         ocr_client.tap_ocr_target("close_thong_tin_cua_toi")
                         time.sleep(0.7)
                         # Now tap the separate options/profile button.
-                        ocr_client.tap_ocr_target("profile_tuy_chon")
+                        ocr_client.tap_ocr_target("button_tuy_chon")
                         time.sleep(1)
                         for options_attempt in range(10):
                             if not self._wait_if_paused():
