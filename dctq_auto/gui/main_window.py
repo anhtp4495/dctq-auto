@@ -1006,6 +1006,7 @@ class MainWindow(QMainWindow):
                     "clone_daily_check_in",
                     "clone_guild_check_in",
                     "clone_receive_lucky_bag",
+                    "clone_guild_fortune",
                     "clone_logout",
                 ) if config.get(key)
             ]
