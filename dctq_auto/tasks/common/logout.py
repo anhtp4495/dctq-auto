@@ -1,6 +1,15 @@
-"""Quy trình đăng xuất và xác minh quay lại màn hình đăng nhập."""
+"""Quy trình và khai báo task đăng xuất dùng chung."""
 
 import time
+
+from dctq_auto.tasks.base import TaskSpec
+
+SPEC = TaskSpec(
+    key="clone_logout",
+    label="Đăng xuất",
+    description="Đăng xuất sau khi hoàn tất các nhiệm vụ của tài khoản.",
+    category="clone",
+)
 
 
 def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
@@ -25,19 +34,17 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
         try:
             if not worker._wait_if_paused():
                 worker.log_message.emit("Đã dừng theo yêu cầu.")
-                return
+                return None
             worker.log_message.emit(
                 f"[{account.username}] Mở profile để vào Cài đặt người dùng; thử tối đa 3 lần."
             )
 
-            # First open and verify the profile panel ("Thông tin của tôi").
-            # Only after this succeeds, close it and open the options/profile menu.
             profile_panel_found = False
             profile_panel_text = ""
             for profile_attempt in range(3):
                 if not worker._wait_if_paused():
                     worker.log_message.emit("Đã dừng theo yêu cầu.")
-                    return
+                    return None
                 screen_image = device.screenshot()
                 tap_x = int(screen_image.width * 0.029167)
                 tap_y = int(screen_image.height * 0.071296)
@@ -46,8 +53,6 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
                     f"lần {profile_attempt + 1}/3 (ảnh {screen_image.width}x{screen_image.height})."
                 )
                 device.shell(f"input tap {tap_x} {tap_y}")
-                # Let the game UI animation finish before OCR; retry attempts
-                # are deliberately spaced out to avoid rapid repeated taps.
                 time.sleep(2.5)
                 profile_panel_text = worker._normalize_screen_text(worker._screen_text(device))
                 if "thong tin cua toi" in profile_panel_text:
@@ -73,14 +78,12 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
                     "không chuyển sang Tùy chọn để tránh thao tác nhầm."
                 )
             else:
-                # The Tùy chọn button is INSIDE the verified "Thông tin của tôi" profile.
-                # Keep the profile panel open and click this toggle exactly once.
                 ocr_client.tap_ocr_target("button_tuy_chon")
                 time.sleep(1.5)
                 for options_attempt in range(10):
                     if not worker._wait_if_paused():
                         worker.log_message.emit("Đã dừng theo yêu cầu.")
-                        return
+                        return None
                     options_text = worker._normalize_screen_text(worker._screen_text(device))
                     if "tuy chon" in options_text or "cai dat nguoi dung" in options_text:
                         options_found = True
@@ -97,7 +100,6 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
                         f"[{account.username}] Đã xác minh profile nhưng không nhận diện được "
                         f"màn hình Tùy chọn. OCR: {options_text[:180] or '(trống)'}"
                     )
-                # Open Cài đặt người dùng using the supplied saved coordinate.
                 ocr_client.tap_ocr_target("cai_dat_nguoi_dung")
                 time.sleep(1)
 
@@ -106,7 +108,7 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
                 for settings_attempt in range(10):
                     if not worker._wait_if_paused():
                         worker.log_message.emit("Đã dừng theo yêu cầu.")
-                        return
+                        return None
                     settings_text = worker._normalize_screen_text(worker._screen_text(device))
                     if "cai dat nguoi dung" in settings_text:
                         settings_found = True
@@ -127,8 +129,6 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
                     ocr_client.tap_ocr_target("doi_tai_khoan")
                     time.sleep(1.0)
 
-                    # Confirm using the saved button coordinate, not OCR text:
-                    # the word "Xác nhận" can also appear in the dialog message.
                     switch_confirm_text = worker._normalize_screen_text(worker._screen_text(device))
                     if (
                         "ban can nhap lai tai khoan mat khau" in switch_confirm_text
@@ -147,13 +147,12 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
                             f"OCR: {switch_confirm_text[:220] or '(trống)'}"
                         )
 
-                    # Wait for the login form after switching accounts.
                     login_screen_found = False
                     login_text = ""
                     for login_attempt in range(30):
                         if not worker._wait_if_paused():
                             worker.log_message.emit("Đã dừng theo yêu cầu.")
-                            return
+                            return None
                         login_text = worker._screen_text(device)
                         if worker._is_login_screen(login_text):
                             login_screen_found = True
@@ -175,6 +174,5 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
             worker.log_message.emit(
                 f"[{account.username}] Lỗi trong quy trình đổi tài khoản: {exc}"
             )
-
 
     return logout_ok
