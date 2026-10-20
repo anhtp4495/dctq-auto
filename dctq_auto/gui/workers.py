@@ -1021,7 +1021,27 @@ class BotWorker(QThread):
                                 f"[{account.username}] Đã xác nhận giao diện Cài đặt người dùng."
                             )
                             ocr_client.tap_ocr_target("doi_tai_khoan")
-                            time.sleep(1.5)
+                            time.sleep(1.0)
+
+                            # Confirm using the saved button coordinate, not OCR text:
+                            # the word "Xác nhận" can also appear in the dialog message.
+                            switch_confirm_text = self._normalize_screen_text(self._screen_text(device))
+                            if (
+                                "ban can nhap lai tai khoan mat khau" in switch_confirm_text
+                                or "thay doi tai khoan chu" in switch_confirm_text
+                            ):
+                                ocr_client.tap_ocr_target("button_xac_nhan")
+                                time.sleep(1.5)
+                                self.log_message.emit(
+                                    f"[{account.username}] Đã bấm nút xác nhận đổi tài khoản theo tọa độ lưu."
+                                )
+                            else:
+                                logout_ok = False
+                                self.log_message.emit(
+                                    f"[{account.username}] Không nhận diện được hộp thoại xác nhận đổi tài khoản; "
+                                    f"không bấm tọa độ xác nhận để tránh thao tác nhầm. "
+                                    f"OCR: {switch_confirm_text[:220] or '(trống)'}"
+                                )
 
                             # Wait for the login form after switching accounts.
                             login_screen_found = False
