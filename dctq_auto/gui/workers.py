@@ -535,31 +535,26 @@ class BotWorker(QThread):
             )
 
             self.log_message.emit("BƯỚC 2/7: Kiểm tra màn hình Hoạt động bằng OCR.")
-            screen_text = ""
-            normalized = ""
+            if not self._wait_if_paused():
+                self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
+                return False
+            time.sleep(0.7)
+            screen_text = self._screen_text(device)
+            normalized = self._normalize_screen_text(screen_text)
             activity_markers = ("phuc loi", "le bao", "diem danh", "hoat dong")
-            for attempt in range(6):
-                if not self._wait_if_paused():
-                    self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
-                    return False
-                time.sleep(0.7)
-                screen_text = self._screen_text(device)
-                normalized = self._normalize_screen_text(screen_text)
-                matched = [marker for marker in activity_markers if marker in normalized]
-                if len(matched) >= 2:
-                    self.log_message.emit(
-                        "OCR xác nhận màn hình Hoạt động: " + ", ".join(matched)
-                    )
-                    break
-                if attempt == 5:
-                    # OCR is unreliable on this game screen and may misread
-                    # labels even when the fixed Hoạt động tap succeeded.
-                    # Do not abort here; continue the known navigation flow.
-                    self.log_message.emit(
-                        "OCR chưa xác nhận đủ dấu hiệu màn hình Hoạt động; "
-                        "tiếp tục luồng theo tọa độ đã cấu hình. Văn bản OCR: "
-                        f"{normalized[:240]!r}"
-                    )
+            matched = [marker for marker in activity_markers if marker in normalized]
+            if len(matched) >= 2:
+                self.log_message.emit(
+                    "OCR xác nhận màn hình Hoạt động: " + ", ".join(matched)
+                )
+            else:
+                # OCR can be noisy on this game screen. Check only once, warn,
+                # then continue with the configured navigation flow.
+                self.log_message.emit(
+                    "CẢNH BÁO: OCR chưa xác nhận được màn hình Hoạt động sau 1 lần; "
+                    "tiếp tục luồng theo tọa độ đã cấu hình. Văn bản OCR: "
+                    f"{normalized[:240]!r}"
+                )
 
             if not self._wait_if_paused():
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
