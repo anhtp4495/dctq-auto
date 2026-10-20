@@ -333,9 +333,8 @@ class BotWorker(QThread):
 
     @staticmethod
     def _tap_ocr_word(device, words: tuple[str, ...]) -> bool:
-        """Tap the center of a word detected in the current screenshot by OCR."""
-        image = device.screenshot()
-        image = ImageOps.autocontrast(image.convert("L"))
+        """Tap a live OCR word or phrase, including labels split into multiple words."""
+        image = ImageOps.autocontrast(device.screenshot().convert("L"))
         try:
             data = pytesseract.image_to_data(
                 image, lang="vie+eng", config="--psm 11",
@@ -349,9 +348,14 @@ class BotWorker(QThread):
 
         wanted = {BotWorker._normalize_screen_text(word) for word in words}
         candidates = []
+        lines = {}
+        total_words = len(data.get("text", []))
+        blocks = data.get("block_num", [0] * total_words)
+        paragraphs = data.get("par_num", [0] * total_words)
+        line_numbers = data.get("line_num", [0] * total_words)
         for i, raw in enumerate(data.get("text", [])):
             normalized = BotWorker._normalize_screen_text(raw)
-            if normalized not in wanted:
+            if not normalized:
                 continue
             try:
                 confidence = float(data["conf"][i])
@@ -359,18 +363,102 @@ class BotWorker(QThread):
                 confidence = 0.0
             if confidence < 0:
                 continue
-            x = int(data["left"][i] + data["width"][i] / 2)
-            y = int(data["top"][i] + data["height"][i] / 2)
-            candidates.append((confidence, x, y, normalized))
+            left, top = int(data["left"][i]), int(data["top"][i])
+            width, height = int(data["width"][i]), int(data["height"][i])
+            candidates.append((confidence, left, top, width, height, normalized))
+            line_key = (blocks[i], paragraphs[i], line_numbers[i])
+            lines.setdefault(line_key, []).append(
+                (left, top, width, height, confidence, normalized)
+            )
 
-        if not candidates:
+        matches = [
+            (confidence, left, top, width, height)
+            for confidence, left, top, width, height, normalized in candidates
+            if normalized in wanted
+        ]
+        # OCR commonly splits Vietnamese labels such as "Điểm danh" into two words.
+        for line_words in lines.values():
+            line_words.sort(key=lambda item: item[0])
+            for start_index in range(len(line_words)):
+                phrase_parts = []
+                for end_index in range(start_index, min(len(line_words), start_index + 5)):
+                    phrase_parts.append(line_words[end_index][5])
+                    if " ".join(phrase_parts) not in wanted:
+                        continue
+                    selected = line_words[start_index:end_index + 1]
+                    left = min(item[0] for item in selected)
+                    top = min(item[1] for item in selected)
+                    right = max(item[0] + item[2] for item in selected)
+                    bottom = max(item[1] + item[3] for item in selected)
+                    confidence = sum(item[4] for item in selected) / len(selected)
+                    matches.append((confidence, left, top, right - left, bottom - top))
+
+        if not matches:
             return False
-
-        # Prefer the clearest recognized "dong" label. Tap the live screenshot
-        # coordinates directly rather than relying on a possibly missing saved region.
-        confidence, x, y, word = max(candidates)
+        confidence, left, top, width, height = max(matches, key=lambda item: item[0])
+        x, y = int(left + width / 2), int(top + height / 2)
         device.shell(f"input tap {x} {y}")
         return True
+
+    def _run_daily_checkin(self, device, ocr_client) -> bool:
+        """Open Hoạt động and select Điểm danh only after OCR verifies the page."""
+        if not self._wait_if_paused():
+            self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
+            return False
+
+        self.log_message.emit("Điểm danh: mở mục Hoạt động từ màn hình chính.")
+        try:
+            try:
+                x, y = ocr_client.tap_ocr_target("buttons_hoat_dong")
+                self.log_message.emit(
+                    f"Đã click Hoạt động theo tọa độ đã lưu ({x}, {y})."
+                )
+            except (KeyError, FileNotFoundError, ValueError) as saved_target_error:
+                self.log_message.emit(
+                    "Không dùng được tọa độ buttons_hoat_dong đã lưu; thử nhận diện OCR trực tiếp."
+                )
+                if not self._tap_ocr_word(device, ("hoat dong",)):
+                    raise RuntimeError(
+                        "Không tìm thấy chữ Hoạt động trên màn hình chính qua OCR."
+                    ) from saved_target_error
+
+            screen_text = ""
+            activity_markers = ("phuc loi", "le bao", "diem danh", "hoat dong")
+            for attempt in range(6):
+                if not self._wait_if_paused():
+                    self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
+                    return False
+                time.sleep(0.7)
+                screen_text = self._screen_text(device)
+                normalized = self._normalize_screen_text(screen_text)
+                matched = [marker for marker in activity_markers if marker in normalized]
+                if len(matched) >= 2:
+                    self.log_message.emit(
+                        "OCR xác nhận màn hình Hoạt động: " + ", ".join(matched)
+                    )
+                    break
+                if attempt == 5:
+                    raise RuntimeError(
+                        "Đã click Hoạt động nhưng OCR không xác nhận được màn hình. "
+                        f"Văn bản nhận diện: {normalized[:240]!r}"
+                    )
+
+            if not self._wait_if_paused():
+                self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
+                return False
+            if not self._tap_ocr_word(device, ("diem danh",)):
+                raise RuntimeError(
+                    "Đã mở màn hình Hoạt động nhưng OCR không tìm thấy mục Điểm danh."
+                )
+            time.sleep(1.2)
+            self.log_message.emit(
+                "Đã mở mục Điểm danh bằng OCR. Chưa xác nhận đã nhận thưởng; "
+                "cần nhận diện nút thao tác trên màn hình Điểm danh."
+            )
+            return True
+        except Exception as exc:
+            self.log_message.emit(f"Điểm danh thất bại: {exc}")
+            return False
 
     @staticmethod
     def _is_login_screen(text: str) -> bool:
@@ -484,7 +572,10 @@ class BotWorker(QThread):
 
         # Gameplay automation for these actions is not implemented in the real
         # ADB flow yet. Report an explicit failed status for each selected task.
-        implemented = {"task_login", "task_close_guild", "task_switch_account", "task_click_coordinates"}
+        implemented = {
+            "task_login", "diem_danh", "task_close_guild",
+            "task_switch_account", "task_click_coordinates",
+        }
         for key, label in selected:
             if key in implemented:
                 continue
@@ -542,6 +633,24 @@ class BotWorker(QThread):
             finally:
                 # Do not retain the password in the worker configuration after use.
                 self._config.pop("login_password", None)
+
+        if self._config.get("diem_danh"):
+            self.task_progress_changed.emit("Điểm danh", "running", 0, 1)
+            if not self._wait_if_paused():
+                self.log_message.emit("Đã dừng theo yêu cầu.")
+                return
+            if self._run_daily_checkin(device, ocr_client):
+                completed += 1
+                self.task_progress_changed.emit("Điểm danh", "done", 1, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), "Đã mở mục Điểm danh"
+                )
+            else:
+                self.task_progress_changed.emit("Điểm danh", "failed", 0, 1)
+                completed += 1
+                self.progress_changed.emit(
+                    completed, max(1, total), "Lỗi: Điểm danh"
+                )
 
         if self._config.get("task_close_guild"):
             if not self._wait_if_paused():
