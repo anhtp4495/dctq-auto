@@ -610,8 +610,67 @@ class BotWorker(QThread):
                 )
             time.sleep(1.2)
             self.log_message.emit(
-                "Đã click button_diem_danh bằng OCR. Chưa xác nhận đã nhận thưởng; "
-                "cần nhận diện nút thao tác trên màn hình Điểm danh."
+                "Đã click button_diem_danh bằng OCR; chờ màn hình chọn ngày."
+            )
+            if not self._wait_if_paused():
+                self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
+                return False
+
+            # The calendar is a 9-column grid. Use the measured ratios for
+            # days 1-9 and the measured first-column row positions for days
+            # 10, 20, and 30. Fill days 11-19 and 21-29 by column/row.
+            calendar_image = device.screenshot()
+            calendar_width, calendar_height = calendar_image.size
+            column_x_ratios = (
+                0.290104, 0.364063, 0.446354, 0.502604, 0.590104,
+                0.675521, 0.750000, 0.829688, 0.901042,
+            )
+            first_row_y_ratios = (
+                0.443519, 0.469444, 0.435185, 0.459259, 0.462963,
+                0.450926, 0.460185, 0.450926, 0.460185,
+            )
+            row_y_ratios = {
+                1: first_row_y_ratios,
+                2: (0.580556,) * 9,
+                3: (0.725000,) * 9,
+            }
+            # Keep the measured coordinates for the last row's first 3 cells.
+            last_row_ratios = {
+                30: (0.288021, 0.858333),
+                31: (0.368229, 0.882407),
+                32: (0.447917, 0.858333),
+            }
+
+            self.log_message.emit(
+                f"Màn hình chọn ngày: {calendar_width}x{calendar_height}; "
+                "bắt đầu click lần lượt 32 ô ngày."
+            )
+            for day in range(1, 33):
+                if not self._wait_if_paused():
+                    self.log_message.emit(
+                        f"Điểm danh đã dừng theo yêu cầu tại ngày {day}."
+                    )
+                    return False
+
+                if day in last_row_ratios:
+                    x_ratio, y_ratio = last_row_ratios[day]
+                else:
+                    row = (day - 1) // 9
+                    column = (day - 1) % 9
+                    x_ratio = column_x_ratios[column]
+                    y_ratio = row_y_ratios[row][column]
+
+                day_x = round(x_ratio * calendar_width)
+                day_y = round(y_ratio * calendar_height)
+                device.shell(f"input tap {day_x} {day_y}")
+                self.log_message.emit(
+                    f"Đã click ô ngày {day}/32 tại ({day_x}, {day_y})."
+                )
+                time.sleep(0.15)
+
+            self.log_message.emit(
+                "Đã gửi thao tác click cho đủ 32 ô ngày. "
+                "Cần kiểm tra trên LDPlayer xem game có yêu cầu xác nhận/nhận thưởng riêng không."
             )
             return True
         except Exception as exc:
