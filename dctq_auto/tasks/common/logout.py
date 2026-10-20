@@ -1,4 +1,4 @@
-""""Quy trình đăng xuất và xác minh quay lại màn hình đăng nhập."""
+"""Quy trình đăng xuất và xác minh quay lại màn hình đăng nhập."""
 
 import time
 
@@ -177,4 +177,4 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool:
             )
 
 
-        return logout_ok
+    return logout_ok
