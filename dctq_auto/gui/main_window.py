@@ -3,10 +3,8 @@
 import logging
 import time
 
-from PySide6.QtCore import Qt, QTimer, QSettings, QThread, Signal, QObject
+from PySide6.QtCore import Qt, QTimer, QSettings, QThread, Signal
 from PySide6.QtGui import QColor, QFont, QGuiApplication, QIcon, QPainter, QPixmap
-from pynput.keyboard import GlobalHotKeys
-
 from PySide6.QtWidgets import (
     QAbstractButton,
     QAbstractItemView,
@@ -44,12 +42,6 @@ from dctq_auto.tasks.clone.accounts import load_accounts
 
 
 SCREENSHOT_DIR = "artifacts/screenshots"
-
-
-class GlobalHotkeyBridge(QObject):
-    """Deliver global keyboard events safely to the Qt UI thread."""
-
-    pause_resume = Signal()
 
 
 class ScreenshotCaptureWorker(QThread):
@@ -151,7 +143,7 @@ class MainWindow(QMainWindow):
         self.pause_button.setToolTip("Tạm dừng")
         self.pause_button.setEnabled(False)
         self.pause_button.clicked.connect(self.toggle_pause_bot)
-        self.pause_button.setToolTip("Tạm dừng / tiếp tục (Ctrl+5)")
+        self.pause_button.setToolTip("Tạm dừng")
         capture_row.addWidget(self.pause_button)
 
         self.stop_button = QPushButton("⏹")
@@ -427,12 +419,6 @@ class MainWindow(QMainWindow):
         # title-bar height on some DPI settings.
         QTimer.singleShot(0, self._restore_window_geometry_after_show)
         self._connect_settings_persistence()
-        self._global_hotkey_bridge = GlobalHotkeyBridge(self)
-        self._global_hotkey_bridge.pause_resume.connect(self.toggle_pause_bot)
-        self._global_hotkey_listener = GlobalHotKeys({
-            "<ctrl>+5": self._global_hotkey_bridge.pause_resume.emit,
-        })
-        self._global_hotkey_listener.start()
         self.tabs.currentChanged.connect(self._save_settings)
         self.clone_tab.account_file_combo.currentIndexChanged.connect(self._save_settings)
         self._on_device_changed()
@@ -622,8 +608,6 @@ class MainWindow(QMainWindow):
         self._ui_settings.sync()
 
     def closeEvent(self, event) -> None:
-        if hasattr(self, "_global_hotkey_listener"):
-            self._global_hotkey_listener.stop()
         self._ui_settings.setValue("ui/window_geometry", self.saveGeometry())
         self._ui_settings.sync()
         self._save_settings()
