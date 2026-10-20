@@ -359,10 +359,28 @@ class MainWindow(QMainWindow):
         self.clone_result_label = QLabel("0 thành công | 0 thất bại")
         self.clone_result_label.setWordWrap(True)
         progress_layout.addWidget(self.clone_result_label)
-        self.task_progress_layout = QVBoxLayout()
+        task_progress_content = QWidget()
+        self.task_progress_layout = QVBoxLayout(task_progress_content)
+        self.task_progress_layout.setContentsMargins(0, 0, 0, 0)
         self.task_progress_layout.setSpacing(2)
         self.task_progress_labels: dict[str, QLabel] = {}
-        progress_layout.addLayout(self.task_progress_layout)
+        task_progress_scroll = QScrollArea()
+        task_progress_scroll.setWidgetResizable(True)
+        task_progress_scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        task_progress_scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
+        task_progress_scroll.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
+        task_progress_scroll.setWidget(task_progress_content)
+        task_progress_scroll.setMinimumHeight(0)
+        task_progress_scroll.setMaximumHeight(56)
+        progress_layout.addWidget(task_progress_scroll)
+        progress_group.setSizePolicy(
+            progress_group.sizePolicy().horizontalPolicy(),
+            progress_group.sizePolicy().verticalPolicy(),
+        )
         timing_layout = QHBoxLayout()
         self.elapsed_time_label = QLabel("Thời gian đã chạy: 00:00:00")
         self.eta_label = QLabel("Dự kiến kết thúc: Chưa ước tính")
@@ -370,6 +388,7 @@ class MainWindow(QMainWindow):
         timing_layout.addStretch(1)
         timing_layout.addWidget(self.eta_label)
         progress_layout.addLayout(timing_layout)
+        progress_group.setMaximumHeight(190)
         root.addWidget(progress_group, 0)
 
         self.elapsed_timer = QTimer(self)
