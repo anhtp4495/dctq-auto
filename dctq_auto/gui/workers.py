@@ -361,8 +361,8 @@ class BotWorker(QThread):
     @staticmethod
     def _clear_focused_text(device) -> None:
         """Select and delete all text in the currently focused input field."""
-        # Ctrl+A is preferable to long-pressing Delete, which may remove only
-        # part of a long existing username depending on the Android keyboard.
+        # Apply the same clearing sequence to both username and password fields.
+        # Ctrl+A avoids leaving trailing characters when the old value is longer.
         device.shell("input keycombination KEYCODE_CTRL_LEFT KEYCODE_A")
         device.shell("input keyevent KEYCODE_DEL")
 
@@ -372,6 +372,12 @@ class BotWorker(QThread):
         # Android's input command uses %s as the escape sequence for a space.
         value = value.replace(" ", "%s")
         device.shell(f"input text {shlex.quote(value)}")
+
+    @staticmethod
+    def _replace_focused_text(device, value: str) -> None:
+        """Clear the focused field before entering a new username or password."""
+        BotWorker._clear_focused_text(device)
+        BotWorker._input_text(device, value)
 
     def _run_clone_login(self, device) -> None:
         """Log in clone accounts using the confirmed login-screen OCR coordinates."""
@@ -454,8 +460,7 @@ class BotWorker(QThread):
             try:
                 ocr_client.tap_ocr_target("ten_dang_nhap")
                 time.sleep(0.25)
-                self._clear_focused_text(device)
-                self._input_text(device, account.username)
+                self._replace_focused_text(device, account.username)
 
                 if not self._wait_if_paused():
                     self.log_message.emit("Đã dừng theo yêu cầu.")
@@ -463,8 +468,7 @@ class BotWorker(QThread):
 
                 ocr_client.tap_ocr_target("mat_khau")
                 time.sleep(0.25)
-                self._clear_focused_text(device)
-                self._input_text(device, account.password)
+                self._replace_focused_text(device, account.password)
 
                 if not self._wait_if_paused():
                     self.log_message.emit("Đã dừng theo yêu cầu.")
