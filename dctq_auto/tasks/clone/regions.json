@@ -315,6 +315,106 @@
             "x": 0.351562,
             "y": 0.534259
           }
+        },
+        {
+          "name": "tui_phuc_thuong",
+          "text": "Nút Túi phúc tướng",
+          "confidence": null,
+          "bounds": {
+            "left": 462,
+            "top": 444,
+            "right": 502,
+            "bottom": 484
+          },
+          "rect": {
+            "x": 462,
+            "y": 444,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 482,
+            "y_px": 464
+          },
+          "center_ratio": {
+            "x": 0.251042,
+            "y": 0.42963
+          }
+        },
+        {
+          "name": "tui_phuc_truong_thanh",
+          "text": "Nút Túi phúc trưởng thành",
+          "confidence": null,
+          "bounds": {
+            "left": 983,
+            "top": 494,
+            "right": 1023,
+            "bottom": 534
+          },
+          "rect": {
+            "x": 983,
+            "y": 494,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 1003,
+            "y_px": 514
+          },
+          "center_ratio": {
+            "x": 0.522396,
+            "y": 0.475926
+          }
+        },
+        {
+          "name": "tui_phuc_knb",
+          "text": "Nút Túi phúc KNB",
+          "confidence": null,
+          "bounds": {
+            "left": 1448,
+            "top": 442,
+            "right": 1488,
+            "bottom": 482
+          },
+          "rect": {
+            "x": 1448,
+            "y": 442,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 1468,
+            "y_px": 462
+          },
+          "center_ratio": {
+            "x": 0.764583,
+            "y": 0.427778
+          }
+        },
+        {
+          "name": "close_tui_phuc",
+          "text": "Nút đóng cửa sổ Túi phúc",
+          "confidence": null,
+          "bounds": {
+            "left": 1734,
+            "top": 39,
+            "right": 1774,
+            "bottom": 79
+          },
+          "rect": {
+            "x": 1734,
+            "y": 39,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 1754,
+            "y_px": 59
+          },
+          "center_ratio": {
+            "x": 0.913542,
+            "y": 0.05463
+          }
         }
       ],
       "screenshot": "user-provided OCR coordinates",
