@@ -1328,7 +1328,22 @@ class MainWindow(QMainWindow):
 
     @staticmethod
     def _task_specs(config: dict) -> list[tuple[str, int]]:
-        """Load task definitions only when the user starts a task."""
+        """Return progress rows using the exact labels emitted by the worker."""
+        if config.get("utility_tasks_mode"):
+            task_labels = (
+                ("task_login", "Đăng nhập"),
+                ("diem_danh", "Điểm danh"),
+                ("bao_danh_quan_doan", "Báo danh quân đoàn"),
+                ("dong_gop_knb", "Đóng góp KNB"),
+                ("tham_do_lanh_dia", "Thăm dò lãnh địa"),
+                ("nhiem_vu_luu_ly_thap", "Lưu Ly Tháp"),
+                ("thuc_hien_giao_tranh", "Giao tranh"),
+                ("thuc_hien_tranh_ba", "Tranh bá"),
+                ("thiet_lap_muu_binh", "Mưu binh"),
+                ("task_close_guild", "Thoát màn hình Quân đoàn"),
+                ("task_switch_account", "Đổi tài khoản"),
+            )
+            return [(label, 1) for key, label in task_labels if config.get(key)]
         from dctq_auto.tasks.registry import get_enabled_tasks
         return [(spec.label, count) for spec, count in get_enabled_tasks(config)]
 
@@ -1364,18 +1379,15 @@ class MainWindow(QMainWindow):
         show_count = total > 1 or name == "Thăm dò lãnh địa"
         detail = f" {completed}/{total}" if show_count else ""
         item.setText(f"{prefix} {name}{detail}")
-        item.setForeground(color)
 
     def _update_clone_account_result(self, username: str, success: bool) -> None:
         for index in range(self.clone_result_list.count()):
             item = self.clone_result_list.item(index)
             if item.data(Qt.ItemDataRole.UserRole) == username:
                 item.setText(f"{'✓' if success else '✗'} {username}")
-                item.setForeground(Qt.GlobalColor.green if success else Qt.GlobalColor.red)
                 return
         item = QListWidgetItem(f"{'✓' if success else '✗'} {username}")
         item.setData(Qt.ItemDataRole.UserRole, username)
-        item.setForeground(Qt.GlobalColor.green if success else Qt.GlobalColor.red)
         self.clone_result_list.addItem(item)
         self.clone_result_list.scrollToBottom()
 
