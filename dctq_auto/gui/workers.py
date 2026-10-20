@@ -522,7 +522,7 @@ class BotWorker(QThread):
             self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
             return False
 
-        self.log_message.emit("Điểm danh: mở mục Hoạt động từ màn hình chính.")
+        self.log_message.emit("BƯỚC 1/6: Mở mục Hoạt động từ màn hình chính.")
         try:
             screenshot = device.screenshot()
             screen_width, screen_height = screenshot.size
@@ -534,6 +534,7 @@ class BotWorker(QThread):
                 f"({hoat_dong_x}, {hoat_dong_y}); không dùng OCR để click nút này."
             )
 
+            self.log_message.emit("BƯỚC 2/6: Kiểm tra màn hình Hoạt động bằng OCR.")
             screen_text = ""
             normalized = ""
             activity_markers = ("phuc loi", "le bao", "diem danh", "hoat dong")
@@ -575,9 +576,9 @@ class BotWorker(QThread):
                 round(0.922222 * screen_height),
             )
 
-            # If Điểm danh was already detected on the verified screen, tap it
-            # directly. Otherwise open Phúc lợi first, then do one fresh OCR scan.
-            if "diem danh" not in normalized:
+            # BƯỚC 3: Luôn mở Phúc lợi và nhận lễ bao miễn phí trước khi vào Điểm danh.
+            self.log_message.emit("BƯỚC 3/6: Mở Phúc lợi và nhận lễ bao miễn phí.")
+            if True:
                 phuc_loi_x = round(0.077604 * screen_width)
                 phuc_loi_y = round(0.325000 * screen_height)
                 self.log_message.emit(
@@ -596,11 +597,8 @@ class BotWorker(QThread):
                 if not self._wait_if_paused():
                     self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
                     return False
-            else:
-                self.log_message.emit(
-                    "Lần OCR xác nhận đã thấy Điểm danh; tìm nút trong RECT và click trực tiếp."
-                )
-
+            
+            self.log_message.emit("BƯỚC 4/6: Tìm nút Điểm danh bằng OCR, thử tối đa 3 lần.")
             clicked_diem_danh = False
             for attempt in range(1, 4):
                 if not self._wait_if_paused():
@@ -662,8 +660,8 @@ class BotWorker(QThread):
             }
 
             self.log_message.emit(
-                f"Màn hình chọn ngày: {calendar_width}x{calendar_height}; "
-                "bắt đầu click lần lượt 32 ô ngày."
+                f"BƯỚC 5/6: Màn hình chọn ngày {calendar_width}x{calendar_height}; "
+                "bắt đầu chọn lần lượt 32 ô ngày."
             )
             for day in range(1, 33):
                 if not self._wait_if_paused():
@@ -687,27 +685,32 @@ class BotWorker(QThread):
                     f"Đã click ô ngày {day}/32 tại ({day_x}, {day_y})."
                 )
                 time.sleep(0.15)
-                confirm_x = round(0.616667 * calendar_width)
-                confirm_y = round(0.631481 * calendar_height)
-                device.shell(f"input tap {confirm_x} {confirm_y}")
-                self.log_message.emit(
-                    f"Đã click xac_nhan sau ngày {day}/32 tại "
-                    f"({confirm_x}, {confirm_y})."
-                )
-                time.sleep(0.15)
 
             self.log_message.emit(
-                "Đã gửi thao tác click cho đủ 32 ô ngày và xác nhận từng ô."
+                "Đã chọn xong 32/32 ô ngày; chuẩn bị bấm xac_nhan đúng 1 lần."
             )
+            if not self._wait_if_paused():
+                self.log_message.emit("Điểm danh đã dừng theo yêu cầu trước khi xác nhận.")
+                return False
+            confirm_x = round(0.616667 * calendar_width)
+            confirm_y = round(0.631481 * calendar_height)
+            self.log_message.emit(
+                f"BƯỚC 6/6: Bấm xac_nhan một lần duy nhất tại "
+                f"({confirm_x}, {confirm_y})."
+            )
+            device.shell(f"input tap {confirm_x} {confirm_y}")
+            self.log_message.emit("Đã bấm xac_nhan 1/1; chờ game xử lý.")
+            time.sleep(0.5)
             if not self._wait_if_paused():
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu trước khi thoát màn hình.")
                 return False
             close_x = round(0.972396 * calendar_width)
             close_y = round(0.119444 * calendar_height)
-            device.shell(f"input tap {close_x} {close_y}")
             self.log_message.emit(
-                f"Đã click close_diem_danh sau ngày 32/32 tại ({close_x}, {close_y})."
+                f"Đang đóng màn hình Điểm danh tại ({close_x}, {close_y})."
             )
+            device.shell(f"input tap {close_x} {close_y}")
+            self.log_message.emit("Đã đóng màn hình Điểm danh.")
             time.sleep(0.5)
             return True
         except Exception as exc:
