@@ -72,6 +72,7 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("DCTQ Auto")
+        self.setStyleSheet("QGroupBox { border: 0; margin-top: 8px; padding-top: 4px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; padding: 0; }")
         self._ui_settings = QSettings("DCTQAuto", "DCTQAuto")
         self._settings = Settings.from_env()
         self._worker = None
