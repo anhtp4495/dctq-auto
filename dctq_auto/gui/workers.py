@@ -391,7 +391,7 @@ class BotWorker(QThread):
 
     def _run_clone_login(self, device) -> None:
         """Delegate the shared account/game flow to tasks.common."""
-        from dctq_auto.tasks.common.clone_flow import run_clone_flow
+        from dctq_auto.tasks.clone.flow import run_clone_flow
 
         run_clone_flow(self, device)
 
