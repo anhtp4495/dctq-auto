@@ -1025,6 +1025,14 @@ class MainWindow(QMainWindow):
         self.task_daily_checkin = QCheckBox("Điểm danh")
         self.task_guild_checkin = QCheckBox("Báo danh quân đoàn")
         self.task_knb_contribution = QCheckBox("Đóng góp KNB")
+        self.task_knb_contribution_count = QSpinBox()
+        self.task_knb_contribution_count.setRange(1, 10)
+        self.task_knb_contribution_count.setValue(1)
+        self.task_knb_contribution_count.setEnabled(False)
+        self.task_knb_contribution_count.setKeyboardTracking(False)
+        self.task_knb_contribution.toggled.connect(
+            self.task_knb_contribution_count.setEnabled
+        )
         self.task_territory = QCheckBox("Thăm dò lãnh địa")
         self.task_territory_count = QSpinBox()
         self.task_territory_count.setRange(1, 10)
@@ -1036,6 +1044,19 @@ class MainWindow(QMainWindow):
         self.task_territory_knb.setEnabled(False)
         self.task_territory.toggled.connect(self.task_territory_knb.setEnabled)
         self.task_glass_tower = QCheckBox("Lưu Ly Tháp")
+        self.task_glass_tower_count = QSpinBox()
+        self.task_glass_tower_count.setRange(6, 10)
+        self.task_glass_tower_count.setValue(6)
+        self.task_glass_tower_count.setEnabled(False)
+        self.task_glass_tower_count.setKeyboardTracking(False)
+        self.task_glass_tower.toggled.connect(
+            self.task_glass_tower_count.setEnabled
+        )
+        self.task_glass_tower_knb = QCheckBox("Mua lượt thiếu bằng KNB")
+        self.task_glass_tower_knb.setEnabled(False)
+        self.task_glass_tower.toggled.connect(
+            self.task_glass_tower_knb.setEnabled
+        )
         self.task_battle = QCheckBox("Giao tranh")
         self.task_championship = QCheckBox("Tranh bá")
         self.task_strategy = QCheckBox("Mưu binh")
@@ -1049,9 +1070,15 @@ class MainWindow(QMainWindow):
             self.task_login,
             self.task_daily_checkin,
             self.task_guild_checkin,
-            self.task_knb_contribution,
         ):
             daily_layout.addWidget(task_checkbox)
+
+        knb_contribution_row = QHBoxLayout()
+        knb_contribution_row.addWidget(self.task_knb_contribution)
+        knb_contribution_row.addWidget(QLabel("Số lần:"))
+        knb_contribution_row.addWidget(self.task_knb_contribution_count)
+        knb_contribution_row.addStretch(1)
+        daily_layout.addLayout(knb_contribution_row)
 
         territory_row = QHBoxLayout()
         territory_row.addWidget(self.task_territory)
@@ -1061,8 +1088,15 @@ class MainWindow(QMainWindow):
         territory_row.addStretch(1)
         daily_layout.addLayout(territory_row)
 
+        glass_tower_row = QHBoxLayout()
+        glass_tower_row.addWidget(self.task_glass_tower)
+        glass_tower_row.addWidget(QLabel("Số lần:"))
+        glass_tower_row.addWidget(self.task_glass_tower_count)
+        glass_tower_row.addWidget(self.task_glass_tower_knb)
+        glass_tower_row.addStretch(1)
+        daily_layout.addLayout(glass_tower_row)
+
         for task_checkbox in (
-            self.task_glass_tower,
             self.task_battle,
             self.task_championship,
             self.task_strategy,
@@ -1100,10 +1134,13 @@ class MainWindow(QMainWindow):
                 "diem_danh": self.task_daily_checkin.isChecked(),
                 "bao_danh_quan_doan": self.task_guild_checkin.isChecked(),
                 "dong_gop_knb": self.task_knb_contribution.isChecked(),
+                "so_lan_dong_gop_knb": self.task_knb_contribution_count.value(),
                 "tham_do_lanh_dia": self.task_territory.isChecked(),
                 "so_lan_tham_do_lanh_dia": self.task_territory_count.value(),
                 "tham_do_lanh_dia_knb": self.task_territory_knb.isChecked(),
                 "nhiem_vu_luu_ly_thap": self.task_glass_tower.isChecked(),
+                "so_lan_luu_ly_thap": self.task_glass_tower_count.value(),
+                "luu_ly_thap_knb": self.task_glass_tower_knb.isChecked(),
                 "thuc_hien_giao_tranh": self.task_battle.isChecked(),
                 "thuc_hien_tranh_ba": self.task_championship.isChecked(),
                 "thiet_lap_muu_binh": self.task_strategy.isChecked(),
