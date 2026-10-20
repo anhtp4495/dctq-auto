@@ -535,65 +535,98 @@ class BotWorker(QThread):
             )
 
             self.log_message.emit(
-                "BƯỚC 2/7: Thử 3 vị trí button_phuc_loi; sau mỗi lần click quét OCR "
-                "và chọn vị trí làm xuất hiện 'Điểm danh'."
+                "BƯỚC 2/7: Quét OCR trong RECT ocr_phuc_loi trước; nếu chưa thấy "
+                "nhãn mục Hoạt động thì mới thử 3 vị trí Phúc lợi."
             )
             if not self._wait_if_paused():
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
                 return False
             screenshot = device.screenshot()
             screen_width, screen_height = screenshot.size
-            phuc_loi_candidates = (
-                ("button_1", 143 / 1920, 358 / 1080),
-                ("button_2", 135 / 1920, 495 / 1080),
-                ("button_3", 123 / 1920, 613 / 1080),
+            phuc_loi_rect = (
+                round(14 / 1920 * screen_width),
+                round(128 / 1080 * screen_height),
+                round(488 / 1920 * screen_width),
+                round(988 / 1080 * screen_height),
             )
-            phuc_loi_found = False
-            for attempt, (button_name, x_ratio, y_ratio) in enumerate(
-                phuc_loi_candidates, start=1
-            ):
-                if not self._wait_if_paused():
-                    self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
-                    return False
-                phuc_loi_x = round(x_ratio * screen_width)
-                phuc_loi_y = round(y_ratio * screen_height)
+            phuc_loi_markers = (
+                "tranh ba", "qua online", "diem danh",
+                "le bao thien", "le bao quoc", "hoan the",
+            )
+
+            def phuc_loi_screen_matches() -> tuple[bool, str]:
+                detected = self._ocr_words_in_rect(device, phuc_loi_rect)
+                detected_text = " ".join(word["text"] for word in detected)
+                normalized_text = self._normalize_screen_text(detected_text)
+                found = [
+                    marker for marker in phuc_loi_markers
+                    if marker in normalized_text
+                ]
+                return bool(found), ", ".join(found) if found else normalized_text[:180]
+
+            phuc_loi_found, initial_ocr = phuc_loi_screen_matches()
+            if phuc_loi_found:
                 self.log_message.emit(
-                    f"OCR dò button_phuc_loi lần {attempt}/3: click {button_name} "
-                    f"tại ({phuc_loi_x}, {phuc_loi_y})."
+                    "OCR ban đầu đã thấy nội dung của mục Phúc lợi "
+                    f"({initial_ocr}); giữ nguyên vị trí hiện tại, không click thử."
                 )
-                device.shell(f"input tap {phuc_loi_x} {phuc_loi_y}")
-                time.sleep(0.7)
-                screen_text = self._screen_text(device)
-                normalized = self._normalize_screen_text(screen_text)
-                if "diem danh" in normalized:
-                    phuc_loi_found = True
+            else:
+                self.log_message.emit(
+                    "OCR ban đầu chưa thấy các nhãn Phúc lợi; bắt đầu thử 3 vị trí."
+                )
+                phuc_loi_candidates = (
+                    ("button_1", 143 / 1920, 358 / 1080),
+                    ("button_2", 135 / 1920, 495 / 1080),
+                    ("button_3", 123 / 1920, 613 / 1080),
+                )
+                for attempt, (button_name, x_ratio, y_ratio) in enumerate(
+                    phuc_loi_candidates, start=1
+                ):
+                    if not self._wait_if_paused():
+                        self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
+                        return False
+                    phuc_loi_x = round(x_ratio * screen_width)
+                    phuc_loi_y = round(y_ratio * screen_height)
                     self.log_message.emit(
-                        f"Xác định button_phuc_loi là {button_name} tại "
-                        f"({phuc_loi_x}, {phuc_loi_y}); OCR thấy 'diem danh'."
+                        f"Click thử {button_name} ({attempt}/3) tại "
+                        f"({phuc_loi_x}, {phuc_loi_y}); chờ 3 giây rồi quét OCR."
                     )
-                    break
-                self.log_message.emit(
-                    f"{button_name} chưa mở đúng mục (OCR lần {attempt}/3): "
-                    f"{normalized[:180]!r}"
-                )
-            if not phuc_loi_found:
-                raise RuntimeError(
-                    "Đã thử OCR sau cả 3 vị trí button_1/button_2/button_3 "
-                    "nhưng không vị trí nào làm xuất hiện 'Điểm danh'."
-                )
+                    device.shell(f"input tap {phuc_loi_x} {phuc_loi_y}")
+                    time.sleep(3.0)
+                    phuc_loi_found, ocr_result = phuc_loi_screen_matches()
+                    if phuc_loi_found:
+                        self.log_message.emit(
+                            f"Xác định button_phuc_loi là {button_name}; "
+                            f"OCR thấy: {ocr_result}."
+                        )
+                        break
+                    self.log_message.emit(
+                        f"{button_name} chưa đúng vị trí; OCR chưa thấy nhãn mục "
+                        f"Phúc lợi ({attempt}/3): {ocr_result!r}"
+                    )
+                if not phuc_loi_found:
+                    raise RuntimeError(
+                        "OCR không thấy nhãn Phúc lợi sau khi thử cả 3 vị trí."
+                    )
 
             if not self._wait_if_paused():
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
                 return False
 
-            # User-provided RECT bounds are normalized to screenshot ratios:
-            # x=0..473 / 1920, y=119..996 / 1080.
-            activity_rect = (
-                round(0.0 * screen_width),
-                round(0.110185 * screen_height),
-                round(0.246354 * screen_width),
-                round(0.922222 * screen_height),
+            # Vị trí button_diem_danh nằm ngay phía trên mục Tranh bá.
+            tranh_ba_rect = (
+                round(0 / 1920 * screen_width),
+                round(874 / 1080 * screen_height),
+                round(474 / 1920 * screen_width),
+                round(1002 / 1080 * screen_height),
             )
+            diem_danh_rect = (
+                round(0 / 1920 * screen_width),
+                round(720 / 1080 * screen_height),
+                round(468 / 1920 * screen_width),
+                round(870 / 1080 * screen_height),
+            )
+            activity_rect = diem_danh_rect
 
             # BƯỚC 3: Nhận lễ bao miễn phí sau khi xác định đúng nút Phúc lợi.
             self.log_message.emit("BƯỚC 3/7: Nhận lễ bao miễn phí.")
