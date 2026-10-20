@@ -637,11 +637,13 @@ class BotWorker(QThread):
                 round(474 / 1920 * screen_width),
                 round(1002 / 1080 * screen_height),
             )
+            # Dùng đúng vùng Phúc lợi người dùng đã xác định:
+            # góc trái-trên (199, 125), góc phải-dưới (471, 995) ở 1920x1080.
             diem_danh_rect = (
-                round(0 / 1920 * screen_width),
-                round(720 / 1080 * screen_height),
-                round(468 / 1920 * screen_width),
-                round(870 / 1080 * screen_height),
+                round(199 / 1920 * screen_width),
+                round(125 / 1080 * screen_height),
+                round(471 / 1920 * screen_width),
+                round(995 / 1080 * screen_height),
             )
             activity_rect = diem_danh_rect
 
