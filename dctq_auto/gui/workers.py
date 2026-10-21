@@ -715,13 +715,13 @@ class BotWorker(QThread):
                 return False
 
             self.log_message.emit(
-                "Lễ bao Quốc vận — BƯỚC 5: Click nút nhan_le_bao_mien_phi tại tọa độ cấu hình (200; 300)."
+                "Lễ bao Quốc vận — BƯỚC 5: Click nút nhan_le_bao_mien_phi tại tọa độ (688; 234)."
             )
             screenshot = device.screenshot()
             screen_width, screen_height = screenshot.size
             # Tọa độ gốc theo màn hình 1920x1080, scale theo độ phân giải hiện tại.
-            button_x = round(200 / 1920 * screen_width)
-            button_y = round(300 / 1080 * screen_height)
+            button_x = round(688 / 1920 * screen_width)
+            button_y = round(234 / 1080 * screen_height)
             device.shell(f"input tap {button_x} {button_y}")
             time.sleep(1.0)
 
@@ -729,13 +729,12 @@ class BotWorker(QThread):
                 return False
 
             self.log_message.emit(
-                "Lễ bao Quốc vận — BƯỚC 6: Click vị trí text OCR và nhấn ENTER."
+                "Lễ bao Quốc vận — BƯỚC 6: Click tọa độ đóng/xác nhận dialog (728; 867)."
             )
-            # Dùng lại tọa độ đã lấy ở Bước 4; không OCR tìm lại sau khi dialog
-            # xuất hiện vì lúc đó chính dòng text này có thể đã biến mất.
-            title_x, title_y = title_position
-            device.shell(f"input tap {title_x} {title_y}")
-            device.shell("input keyevent KEYCODE_ENTER")
+            # Tọa độ đóng/xác nhận dialog theo màn hình gốc 1920x1080.
+            close_x = round(728 / 1920 * screen_width)
+            close_y = round(867 / 1080 * screen_height)
+            device.shell(f"input tap {close_x} {close_y}")
             time.sleep(1.0)
 
             if not self._wait_if_paused():
