@@ -241,178 +241,95 @@ def run_clone_flow(self, device) -> None:
                     f"[{account.username}] Điểm danh hằng ngày thất bại; tiếp tục các tác vụ Clone khác."
                 )
 
-        if self._config.get("clone_guild_check_in"):
-            # Open the guild chat/entry panel, then only enter the guild when
-            # OCR confirms one of the trusted labels supplied by the user.
-            self.task_progress_changed.emit(
-                f"{account.username} - Báo danh quân đoàn", "running", 0, 1
+        # Quân đoàn là một nhóm luồng chung: chỉ mở/đóng màn hình khi
+        # ít nhất một trong ba tác vụ con được chọn.
+        guild_tasks = (
+            ("clone_guild_check_in", "bao_danh_quan_doan", "Báo danh quân đoàn"),
+            ("clone_receive_lucky_bag", "task_receive_lucky_bag", "Nhận túi phúc"),
+            ("clone_guild_fortune", "task_guild_fortune", "Cầu vận quân đoàn (5 lần)"),
+        )
+        selected_guild_tasks = [
+            (config_key, task_key, label)
+            for config_key, task_key, label in guild_tasks
+            if self._config.get(config_key)
+        ]
+        guild_screen_opened = False
+        if selected_guild_tasks:
+            enter_label = f"{account.username} - Vào màn hình Quân đoàn"
+            self.task_progress_changed.emit(enter_label, "running", 0, 1)
+            self.log_message.emit(
+                f"[{account.username}] Có chọn {len(selected_guild_tasks)} tác vụ Quân đoàn; "
+                "bắt đầu flow Vào Quân đoàn dùng chung với tab Tác vụ."
             )
-            try:
-                self.log_message.emit(
-                    f"[{account.username}] Đang mở mục Quân đoàn qua nút chat quân đoàn."
-                )
-                ocr_client.tap_ocr_target("button_chat_quan_doan")
-                time.sleep(1.5)
-                guild_entry_found = False
-                last_guild_text = ""
-                for guild_attempt in range(5):
-                    if not self._wait_if_paused():
-                        self.log_message.emit("Đã dừng theo yêu cầu.")
-                        return
-                    last_guild_text = self._normalize_screen_text(self._screen_text(device))
-                    trusted_guild_labels = (
-                        "quoc chien", "su do", "quoc chien do",
-                        "doan truong", "doan pho", "quan su",
-                        "thanh vien", "tinh anh", "toi can tang vien",
-                    )
-                    if any(label in last_guild_text for label in trusted_guild_labels):
-                        guild_entry_found = True
-                        self.log_message.emit(
-                            f"[{account.username}] OCR xác nhận giao diện chat/quân đoàn: "
-                            f"{last_guild_text[:220]}"
-                        )
-                        break
-                    if guild_attempt < 4:
-                        time.sleep(1)
-                if not guild_entry_found:
-                    # OCR can miss the trusted labels on the chat screen. The user
-                    # confirmed that the game is already showing the guild chat, so
-                    # cautiously try the known entry button once, then inspect again.
-                    self.log_message.emit(
-                        f"[{account.username}] Chưa thấy từ khóa tin cậy; thử bấm "
-                        "'Vào quân đoàn' một lần và kiểm tra màn hình sau đó."
-                    )
-                ocr_client.tap_ocr_target("vao_quan_doan")
-                time.sleep(2)
-                try:
-                    after_entry_text = self._normalize_screen_text(self._screen_text(device))
-                except Exception as ocr_exc:
-                    after_entry_text = ""
-                    self.log_message.emit(
-                        f"[{account.username}] Lỗi OCR sau khi bấm Vào quân đoàn: {ocr_exc}"
-                    )
-                guild_screen_markers = (
-                    "doan truong", "doan pho", "quan su", "thanh vien",
-                    "tinh anh", "toi can tang vien", "tin he thong",
-                )
-                if any(marker in after_entry_text for marker in guild_screen_markers):
-                    self.log_message.emit(
-                        f"[{account.username}] Đã xác nhận giao diện quân đoàn sau khi bấm: "
-                        f"{after_entry_text[:220]}"
-                    )
-                else:
-                    self.log_message.emit(
-                        f"[{account.username}] Đã gửi thao tác Vào quân đoàn; chưa thấy "
-                        f"từ khóa xác nhận rõ. OCR: {after_entry_text[:220] or '(trống)'}"
-                    )
-                self.log_message.emit(
-                    f"[{account.username}] Đang thực hiện báo danh quân đoàn."
-                )
-                ocr_client.tap_ocr_target("bao_danh_nhan_thuong")
-                time.sleep(1.5)
-                try:
-                    check_in_text = self._normalize_screen_text(self._screen_text(device))
-                except Exception as ocr_exc:
-                    check_in_text = ""
-                    self.log_message.emit(
-                        f"[{account.username}] Không đọc được OCR sau khi bấm Báo danh: {ocr_exc}"
-                    )
-                self.log_message.emit(
-                    f"[{account.username}] Đã gửi thao tác 'Báo danh nhận thưởng'. "
-                    f"OCR sau thao tác: {check_in_text[:220] or '(trống)'}"
-                )
-                # A tap alone does not prove that the server granted the reward.
-                # Keep this task running until a reliable success marker is known.
+            guild_screen_opened = self._run_enter_guild(device, ocr_client)
+            self.task_progress_changed.emit(
+                enter_label, "done" if guild_screen_opened else "failed",
+                1 if guild_screen_opened else 0, 1,
+            )
 
-            except Exception as exc:
-                self.log_message.emit(
-                    f"[{account.username}] Không mở được mục quân đoàn: {exc}"
-                )
-                self.task_progress_changed.emit(
-                    f"{account.username} - Báo danh quân đoàn", "failed", 0, 1
-                )
-
-        if self._config.get("clone_receive_lucky_bag"):
-            try:
-                self.log_message.emit(
-                    f"[{account.username}] Đang kiểm tra cửa hàng quân đoàn để mở Túi phúc."
-                )
-                shop_text = ""
-                shop_markers = (
-                    "cua hang quan doan", "tui phuc", "anh hung",
-                    "cau van quan doan", "lanh tui phuc",
-                )
-                for shop_attempt in range(3):
+            if guild_screen_opened:
+                for config_key, task_key, label in selected_guild_tasks:
                     if not self._wait_if_paused():
-                        self.log_message.emit("Đã dừng theo yêu cầu.")
+                        self.log_message.emit("Đã dừng theo yêu cầu trong nhóm tác vụ Quân đoàn.")
                         return
-                    shop_text = self._normalize_screen_text(self._screen_text(device))
-                    if any(marker in shop_text for marker in shop_markers):
-                        break
-                    if shop_attempt < 2:
-                        time.sleep(1)
-                if any(marker in shop_text for marker in shop_markers):
                     self.log_message.emit(
-                        f"[{account.username}] Đã nhận diện mục Túi phúc/cửa hàng quân đoàn: "
-                        f"{shop_text[:220]}"
+                        f"[{account.username}] Bắt đầu tác vụ Quân đoàn: {label}."
                     )
-                    ocr_client.tap_ocr_target("tui_phuc")
-                    time.sleep(1.5)
-                    bag_text = ""
-                    bag_screen_found = False
-                    for bag_attempt in range(5):
-                        if not self._wait_if_paused():
-                            self.log_message.emit("Đã dừng theo yêu cầu.")
-                            return
-                        bag_text = self._normalize_screen_text(self._screen_text(device))
-                        has_count = re.search(r"\b\d+\s+30\b", bag_text) is not None
-                        bag_markers = (
-                            "tui phuc tuong", "tui phuc truong thanh",
-                            "tui phuc knb", "co so",
-                        )
-                        if has_count or any(marker in bag_text for marker in bag_markers):
-                            bag_screen_found = True
-                            break
-                        if bag_attempt < 4:
-                            time.sleep(1)
-                    if bag_screen_found:
+                    task_ok = self._run_guild_screen_task(task_key, device, ocr_client)
+                    if not task_ok:
                         self.log_message.emit(
-                            f"[{account.username}] Đã xác nhận màn hình Túi phúc: {bag_text[:220]}"
+                            f"[{account.username}] {label} thất bại; tiếp tục tác vụ Quân đoàn kế tiếp."
                         )
-                        for target in ("tui_phuc_thuong", "tui_phuc_truong_thanh", "tui_phuc_knb"):
-                            if not self._wait_if_paused():
-                                self.log_message.emit("Đã dừng theo yêu cầu.")
-                                return
-                            ocr_client.tap_ocr_target(target)
-                            time.sleep(1)
-                        ocr_client.tap_ocr_target("close_tui_phuc")
+
+                # Close only after a successful, OCR-confirmed entry. Reuse the
+                # saved targets used by the standalone Tác vụ tab.
+                close_label = f"{account.username} - Thoát màn hình Quân đoàn"
+                self.task_progress_changed.emit(close_label, "running", 0, 1)
+                try:
+                    self.log_message.emit(
+                        f"[{account.username}] Thoát Quân đoàn — đóng màn hình bằng "
+                        "close_quan_doan từ regions.json."
+                    )
+                    ocr_client.tap_ocr_target("close_quan_doan")
+                    time.sleep(0.8)
+                    image = device.screenshot()
+                    scale_x, scale_y = image.width / 1920, image.height / 1080
+                    rect = (
+                        round(1270 * scale_x), round(968 * scale_y),
+                        round(1532 * scale_x), round(1026 * scale_y),
+                    )
+                    after_close_text = self._normalize_screen_text(
+                        self._screen_text_in_rect(device, rect)
+                    )
+                    if "vao quan doan" in after_close_text:
+                        x, y = ocr_client.tap_ocr_target("thoat_chat_quan_doan")
                         time.sleep(0.8)
                         self.log_message.emit(
-                            f"[{account.username}] Đã bấm lần lượt 3 mục Túi phúc và đóng cửa sổ."
+                            f"[{account.username}] OCR thấy 'vao_quan_doan'; "
+                            f"đã đóng chat tại ({x}, {y})."
                         )
                     else:
                         self.log_message.emit(
-                            f"[{account.username}] Đã bấm Túi phúc nhưng OCR chưa xác nhận "
-                            f"đúng màn hình; không bấm các vị trí nhận. OCR: {bag_text[:220] or '(trống)'}"
+                            f"[{account.username}] Đã đóng màn hình Quân đoàn; "
+                            "OCR không thấy 'vao_quan_doan' nên không bấm đóng chat. "
+                            f"OCR: {after_close_text[:180] or '(trống)'}"
                         )
-                else:
+                    self._config["_clone_guild_screen_closed"] = True
+                    self.task_progress_changed.emit(close_label, "done", 1, 1)
+                except Exception as exc:
                     self.log_message.emit(
-                        f"[{account.username}] Chưa nhận diện được cửa hàng/Túi phúc; bỏ qua để tránh bấm nhầm. "
-                        f"OCR: {shop_text[:220] or '(trống)'}"
+                        f"[{account.username}] Thoát màn hình Quân đoàn thất bại: {exc}"
                     )
-            except Exception as exc:
+                    self.task_progress_changed.emit(close_label, "failed", 0, 1)
+            else:
                 self.log_message.emit(
-                    f"[{account.username}] Lỗi thao tác nhận Túi phúc: {exc}"
+                    f"[{account.username}] Không xác nhận được màn hình Quân đoàn; "
+                    "bỏ qua các thao tác con để tránh click nhầm."
                 )
-                self.task_progress_changed.emit(
-                    f"{account.username} - Nhận Túi phúc", "failed", 0, 1
-                )
-
-        if self._config.get("clone_guild_fortune"):
-            from dctq_auto.tasks.common.guild_logistics import run_guild_logistics
-
-            if not run_guild_logistics(self, account, device, ocr_client):
-                return
+                for _config_key, _task_key, label in selected_guild_tasks:
+                    self.task_progress_changed.emit(
+                        f"{account.username} - {label}", "failed", 0, 1
+                    )
 
         if self._config.get("clone_quoc_chien"):
             try:
