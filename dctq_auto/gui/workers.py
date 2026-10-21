@@ -1127,20 +1127,61 @@ class BotWorker(QThread):
                 )
                 ocr_client.tap_ocr_target("close_quan_doan")
                 time.sleep(0.8)
+
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng trước khi kiểm tra chat Quân đoàn.")
+                    return
+
+                self.log_message.emit(
+                    "Kiểm tra chat_quan_doan: OCR tìm chữ 'vao_quan_doan' "
+                    "để xác nhận màn hình Quân đoàn đã đóng."
+                )
+                screen_text = self._screen_text(device)
+                if not self._fuzzy_ocr_target_match(screen_text, "vao_quan_doan", 0.25):
+                    screenshot = device.screenshot()
+                    screen_width, screen_height = screenshot.size
+                    chat_x = round(181 / 1920 * screen_width)
+                    chat_y = round(64 / 1080 * screen_height)
+                    self.log_message.emit(
+                        "Chưa thấy chữ 'vao_quan_doan'; có thể chat_quan_doan "
+                        "vẫn đang mở. Click tọa độ (181, 64) để đóng chat."
+                    )
+                    device.shell(f"input tap {chat_x} {chat_y}")
+                    time.sleep(0.8)
+
+                    if not self._wait_if_paused():
+                        self.log_message.emit("Đã dừng sau thao tác đóng chat Quân đoàn.")
+                        return
+
+                    screen_text = self._screen_text(device)
+                    if not self._fuzzy_ocr_target_match(screen_text, "vao_quan_doan", 0.25):
+                        raise RuntimeError(
+                            "Đã click (181, 64) nhưng OCR vẫn không tìm thấy "
+                            "'vao_quan_doan'; chưa xác nhận chat Quân đoàn đã đóng. "
+                            f"OCR: {screen_text[:180] or '(trống)'}"
+                        )
+                    self.log_message.emit(
+                        "Đã xác nhận chat_quan_doan đóng: OCR tìm thấy 'vao_quan_doan'."
+                    )
+                else:
+                    self.log_message.emit(
+                        "Chat_quan_doan không còn che màn hình: OCR đã thấy 'vao_quan_doan'."
+                    )
+
                 completed += 1
                 self.progress_changed.emit(
-                    completed, max(1, total), "Đã gửi thao tác đóng Quân đoàn"
+                    completed, max(1, total), "Đã đóng Quân đoàn và kiểm tra chat"
                 )
                 self.task_progress_changed.emit(
                     "Thoát màn hình Quân đoàn", "done", 1, 1
                 )
                 self.log_message.emit(
-                    "Đã gửi thao tác đóng giao diện Quân đoàn. "
+                    "Đã đóng giao diện Quân đoàn và kiểm tra trạng thái chat. "
                     "Đây không phải thao tác rời bang hội."
                 )
             except Exception as exc:
                 self.log_message.emit(
-                    f"Không đóng được giao diện Quân đoàn: {exc}"
+                    f"Không đóng được giao diện Quân đoàn/chat: {exc}"
                 )
                 self.task_progress_changed.emit(
                     "Thoát màn hình Quân đoàn", "failed", 0, 1
