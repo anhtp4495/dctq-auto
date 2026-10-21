@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "regions": {
+    "muu_binh.option_1": {"psm": 11, "min_confidence": 20},
+    "muu_binh.option_2": {"psm": 11, "min_confidence": 20},
+    "muu_binh.option_3": {"psm": 11, "min_confidence": 20},
+    "muu_binh.button_refresh": {"psm": [6, 11, 12], "min_confidence": 10},
+    "muu_binh.button_confirm": {"psm": [6, 11, 12], "min_confidence": 10}
+  }
+}
