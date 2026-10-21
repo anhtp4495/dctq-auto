@@ -1105,7 +1105,10 @@ class MainWindow(QMainWindow):
         self.task_login = QCheckBox("Đăng nhập (nhập tài khoản khi bắt đầu)")
         self.task_daily_checkin = QCheckBox("Điểm danh")
         self.task_receive_quoc_van = QCheckBox("Nhận lễ bao quốc vận")
+        self.task_enter_guild = QCheckBox("Vào quân đoàn")
         self.task_guild_checkin = QCheckBox("Báo danh quân đoàn")
+        self.task_receive_lucky_bag = QCheckBox("Nhận túi phúc")
+        self.task_guild_fortune = QCheckBox("Cầu vận quân đoàn (5 lần)")
         self.task_knb_contribution = QCheckBox("Đóng góp KNB")
         self.task_knb_contribution_count = QSpinBox()
         self.task_knb_contribution_count.setRange(1, 10)
@@ -1269,7 +1272,17 @@ class MainWindow(QMainWindow):
         phuc_loi_layout.addWidget(self.task_daily_checkin)
         daily_layout.addWidget(phuc_loi_group)
 
-        daily_layout.addWidget(self.task_guild_checkin)
+        guild_group = QGroupBox("Quân đoàn")
+        guild_layout = QVBoxLayout(guild_group)
+        for task_checkbox in (
+            self.task_enter_guild,
+            self.task_guild_checkin,
+            self.task_receive_lucky_bag,
+            self.task_guild_fortune,
+            self.thoat_quan_doan_task,
+        ):
+            guild_layout.addWidget(task_checkbox)
+        daily_layout.addWidget(guild_group)
 
         knb_contribution_row = QHBoxLayout()
         knb_contribution_row.addWidget(self.task_knb_contribution)
@@ -1351,11 +1364,6 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(daily_group)
 
-        group = QGroupBox("Thao tác tài khoản")
-        group_layout = QVBoxLayout(group)
-        group_layout.addWidget(self.thoat_quan_doan_task)
-        layout.addWidget(group)
-
         coordinate_group = QGroupBox("Click theo tọa độ")
         coordinate_layout = QHBoxLayout(coordinate_group)
         self.task_click_coordinates = QCheckBox("Click")
@@ -1396,6 +1404,9 @@ class MainWindow(QMainWindow):
                 "utility_tasks_mode": True,
                 "task_login": self.task_login.isChecked(),
                 "task_close_guild": self.thoat_quan_doan_task.isChecked(),
+                "task_enter_guild": self.task_enter_guild.isChecked(),
+                "task_receive_lucky_bag": self.task_receive_lucky_bag.isChecked(),
+                "task_guild_fortune": self.task_guild_fortune.isChecked(),
                 "task_switch_account": self.doi_tai_khoan_task.isChecked(),
                 "task_click_coordinates": self.task_click_coordinates.isChecked(),
                 "task_click_x": self.task_click_x.value(),
