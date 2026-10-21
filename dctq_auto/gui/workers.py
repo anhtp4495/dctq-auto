@@ -8,6 +8,8 @@ from types import SimpleNamespace
 from pathlib import Path
 from threading import Event
 
+import cv2
+import numpy as np
 import pytesseract
 from PIL import ImageOps
 from PySide6.QtCore import QThread, Signal
@@ -634,6 +636,91 @@ class BotWorker(QThread):
             device.shell(f"input tap {x} {y}")
         return x, y
 
+    def _run_enter_guild(self, device, ocr_client) -> bool:
+        """Open the guild chat and verify its entry label using color-aware OCR."""
+        try:
+            if not self._wait_if_paused():
+                return False
+
+            self.log_message.emit(
+                "Vào quân đoàn — BƯỚC 1: Click open_chat_quan_doan theo tọa độ đã lưu."
+            )
+            ocr_client.tap_ocr_target("open_chat_quan_doan")
+            time.sleep(1.0)
+
+            if not self._wait_if_paused():
+                return False
+
+            screenshot = device.screenshot().convert("RGB")
+            screen_width, screen_height = screenshot.size
+            # ROI được cung cấp theo ảnh gốc 1920x1080; scale theo độ phân giải hiện tại.
+            left = round(1270 / 1920 * screen_width)
+            top = round(968 / 1080 * screen_height)
+            right = round(1532 / 1920 * screen_width)
+            bottom = round(1026 / 1080 * screen_height)
+            crop_rgb = np.asarray(screenshot.crop((left, top, right, bottom)))
+            if crop_rgb.size == 0:
+                raise RuntimeError("RECT OCR Vào quân đoàn nằm ngoài màn hình.")
+
+            self.log_message.emit(
+                "Vào quân đoàn — BƯỚC 2: OCR color_text trong RECT "
+                f"({left}, {top}, {right}, {bottom}); thử text vao_quan_doan / "
+                "quan_doan / quan_d, ngưỡng tương đồng > 25%."
+            )
+
+            # Đồng bộ với scripts/ocr_debug.py: chữ trắng, nền đen, Lab distance,
+            # tolerance 100, scale 3 và PSM 11. Gray-only đã được thử nhưng không
+            # đọc được nhãn trên screenshot thực tế.
+            image_lab = cv2.cvtColor(crop_rgb, cv2.COLOR_RGB2LAB).astype(np.float32)
+            text_ref = cv2.cvtColor(
+                np.uint8([[[255, 255, 255]]]), cv2.COLOR_RGB2LAB
+            )[0, 0].astype(np.float32)
+            background_ref = cv2.cvtColor(
+                np.uint8([[[0, 0, 0]]]), cv2.COLOR_RGB2LAB
+            )[0, 0].astype(np.float32)
+            text_distance = np.linalg.norm(image_lab - text_ref, axis=2)
+            background_distance = np.linalg.norm(image_lab - background_ref, axis=2)
+            text_mask = (text_distance <= 100.0) & (text_distance < background_distance)
+            processed = np.where(text_mask, 0, 255).astype(np.uint8)
+            processed = cv2.resize(
+                processed, None, fx=3, fy=3, interpolation=cv2.INTER_NEAREST
+            )
+            processed = cv2.copyMakeBorder(
+                processed, 18, 18, 18, 18, cv2.BORDER_CONSTANT, value=255
+            )
+            try:
+                recognized = pytesseract.image_to_string(
+                    processed, lang="vie+eng", config="--oem 3 --psm 11"
+                ).strip()
+            except pytesseract.TesseractError:
+                recognized = pytesseract.image_to_string(
+                    processed, lang="eng", config="--oem 3 --psm 11"
+                ).strip()
+
+            targets = ("vao_quan_doan", "quan_doan", "quan_d")
+            matched_target = next(
+                (
+                    target for target in targets
+                    if self._fuzzy_ocr_target_match(recognized, target, 0.25)
+                ),
+                None,
+            )
+            if not matched_target:
+                raise RuntimeError(
+                    "Đã click open_chat_quan_doan nhưng OCR color_text không xác nhận "
+                    "được màn hình Quân đoàn (>25%). "
+                    f"OCR: {recognized or '(trống)'}"
+                )
+
+            self.log_message.emit(
+                "Đã xác nhận vào Quân đoàn: OCR color_text khớp "
+                f"{matched_target} (>25%); nội dung OCR: {recognized}"
+            )
+            return True
+        except Exception as exc:
+            self.log_message.emit(f"Vào quân đoàn thất bại, dừng luồng: {exc}")
+            return False
+
     def _run_receive_quoc_van(self, device, ocr_client) -> bool:
         """Receive the free Quốc vận gift and verify that its dialog has closed."""
         target_title = "mua_tich_luy_10_ngay_nhan_them_qua"
@@ -1022,7 +1109,7 @@ class BotWorker(QThread):
         # Gameplay automation for these actions is not implemented in the real
         # ADB flow yet. Report an explicit failed status for each selected task.
         implemented = {
-            "task_login", "nhan_le_bao_quoc_van", "diem_danh",
+            "task_login", "nhan_le_bao_quoc_van", "diem_danh", "task_enter_guild",
             "task_close_guild", "task_switch_account", "task_click_coordinates",
         }
         for key, label in selected:
@@ -1118,6 +1205,25 @@ class BotWorker(QThread):
                 completed += 1
                 self.progress_changed.emit(
                     completed, max(1, total), "Lỗi: Điểm danh"
+                )
+
+        if self._config.get("task_enter_guild"):
+            label = "Vào quân đoàn"
+            self.task_progress_changed.emit(label, "running", 0, 1)
+            if not self._wait_if_paused():
+                self.log_message.emit("Đã dừng trước khi vào Quân đoàn.")
+                return
+            if self._run_enter_guild(device, ocr_client):
+                completed += 1
+                self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), "Đã xác nhận vào Quân đoàn"
+                )
+            else:
+                completed += 1
+                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), "Lỗi: Vào quân đoàn"
                 )
 
         if self._config.get("task_close_guild"):
