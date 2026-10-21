@@ -643,9 +643,18 @@ class BotWorker(QThread):
                 return False
 
             self.log_message.emit(
-                "Vào quân đoàn — BƯỚC 1: Click open_chat_quan_doan theo tọa độ đã lưu."
+                "Vào quân đoàn — BƯỚC 1: Click tọa độ open_chat_quan_doan "
+                "(1888, 568) theo màn hình gốc 1920x1080."
             )
-            ocr_client.tap_ocr_target("open_chat_quan_doan")
+            screenshot = device.screenshot()
+            screen_width, screen_height = screenshot.size
+            click_x = round(1888 / 1920 * screen_width)
+            click_y = round(568 / 1080 * screen_height)
+            device.shell(f"input tap {click_x} {click_y}")
+            self.log_message.emit(
+                f"Đã click open_chat_quan_doan tại ({click_x}, {click_y}) "
+                f"trên màn hình {screen_width}x{screen_height}."
+            )
             time.sleep(1.0)
 
             if not self._wait_if_paused():
