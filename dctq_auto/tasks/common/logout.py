@@ -15,9 +15,12 @@ SPEC = TaskSpec(
 def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
     """Đăng xuất an toàn; False nếu không thể xác minh trạng thái cuối."""
     logout_ok = True
-    if any(worker._config.get(key) for key in (
-        "clone_guild_check_in", "clone_receive_lucky_bag", "clone_guild_fortune"
-    )):
+    if (
+        not worker._config.get("_clone_guild_screen_closed")
+        and any(worker._config.get(key) for key in (
+            "clone_guild_check_in", "clone_receive_lucky_bag", "clone_guild_fortune"
+        ))
+    ):
         try:
             ocr_client.tap_ocr_target("close_quan_doan")
             time.sleep(0.8)
