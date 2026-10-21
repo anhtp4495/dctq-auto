@@ -665,7 +665,27 @@
             "x": 0.602083,
             "y": 0.653704
           }
-        },
+        }
+      ],
+      "screenshot": "user-provided OCR coordinates",
+      "image_resolution": [
+        1920,
+        1080
+      ],
+      "note": "Resolution 1920x1080 inferred from locations.json reference_resolution; verify against actual screenshot."
+    },
+    "quan_doan": {
+      "name": "quan_doan",
+      "serial": "emulator-5554",
+      "recognized_text": "Nút mở chat quân đoàn",
+      "normalized_text": "open_chat_quan_doan",
+      "recognized_items": [
+        "Nút mở chat quân đoàn"
+      ],
+      "normalized_items": [
+        "open_chat_quan_doan"
+      ],
+      "elements": [
         {
           "name": "open_chat_quan_doan",
           "text": "Nút mở chat quân đoàn",
@@ -696,8 +716,7 @@
       "image_resolution": [
         1920,
         1080
-      ],
-      "note": "Resolution 1920x1080 inferred from locations.json reference_resolution; verify against actual screenshot."
+      ]
     }
   }
 }
