@@ -965,6 +965,15 @@ class ScreenshotAnnotator(QDialog):
             QMessageBox.warning(self, "Màu không hợp lệ", str(exc))
             return
 
+        print(
+            "[OCR] Bắt đầu phân tích: "
+            f"image={self._image_path}, rect={self._ocr_region}, "
+            f"target={target_text!r}, steps={selected_steps}, psm={selected_psms}, "
+            f"text_color={text_rgb}, background_color={background_rgb}, "
+            f"border_color={border_rgb}, tolerance={tolerance_input.value()}, "
+            f"save_files={save_files_checkbox.isChecked()}",
+            flush=True,
+        )
         try:
             with Image.open(self._image_path) as screenshot:
                 original_size = screenshot.size
@@ -1043,6 +1052,11 @@ class ScreenshotAnnotator(QDialog):
             from PySide6.QtWidgets import QApplication
             QApplication.processEvents()
             completed_jobs = 0
+            print(
+                f"[OCR] Có {len(variants)} step và {len(selected_psms)} PSM; "
+                f"tổng cộng {total_jobs} lượt OCR.",
+                flush=True,
+            )
             for variant_name, processed in variants.items():
                 if progress.wasCanceled():
                     break
@@ -1052,17 +1066,34 @@ class ScreenshotAnnotator(QDialog):
                     if progress.wasCanceled():
                         break
                     progress.setLabelText(f"Đang OCR: {variant_name} / PSM {psm} ({completed_jobs + 1}/{total_jobs})")
+                    print(
+                        f"[OCR] ({completed_jobs + 1}/{total_jobs}) Bắt đầu step={variant_name}, PSM={psm}",
+                        flush=True,
+                    )
                     QApplication.processEvents()
                     try:
                         data = pytesseract.image_to_data(
                             processed, lang="vie+eng", config=f"--oem 3 --psm {psm}",
                             output_type=pytesseract.Output.DICT,
                         )
-                    except pytesseract.TesseractError:
+                    except pytesseract.TesseractError as first_error:
+                        print(
+                            f"[OCR] Cảnh báo: vie+eng thất bại ở {variant_name}/PSM {psm}: {first_error}; thử eng.",
+                            flush=True,
+                        )
                         data = pytesseract.image_to_data(
                             processed, lang="eng", config=f"--oem 3 --psm {psm}",
                             output_type=pytesseract.Output.DICT,
                         )
+                    recognized_words = [
+                        str(raw).strip() for raw in data.get("text", []) if str(raw).strip()
+                    ]
+                    print(
+                        f"[OCR] ({completed_jobs + 1}/{total_jobs}) Hoàn tất step={variant_name}, "
+                        f"PSM={psm}, số từ nhận diện={len(recognized_words)}: "
+                        f"{' '.join(recognized_words)[:500]}",
+                        flush=True,
+                    )
                     if save_files_checkbox.isChecked():
                         words = []
                         confidences = []
@@ -1116,6 +1147,7 @@ class ScreenshotAnnotator(QDialog):
                     QApplication.processEvents()
             progress.close()
             if completed_jobs == 0:
+                print("[OCR] Đã hủy phân tích trước khi hoàn thành lượt OCR nào.", flush=True)
                 self.instruction.setText("Đã hủy phân tích OCR.")
                 return
 
@@ -1169,12 +1201,20 @@ class ScreenshotAnnotator(QDialog):
                 f" File debug đã lưu tại: {output_dir}"
                 if save_files_checkbox.isChecked() else ""
             )
+            print(
+                f"[OCR] Hoàn tất: {len(matches)} dòng khớp / {len(self._ocr_elements)} dòng nhận diện; "
+                f"hoàn thành {completed_jobs}/{total_jobs} lượt.",
+                flush=True,
+            )
             self.instruction.setText(
                 f"OCR hoàn tất: {len(matches)} dòng khớp / {len(self._ocr_elements)} dòng nhận diện. "
                 f"Steps={', '.join(selected_steps)}; PSM={', '.join(map(str, selected_psms))}. "
                 "Nhấp vào hộp chữ để chọn tọa độ." + saved_message
             )
         except Exception as exc:
+            import traceback
+            print(f"[OCR] LỖI: {type(exc).__name__}: {exc}", flush=True)
+            traceback.print_exc()
             QMessageBox.critical(self, "Lỗi OCR", f"Không thể phân tích OCR: {exc}")
 
     def undo_point(self) -> None:
