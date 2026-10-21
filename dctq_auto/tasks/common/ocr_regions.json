@@ -1,10 +1,53 @@
 {
   "version": 1,
+  "defaults": {
+    "method": "color_text",
+    "text_color": "#FFFFFF",
+    "background_color": "#202020",
+    "border_color": null,
+    "color_tolerance": 38,
+    "psm": 11,
+    "lang": "vie+eng",
+    "scale": 3
+  },
   "regions": {
-    "muu_binh.option_1": {"psm": 11, "min_confidence": 20},
-    "muu_binh.option_2": {"psm": 11, "min_confidence": 20},
-    "muu_binh.option_3": {"psm": 11, "min_confidence": 20},
-    "muu_binh.button_refresh": {"psm": [6, 11, 12], "min_confidence": 10},
-    "muu_binh.button_confirm": {"psm": [6, 11, 12], "min_confidence": 10}
+    "muu_binh.option_1": {
+      "psm": 11,
+      "min_confidence": 20
+    },
+    "muu_binh.option_2": {
+      "psm": 11,
+      "min_confidence": 20
+    },
+    "muu_binh.option_3": {
+      "psm": 11,
+      "min_confidence": 20
+    },
+    "muu_binh.button_refresh": {
+      "psm": [
+        6,
+        11,
+        12
+      ],
+      "min_confidence": 10
+    },
+    "muu_binh.button_confirm": {
+      "psm": [
+        6,
+        11,
+        12
+      ],
+      "min_confidence": 10
+    },
+    "example.black_text_light_gray": {
+      "method": "color_text",
+      "text_color": "#000000",
+      "background_color": "#D3D3D3",
+      "border_color": null,
+      "color_tolerance": 100,
+      "psm": 6,
+      "lang": "vie+eng",
+      "scale": 3
+    }
   }
 }
