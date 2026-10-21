@@ -1264,8 +1264,8 @@ class MainWindow(QMainWindow):
 
         phuc_loi_group = QGroupBox("Hoạt động - Phúc lợi")
         phuc_loi_layout = QVBoxLayout(phuc_loi_group)
-        phuc_loi_layout.addWidget(self.task_daily_checkin)
         phuc_loi_layout.addWidget(self.task_receive_quoc_van)
+        phuc_loi_layout.addWidget(self.task_daily_checkin)
         daily_layout.addWidget(phuc_loi_group)
 
         daily_layout.addWidget(self.task_guild_checkin)
