@@ -896,6 +896,8 @@ class ScreenshotAnnotator(QDialog):
             psm_layout.addWidget(checkbox, index // 7, index % 7)
         layout.addWidget(psm_group)
 
+        target_text_input = QLineEdit("")
+        target_text_input.setPlaceholderText("Để trống để hiển thị toàn bộ kết quả OCR")
         text_color_input = QLineEdit("#FFFFFF")
         background_color_input = QLineEdit("#202020")
         border_color_input = QLineEdit("")
@@ -904,21 +906,12 @@ class ScreenshotAnnotator(QDialog):
         tolerance_input.setDecimals(1)
         tolerance_input.setValue(38.0)
         tolerance_input.setToolTip("Ngưỡng sai khác màu; dùng cho bước color_text và lọc viền.")
+        form.addRow("Text cần phát hiện:", target_text_input)
         form.addRow("Text-color (#RRGGBB hoặc R,G,B):", text_color_input)
         form.addRow("Background-color:", background_color_input)
         form.addRow("Border-color (để trống nếu không có):", border_color_input)
         form.addRow("Color-tolerance:", tolerance_input)
         layout.addLayout(form)
-
-        target_text, accepted = QInputDialog.getText(
-            self,
-            "Text cần phát hiện (không bắt buộc)",
-            "Nhập text muốn tìm. Để trống để hiển thị toàn bộ kết quả OCR:",
-            text="",
-        )
-        if not accepted:
-            return
-        target_normalized = self.normalize_text(target_text) if target_text.strip() else ""
 
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
@@ -929,6 +922,8 @@ class ScreenshotAnnotator(QDialog):
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return
 
+        target_text = target_text_input.text().strip()
+        target_normalized = self.normalize_text(target_text) if target_text else ""
         selected_steps = [key for key, checkbox in step_checks.items() if checkbox.isChecked()]
         selected_psms = [psm for psm, checkbox in psm_checks.items() if checkbox.isChecked()]
         if not selected_steps:
