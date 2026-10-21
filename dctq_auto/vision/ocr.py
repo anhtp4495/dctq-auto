@@ -140,6 +140,9 @@ def read_region_ocr(crop, *, region_key=None, lang=None, override=None):
     processed = preprocess_region(crop, config)
     images = processed if isinstance(processed, dict) else {config.get("method", "color_text"): processed}
     scale = int(config.get("scale", 3))
+    bounds = config.get("bounds") or {}
+    offset_x = int(bounds.get("left", 0))
+    offset_y = int(bounds.get("top", 0))
     results, seen = [], set()
     for step_name, image in images.items():
         for psm in config["psm"]:
@@ -167,6 +170,10 @@ def read_region_ocr(crop, *, region_key=None, lang=None, override=None):
                 results.append({
                     "text": word, "confidence": round(confidence, 1),
                     "box": {"x": box[0], "y": box[1], "w": box[2], "h": box[3]},
+                    "screen_box": {
+                        "x": offset_x + box[0], "y": offset_y + box[1],
+                        "w": box[2], "h": box[3],
+                    },
                     "psm": psm, "step": step_name,
                 })
     return results
