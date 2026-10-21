@@ -710,6 +710,31 @@
             "x": 0.983333,
             "y": 0.525926
           }
+        },
+        {
+          "name": "thoat_chat_quan_doan",
+          "text": "Nút thoát chat quân đoàn",
+          "confidence": null,
+          "bounds": {
+            "left": 861,
+            "top": 516,
+            "right": 901,
+            "bottom": 556
+          },
+          "rect": {
+            "x": 861,
+            "y": 516,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 881,
+            "y_px": 536
+          },
+          "center_ratio": {
+            "x": 0.458854,
+            "y": 0.496296
+          }
         }
       ],
       "screenshot": "user-provided OCR coordinates",
