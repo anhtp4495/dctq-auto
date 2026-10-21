@@ -60,9 +60,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--scale", type=int, default=3, help="Hệ số phóng to (mặc định: 3).")
     parser.add_argument(
         "--steps", nargs="+",
-        choices=("gray", "clahe", "otsu", "otsu_inverted"),
+        choices=("gray", "clahe", "otsu", "otsu_inverted", "white_text"),
         default=["gray", "clahe", "otsu", "otsu_inverted"],
-        help="Chỉ chạy các bước được chọn (mặc định: gray clahe otsu otsu_inverted).",
+        help="Chỉ chạy các bước được chọn; white_text lọc chữ trắng theo HSV (mặc định: gray clahe otsu otsu_inverted).",
     )
     parser.add_argument(
         "--tesseract-cmd", help="Đường dẫn tesseract.exe nếu không có trong PATH."
@@ -106,6 +106,25 @@ def preprocess(crop: np.ndarray, scale: int, steps: list[str]) -> dict[str, np.n
     variants: dict[str, np.ndarray] = {}
     if "gray" in steps:
         variants["gray"] = gray
+
+    # Isolate near-white pixels in HSV to suppress yellow borders and ornaments.
+    # Invert the mask so Tesseract sees dark glyphs on a white background.
+    # Thresholds are intentionally tolerant of anti-aliased white text.
+    if "white_text" in steps:
+        hsv = cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)
+        white_mask = cv2.inRange(
+            hsv,
+            np.array([0, 0, 135], dtype=np.uint8),
+            np.array([180, 120, 255], dtype=np.uint8),
+        )
+        if scale > 1:
+            white_mask = cv2.resize(
+                white_mask, None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST
+            )
+        white_mask = cv2.copyMakeBorder(
+            white_mask, 18, 18, 18, 18, cv2.BORDER_CONSTANT, value=0
+        )
+        variants["white_text"] = cv2.bitwise_not(white_mask)
 
     # Later operations still use the intermediate result even if it isn't
     # selected for saving. This keeps the pipeline consistent.
