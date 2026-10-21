@@ -78,19 +78,23 @@ class CloneTab(QWidget):
         phuc_loi_layout.addWidget(self.clone_daily_check_in)
         layout.addWidget(phuc_loi_group)
 
+        guild_group = QGroupBox("Quân đoàn")
+        guild_layout = QVBoxLayout(guild_group)
         self.clone_guild_check_in = QCheckBox("Báo danh quân đoàn")
         self.clone_guild_check_in.setChecked(True)
         self.clone_receive_lucky_bag = QCheckBox("Nhận túi phúc")
         self.clone_receive_lucky_bag.setChecked(True)
         self.clone_guild_fortune = QCheckBox("Cầu vận quân đoàn (5 lần)")
-        self.clone_quoc_chien = QCheckBox("Quốc chiến")
         for checkbox in (
             self.clone_guild_check_in,
             self.clone_receive_lucky_bag,
             self.clone_guild_fortune,
-            self.clone_quoc_chien,
         ):
-            layout.addWidget(checkbox)
+            guild_layout.addWidget(checkbox)
+        layout.addWidget(guild_group)
+
+        self.clone_quoc_chien = QCheckBox("Quốc chiến")
+        layout.addWidget(self.clone_quoc_chien)
 
         layout.addStretch(1)
         scroll_area.setWidget(page)
