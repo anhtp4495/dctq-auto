@@ -76,13 +76,27 @@ def preprocess_region(crop, config):
         if scale > 1:
             output = cv2.resize(output, None, fx=scale, fy=scale, interpolation=cv2.INTER_LANCZOS4)
     elif method == "color_text":
-        text_distance = _color_distance(rgb, config["text_color"])
-        background_distance = _color_distance(rgb, config["background_color"])
         tolerance = float(config.get("color_tolerance", 38))
-        mask = (text_distance <= tolerance) & (text_distance < background_distance)
-        border_color = config.get("border_color")
-        if border_color is not None:
-            mask &= _color_distance(rgb, border_color) > tolerance
+        profiles = config.get("color_profiles") or [{
+            "text_color": config["text_color"],
+            "background_color": config["background_color"],
+            "border_color": config.get("border_color"),
+            "color_tolerance": tolerance,
+        }]
+        mask = np.zeros(rgb.shape[:2], dtype=bool)
+        for profile in profiles:
+            text_color = _parse_color(profile.get("text_color"))
+            background_color = _parse_color(profile.get("background_color"))
+            if text_color is None or background_color is None:
+                continue
+            profile_tolerance = float(profile.get("color_tolerance", tolerance))
+            text_distance = _color_distance(rgb, text_color)
+            background_distance = _color_distance(rgb, background_color)
+            profile_mask = (text_distance <= profile_tolerance) & (text_distance < background_distance)
+            border_color = _parse_color(profile.get("border_color"))
+            if border_color is not None:
+                profile_mask &= _color_distance(rgb, border_color) > profile_tolerance
+            mask |= profile_mask
         output = np.where(mask, 0, 255).astype(np.uint8)
         if scale > 1:
             output = cv2.resize(output, None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST)
