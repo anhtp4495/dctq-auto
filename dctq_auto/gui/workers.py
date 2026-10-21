@@ -128,6 +128,8 @@ class BotWorker(QThread):
             selected = []
             if self._config.get("task_login"):
                 selected.append("Đăng nhập")
+            if self._config.get("nhan_le_bao_quoc_van"):
+                selected.append("Nhận lễ bao quốc vận")
             if self._config.get("diem_danh"):
                 selected.append("Điểm danh")
             if self._config.get("bao_danh_quan_doan"):
@@ -238,6 +240,7 @@ class BotWorker(QThread):
         accounts = load_accounts(self._config.get("clone_account_file", ""))
         task_specs = (
             ("clone_login", "Đăng nhập"),
+            ("clone_receive_quoc_van", "Nhận lễ bao quốc vận"),
             ("clone_daily_check_in", "Điểm danh"),
             ("clone_guild_check_in", "Báo danh quân đoàn"),
             ("clone_receive_lucky_bag", "Nhận túi phúc"),
@@ -716,6 +719,7 @@ class BotWorker(QThread):
         # in the progress panel instead of silently being skipped.
         task_labels = (
             ("task_login", "Đăng nhập"),
+            ("nhan_le_bao_quoc_van", "Nhận lễ bao quốc vận"),
             ("diem_danh", "Điểm danh"),
             ("bao_danh_quan_doan", "Báo danh quân đoàn"),
             ("dong_gop_knb", "Đóng góp KNB"),
