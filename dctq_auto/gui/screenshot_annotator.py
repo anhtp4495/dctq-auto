@@ -1145,10 +1145,14 @@ class ScreenshotAnnotator(QDialog):
                     recognized_words = [
                         str(raw).strip() for raw in data.get("text", []) if str(raw).strip()
                     ]
+                    normalized_words = [
+                        self.normalize_text(word) for word in recognized_words
+                    ]
+                    normalized_words = [word for word in normalized_words if word]
                     print(
                         f"[OCR] ({completed_jobs + 1}/{total_jobs}) Hoàn tất step={variant_name}, "
                         f"PSM={psm}, số từ nhận diện={len(recognized_words)}: "
-                        f"{' '.join(recognized_words)[:500]}",
+                        f"{' '.join(normalized_words)[:500]}",
                         flush=True,
                     )
                     if save_files_checkbox.isChecked():
@@ -1166,9 +1170,11 @@ class ScreenshotAnnotator(QDialog):
                         recognized = " ".join(words)
                         avg_conf = sum(confidences) / len(confidences) if confidences else 0.0
                         with (output_dir / "results.txt").open("a", encoding="utf-8") as summary:
+                            normalized_recognized = self.normalize_text(recognized)
                             summary.write(
                                 f"[{variant_name} | PSM {psm}] confidence trung bình: {avg_conf:.1f}\n"
-                                f"{recognized or '(không nhận diện được chữ)'}\n\n"
+                                f"Text gốc: {recognized or '(không nhận diện được chữ)'}\n"
+                                f"Chuẩn hóa: {normalized_recognized or '(không có text)'}\n\n"
                             )
                         csv_path = output_dir / f"{self._image_path.stem}.{variant_name}.psm{psm}.csv"
                         with csv_path.open("w", newline="", encoding="utf-8-sig") as csv_file:
