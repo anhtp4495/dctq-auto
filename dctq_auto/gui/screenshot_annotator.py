@@ -8,7 +8,9 @@ import unicodedata
 from datetime import datetime
 from pathlib import Path
 
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageEnhance, ImageFilter
+import numpy as np
+import cv2
 import pytesseract
 
 from PySide6.QtCore import QPoint, Qt, QSettings
@@ -16,6 +18,9 @@ from PySide6.QtGui import QGuiApplication, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
+    QCheckBox,
+    QDoubleSpinBox,
+    QGridLayout,
     QFileDialog,
     QButtonGroup,
     QFormLayout,
@@ -850,212 +855,233 @@ class ScreenshotAnnotator(QDialog):
         if self._image_path is None or self._pixmap.isNull():
             QMessageBox.warning(self, "Chưa có ảnh", "Hãy chọn ảnh trong artifacts/screenshots trước.")
             return
-
-        rect_mode = self._current_mode() == "Từng vùng" or self._ocr_region is not None
-        if not rect_mode:
+        if self._current_mode() != "Từng vùng" and self._ocr_region is None:
             return
         if self._ocr_region is None:
             QMessageBox.information(
                 self, "Chưa chọn RECT",
-                "Hãy kéo chọn một vùng RECT trên ảnh trước khi chạy OCR. OCR sẽ chỉ phân tích vùng đó và trả về hộp tọa độ cho từng dòng chữ nhận diện được.",
+                "Hãy kéo chọn một vùng RECT trên ảnh trước khi chạy OCR.",
             )
             return
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Thiết lập phân tích OCR")
+        dialog.setMinimumWidth(440)
+        layout = QVBoxLayout(dialog)
+        form = QFormLayout()
+
+        steps_group = QGroupBox("Steps")
+        steps_layout = QGridLayout(steps_group)
+        step_checks = {}
+        step_names = [
+            ("gray", "gray", True), ("clahe", "clahe", True),
+            ("otsu", "otsu", True), ("otsu_inverted", "otsu_inverted", True),
+            ("color_text", "color_text", True), ("white_text", "white_text", False),
+        ]
+        for index, (key, label, checked) in enumerate(step_names):
+            checkbox = QCheckBox(label)
+            checkbox.setChecked(checked)
+            step_checks[key] = checkbox
+            steps_layout.addWidget(checkbox, index // 3, index % 3)
+        layout.addWidget(steps_group)
+
+        psm_group = QGroupBox("PSM")
+        psm_layout = QGridLayout(psm_group)
+        psm_checks = {}
+        for index, psm in enumerate(range(14)):
+            checkbox = QCheckBox(str(psm))
+            checkbox.setChecked(psm in (6, 7, 11))
+            psm_checks[psm] = checkbox
+            psm_layout.addWidget(checkbox, index // 7, index % 7)
+        layout.addWidget(psm_group)
+
+        text_color_input = QLineEdit("#FFFFFF")
+        background_color_input = QLineEdit("#202020")
+        border_color_input = QLineEdit("")
+        tolerance_input = QDoubleSpinBox()
+        tolerance_input.setRange(1, 255)
+        tolerance_input.setDecimals(1)
+        tolerance_input.setValue(38.0)
+        tolerance_input.setToolTip("Ngưỡng sai khác màu; dùng cho bước color_text và lọc viền.")
+        form.addRow("Text-color (#RRGGBB hoặc R,G,B):", text_color_input)
+        form.addRow("Background-color:", background_color_input)
+        form.addRow("Border-color (để trống nếu không có):", border_color_input)
+        form.addRow("Color-tolerance:", tolerance_input)
+        layout.addLayout(form)
 
         target_text, accepted = QInputDialog.getText(
             self,
             "Text cần phát hiện (không bắt buộc)",
-            "Nhập text muốn tìm, ví dụ quan_doan. Để trống để hiển thị toàn bộ kết quả OCR:",
+            "Nhập text muốn tìm. Để trống để hiển thị toàn bộ kết quả OCR:",
             text="",
         )
         if not accepted:
             return
         target_normalized = self.normalize_text(target_text) if target_text.strip() else ""
 
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        selected_steps = [key for key, checkbox in step_checks.items() if checkbox.isChecked()]
+        selected_psms = [psm for psm, checkbox in psm_checks.items() if checkbox.isChecked()]
+        if not selected_steps:
+            QMessageBox.warning(self, "Thiếu steps", "Hãy chọn ít nhất một step.")
+            return
+        if not selected_psms:
+            QMessageBox.warning(self, "Thiếu PSM", "Hãy chọn ít nhất một PSM.")
+            return
+
+        def parse_rgb(value: str, field_name: str, optional: bool = False):
+            value = value.strip()
+            if not value and optional:
+                return None
+            try:
+                if value.startswith("#"):
+                    raw = value[1:]
+                    if len(raw) != 6:
+                        raise ValueError
+                    rgb = tuple(int(raw[i:i + 2], 16) for i in (0, 2, 4))
+                else:
+                    rgb = tuple(int(part.strip()) for part in value.split(","))
+                if len(rgb) != 3 or any(channel < 0 or channel > 255 for channel in rgb):
+                    raise ValueError
+                return rgb
+            except ValueError:
+                raise ValueError(f"{field_name} không hợp lệ: {value}")
+
         try:
-            # OCR input is the selected region in Từng vùng mode; point mode cannot run OCR.
+            text_rgb = parse_rgb(text_color_input.text(), "Text-color")
+            background_rgb = parse_rgb(background_color_input.text(), "Background-color")
+            border_rgb = parse_rgb(border_color_input.text(), "Border-color", optional=True)
+        except ValueError as exc:
+            QMessageBox.warning(self, "Màu không hợp lệ", str(exc))
+            return
+
+        try:
             with Image.open(self._image_path) as screenshot:
                 original_size = screenshot.size
-                if rect_mode:
-                    left, top, right, bottom = self._ocr_region
-                    left = max(0, min(original_size[0], left))
-                    top = max(0, min(original_size[1], top))
-                    right = max(left + 1, min(original_size[0], right))
-                    bottom = max(top + 1, min(original_size[1], bottom))
-                    source_region = screenshot.convert("RGB").crop((left, top, right, bottom))
-                    offset_x, offset_y = left, top
-                else:
-                    source_region = screenshot.convert("RGB")
-                    offset_x, offset_y = 0, 0
+                left, top, right, bottom = self._ocr_region
+                left = max(0, min(original_size[0], left))
+                top = max(0, min(original_size[1], top))
+                right = max(left + 1, min(original_size[0], right))
+                bottom = max(top + 1, min(original_size[1], bottom))
+                source_region = screenshot.convert("RGB").crop((left, top, right, bottom))
+                rgb_image = np.asarray(source_region)
+                bgr_image = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2BGR)
+                gray = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2GRAY)
+                scale = 3
+                gray = cv2.resize(gray, None, fx=scale, fy=scale, interpolation=cv2.INTER_LANCZOS4)
+                gray = cv2.copyMakeBorder(gray, 18, 18, 18, 18, cv2.BORDER_CONSTANT, value=255)
 
-                image = ImageOps.autocontrast(source_region.convert("L"))
-                scale = 2
-                image = image.resize(
-                    (image.width * scale, image.height * scale),
-                    Image.Resampling.LANCZOS,
-                )
+                variants = {}
+                if "gray" in selected_steps:
+                    variants["gray"] = gray
+                contrast = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8)).apply(gray)
+                if "clahe" in selected_steps:
+                    variants["clahe"] = contrast
+                _, otsu = cv2.threshold(contrast, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+                if "otsu" in selected_steps:
+                    variants["otsu"] = otsu
+                _, otsu_inv = cv2.threshold(contrast, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+                if "otsu_inverted" in selected_steps:
+                    variants["otsu_inverted"] = otsu_inv
 
-            try:
-                ocr_data = pytesseract.image_to_data(
-                    image, lang="vie+eng", config="--psm 6",
-                    output_type=pytesseract.Output.DICT,
-                )
-            except pytesseract.TesseractError:
-                ocr_data = pytesseract.image_to_data(
-                    image, lang="eng", config="--psm 6",
-                    output_type=pytesseract.Output.DICT,
-                )
+                tolerance = float(tolerance_input.value())
+                if "color_text" in selected_steps:
+                    def color_distance(rgb, reference):
+                        ref_lab = cv2.cvtColor(np.uint8([[list(reference)]]), cv2.COLOR_RGB2LAB)[0, 0].astype(np.float32)
+                        lab = cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB).astype(np.float32)
+                        return np.linalg.norm(lab - ref_lab, axis=2)
+                    text_distance = color_distance(rgb_image, text_rgb)
+                    bg_distance = color_distance(rgb_image, background_rgb)
+                    mask = (text_distance <= tolerance) & (text_distance < bg_distance)
+                    if border_rgb is not None:
+                        mask &= color_distance(rgb_image, border_rgb) > tolerance
+                    binary = np.where(mask, 0, 255).astype(np.uint8)
+                    binary = cv2.resize(binary, None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST)
+                    variants["color_text"] = cv2.copyMakeBorder(binary, 18, 18, 18, 18, cv2.BORDER_CONSTANT, value=255)
+                if "white_text" in selected_steps:
+                    hsv = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2HSV)
+                    mask = cv2.inRange(hsv, np.array([0, 0, 135], dtype=np.uint8), np.array([180, 120, 255], dtype=np.uint8))
+                    mask = cv2.resize(mask, None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST)
+                    variants["white_text"] = cv2.copyMakeBorder(cv2.bitwise_not(mask), 18, 18, 18, 18, cv2.BORDER_CONSTANT, value=255)
 
-            grouped = self._split_ocr_words(ocr_data, min_confidence=45.0)
+            grouped_candidates = []
+            for variant_name, processed in variants.items():
+                for psm in selected_psms:
+                    try:
+                        data = pytesseract.image_to_data(
+                            processed, lang="vie+eng", config=f"--oem 3 --psm {psm}",
+                            output_type=pytesseract.Output.DICT,
+                        )
+                    except pytesseract.TesseractError:
+                        data = pytesseract.image_to_data(
+                            processed, lang="eng", config=f"--oem 3 --psm {psm}",
+                            output_type=pytesseract.Output.DICT,
+                        )
+                    for item in self._split_ocr_words(data, min_confidence=45.0):
+                        # Combine results from selected steps/PSMs and remove duplicate boxes below.
+                        grouped_candidates.append(item)
+
+            unique_candidates = []
+            seen_candidates = set()
+            for item in sorted(grouped_candidates, key=lambda x: x["confidence"], reverse=True):
+                signature = (self.normalize_text(item["text"]), round(item["left"] / scale), round(item["top"] / scale))
+                if signature in seen_candidates:
+                    continue
+                seen_candidates.add(signature)
+                unique_candidates.append(item)
+            grouped = sorted(unique_candidates, key=lambda x: (x["top"], x["left"]))
             self._ocr_elements = []
             self.image_view.set_ocr_boxes([])
             image_width, image_height = original_size
 
-            if rect_mode:
-                # Return each OCR text line with its own bounding box in original-image coordinates.
-                for item in grouped:
-                    x1 = max(left, min(right, left + round(item["left"] / scale)))
-                    y1 = max(top, min(bottom, top + round(item["top"] / scale)))
-                    x2 = max(x1, min(right, left + round(item["right"] / scale)))
-                    y2 = max(y1, min(bottom, top + round(item["bottom"] / scale)))
-                    width, height = x2 - x1, y2 - y1
-                    if width < 3 or height < 3:
-                        continue
-                    center_x = round((x1 + x2) / 2)
-                    center_y = round((y1 + y2) / 2)
-                    word_bounds = []
-                    for word in item.get("words", []):
-                        wx1 = max(left, min(right, left + round(word["left"] / scale)))
-                        wy1 = max(top, min(bottom, top + round(word["top"] / scale)))
-                        wx2 = max(wx1, min(right, left + round(word["right"] / scale)))
-                        wy2 = max(wy1, min(bottom, top + round(word["bottom"] / scale)))
-                        if wx2 - wx1 >= 2 and wy2 - wy1 >= 2:
-                            word_bounds.append({
-                                "text": word["text"],
-                                "bounds": {
-                                    "left": wx1, "top": wy1, "right": wx2, "bottom": wy2
-                                },
-                            })
-                    self._ocr_elements.append({
-                        "name": self.normalize_text(item["text"]),
-                        "text": item["text"],
-                        "confidence": item["confidence"],
-                        "word_bounds": word_bounds,
-                        "bounds": {"left": x1, "top": y1, "right": x2, "bottom": y2},
-                        "rect": {"x": x1, "y": y1, "width": width, "height": height},
-                        "center": {"x_px": center_x, "y_px": center_y},
-                        "center_ratio": {
-                            "x": round(center_x / image_width, 6),
-                            "y": round(center_y / image_height, 6),
-                        },
-                        "bounds_ratio": {
-                            "left": round(x1 / image_width, 6),
-                            "top": round(y1 / image_height, 6),
-                            "right": round(x2 / image_width, 6),
-                            "bottom": round(y2 / image_height, 6),
-                        },
-                    })
-                self.image_view.set_ocr_boxes(self._ocr_elements)
-            else:
-                # Point mode retains whole-image OCR, but only accepts filtered text lines.
-                for item in grouped:
-                    x1 = max(0, min(image_width, offset_x + round(item["left"] / scale)))
-                    y1 = max(0, min(image_height, offset_y + round(item["top"] / scale)))
-                    x2 = max(x1, min(image_width, offset_x + round(item["right"] / scale)))
-                    y2 = max(y1, min(image_height, offset_y + round(item["bottom"] / scale)))
-                    width, height = x2 - x1, y2 - y1
-                    if width < 3 or height < 3:
-                        continue
-                    center_x = round((x1 + x2) / 2)
-                    center_y = round((y1 + y2) / 2)
-                    self._ocr_elements.append({
-                        "name": self.normalize_text(item["text"]),
-                        "text": item["text"],
-                        "confidence": item["confidence"],
-                        "bounds": {"left": x1, "top": y1, "right": x2, "bottom": y2},
-                        "rect": {"x": x1, "y": y1, "width": width, "height": height},
-                        "center": {"x_px": center_x, "y_px": center_y},
-                        "center_ratio": {
-                            "x": round(center_x / image_width, 6),
-                            "y": round(center_y / image_height, 6),
-                        },
-                        "bounds_ratio": {
-                            "left": round(x1 / image_width, 6),
-                            "top": round(y1 / image_height, 6),
-                            "right": round(x2 / image_width, 6),
-                            "bottom": round(y2 / image_height, 6),
-                        },
-                    })
-
+            for item in grouped:
+                x1 = max(left, min(right, left + round(item["left"] / scale)))
+                y1 = max(top, min(bottom, top + round(item["top"] / scale)))
+                x2 = max(x1, min(right, left + round(item["right"] / scale)))
+                y2 = max(y1, min(bottom, top + round(item["bottom"] / scale)))
+                width, height = x2 - x1, y2 - y1
+                if width < 3 or height < 3:
+                    continue
+                center_x = round((x1 + x2) / 2)
+                center_y = round((y1 + y2) / 2)
+                self._ocr_elements.append({
+                    "name": self.normalize_text(item["text"]),
+                    "text": item["text"],
+                    "confidence": item["confidence"],
+                    "word_bounds": [],
+                    "bounds": {"left": x1, "top": y1, "right": x2, "bottom": y2},
+                    "rect": {"x": x1, "y": y1, "width": width, "height": height},
+                    "center": {"x_px": center_x, "y_px": center_y},
+                    "center_ratio": {"x": round(center_x / image_width, 6), "y": round(center_y / image_height, 6)},
+                    "bounds_ratio": {
+                        "left": round(x1 / image_width, 6), "top": round(y1 / image_height, 6),
+                        "right": round(x2 / image_width, 6), "bottom": round(y2 / image_height, 6),
+                    },
+                })
+            self.image_view.set_ocr_boxes(self._ocr_elements)
+            matches = [
+                item for item in self._ocr_elements
+                if not target_normalized or target_normalized in item["name"]
+            ]
             if target_normalized:
                 for item in self._ocr_elements:
-                    item["matched"] = False
-                    item.pop("highlight_bounds", None)
-                    # Match normalized word sequences so punctuation such as "-" or "." is
-                    # treated consistently, then highlight only the matched word(s), not the
-                    # entire OCR line.
-                    words = item.get("word_bounds", [])
-                    for start_index in range(len(words)):
-                        matched_sequence = []
-                        for end_index in range(start_index, len(words)):
-                            matched_sequence.append(words[end_index])
-                            sequence_text = "_".join(
-                                self.normalize_text(word["text"]) for word in matched_sequence
-                            ).strip("_")
-                            if target_normalized == sequence_text:
-                                item["matched"] = True
-                                item["highlight_bounds"] = {
-                                    "left": min(word["bounds"]["left"] for word in matched_sequence),
-                                    "top": min(word["bounds"]["top"] for word in matched_sequence),
-                                    "right": max(word["bounds"]["right"] for word in matched_sequence),
-                                    "bottom": max(word["bounds"]["bottom"] for word in matched_sequence),
-                                }
-                                break
-                        if item["matched"]:
-                            break
+                    item["matched"] = target_normalized in item["name"]
                 self.image_view.set_ocr_boxes(self._ocr_elements)
-            else:
-                for item in self._ocr_elements:
-                    item["matched"] = False
-                    item.pop("highlight_bounds", None)
-                self.image_view.set_ocr_boxes(self._ocr_elements)
-
-            items = [item["text"] for item in self._ocr_elements]
-            normalized_items = [item["name"] for item in self._ocr_elements]
-            if self._on_ocr_result is not None:
-                self._on_ocr_result(items, normalized_items, self._ocr_elements)
-
-            if not items:
-                self.instruction.setText("Không tìm thấy text đủ tin cậy trong vùng đã chọn." if rect_mode else "Không tìm thấy cụm chữ đủ tin cậy.")
-                QMessageBox.information(
-                    self, "Không nhận diện được chữ",
-                    "Không tìm thấy text đủ tin cậy trong vùng đã chọn." if rect_mode
-                    else "Không tìm thấy text có độ tin cậy đủ cao. Hãy thử ảnh rõ hơn.",
-                )
-            else:
-                if target_normalized:
-                    matches = [item for item in self._ocr_elements if item.get("matched")]
-                    if matches:
-                        self.instruction.setText(
-                            f"Tìm thấy '{target_text.strip()}' trong {len(matches)} vùng chữ. "
-                            "Vùng khớp được viền đỏ; các vùng OCR khác viền xanh."
-                        )
-                    else:
-                        self.instruction.setText(
-                            f"Không tìm thấy '{target_text.strip()}'. Các vùng OCR nhận diện được "
-                            "vẫn hiển thị viền xanh để bạn kiểm tra."
-                        )
-                else:
-                    self.instruction.setText(f"Đã nhận diện {len(items)} cụm chữ trong vùng.")
-        except pytesseract.TesseractNotFoundError:
-            QMessageBox.critical(
-                self,
-                "Chưa cài Tesseract OCR",
-                "Ứng dụng đã có thư viện pytesseract nhưng chưa tìm thấy chương trình Tesseract. "
-                "Hãy cài Tesseract OCR và dữ liệu ngôn ngữ Vietnamese (vie) + English (eng), "
-                "rồi mở lại ứng dụng.",
+            self.instruction.setText(
+                f"OCR hoàn tất: {len(matches)} dòng khớp / {len(self._ocr_elements)} dòng nhận diện. "
+                f"Steps={', '.join(selected_steps)}; PSM={', '.join(map(str, selected_psms))}. "
+                "Nhấp vào hộp chữ để chọn tọa độ."
             )
         except Exception as exc:
-            QMessageBox.critical(self, "OCR thất bại", str(exc))
+            QMessageBox.critical(self, "Lỗi OCR", f"Không thể phân tích OCR: {exc}")
 
     def undo_point(self) -> None:
         if self._points:
