@@ -55,6 +55,7 @@ def run_guild_logistics(worker, account, device, ocr_client) -> bool:
                 f"[{account.username}] Không xác nhận được màn hình Cầu vận; "
                 f"không bấm 5 lần để tránh thao tác nhầm. OCR: {fortune_text[:220] or '(trống)'}"
             )
+            return False
     except Exception as exc:
         worker.log_message.emit(
             f"[{account.username}] Lỗi thao tác hậu cần quân đoàn: {exc}"
@@ -62,4 +63,5 @@ def run_guild_logistics(worker, account, device, ocr_client) -> bool:
         worker.task_progress_changed.emit(
             f"{account.username} - Hậu cần quân đoàn", "failed", 0, 1
         )
+        return False
     return True
