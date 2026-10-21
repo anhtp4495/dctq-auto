@@ -1142,7 +1142,11 @@ class ScreenshotAnnotator(QDialog):
                 if progress.wasCanceled():
                     break
                 if save_files_checkbox.isChecked():
-                    cv2.imwrite(str(output_dir / f"{self._image_path.stem}.{variant_name}.png"), processed)
+                    image_to_save = (
+                        cv2.cvtColor(processed, cv2.COLOR_RGB2BGR)
+                        if processed.ndim == 3 else processed
+                    )
+                    cv2.imwrite(str(output_dir / f"{self._image_path.stem}.{variant_name}.png"), image_to_save)
                 for psm in selected_psms:
                     if progress.wasCanceled():
                         break
@@ -1230,7 +1234,10 @@ class ScreenshotAnnotator(QDialog):
                                     word, data["conf"][i], data["left"][i], data["top"][i],
                                     data["width"][i], data["height"][i],
                                 ])
-                        annotated = cv2.cvtColor(processed, cv2.COLOR_GRAY2BGR)
+                        annotated = (
+                            cv2.cvtColor(processed, cv2.COLOR_RGB2BGR)
+                            if processed.ndim == 3 else cv2.cvtColor(processed, cv2.COLOR_GRAY2BGR)
+                        )
                         for i, raw_text in enumerate(data["text"]):
                             if not raw_text.strip():
                                 continue
