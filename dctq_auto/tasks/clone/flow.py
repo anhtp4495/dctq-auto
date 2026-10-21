@@ -45,6 +45,8 @@ def run_clone_flow(self, device) -> None:
 
     emit_account_progress("Bắt đầu")
     for index, account in enumerate(accounts, start=1):
+        # Per-account flag: the next clone may have a newly opened guild screen.
+        self._config["_clone_guild_screen_closed"] = False
         if not self._wait_if_paused():
             self.log_message.emit("Đã dừng theo yêu cầu.")
             return
