@@ -325,9 +325,9 @@ class BotWorker(QThread):
     def _fuzzy_ocr_target_match(
         recognized_text: str,
         target_text: str,
-        threshold: float = 0.50,
+        threshold: float = 0.25,
     ) -> bool:
-        """Match a target against any OCR substring, ignoring invalid characters."""
+        """Match a target against any OCR substring when similarity is above 25% by default."""
         from difflib import SequenceMatcher
 
         target = BotWorker._normalize_ocr_match_text(target_text)
@@ -346,7 +346,7 @@ class BotWorker(QThread):
             for start in range(0, len(recognized) - window_len + 1):
                 candidate = recognized[start:start + window_len]
                 score = SequenceMatcher(None, target, candidate).ratio()
-                if score >= threshold:
+                if score > threshold:
                     return True
         return False
 
