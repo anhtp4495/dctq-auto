@@ -1018,12 +1018,12 @@ class ScreenshotAnnotator(QDialog):
                 output_dir.mkdir(parents=True, exist_ok=True)
                 cv2.imwrite(str(output_dir / "00_original_crop.png"), bgr_image)
                 (output_dir / "results.txt").write_text(
-                    f"Image: {self._image_path}\\n"
-                    f"RECT: ({left}, {top}, {right}, {bottom})\\n"
-                    f"Language: vie+eng; scale: {scale}; PSM: {selected_psms}\\n"
-                    f"Steps: {selected_steps}\\n"
+                    f"Image: {self._image_path}\n"
+                    f"RECT: ({left}, {top}, {right}, {bottom})\n"
+                    f"Language: vie+eng; scale: {scale}; PSM: {selected_psms}\n"
+                    f"Steps: {selected_steps}\n"
                     f"Text RGB: {text_rgb}; background RGB: {background_rgb}; "
-                    f"border RGB: {border_rgb}; color tolerance: {tolerance_input.value()}\\n\\n",
+                    f"border RGB: {border_rgb}; color tolerance: {tolerance_input.value()}\n\n",
                     encoding="utf-8",
                 )
 
@@ -1058,8 +1058,8 @@ class ScreenshotAnnotator(QDialog):
                         avg_conf = sum(confidences) / len(confidences) if confidences else 0.0
                         with (output_dir / "results.txt").open("a", encoding="utf-8") as summary:
                             summary.write(
-                                f"[{variant_name} | PSM {psm}] confidence trung bình: {avg_conf:.1f}\\n"
-                                f"{recognized or '(không nhận diện được chữ)'}\\n\\n"
+                                f"[{variant_name} | PSM {psm}] confidence trung bình: {avg_conf:.1f}\n"
+                                f"{recognized or '(không nhận diện được chữ)'}\n\n"
                             )
                         csv_path = output_dir / f"{self._image_path.stem}.{variant_name}.psm{psm}.csv"
                         with csv_path.open("w", newline="", encoding="utf-8-sig") as csv_file:
