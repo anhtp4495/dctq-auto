@@ -60,9 +60,25 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--scale", type=int, default=3, help="Hệ số phóng to (mặc định: 3).")
     parser.add_argument(
         "--steps", nargs="+",
-        choices=("gray", "clahe", "otsu", "otsu_inverted", "white_text"),
-        default=["gray", "clahe", "otsu", "otsu_inverted"],
-        help="Chỉ chạy các bước được chọn; white_text lọc chữ trắng theo HSV (mặc định: gray clahe otsu otsu_inverted).",
+        choices=("gray", "clahe", "otsu", "otsu_inverted", "white_text", "color_text"),
+        default=["color_text"],
+        help="Chỉ chạy phương pháp được chỉ định (mặc định: color_text).",
+    )
+    parser.add_argument(
+        "--text-color", default="#FFFFFF",
+        help="Màu chữ, dạng HEX #RRGGBB hoặc RGB R,G,B (mặc định: trắng #FFFFFF).",
+    )
+    parser.add_argument(
+        "--background-color", default="#202020",
+        help="Màu nền, dạng HEX #RRGGBB hoặc RGB R,G,B (mặc định: tối #202020).",
+    )
+    parser.add_argument(
+        "--border-color",
+        help="Màu viền cần loại bỏ, dạng HEX #RRGGBB hoặc RGB R,G,B; bỏ trống nếu không có viền.",
+    )
+    parser.add_argument(
+        "--color-tolerance", type=float, default=38.0,
+        help="Ngưỡng sai khác màu trong không gian Lab (mặc định: 38).",
     )
     parser.add_argument(
         "--tesseract-cmd", help="Đường dẫn tesseract.exe nếu không có trong PATH."
@@ -93,7 +109,43 @@ def select_rect(image: np.ndarray) -> tuple[int, int, int, int] | None:
     return left, top, right, bottom
 
 
-def preprocess(crop: np.ndarray, scale: int, steps: list[str]) -> dict[str, np.ndarray]:
+def parse_color(value: str) -> tuple[int, int, int]:
+    """Parse a color as #RRGGBB or comma-separated RGB values."""
+    value = value.strip()
+    if value.startswith("#"):
+        raw = value[1:]
+        if len(raw) != 6:
+            raise argparse.ArgumentTypeError(f"Màu HEX không hợp lệ: {value}")
+        try:
+            return tuple(int(raw[i:i + 2], 16) for i in (0, 2, 4))
+        except ValueError as exc:
+            raise argparse.ArgumentTypeError(f"Màu HEX không hợp lệ: {value}") from exc
+    try:
+        channels = tuple(int(part.strip()) for part in value.split(","))
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"Màu RGB không hợp lệ: {value}") from exc
+    if len(channels) != 3 or any(channel < 0 or channel > 255 for channel in channels):
+        raise argparse.ArgumentTypeError(f"Màu RGB phải có dạng R,G,B trong khoảng 0-255: {value}")
+    return channels
+
+
+def color_distance_map(image: np.ndarray, rgb: tuple[int, int, int]) -> np.ndarray:
+    """Return per-pixel CIE Lab distance from an RGB reference color."""
+    reference = np.uint8([[list(rgb)]])
+    reference_lab = cv2.cvtColor(reference, cv2.COLOR_RGB2LAB)[0, 0].astype(np.float32)
+    image_lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB).astype(np.float32)
+    return np.linalg.norm(image_lab - reference_lab, axis=2)
+
+
+def preprocess(
+    crop: np.ndarray,
+    scale: int,
+    steps: list[str],
+    text_color: tuple[int, int, int],
+    background_color: tuple[int, int, int],
+    border_color: tuple[int, int, int] | None,
+    color_tolerance: float,
+) -> dict[str, np.ndarray]:
     # Each stage is derived from the previous stage so the user can inspect the
     # image transformation step by step. gray includes optional upscale/padding.
     gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
@@ -107,9 +159,25 @@ def preprocess(crop: np.ndarray, scale: int, steps: list[str]) -> dict[str, np.n
     if "gray" in steps:
         variants["gray"] = gray
 
-    # Isolate near-white pixels in HSV to suppress yellow borders and ornaments.
-    # Invert the mask so Tesseract sees dark glyphs on a white background.
-    # Thresholds are intentionally tolerant of anti-aliased white text.
+    # Color-aware segmentation: retain pixels close to text color, reject
+    # pixels closer to the configured background, and optionally suppress border.
+    if "color_text" in steps:
+        text_distance = color_distance_map(crop, text_color)
+        background_distance = color_distance_map(crop, background_color)
+        text_mask = (text_distance <= color_tolerance) & (text_distance < background_distance)
+        if border_color is not None:
+            border_distance = color_distance_map(crop, border_color)
+            text_mask &= border_distance > color_tolerance
+        mask = np.where(text_mask, 0, 255).astype(np.uint8)
+        if scale > 1:
+            mask = cv2.resize(
+                mask, None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST
+            )
+        variants["color_text"] = cv2.copyMakeBorder(
+            mask, 18, 18, 18, 18, cv2.BORDER_CONSTANT, value=255
+        )
+
+    # Legacy white-only HSV filter, available only when explicitly selected.
     if "white_text" in steps:
         hsv = cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)
         white_mask = cv2.inRange(
@@ -191,7 +259,21 @@ def main() -> int:
     output_dir = Path(args.output) if args.output else image_path.parent / f"ocr_debug_{image_path.stem}"
     output_dir.mkdir(parents=True, exist_ok=True)
     cv2.imwrite(str(output_dir / "00_original_crop.png"), crop)
-    variants = preprocess(crop, args.scale, args.steps)
+    try:
+        text_color = parse_color(args.text_color)
+        background_color = parse_color(args.background_color)
+        border_color = parse_color(args.border_color) if args.border_color else None
+    except argparse.ArgumentTypeError as exc:
+        print(f"Lỗi màu: {exc}")
+        return 2
+    if args.color_tolerance <= 0:
+        print("--color-tolerance phải > 0.")
+        return 2
+
+    variants = preprocess(
+        crop, args.scale, args.steps,
+        text_color, background_color, border_color, args.color_tolerance,
+    )
 
     try:
         installed = set(pytesseract.get_languages(config=""))
@@ -209,11 +291,18 @@ def main() -> int:
     print(f"RECT: ({left}, {top}, {right}, {bottom})")
     print(f"Kích thước RECT: {right-left}x{bottom-top}; scale={args.scale}; lang={args.lang}")
     print(f"Các bước được chọn: {', '.join(args.steps)}")
+    print(f"Màu chữ RGB: {text_color}; màu nền RGB: {background_color}; "
+          f"màu viền RGB: {border_color if border_color is not None else 'không dùng'}")
+    print(f"Color tolerance: {args.color_tolerance}")
     print(f"Kết quả sẽ lưu tại: {output_dir.resolve()}")
     summary_path = output_dir / "results.txt"
     with summary_path.open("w", encoding="utf-8") as summary:
         summary.write(f"Image: {image_path}\nRECT: ({left}, {top}, {right}, {bottom})\n")
         summary.write(f"Language: {args.lang}; scale: {args.scale}; PSM: {args.psm}\n")
+        summary.write(
+            f"Text RGB: {text_color}; background RGB: {background_color}; "
+            f"border RGB: {border_color}; color tolerance: {args.color_tolerance}\n"
+        )
 
         for variant_name, processed in variants.items():
             # Keep filenames tied to the source image name, with the selected
