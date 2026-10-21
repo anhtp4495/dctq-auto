@@ -1155,6 +1155,21 @@ class ScreenshotAnnotator(QDialog):
                         f"{' '.join(normalized_words)[:500]}",
                         flush=True,
                     )
+                    # Log each recognized text line with its rectangle in original-image pixels.
+                    for line_item in self._split_ocr_words(data, min_confidence=45.0):
+                        normalized_line = self.normalize_text(line_item["text"])
+                        if not normalized_line:
+                            continue
+                        x = max(left, left + round((line_item["left"] - 18) / scale))
+                        y = max(top, top + round((line_item["top"] - 18) / scale))
+                        right_x = min(right, left + round((line_item["right"] - 18) / scale))
+                        bottom_y = min(bottom, top + round((line_item["bottom"] - 18) / scale))
+                        width_px = max(0, right_x - x)
+                        height_px = max(0, bottom_y - y)
+                        print(
+                            f"[OCR]   {normalized_line} ({x}; {y}; {width_px}; {height_px})",
+                            flush=True,
+                        )
                     if save_files_checkbox.isChecked():
                         words = []
                         confidences = []
