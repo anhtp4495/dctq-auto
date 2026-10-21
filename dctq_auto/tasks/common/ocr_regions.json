@@ -39,32 +39,18 @@
       ],
       "min_confidence": 10
     },
-    "hoat_dong.phuc_loi.diem_danh": {
+    "hoat_dong.phuc_loi.cac_tinh_nang": {
       "bounds": {
         "left": 202,
         "top": 421,
         "right": 472,
         "bottom": 875
       },
-      "method": "color_text",
-      "color_profiles": [
-        {
-          "text_color": "#FFFFFF",
-          "background_color": "#202020",
-          "color_tolerance": 38
-        },
-        {
-          "text_color": "#FFFFFF",
-          "background_color": "#E0B52A",
-          "color_tolerance": 38
-        },
-        {
-          "text_color": "#000000",
-          "background_color": "#D3D3D3",
-          "color_tolerance": 100
-        }
+      "steps": [
+        "gray",
+        "white_text"
       ],
-      "psm": 6,
+      "psm": 11,
       "min_confidence": 10,
       "lang": "vie+eng",
       "scale": 3
