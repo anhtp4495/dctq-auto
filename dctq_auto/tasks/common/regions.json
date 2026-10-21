@@ -665,6 +665,56 @@
             "x": 0.602083,
             "y": 0.653704
           }
+        },
+        {
+          "name": "dong_chi_tiet_tui_phuc",
+          "text": "Nút đóng chi tiết Túi phúc",
+          "confidence": null,
+          "bounds": {
+            "left": 1667,
+            "top": 16,
+            "right": 1707,
+            "bottom": 56
+          },
+          "rect": {
+            "x": 1667,
+            "y": 16,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 1687,
+            "y_px": 36
+          },
+          "center_ratio": {
+            "x": 0.878646,
+            "y": 0.033333
+          }
+        },
+        {
+          "name": "dong_man_hinh_tui_phuc",
+          "text": "Nút đóng màn hình Túi phúc",
+          "confidence": null,
+          "bounds": {
+            "left": 1721,
+            "top": 42,
+            "right": 1761,
+            "bottom": 82
+          },
+          "rect": {
+            "x": 1721,
+            "y": 42,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 1741,
+            "y_px": 62
+          },
+          "center_ratio": {
+            "x": 0.906771,
+            "y": 0.057407
+          }
         }
       ],
       "screenshot": "user-provided OCR coordinates",
