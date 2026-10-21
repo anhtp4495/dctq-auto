@@ -916,6 +916,9 @@ class ScreenshotAnnotator(QDialog):
         text_color_input = QLineEdit(str(self._ui_settings.value("screenshot_annotator/ocr_text_color", "#FFFFFF")))
         background_color_input = QLineEdit(str(self._ui_settings.value("screenshot_annotator/ocr_background_color", "#202020")))
         border_color_input = QLineEdit(str(self._ui_settings.value("screenshot_annotator/ocr_border_color", "")))
+        output_background_color_input = QLineEdit(
+            str(self._ui_settings.value("screenshot_annotator/ocr_output_background_color", "#FFFFFF"))
+        )
         tolerance_input = QDoubleSpinBox()
 
         def add_color_preview(input_widget: QLineEdit, initial_color: str) -> QWidget:
@@ -948,6 +951,7 @@ class ScreenshotAnnotator(QDialog):
         text_color_row = add_color_preview(text_color_input, "#FFFFFF")
         background_color_row = add_color_preview(background_color_input, "#202020")
         border_color_row = add_color_preview(border_color_input, "#FFFFFF")
+        output_background_color_row = add_color_preview(output_background_color_input, "#FFFFFF")
         tolerance_input.setRange(1, 255)
         tolerance_input.setDecimals(1)
         tolerance_input.setValue(float(self._ui_settings.value("screenshot_annotator/ocr_tolerance", 38.0)))
@@ -956,6 +960,8 @@ class ScreenshotAnnotator(QDialog):
         form.addRow("Text-color (#RRGGBB hoặc R,G,B):", text_color_row)
         form.addRow("Background-color:", background_color_row)
         form.addRow("Border-color (để trống nếu không có):", border_color_row)
+        form.addRow("Output-background-color:", output_background_color_row)
+        form.addRow("Màu nền đầu ra của color_text (HEX #RRGGBB hoặc R,G,B).")
         form.addRow("Color-tolerance:", tolerance_input)
         layout.addLayout(form)
 
@@ -1007,6 +1013,9 @@ class ScreenshotAnnotator(QDialog):
             text_rgb = parse_rgb(text_color_input.text(), "Text-color")
             background_rgb = parse_rgb(background_color_input.text(), "Background-color")
             border_rgb = parse_rgb(border_color_input.text(), "Border-color", optional=True)
+            output_background_rgb = parse_rgb(
+                output_background_color_input.text(), "Output-background-color"
+            )
         except ValueError as exc:
             QMessageBox.warning(self, "Màu không hợp lệ", str(exc))
             return
@@ -1018,6 +1027,9 @@ class ScreenshotAnnotator(QDialog):
         self._ui_settings.setValue("screenshot_annotator/ocr_text_color", text_color_input.text().strip())
         self._ui_settings.setValue("screenshot_annotator/ocr_background_color", background_color_input.text().strip())
         self._ui_settings.setValue("screenshot_annotator/ocr_border_color", border_color_input.text().strip())
+        self._ui_settings.setValue(
+            "screenshot_annotator/ocr_output_background_color", output_background_color_input.text().strip()
+        )
         self._ui_settings.setValue("screenshot_annotator/ocr_tolerance", tolerance_input.value())
         self._ui_settings.setValue("screenshot_annotator/ocr_save_files", save_files_checkbox.isChecked())
         self._ui_settings.sync()
@@ -1027,7 +1039,8 @@ class ScreenshotAnnotator(QDialog):
             f"image={self._image_path}, rect={self._ocr_region}, "
             f"target={target_text!r}, steps={selected_steps}, psm={selected_psms}, "
             f"text_color={text_rgb}, background_color={background_rgb}, "
-            f"border_color={border_rgb}, tolerance={tolerance_input.value()}, "
+            f"border_color={border_rgb}, output_background_color={output_background_rgb}, "
+            f"tolerance={tolerance_input.value()}, "
             f"save_files={save_files_checkbox.isChecked()}",
             flush=True,
         )
@@ -1071,9 +1084,19 @@ class ScreenshotAnnotator(QDialog):
                     mask = (text_distance <= tolerance) & (text_distance < bg_distance)
                     if border_rgb is not None:
                         mask &= color_distance(rgb_image, border_rgb) > tolerance
-                    binary = np.where(mask, 0, 255).astype(np.uint8)
-                    binary = cv2.resize(binary, None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST)
-                    variants["color_text"] = cv2.copyMakeBorder(binary, 18, 18, 18, 18, cv2.BORDER_CONSTANT, value=255)
+                    # Chữ được giữ là đen; các pixel còn lại dùng màu nền đầu ra người dùng chọn.
+                    output_background = np.array(output_background_rgb, dtype=np.uint8)
+                    color_output = np.empty((*mask.shape, 3), dtype=np.uint8)
+                    color_output[:] = output_background
+                    color_output[mask] = (0, 0, 0)
+                    color_output = cv2.resize(
+                        color_output, None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST
+                    )
+                    color_output = cv2.copyMakeBorder(
+                        color_output, 18, 18, 18, 18, cv2.BORDER_CONSTANT,
+                        value=tuple(int(channel) for channel in output_background_rgb[::-1]),
+                    )
+                    variants["color_text"] = color_output
                 if "white_text" in selected_steps:
                     hsv = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2HSV)
                     mask = cv2.inRange(hsv, np.array([0, 0, 135], dtype=np.uint8), np.array([180, 120, 255], dtype=np.uint8))
@@ -1090,7 +1113,8 @@ class ScreenshotAnnotator(QDialog):
                     f"Language: vie+eng; scale: {scale}; PSM: {selected_psms}\n"
                     f"Steps: {selected_steps}\n"
                     f"Text RGB: {text_rgb}; background RGB: {background_rgb}; "
-                    f"border RGB: {border_rgb}; color tolerance: {tolerance_input.value()}\n\n",
+                    f"border RGB: {border_rgb}; output background RGB: {output_background_rgb}; "
+                    f"color tolerance: {tolerance_input.value()}\n\n",
                     encoding="utf-8",
                 )
 
