@@ -32,6 +32,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QProgressDialog,
     QScrollArea,
     QSlider,
     QVBoxLayout,
@@ -1027,11 +1028,31 @@ class ScreenshotAnnotator(QDialog):
                     encoding="utf-8",
                 )
 
+            if not variants:
+                QMessageBox.warning(self, "Chưa có step hợp lệ", "Không tạo được ảnh xử lý từ các steps đã chọn.")
+                return
+
             grouped_candidates = []
+            total_jobs = len(variants) * len(selected_psms)
+            progress = QProgressDialog("Đang khởi tạo OCR...", "Hủy", 0, total_jobs, self)
+            progress.setWindowTitle("Đang phân tích OCR")
+            progress.setWindowModality(Qt.WindowModality.WindowModal)
+            progress.setMinimumDuration(0)
+            progress.setValue(0)
+            progress.show()
+            from PySide6.QtWidgets import QApplication
+            QApplication.processEvents()
+            completed_jobs = 0
             for variant_name, processed in variants.items():
+                if progress.wasCanceled():
+                    break
                 if save_files_checkbox.isChecked():
                     cv2.imwrite(str(output_dir / f"{self._image_path.stem}.{variant_name}.png"), processed)
                 for psm in selected_psms:
+                    if progress.wasCanceled():
+                        break
+                    progress.setLabelText(f"Đang OCR: {variant_name} / PSM {psm} ({completed_jobs + 1}/{total_jobs})")
+                    QApplication.processEvents()
                     try:
                         data = pytesseract.image_to_data(
                             processed, lang="vie+eng", config=f"--oem 3 --psm {psm}",
@@ -1090,6 +1111,13 @@ class ScreenshotAnnotator(QDialog):
                     for item in self._split_ocr_words(data, min_confidence=45.0):
                         # Combine results from selected steps/PSMs and remove duplicate boxes below.
                         grouped_candidates.append(item)
+                    completed_jobs += 1
+                    progress.setValue(completed_jobs)
+                    QApplication.processEvents()
+            progress.close()
+            if completed_jobs == 0:
+                self.instruction.setText("Đã hủy phân tích OCR.")
+                return
 
             unique_candidates = []
             seen_candidates = set()
