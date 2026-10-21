@@ -1103,6 +1103,7 @@ class MainWindow(QMainWindow):
 
         self.task_login = QCheckBox("Đăng nhập (nhập tài khoản khi bắt đầu)")
         self.task_daily_checkin = QCheckBox("Điểm danh")
+        self.task_receive_quoc_van = QCheckBox("Nhận lễ bao quốc vận")
         self.task_guild_checkin = QCheckBox("Báo danh quân đoàn")
         self.task_knb_contribution = QCheckBox("Đóng góp KNB")
         self.task_knb_contribution_count = QSpinBox()
@@ -1258,10 +1259,16 @@ class MainWindow(QMainWindow):
         for task_checkbox in (
             self.task_login,
             self.doi_tai_khoan_task,
-            self.task_daily_checkin,
-            self.task_guild_checkin,
         ):
             daily_layout.addWidget(task_checkbox)
+
+        phuc_loi_group = QGroupBox("Hoạt động - Phúc lợi")
+        phuc_loi_layout = QVBoxLayout(phuc_loi_group)
+        phuc_loi_layout.addWidget(self.task_daily_checkin)
+        phuc_loi_layout.addWidget(self.task_receive_quoc_van)
+        daily_layout.addWidget(phuc_loi_group)
+
+        daily_layout.addWidget(self.task_guild_checkin)
 
         knb_contribution_row = QHBoxLayout()
         knb_contribution_row.addWidget(self.task_knb_contribution)
@@ -1393,6 +1400,7 @@ class MainWindow(QMainWindow):
                 "task_click_x": self.task_click_x.value(),
                 "task_click_y": self.task_click_y.value(),
                 "diem_danh": self.task_daily_checkin.isChecked(),
+                "nhan_le_bao_quoc_van": self.task_receive_quoc_van.isChecked(),
                 "bao_danh_quan_doan": self.task_guild_checkin.isChecked(),
                 "dong_gop_knb": self.task_knb_contribution.isChecked(),
                 "so_lan_dong_gop_knb": self.task_knb_contribution_count.value(),
@@ -1587,7 +1595,7 @@ class MainWindow(QMainWindow):
         if config.get("utility_tasks_mode") and not any(
             config.get(key) for key in (
                 "task_login", "task_close_guild", "task_switch_account",
-                "diem_danh", "bao_danh_quan_doan", "dong_gop_knb",
+                "diem_danh", "nhan_le_bao_quoc_van", "bao_danh_quan_doan", "dong_gop_knb",
                 "tham_do_lanh_dia", "nhiem_vu_luu_ly_thap",
                 "thuc_hien_giao_tranh", "thuc_hien_tranh_ba",
                 "thiet_lap_muu_binh", "task_click_coordinates",
