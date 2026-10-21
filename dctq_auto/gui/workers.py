@@ -240,8 +240,8 @@ class BotWorker(QThread):
         accounts = load_accounts(self._config.get("clone_account_file", ""))
         task_specs = (
             ("clone_login", "Đăng nhập"),
-            ("clone_receive_quoc_van", "Nhận lễ bao quốc vận"),
-            ("clone_daily_check_in", "Điểm danh"),
+            ("clone_receive_quoc_van", "Hoạt động -> Phúc lợi -> Nhận lễ bao quốc vận"),
+            ("clone_daily_check_in", "Hoạt động -> Phúc lợi -> Điểm danh"),
             ("clone_guild_check_in", "Báo danh quân đoàn"),
             ("clone_receive_lucky_bag", "Nhận túi phúc"),
             ("clone_logout", "Đăng xuất"),
@@ -278,9 +278,16 @@ class BotWorker(QThread):
                     self._progress_completed, self._progress_total,
                     f"{account.username} — {label} ({task_index}/{len(selected)})",
                 )
+                flow_step = {
+                    "clone_receive_quoc_van": 2,
+                    "clone_daily_check_in": 3,
+                }.get(_key, task_index)
+                flow_total = 6 if _key in (
+                    "clone_receive_quoc_van", "clone_daily_check_in"
+                ) else len(selected)
                 if not self._mock_tick(
                     f"[{account.username}] {label}: chạy thử bước "
-                    f"{task_index}/{len(selected)}."
+                    f"{flow_step}/{flow_total}."
                 ):
                     return
                 self.task_progress_changed.emit(
