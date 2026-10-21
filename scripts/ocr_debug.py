@@ -70,7 +70,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--background-color", default="#202020",
-        help="Màu nền, dạng HEX #RRGGBB hoặc RGB R,G,B (mặc định: tối #202020).",
+        help="Màu nền gốc, dạng HEX #RRGGBB hoặc RGB R,G,B (mặc định: tối #202020).",
+    )
+    parser.add_argument(
+        "--output-background-color", default="#FFFFFF",
+        help="Màu nền đầu ra cho color_text, dạng HEX #RRGGBB hoặc RGB R,G,B (mặc định: trắng #FFFFFF).",
     )
     parser.add_argument(
         "--border-color",
@@ -145,6 +149,7 @@ def preprocess(
     background_color: tuple[int, int, int],
     border_color: tuple[int, int, int] | None,
     color_tolerance: float,
+    output_background_color: tuple[int, int, int],
 ) -> dict[str, np.ndarray]:
     # Each stage is derived from the previous stage so the user can inspect the
     # image transformation step by step. gray includes optional upscale/padding.
@@ -168,13 +173,18 @@ def preprocess(
         if border_color is not None:
             border_distance = color_distance_map(crop, border_color)
             text_mask &= border_distance > color_tolerance
-        mask = np.where(text_mask, 0, 255).astype(np.uint8)
+        # Output is RGB: retained text pixels are black and rejected pixels use
+        # the user-selected background color.
+        color_output = np.empty((*text_mask.shape, 3), dtype=np.uint8)
+        color_output[:] = output_background_color
+        color_output[text_mask] = (0, 0, 0)
         if scale > 1:
-            mask = cv2.resize(
-                mask, None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST
+            color_output = cv2.resize(
+                color_output, None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST
             )
         variants["color_text"] = cv2.copyMakeBorder(
-            mask, 18, 18, 18, 18, cv2.BORDER_CONSTANT, value=255
+            color_output, 18, 18, 18, 18, cv2.BORDER_CONSTANT,
+            value=tuple(int(channel) for channel in output_background_color[::-1]),
         )
 
     # Legacy white-only HSV filter, available only when explicitly selected.
@@ -262,6 +272,7 @@ def main() -> int:
     try:
         text_color = parse_color(args.text_color)
         background_color = parse_color(args.background_color)
+        output_background_color = parse_color(args.output_background_color)
         border_color = parse_color(args.border_color) if args.border_color else None
     except argparse.ArgumentTypeError as exc:
         print(f"Lỗi màu: {exc}")
@@ -273,6 +284,7 @@ def main() -> int:
     variants = preprocess(
         crop, args.scale, args.steps,
         text_color, background_color, border_color, args.color_tolerance,
+        output_background_color,
     )
 
     try:
@@ -293,6 +305,7 @@ def main() -> int:
     print(f"Các bước được chọn: {', '.join(args.steps)}")
     print(f"Màu chữ RGB: {text_color}; màu nền RGB: {background_color}; "
           f"màu viền RGB: {border_color if border_color is not None else 'không dùng'}")
+    print(f"Màu nền đầu ra RGB (color_text): {output_background_color}")
     print(f"Color tolerance: {args.color_tolerance}")
     print(f"Kết quả sẽ lưu tại: {output_dir.resolve()}")
     summary_path = output_dir / "results.txt"
@@ -301,7 +314,8 @@ def main() -> int:
         summary.write(f"Language: {args.lang}; scale: {args.scale}; PSM: {args.psm}\n")
         summary.write(
             f"Text RGB: {text_color}; background RGB: {background_color}; "
-            f"border RGB: {border_color}; color tolerance: {args.color_tolerance}\n"
+            f"border RGB: {border_color}; output background RGB: {output_background_color}; "
+            f"color tolerance: {args.color_tolerance}\n"
         )
 
         for variant_name, processed in variants.items():
@@ -355,7 +369,10 @@ def main() -> int:
                         ])
 
                 # Draw word boxes on the processed crop for visual inspection.
-                annotated = cv2.cvtColor(processed, cv2.COLOR_GRAY2BGR)
+                annotated = (
+                    cv2.cvtColor(processed, cv2.COLOR_RGB2BGR)
+                    if processed.ndim == 3 else cv2.cvtColor(processed, cv2.COLOR_GRAY2BGR)
+                )
                 for i, raw_text in enumerate(data["text"]):
                     if not raw_text.strip():
                         continue
