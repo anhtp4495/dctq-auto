@@ -881,9 +881,15 @@ class ScreenshotAnnotator(QDialog):
             ("otsu", "otsu", True), ("otsu_inverted", "otsu_inverted", True),
             ("color_text", "color_text", True), ("white_text", "white_text", False),
         ]
+        saved_steps = self._ui_settings.value(
+            "screenshot_annotator/ocr_steps", [key for key, _label, checked in step_names if checked]
+        )
+        if isinstance(saved_steps, str):
+            saved_steps = [item for item in saved_steps.split(",") if item]
+        saved_steps = set(saved_steps)
         for index, (key, label, checked) in enumerate(step_names):
             checkbox = QCheckBox(label)
-            checkbox.setChecked(checked)
+            checkbox.setChecked(key in saved_steps if self._ui_settings.contains("screenshot_annotator/ocr_steps") else checked)
             step_checks[key] = checkbox
             steps_layout.addWidget(checkbox, index // 3, index % 3)
         layout.addWidget(steps_group)
@@ -891,18 +897,22 @@ class ScreenshotAnnotator(QDialog):
         psm_group = QGroupBox("PSM")
         psm_layout = QGridLayout(psm_group)
         psm_checks = {}
+        saved_psms = self._ui_settings.value("screenshot_annotator/ocr_psms", [6, 7, 11])
+        if isinstance(saved_psms, str):
+            saved_psms = [item for item in saved_psms.split(",") if item]
+        saved_psms = {int(item) for item in saved_psms}
         for index, psm in enumerate(range(14)):
             checkbox = QCheckBox(str(psm))
-            checkbox.setChecked(psm in (6, 7, 11))
+            checkbox.setChecked(psm in saved_psms)
             psm_checks[psm] = checkbox
             psm_layout.addWidget(checkbox, index // 7, index % 7)
         layout.addWidget(psm_group)
 
-        target_text_input = QLineEdit("")
+        target_text_input = QLineEdit(str(self._ui_settings.value("screenshot_annotator/ocr_target_text", "")))
         target_text_input.setPlaceholderText("Để trống để hiển thị toàn bộ kết quả OCR")
-        text_color_input = QLineEdit("#FFFFFF")
-        background_color_input = QLineEdit("#202020")
-        border_color_input = QLineEdit("")
+        text_color_input = QLineEdit(str(self._ui_settings.value("screenshot_annotator/ocr_text_color", "#FFFFFF")))
+        background_color_input = QLineEdit(str(self._ui_settings.value("screenshot_annotator/ocr_background_color", "#202020")))
+        border_color_input = QLineEdit(str(self._ui_settings.value("screenshot_annotator/ocr_border_color", "")))
         tolerance_input = QDoubleSpinBox()
 
         def add_color_preview(input_widget: QLineEdit, initial_color: str) -> QWidget:
@@ -937,7 +947,7 @@ class ScreenshotAnnotator(QDialog):
         border_color_row = add_color_preview(border_color_input, "#FFFFFF")
         tolerance_input.setRange(1, 255)
         tolerance_input.setDecimals(1)
-        tolerance_input.setValue(38.0)
+        tolerance_input.setValue(float(self._ui_settings.value("screenshot_annotator/ocr_tolerance", 38.0)))
         tolerance_input.setToolTip("Ngưỡng sai khác màu; dùng cho bước color_text và lọc viền.")
         form.addRow("Text cần phát hiện:", target_text_input)
         form.addRow("Text-color (#RRGGBB hoặc R,G,B):", text_color_row)
@@ -947,7 +957,9 @@ class ScreenshotAnnotator(QDialog):
         layout.addLayout(form)
 
         save_files_checkbox = QCheckBox("Lưu file xử lý và kết quả OCR (giống scripts/ocr_debug.py)")
-        save_files_checkbox.setChecked(False)
+        save_files_checkbox.setChecked(
+            self._ui_settings.value("screenshot_annotator/ocr_save_files", False, type=bool)
+        )
         layout.addWidget(save_files_checkbox)
 
         buttons = QDialogButtonBox(
@@ -995,6 +1007,17 @@ class ScreenshotAnnotator(QDialog):
         except ValueError as exc:
             QMessageBox.warning(self, "Màu không hợp lệ", str(exc))
             return
+
+        # Lưu cấu hình sau khi người dùng xác nhận và các giá trị màu hợp lệ.
+        self._ui_settings.setValue("screenshot_annotator/ocr_target_text", target_text_input.text())
+        self._ui_settings.setValue("screenshot_annotator/ocr_steps", selected_steps)
+        self._ui_settings.setValue("screenshot_annotator/ocr_psms", selected_psms)
+        self._ui_settings.setValue("screenshot_annotator/ocr_text_color", text_color_input.text().strip())
+        self._ui_settings.setValue("screenshot_annotator/ocr_background_color", background_color_input.text().strip())
+        self._ui_settings.setValue("screenshot_annotator/ocr_border_color", border_color_input.text().strip())
+        self._ui_settings.setValue("screenshot_annotator/ocr_tolerance", tolerance_input.value())
+        self._ui_settings.setValue("screenshot_annotator/ocr_save_files", save_files_checkbox.isChecked())
+        self._ui_settings.sync()
 
         print(
             "[OCR] Bắt đầu phân tích: "
