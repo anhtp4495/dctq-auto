@@ -383,6 +383,34 @@ class BotWorker(QThread):
         return "\\n".join(recognized)
 
     @staticmethod
+    def _screen_text_in_rect(device, rect: tuple[int, int, int, int]) -> str:
+        """OCR only the supplied (left, top, right, bottom) screenshot rectangle."""
+        left, top, right, bottom = rect
+        image = device.screenshot().convert("RGB")
+        width, height = image.size
+        left = max(0, min(int(left), width - 1))
+        top = max(0, min(int(top), height - 1))
+        right = max(left + 1, min(int(right), width))
+        bottom = max(top + 1, min(int(bottom), height))
+        cropped = ImageOps.autocontrast(image.crop((left, top, right, bottom)).convert("L"))
+        recognized: list[str] = []
+        for language in ("vie+eng", "eng"):
+            language_failed = False
+            for page_mode in (6, 11):
+                try:
+                    text = pytesseract.image_to_string(
+                        cropped, lang=language, config=f"--psm {page_mode}"
+                    ).strip()
+                except pytesseract.TesseractError:
+                    language_failed = True
+                    break
+                if text and text not in recognized:
+                    recognized.append(text)
+            if not language_failed and recognized:
+                break
+        return "\\n".join(recognized)
+
+    @staticmethod
     def _tap_ocr_word(device, words: tuple[str, ...]) -> bool:
         """Tap a live OCR word or phrase, including labels split into multiple words."""
         image = ImageOps.autocontrast(device.screenshot().convert("L"))
@@ -1188,10 +1216,63 @@ class BotWorker(QThread):
                 if not self._wait_if_paused():
                     self.log_message.emit("Nhận túi phúc đã dừng trước khi đóng cửa sổ.")
                     return False
-                ocr_client.tap_ocr_target("close_tui_phuc")
+
+                # A reward click may open a second-level detail dialog. Close it
+                # only when its title is OCR-confirmed, then OCR again before
+                # deciding whether the main Túi phúc window can be closed.
+                bag_rect = (147, 4, 1809, 172)
+                detail_title = "chi_tiet_nhan_tui_phuc_knb_hom_nay"
+                main_window_markers = ("tui_phuc", "gui_tui_phuc", "cuop_tui_phuc")
+                visible_text = self._screen_text_in_rect(device, bag_rect)
+                self.log_message.emit(
+                    f"Nhận túi phúc — OCR RECT man_hinh_tui_phuc {bag_rect}: "
+                    f"{visible_text[:220] or '(trống)'}"
+                )
+
+                if self._fuzzy_ocr_target_match(
+                    visible_text, detail_title, threshold=0.5
+                ):
+                    self.log_message.emit(
+                        "OCR khớp chi_tiet_nhan_tui_phuc_knb_hom_nay > 50%; "
+                        "đóng chi tiết bằng tọa độ dong_chi_tiet_tui_phuc."
+                    )
+                    ocr_client.tap_ocr_target("dong_chi_tiet_tui_phuc")
+                    time.sleep(0.8)
+                    visible_text = self._screen_text_in_rect(device, bag_rect)
+                    self.log_message.emit(
+                        f"OCR lại sau khi đóng chi tiết: "
+                        f"{visible_text[:220] or '(trống)'}"
+                    )
+
+                normalized_bag_text = self._normalize_screen_text(visible_text)
+                matched_main_marker = next(
+                    (
+                        marker for marker in main_window_markers
+                        if self._fuzzy_ocr_target_match(
+                            normalized_bag_text, marker, threshold=0.5
+                        )
+                    ),
+                    None,
+                )
+                if not matched_main_marker:
+                    raise RuntimeError(
+                        "Nhận túi phúc thất bại: đã không xác nhận được cửa sổ chính "
+                        "bằng OCR sau khi đóng chi tiết (cần tui_phuc, gui_tui_phuc "
+                        "hoặc cuop_tui_phuc); không click nút đóng cửa sổ chính. "
+                        f"OCR: {visible_text[:220] or '(trống)'}"
+                    )
+
+                if not self._wait_if_paused():
+                    self.log_message.emit("Nhận túi phúc đã dừng trước khi đóng cửa sổ chính.")
+                    return False
+                self.log_message.emit(
+                    f"OCR xác nhận cửa sổ Túi phúc qua '{matched_main_marker}'; "
+                    "đóng bằng tọa độ dong_man_hinh_tui_phuc."
+                )
+                ocr_client.tap_ocr_target("dong_man_hinh_tui_phuc")
                 time.sleep(0.8)
                 self.log_message.emit(
-                    "Đã xử lý 3 mục Túi phúc (tướng, trưởng thành, KNB) và đóng cửa sổ Túi phúc; "
+                    "Đã xử lý 3 mục Túi phúc và đóng đúng cửa sổ đã được OCR xác nhận; "
                     "không đóng màn hình Quân đoàn."
                 )
 
