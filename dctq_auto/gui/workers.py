@@ -1341,16 +1341,43 @@ class BotWorker(QThread):
                     "lấy từ regions.json."
                 )
                 ocr_client.tap_ocr_target("close_quan_doan", regions_path=regions_path)
-                time.sleep(0.8)
+                self.log_message.emit(
+                    "Đã đóng màn hình Quân đoàn; chờ 5 giây trước khi OCR nút "
+                    "'vao_quan_doan' trong RECT (1270, 968, 1532, 1026)."
+                )
+                time.sleep(5)
 
                 if not self._wait_if_paused():
-                    self.log_message.emit("Đã dừng trước khi kiểm tra chat Quân đoàn.")
+                    self.log_message.emit("Đã dừng trước khi kiểm tra nút vào Quân đoàn.")
                     return
 
-                # Chỉ click nút thoát chat nếu OCR thực sự thấy nhãn "Vào quân đoàn".
-                # Nhãn này được dùng làm điều kiện theo yêu cầu; tọa độ click được
-                # lấy theo tên thoat_chat_quan_doan trong regions.json.
-                screen_text = self._screen_text(device)
+                # Chỉ OCR vùng nút "Vào quân đoàn", tránh chữ trong khung chat
+                # làm nhiễu kết quả. RECT có dạng (left, top, right, bottom).
+                rect = (1270, 968, 1532, 1026)
+                screenshot = device.screenshot().convert("RGB")
+                if screenshot.width < rect[2] or screenshot.height < rect[3]:
+                    raise RuntimeError(
+                        f"Screenshot {screenshot.width}x{screenshot.height} nhỏ hơn RECT {rect}"
+                    )
+                roi = ImageOps.autocontrast(
+                    screenshot.crop(rect).convert("L")
+                )
+                recognized_texts = []
+                for language in ("vie+eng", "eng"):
+                    language_failed = False
+                    for page_mode in (6, 11):
+                        try:
+                            text = pytesseract.image_to_string(
+                                roi, lang=language, config=f"--psm {page_mode}"
+                            ).strip()
+                        except pytesseract.TesseractError:
+                            language_failed = True
+                            break
+                        if text and text not in recognized_texts:
+                            recognized_texts.append(text)
+                    if not language_failed and recognized_texts:
+                        break
+                screen_text = " ".join(recognized_texts)
                 normalized = self._normalize_screen_text(screen_text)
                 has_enter_guild_label = "vao quan doan" in normalized
                 if has_enter_guild_label:
