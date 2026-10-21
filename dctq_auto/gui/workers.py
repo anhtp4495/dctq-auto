@@ -715,19 +715,14 @@ class BotWorker(QThread):
                 return False
 
             self.log_message.emit(
-                "Lễ bao Quốc vận — BƯỚC 5: Tìm và click nút nhan_le_bao_mien_phi bằng OCR."
+                "Lễ bao Quốc vận — BƯỚC 5: Click nút nhan_le_bao_mien_phi tại tọa độ cấu hình (200; 300)."
             )
             screenshot = device.screenshot()
             screen_width, screen_height = screenshot.size
-            full_rect = (0, 0, screen_width, screen_height)
-            if not self._tap_ocr_phrase_in_rect(
-                device,
-                ("nhan le bao mien phi", "nhan le bao", "nhan mien phi"),
-                full_rect,
-            ):
-                raise RuntimeError(
-                    "OCR không tìm thấy nút nhan_le_bao_mien_phi để click."
-                )
+            # Tọa độ gốc theo màn hình 1920x1080, scale theo độ phân giải hiện tại.
+            button_x = round(200 / 1920 * screen_width)
+            button_y = round(300 / 1080 * screen_height)
+            device.shell(f"input tap {button_x} {button_y}")
             time.sleep(1.0)
 
             if not self._wait_if_paused():
