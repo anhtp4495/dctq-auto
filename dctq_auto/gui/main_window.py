@@ -564,6 +564,7 @@ class MainWindow(QMainWindow):
             name: getattr(self.clone_tab, name)
             for name in (
                 "clone_daily_check_in",
+                "clone_receive_quoc_van",
                 "clone_guild_check_in",
                 "clone_receive_lucky_bag",
                 "clone_guild_fortune",
