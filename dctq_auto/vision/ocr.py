@@ -57,7 +57,7 @@ def _color_distance(rgb, color):
     return np.linalg.norm(lab - ref, axis=2)
 
 def preprocess_region(crop, config):
-    """Prepare a crop for Tesseract using the selected OCR method."""
+    """Prepare a crop for Tesseract using one method or multiple configured steps."""
     if isinstance(crop, Image.Image):
         rgb = np.asarray(crop.convert("RGB"))
     else:
@@ -68,7 +68,37 @@ def preprocess_region(crop, config):
             rgb = cv2.cvtColor(array, cv2.COLOR_BGR2RGB)
         else:
             raise ValueError(f"Unsupported image shape: {array.shape}")
+
     scale = int(config.get("scale", 3))
+    steps = config.get("steps")
+    if steps:
+        outputs = {}
+        gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
+        if scale > 1:
+            gray = cv2.resize(gray, None, fx=scale, fy=scale, interpolation=cv2.INTER_LANCZOS4)
+        outputs["gray"] = cv2.copyMakeBorder(
+            gray, 18, 18, 18, 18, cv2.BORDER_CONSTANT, value=255
+        ) if "gray" in steps else None
+
+        if "white_text" in steps:
+            hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV)
+            white_mask = cv2.inRange(
+                hsv, np.array([0, 0, 135], dtype=np.uint8),
+                np.array([180, 120, 255], dtype=np.uint8),
+            )
+            if scale > 1:
+                white_mask = cv2.resize(
+                    white_mask, None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST
+                )
+            white_mask = cv2.copyMakeBorder(
+                white_mask, 18, 18, 18, 18, cv2.BORDER_CONSTANT, value=0
+            )
+            outputs["white_text"] = cv2.bitwise_not(white_mask)
+        unknown = set(steps) - {"gray", "white_text"}
+        if unknown:
+            raise ValueError(f"Unsupported OCR steps: {sorted(unknown)}")
+        return {name: image for name, image in outputs.items() if image is not None}
+
     method = config.get("method", "color_text")
     if method == "grayscale":
         output = cv2.createCLAHE(clipLimit=2, tileGridSize=(8, 8)).apply(
@@ -107,31 +137,36 @@ def preprocess_region(crop, config):
 def read_region_ocr(crop, *, region_key=None, lang=None, override=None):
     """Return OCR tokens with confidence and boxes relative to the crop."""
     config = get_ocr_config(region_key, override)
-    image = preprocess_region(crop, config)
+    processed = preprocess_region(crop, config)
+    images = processed if isinstance(processed, dict) else {config.get("method", "color_text"): processed}
     scale = int(config.get("scale", 3))
     results, seen = [], set()
-    for psm in config["psm"]:
-        data = pytesseract.image_to_data(
-            image, lang=lang or config.get("lang", "vie+eng"),
-            config=f"--oem 3 --psm {psm}", output_type=pytesseract.Output.DICT)
-        for index, raw_text in enumerate(data["text"]):
-            word = raw_text.strip()
-            try:
-                confidence = float(data["conf"][index])
-            except (ValueError, TypeError):
-                continue
-            if not word or confidence < float(config.get("min_confidence", 10)):
-                continue
-            box = (
-                max(0, int((int(data["left"][index]) - 18) / scale)),
-                max(0, int((int(data["top"][index]) - 18) / scale)),
-                max(0, round(int(data["width"][index]) / scale)),
-                max(0, round(int(data["height"][index]) / scale)),
-            )
-            key = (word.lower(), box)
-            if key in seen:
-                continue
-            seen.add(key)
-            results.append({"text": word, "confidence": round(confidence, 1),
-                "box": {"x": box[0], "y": box[1], "w": box[2], "h": box[3]}, "psm": psm})
+    for step_name, image in images.items():
+        for psm in config["psm"]:
+            data = pytesseract.image_to_data(
+                image, lang=lang or config.get("lang", "vie+eng"),
+                config=f"--oem 3 --psm {psm}", output_type=pytesseract.Output.DICT)
+            for index, raw_text in enumerate(data["text"]):
+                word = raw_text.strip()
+                try:
+                    confidence = float(data["conf"][index])
+                except (ValueError, TypeError):
+                    continue
+                if not word or confidence < float(config.get("min_confidence", 10)):
+                    continue
+                box = (
+                    max(0, int((int(data["left"][index]) - 18) / scale)),
+                    max(0, int((int(data["top"][index]) - 18) / scale)),
+                    max(0, round(int(data["width"][index]) / scale)),
+                    max(0, round(int(data["height"][index]) / scale)),
+                )
+                key = (word.lower(), box)
+                if key in seen:
+                    continue
+                seen.add(key)
+                results.append({
+                    "text": word, "confidence": round(confidence, 1),
+                    "box": {"x": box[0], "y": box[1], "w": box[2], "h": box[3]},
+                    "psm": psm, "step": step_name,
+                })
     return results
