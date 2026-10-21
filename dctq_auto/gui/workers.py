@@ -558,6 +558,201 @@ class BotWorker(QThread):
         device.shell(f"input tap {x} {y}")
         return True
 
+    def _tap_fuzzy_ocr_target(
+        self, device, target_text: str, threshold: float = 0.25
+    ) -> tuple[int, int] | None:
+        """Find the best OCR word-window for a target and tap its center."""
+        from difflib import SequenceMatcher
+
+        image = ImageOps.autocontrast(device.screenshot().convert("L"))
+        try:
+            data = pytesseract.image_to_data(
+                image, lang="vie+eng", config="--psm 11",
+                output_type=pytesseract.Output.DICT,
+            )
+        except pytesseract.TesseractError:
+            data = pytesseract.image_to_data(
+                image, lang="eng", config="--psm 11",
+                output_type=pytesseract.Output.DICT,
+            )
+
+        target = self._normalize_ocr_match_text(target_text)
+        if not target:
+            return None
+        count = len(data.get("text", []))
+        lines = {}
+        for i, raw in enumerate(data.get("text", [])):
+            normalized = self._normalize_ocr_match_text(raw)
+            if not normalized:
+                continue
+            try:
+                confidence = float(data["conf"][i])
+            except (ValueError, TypeError):
+                confidence = 0.0
+            if confidence < 0:
+                continue
+            key = (
+                data.get("block_num", [0] * count)[i],
+                data.get("par_num", [0] * count)[i],
+                data.get("line_num", [0] * count)[i],
+            )
+            lines.setdefault(key, []).append((
+                int(data["left"][i]), int(data["top"][i]),
+                int(data["width"][i]), int(data["height"][i]),
+                confidence, normalized,
+            ))
+
+        best = None
+        for line in lines.values():
+            line.sort(key=lambda item: item[0])
+            for start in range(len(line)):
+                parts = []
+                for end in range(start, min(len(line), start + 12)):
+                    parts.append(line[end][5])
+                    candidate = "".join(parts)
+                    score = SequenceMatcher(None, target, candidate).ratio()
+                    if score > threshold and (best is None or score > best[0]):
+                        group = line[start:end + 1]
+                        left = min(item[0] for item in group)
+                        top = min(item[1] for item in group)
+                        right = max(item[0] + item[2] for item in group)
+                        bottom = max(item[1] + item[3] for item in group)
+                        best = (score, left, top, right, bottom)
+        if best is None:
+            return None
+        _score, left, top, right, bottom = best
+        x, y = round((left + right) / 2), round((top + bottom) / 2)
+        device.shell(f"input tap {x} {y}")
+        return x, y
+
+    def _run_receive_quoc_van(self, device, ocr_client) -> bool:
+        """Receive the free Quốc vận gift and verify that its dialog has closed."""
+        target_title = "mua_tich_luy_10_ngay_nhan_them_qua"
+        try:
+            if not self._wait_if_paused():
+                return False
+
+            self.log_message.emit(
+                "Lễ bao Quốc vận — BƯỚC 1: Mở mục Hoạt động."
+            )
+            screenshot = device.screenshot()
+            screen_width, screen_height = screenshot.size
+            device.shell(
+                f"input tap {round(0.035937 * screen_width)} "
+                f"{round(0.732407 * screen_height)}"
+            )
+            time.sleep(5.0)
+
+            if not self._wait_if_paused():
+                return False
+
+            self.log_message.emit(
+                "Lễ bao Quốc vận — BƯỚC 2: OCR xác nhận các tính năng của hoat_dong.phuc_loi."
+            )
+            screenshot = device.screenshot()
+            screen_width, screen_height = screenshot.size
+            phuc_loi_rect = (
+                round(14 / 1920 * screen_width),
+                round(128 / 1080 * screen_height),
+                round(488 / 1920 * screen_width),
+                round(988 / 1080 * screen_height),
+            )
+            detected = self._ocr_words_in_rect(device, phuc_loi_rect)
+            detected_text = " ".join(word["text"] for word in detected)
+            phuc_loi_markers = ("tranh ba", "qua online", "diem danh", "hoan the")
+            if not any(
+                self._normalize_screen_text(marker) in self._normalize_screen_text(detected_text)
+                for marker in phuc_loi_markers
+            ):
+                raise RuntimeError(
+                    "OCR không xác nhận được cac_tinh_nang của hoat_dong.phuc_loi. "
+                    f"OCR: {detected_text[:180] or '(trống)'}"
+                )
+
+            if not self._wait_if_paused():
+                return False
+
+            self.log_message.emit(
+                "Lễ bao Quốc vận — BƯỚC 3: Tìm và click mục Lễ bao Quốc vận bằng OCR."
+            )
+            full_rect = (0, 0, screen_width, screen_height)
+            if not self._tap_ocr_phrase_in_rect(
+                device, ("le bao quoc van", "le bao"), full_rect
+            ):
+                raise RuntimeError("OCR không tìm thấy mục le_bao_quoc_van để click.")
+
+            time.sleep(1.2)
+            if not self._wait_if_paused():
+                return False
+
+            self.log_message.emit(
+                "Lễ bao Quốc vận — BƯỚC 4: OCR tìm text chuẩn, yêu cầu tương đồng > 25%."
+            )
+            screen_text = self._screen_text(device)
+            if not self._fuzzy_ocr_target_match(screen_text, target_title, 0.25):
+                raise RuntimeError(
+                    "Không xác nhận được giao diện lễ bao Quốc vận: text chuẩn "
+                    f"không tương đồng > 25%. OCR: {screen_text[:220] or '(trống)'}"
+                )
+
+            if not self._wait_if_paused():
+                return False
+
+            self.log_message.emit(
+                "Lễ bao Quốc vận — BƯỚC 5: Tìm và click nút nhan_le_bao_mien_phi bằng OCR."
+            )
+            screenshot = device.screenshot()
+            screen_width, screen_height = screenshot.size
+            full_rect = (0, 0, screen_width, screen_height)
+            if not self._tap_ocr_phrase_in_rect(
+                device,
+                ("nhan le bao mien phi", "nhan le bao", "nhan mien phi"),
+                full_rect,
+            ):
+                raise RuntimeError(
+                    "OCR không tìm thấy nút nhan_le_bao_mien_phi để click."
+                )
+            time.sleep(1.0)
+
+            if not self._wait_if_paused():
+                return False
+
+            self.log_message.emit(
+                "Lễ bao Quốc vận — BƯỚC 6: Click vị trí text OCR và nhấn ENTER."
+            )
+            clicked_at = self._tap_fuzzy_ocr_target(device, target_title, 0.25)
+            if clicked_at is None:
+                raise RuntimeError(
+                    "Không tìm được vị trí OCR của text chuẩn để click xác nhận."
+                )
+            device.shell("input keyevent KEYCODE_ENTER")
+            time.sleep(1.0)
+
+            if not self._wait_if_paused():
+                return False
+
+            self.log_message.emit(
+                "Lễ bao Quốc vận — kiểm tra lại OCR: text chuẩn phải tương đồng > 25%."
+            )
+            after_text = self._screen_text(device)
+            if not self._fuzzy_ocr_target_match(after_text, target_title, 0.25):
+                raise RuntimeError(
+                    "Chưa xác nhận nhận lễ bao thành công: sau click + ENTER, "
+                    "text chuẩn chưa đạt tương đồng > 25%; "
+                    f"OCR: {after_text[:220] or '(trống)'}"
+                )
+
+            self.log_message.emit(
+                "Đã xác nhận nhận lễ bao Quốc vận thành công: OCR tìm lại được "
+                "mua_tich_luy_10_ngay_nhan_them_qua (>25%), dialog đã tắt."
+            )
+            return True
+        except Exception as exc:
+            self.log_message.emit(
+                f"Nhận lễ bao Quốc vận thất bại, dừng flow (không retry): {exc}"
+            )
+            return False
+
     def _run_daily_checkin(self, device, ocr_client) -> bool:
         """Open Hoạt động > Phúc lợi > Điểm danh and tap days 30 through 1 once."""
         try:
@@ -779,8 +974,8 @@ class BotWorker(QThread):
         # Gameplay automation for these actions is not implemented in the real
         # ADB flow yet. Report an explicit failed status for each selected task.
         implemented = {
-            "task_login", "diem_danh", "task_close_guild",
-            "task_switch_account", "task_click_coordinates",
+            "task_login", "nhan_le_bao_quoc_van", "diem_danh",
+            "task_close_guild", "task_switch_account", "task_click_coordinates",
         }
         for key, label in selected:
             if key in implemented:
@@ -839,6 +1034,25 @@ class BotWorker(QThread):
             finally:
                 # Do not retain the password in the worker configuration after use.
                 self._config.pop("login_password", None)
+
+        if self._config.get("nhan_le_bao_quoc_van"):
+            label = "Nhận lễ bao quốc vận"
+            self.task_progress_changed.emit(label, "running", 0, 1)
+            if not self._wait_if_paused():
+                self.log_message.emit("Đã dừng theo yêu cầu.")
+                return
+            if self._run_receive_quoc_van(device, ocr_client):
+                completed += 1
+                self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), "Đã nhận lễ bao Quốc vận"
+                )
+            else:
+                completed += 1
+                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), "Lỗi: Nhận lễ bao Quốc vận"
+                )
 
         if self._config.get("diem_danh"):
             self.task_progress_changed.emit("Điểm danh", "running", 0, 1)
