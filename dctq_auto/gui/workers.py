@@ -749,9 +749,51 @@ class BotWorker(QThread):
                 )
 
             self.log_message.emit(
-                "Đã xác nhận vào Quân đoàn: OCR color_text khớp "
+                "Đã xác nhận nút 'Vào quân đoàn': OCR color_text khớp "
                 f"{matched_target} (>25%); nội dung OCR: {recognized}"
             )
+
+            # Chỉ click sau khi OCR xác nhận đúng nhãn, dùng tọa độ đã lưu
+            # trong regions.json để tránh hardcode và có thể tái sử dụng.
+            enter_target = None
+            for region_data in regions_data.get("regions", {}).values():
+                for element in region_data.get("elements", []):
+                    if element.get("name") == "vao_quan_doan":
+                        enter_target = element
+                        break
+                if enter_target:
+                    break
+            if enter_target is None:
+                raise RuntimeError(
+                    f"Đã nhận diện nút 'Vào quân đoàn' nhưng không tìm thấy "
+                    f"tọa độ 'vao_quan_doan' trong {regions_path}."
+                )
+
+            enter_center = enter_target.get("center", {})
+            enter_ratio = enter_target.get("center_ratio", {})
+            if "x" in enter_ratio and "y" in enter_ratio:
+                enter_x = round(float(enter_ratio["x"]) * screen_width)
+                enter_y = round(float(enter_ratio["y"]) * screen_height)
+            else:
+                base_width, base_height = regions_data.get(
+                    "reference_resolution", [1920, 1080]
+                )
+                enter_x = round(
+                    float(enter_center.get("x_px", 1406)) / base_width * screen_width
+                )
+                enter_y = round(
+                    float(enter_center.get("y_px", 993)) / base_height * screen_height
+                )
+
+            if not self._wait_if_paused():
+                return False
+            device.shell(f"input tap {enter_x} {enter_y}")
+            self.log_message.emit(
+                f"Đã click nút 'Vào quân đoàn' theo regions.json tại "
+                f"({enter_x}, {enter_y}) trên màn hình "
+                f"{screen_width}x{screen_height}."
+            )
+            time.sleep(1.0)
             return True
         except Exception as exc:
             self.log_message.emit(f"Vào quân đoàn thất bại, dừng luồng: {exc}")
