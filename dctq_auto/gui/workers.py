@@ -517,31 +517,25 @@ class BotWorker(QThread):
         return True
 
     def _run_daily_checkin(self, device, ocr_client) -> bool:
-        """Open Hoạt động, then locate and tap Điểm danh using live OCR."""
-        if not self._wait_if_paused():
-            self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
-            return False
-
-        self.log_message.emit("BƯỚC 1/7: Mở mục Hoạt động từ màn hình chính.")
+        """Open Hoạt động > Phúc lợi > Điểm danh and tap days 30 through 1 once."""
         try:
+            if not self._wait_if_paused():
+                self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
+                return False
+
+            self.log_message.emit("BƯỚC 1/5: Mở mục Hoạt động từ màn hình chính.")
             screenshot = device.screenshot()
             screen_width, screen_height = screenshot.size
             hoat_dong_x = round(0.035937 * screen_width)
             hoat_dong_y = round(0.732407 * screen_height)
             device.shell(f"input tap {hoat_dong_x} {hoat_dong_y}")
-            self.log_message.emit(
-                "Đã click button_hoat_dong theo tọa độ tỷ lệ "
-                f"({hoat_dong_x}, {hoat_dong_y}); không dùng OCR để click nút này."
-            )
+            time.sleep(5.0)
 
-            self.log_message.emit(
-                "BƯỚC 2/7: Sau khi mở Hoạt động, chờ 5 giây rồi quét OCR 3 lần; "
-                "chỉ khi cả 3 lần đều không thấy nhãn Phúc lợi mới thử 3 vị trí."
-            )
             if not self._wait_if_paused():
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
                 return False
-            time.sleep(5.0)
+
+            self.log_message.emit("BƯỚC 2/5: Xác nhận màn hình Phúc lợi bằng một lần OCR.")
             screenshot = device.screenshot()
             screen_width, screen_height = screenshot.size
             phuc_loi_rect = (
@@ -550,232 +544,83 @@ class BotWorker(QThread):
                 round(488 / 1920 * screen_width),
                 round(988 / 1080 * screen_height),
             )
-            phuc_loi_markers = (
-                "tranh ba", "qua online", "diem danh",
-                "le bao thien", "le bao quoc", "hoan the",
+            detected = self._ocr_words_in_rect(device, phuc_loi_rect)
+            detected_text = self._normalize_screen_text(
+                " ".join(word["text"] for word in detected)
             )
-
-            def phuc_loi_screen_matches() -> tuple[bool, str]:
-                detected = self._ocr_words_in_rect(device, phuc_loi_rect)
-                detected_text = " ".join(word["text"] for word in detected)
-                normalized_text = self._normalize_screen_text(detected_text)
-                found = [
-                    marker for marker in phuc_loi_markers
-                    if marker in normalized_text
-                ]
-                return bool(found), ", ".join(found) if found else normalized_text[:180]
-
-            phuc_loi_found = False
-            initial_ocr = ""
-            for ocr_attempt in range(1, 4):
-                if not self._wait_if_paused():
-                    self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
-                    return False
-                phuc_loi_found, initial_ocr = phuc_loi_screen_matches()
-                if phuc_loi_found:
-                    self.log_message.emit(
-                        f"OCR kiểm tra {ocr_attempt}/3 đã thấy nội dung Phúc lợi "
-                        f"({initial_ocr}); không cần click thử button_1/2/3."
-                    )
-                    break
-                self.log_message.emit(
-                    f"OCR kiểm tra {ocr_attempt}/3 chưa thấy nhãn Phúc lợi: "
-                    f"{initial_ocr!r}"
+            # Không dựa vào bất kỳ mục Lễ bao nào để nhận diện hoặc điều hướng.
+            phuc_loi_markers = ("tranh ba", "qua online", "diem danh", "hoan the")
+            if not any(marker in detected_text for marker in phuc_loi_markers):
+                raise RuntimeError(
+                    "Không nhận diện được màn hình Phúc lợi bằng OCR một lần; "
+                    f"dừng flow. OCR: {detected_text[:180] or '(trống)'}"
                 )
-                if ocr_attempt < 3:
-                    time.sleep(1.0)
-
-            if not phuc_loi_found:
-                self.log_message.emit(
-                    "Cả 3 lần quét OCR đều chưa thấy nhãn Phúc lợi; "
-                    "bắt đầu thử 3 vị trí button_1/2/3."
-                )
-                phuc_loi_candidates = (
-                    ("button_1", 143 / 1920, 358 / 1080),
-                    ("button_2", 135 / 1920, 495 / 1080),
-                    ("button_3", 123 / 1920, 613 / 1080),
-                )
-                for attempt, (button_name, x_ratio, y_ratio) in enumerate(
-                    phuc_loi_candidates, start=1
-                ):
-                    if not self._wait_if_paused():
-                        self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
-                        return False
-                    phuc_loi_x = round(x_ratio * screen_width)
-                    phuc_loi_y = round(y_ratio * screen_height)
-                    self.log_message.emit(
-                        f"Click thử {button_name} ({attempt}/3) tại "
-                        f"({phuc_loi_x}, {phuc_loi_y}); chờ 3 giây rồi quét OCR."
-                    )
-                    device.shell(f"input tap {phuc_loi_x} {phuc_loi_y}")
-                    time.sleep(3.0)
-                    phuc_loi_found, ocr_result = phuc_loi_screen_matches()
-                    if phuc_loi_found:
-                        self.log_message.emit(
-                            f"Xác định button_phuc_loi là {button_name}; "
-                            f"OCR thấy: {ocr_result}."
-                        )
-                        break
-                    self.log_message.emit(
-                        f"{button_name} chưa đúng vị trí; OCR chưa thấy nhãn mục "
-                        f"Phúc lợi ({attempt}/3): {ocr_result!r}"
-                    )
-                if not phuc_loi_found:
-                    raise RuntimeError(
-                        "OCR không thấy nhãn Phúc lợi sau 3 lần quét ban đầu "
-                        "và 3 vị trí click thử."
-                    )
 
             if not self._wait_if_paused():
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
                 return False
 
-            # RECT button_diem_danh đã đo thực tế trên màn hình 1920x1080:
-            # (201, 726, 474, 871). Dùng đúng vùng này để OCR và click fallback.
+            self.log_message.emit("BƯỚC 3/5: Click Điểm danh bằng OCR đúng một lần.")
             diem_danh_rect = (
                 round(201 / 1920 * screen_width),
                 round(726 / 1080 * screen_height),
                 round(474 / 1920 * screen_width),
                 round(871 / 1080 * screen_height),
             )
-
-            # BƯỚC 3: Nhận lễ bao miễn phí sau khi xác định đúng nút Phúc lợi.
-            self.log_message.emit("BƯỚC 3/7: Nhận lễ bao miễn phí.")
-            self.log_message.emit("Đã xác định vị trí Phúc lợi; click lễ bao miễn phí.")
-            le_bao_x = round(0.366667 * screen_width)
-            le_bao_y = round(0.202778 * screen_height)
-            device.shell(f"input tap {le_bao_x} {le_bao_y}")
-            self.log_message.emit(
-                f"Đã click le_bao_mien_phi tại ({le_bao_x}, {le_bao_y}); chờ 3 giây."
-            )
-            time.sleep(3.0)
-            if not self._wait_if_paused():
-                self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
-                return False
-            # Gửi Enter để đóng/xác nhận dialog lễ bao nếu dialog đang mở.
-            device.shell("input keyevent 66")
-            self.log_message.emit("Đã gửi phím Enter để đóng/xác nhận dialog lễ bao.")
-            time.sleep(0.5)
-
-            self.log_message.emit(
-                "BƯỚC 4/7: Ưu tiên OCR tìm Điểm danh trong RECT button_diem_danh đã đo thực tế."
-            )
-            clicked_diem_danh = False
-            for attempt in range(1, 4):
-                if not self._wait_if_paused():
-                    self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
-                    return False
-                self.log_message.emit(
-                    f"Lần OCR {attempt}/3 tìm 'diem danh' trong RECT "
-                    f"({diem_danh_rect[0]}, {diem_danh_rect[1]}, "
-                    f"{diem_danh_rect[2]}, {diem_danh_rect[3]})."
+            if not self._tap_ocr_phrase_in_rect(device, ("diem danh",), diem_danh_rect):
+                raise RuntimeError(
+                    "OCR không tìm thấy nút Điểm danh trong RECT đã cấu hình; "
+                    "không retry và không click fallback."
                 )
-                if self._tap_ocr_phrase_in_rect(
-                    device, ("diem danh",), diem_danh_rect
-                ):
-                    clicked_diem_danh = True
-                    self.log_message.emit(
-                        f"OCR đã tìm thấy và click Điểm danh ở lần {attempt}/3."
-                    )
-                    break
-                if attempt < 3:
-                    time.sleep(0.7)
-
-            if not clicked_diem_danh:
-                # OCR không nhận được chữ thì tap tâm RECT button_diem_danh đã đo thực tế.
-                fallback_x = round(((201 + 474) / 2) / 1920 * screen_width)
-                fallback_y = round(((726 + 871) / 2) / 1080 * screen_height)
-                self.log_message.emit(
-                    "OCR không thấy 'Điểm danh' sau 3 lần; dùng tâm RECT "
-                    f"button_diem_danh tại ({fallback_x}, {fallback_y})."
-                )
-                if not self._wait_if_paused():
-                    self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
-                    return False
-                device.shell(f"input tap {fallback_x} {fallback_y}")
-                clicked_diem_danh = True
-                time.sleep(1.0)
-
+            time.sleep(1.0)
 
             if not self._wait_if_paused():
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
                 return False
 
-            # RECT bao toàn bộ lưới 36 ô: 4 hàng x 9 cột.
-            # Hai góc người dùng cung cấp trên màn hình 1920x1080:
-            # trái-trên (484, 402), phải-dưới (1822, 998).
-            # Dùng tỷ lệ để tự co giãn theo độ phân giải, sau đó click tâm từng ô.
+            self.log_message.emit("BƯỚC 4/5: Click 30 ô theo thứ tự ngày 30 → ngày 1.")
             calendar_image = device.screenshot()
             calendar_width, calendar_height = calendar_image.size
-            rect_left = 484 / 1920
-            rect_top = 402 / 1080
-            rect_right = 1822 / 1920
-            rect_bottom = 998 / 1080
-            grid_left = rect_left * calendar_width
-            grid_top = rect_top * calendar_height
-            grid_width = (rect_right - rect_left) * calendar_width
-            grid_height = (rect_bottom - rect_top) * calendar_height
+            grid_left = (484 / 1920) * calendar_width
+            grid_top = (402 / 1080) * calendar_height
+            grid_width = ((1822 - 484) / 1920) * calendar_width
+            grid_height = ((998 - 402) / 1080) * calendar_height
 
-            # Lưới có 30 ô theo cách đánh số người dùng cung cấp:
-            # hàng 1: 1-9, hàng 2: 10-18, hàng 3: 19-26, hàng 4: 27-30.
-            # Tọa độ mỗi ô lấy theo tâm cột/hàng trong RECT; hàng ngắn hơn
-            # được căn trái theo các cột đầu tiên của lưới 9 cột.
             cells_reverse = tuple(range(30, 0, -1))
-            if len(cells_reverse) != 30 or set(cells_reverse) != set(range(1, 31)):
-                raise RuntimeError("Danh sách ô điểm danh không đủ 30 ô.")
-
-            row_ranges = (
-                (1, 9),
-                (10, 18),
-                (19, 26),
-                (27, 30),
-            )
+            row_ranges = ((1, 9), (10, 18), (19, 26), (27, 30))
             cell_positions = {}
             for row_index, (first_cell, last_cell) in enumerate(row_ranges):
                 for cell in range(first_cell, last_cell + 1):
-                    column_index = cell - first_cell
-                    cell_positions[cell] = (row_index, column_index)
+                    cell_positions[cell] = (row_index, cell - first_cell)
 
-            self.log_message.emit(
-                f"BƯỚC 5/6: Lưới điểm danh {calendar_width}x{calendar_height}, "
-                f"RECT=({round(grid_left)}, {round(grid_top)}, "
-                f"{round(grid_left + grid_width)}, {round(grid_top + grid_height)}); "
-                "sẽ click đủ 30/30 ô theo thứ tự 30 → 1."
-            )
             for cell in cells_reverse:
                 if not self._wait_if_paused():
-                    self.log_message.emit(
-                        f"Điểm danh đã dừng theo yêu cầu tại ô {cell}."
-                    )
+                    self.log_message.emit(f"Điểm danh đã dừng theo yêu cầu tại ô {cell}.")
                     return False
-
                 row, column = cell_positions[cell]
                 day_x = round(grid_left + (column + 0.5) * grid_width / 9)
                 day_y = round(grid_top + (row + 0.5) * grid_height / 4)
+                # Mỗi ô chỉ gửi đúng một lệnh tap; lỗi thì dừng, không thử lại.
                 device.shell(f"input tap {day_x} {day_y}")
                 self.log_message.emit(
-                    f"Đã click ô {cell}/30 (hàng {row + 1}, cột {column + 1}) "
+                    f"Đã click ô ngày {cell} (hàng {row + 1}, cột {column + 1}) "
                     f"tại ({day_x}, {day_y})."
                 )
                 time.sleep(0.15)
 
-            self.log_message.emit(
-                "Đã chọn xong 30/30 ô; bỏ qua xac_nhan_diem_danh_bu vì không còn cần thiết."
-            )
             if not self._wait_if_paused():
-                self.log_message.emit("Điểm danh đã dừng theo yêu cầu trước khi thoát màn hình.")
+                self.log_message.emit("Điểm danh đã dừng theo yêu cầu trước khi đóng màn hình.")
                 return False
+
+            self.log_message.emit("BƯỚC 5/5: Đóng màn hình Điểm danh.")
             close_x = round(0.972396 * calendar_width)
             close_y = round(0.119444 * calendar_height)
-            self.log_message.emit(
-                f"BƯỚC 6/6: Đóng màn hình Điểm danh tại ({close_x}, {close_y})."
-            )
             device.shell(f"input tap {close_x} {close_y}")
-            self.log_message.emit("Đã đóng màn hình Điểm danh.")
             time.sleep(0.5)
+            self.log_message.emit("Đã hoàn tất flow Điểm danh: click đủ 30 ô từ ngày 30 đến ngày 1.")
             return True
         except Exception as exc:
-            self.log_message.emit(f"Điểm danh thất bại: {exc}")
+            self.log_message.emit(f"Điểm danh thất bại, dừng ngay (không retry): {exc}")
             return False
 
     @staticmethod
