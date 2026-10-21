@@ -778,19 +778,9 @@ class BotWorker(QThread):
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
                 return False
 
-            self.log_message.emit("BƯỚC 1/5: Mở mục Hoạt động từ màn hình chính.")
-            screenshot = device.screenshot()
-            screen_width, screen_height = screenshot.size
-            hoat_dong_x = round(0.035937 * screen_width)
-            hoat_dong_y = round(0.732407 * screen_height)
-            device.shell(f"input tap {hoat_dong_x} {hoat_dong_y}")
-            time.sleep(5.0)
-
-            if not self._wait_if_paused():
-                self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
-                return False
-
-            self.log_message.emit("BƯỚC 2/5: Xác nhận màn hình Phúc lợi bằng một lần OCR.")
+            self.log_message.emit(
+                "BƯỚC 1/5: Kiểm tra có đang ở màn hình Hoạt động > Phúc lợi hay chưa."
+            )
             screenshot = device.screenshot()
             screen_width, screen_height = screenshot.size
             phuc_loi_rect = (
@@ -799,17 +789,54 @@ class BotWorker(QThread):
                 round(488 / 1920 * screen_width),
                 round(988 / 1080 * screen_height),
             )
+            phuc_loi_markers = ("tranh ba", "qua online", "diem danh", "hoan the")
             detected = self._ocr_words_in_rect(device, phuc_loi_rect)
             detected_text = self._normalize_screen_text(
                 " ".join(word["text"] for word in detected)
             )
-            # Không dựa vào bất kỳ mục Lễ bao nào để nhận diện hoặc điều hướng.
-            phuc_loi_markers = ("tranh ba", "qua online", "diem danh", "hoan the")
-            if not any(marker in detected_text for marker in phuc_loi_markers):
-                raise RuntimeError(
-                    "Không nhận diện được màn hình Phúc lợi bằng OCR một lần; "
-                    f"dừng flow. OCR: {detected_text[:180] or '(trống)'}"
+            already_in_phuc_loi = any(
+                marker in detected_text for marker in phuc_loi_markers
+            )
+
+            # Nhận lễ bao Quốc vận cũng kết thúc tại màn hình Phúc lợi.
+            # Nếu đang ở đây thì không click Hoạt động lần nữa, tránh lệch màn hình.
+            if already_in_phuc_loi:
+                self.log_message.emit(
+                    "Đã nhận diện màn hình Phúc lợi hiện tại; tiếp tục tìm Điểm danh."
                 )
+            else:
+                self.log_message.emit(
+                    "Chưa ở màn hình Phúc lợi; mở Hoạt động từ màn hình chính."
+                )
+                hoat_dong_x = round(0.035937 * screen_width)
+                hoat_dong_y = round(0.732407 * screen_height)
+                device.shell(f"input tap {hoat_dong_x} {hoat_dong_y}")
+                time.sleep(5.0)
+
+                if not self._wait_if_paused():
+                    self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
+                    return False
+
+                self.log_message.emit(
+                    "BƯỚC 2/5: Xác nhận màn hình Phúc lợi bằng OCR."
+                )
+                screenshot = device.screenshot()
+                screen_width, screen_height = screenshot.size
+                phuc_loi_rect = (
+                    round(14 / 1920 * screen_width),
+                    round(128 / 1080 * screen_height),
+                    round(488 / 1920 * screen_width),
+                    round(988 / 1080 * screen_height),
+                )
+                detected = self._ocr_words_in_rect(device, phuc_loi_rect)
+                detected_text = self._normalize_screen_text(
+                    " ".join(word["text"] for word in detected)
+                )
+                if not any(marker in detected_text for marker in phuc_loi_markers):
+                    raise RuntimeError(
+                        "Không nhận diện được màn hình Phúc lợi; "
+                        f"dừng flow. OCR: {detected_text[:180] or '(trống)'}"
+                    )
 
             if not self._wait_if_paused():
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
