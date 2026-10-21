@@ -1094,7 +1094,7 @@ class ScreenshotAnnotator(QDialog):
                     )
                     color_output = cv2.copyMakeBorder(
                         color_output, 18, 18, 18, 18, cv2.BORDER_CONSTANT,
-                        value=tuple(int(channel) for channel in output_background_rgb[::-1]),
+                        value=tuple(int(channel) for channel in output_background_rgb),
                     )
                     variants["color_text"] = color_output
                 if "white_text" in selected_steps:
