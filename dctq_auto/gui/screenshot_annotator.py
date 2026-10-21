@@ -374,7 +374,9 @@ class ScreenshotAnnotator(QDialog):
         self.instruction.setWordWrap(True)
         self.instruction.setVisible(False)
 
-        self._zoom_percent = 100
+        self._zoom_percent = max(
+            25, min(200, int(self._ui_settings.value("screenshot_annotator/zoom_percent", 100)))
+        )
         self.image_view = ClickableImage(
             QPixmap(),
             self._on_image_click,
@@ -469,6 +471,7 @@ class ScreenshotAnnotator(QDialog):
     def _on_zoom_changed(self, value: int) -> None:
         self._zoom_percent = value
         self.zoom_label.setText(f"{value}%")
+        self._ui_settings.setValue("screenshot_annotator/zoom_percent", value)
         self._apply_zoom()
 
     def _apply_zoom(self) -> None:
