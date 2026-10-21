@@ -74,8 +74,8 @@ class CloneTab(QWidget):
         self.clone_daily_check_in.setChecked(True)
         self.clone_receive_quoc_van = QCheckBox("Nhận lễ bao quốc vận")
         self.clone_receive_quoc_van.setChecked(False)
-        phuc_loi_layout.addWidget(self.clone_daily_check_in)
         phuc_loi_layout.addWidget(self.clone_receive_quoc_van)
+        phuc_loi_layout.addWidget(self.clone_daily_check_in)
         layout.addWidget(phuc_loi_group)
 
         self.clone_guild_check_in = QCheckBox("Báo danh quân đoàn")
