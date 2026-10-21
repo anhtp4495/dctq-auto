@@ -689,24 +689,22 @@ class BotWorker(QThread):
 
             screenshot = device.screenshot().convert("RGB")
             screen_width, screen_height = screenshot.size
-            # ROI được cung cấp theo ảnh gốc 1920x1080; scale theo độ phân giải hiện tại.
-            left = round(1270 / 1920 * screen_width)
-            top = round(968 / 1080 * screen_height)
-            right = round(1532 / 1920 * screen_width)
-            bottom = round(1026 / 1080 * screen_height)
+            # RECT thanh tiêu đề Quân đoàn, theo ảnh tham chiếu 1920x1080.
+            left = round(147 / 1920 * screen_width)
+            top = round(4 / 1080 * screen_height)
+            right = round(956 / 1920 * screen_width)
+            bottom = round(147 / 1080 * screen_height)
             crop_rgb = np.asarray(screenshot.crop((left, top, right, bottom)))
             if crop_rgb.size == 0:
-                raise RuntimeError("RECT OCR Vào quân đoàn nằm ngoài màn hình.")
+                raise RuntimeError("RECT xác nhận giao diện Quân đoàn nằm ngoài màn hình.")
 
             self.log_message.emit(
-                "Vào quân đoàn — BƯỚC 2: OCR color_text trong RECT "
-                f"({left}, {top}, {right}, {bottom}); thử text vao_quan_doan / "
-                "quan_doan / quan_d, ngưỡng tương đồng > 25%."
+                "Vào quân đoàn — BƯỚC 3: Xác nhận giao diện bằng OCR trong RECT "
+                f"({left}, {top}, {right}, {bottom}); chỉ cần khớp một trong "
+                "quan_doan / thanh_vien / tim_quan_doan."
             )
-
-            # Đồng bộ với scripts/ocr_debug.py: chữ trắng, nền đen, Lab distance,
-            # tolerance 100, scale 3 và PSM 11. Gray-only đã được thử nhưng không
-            # đọc được nhãn trên screenshot thực tế.
+            # Dùng color_text đã kiểm chứng bằng ocr_debug.py:
+            # chữ trắng, nền đen, Lab tolerance 38, scale 3, PSM 11.
             image_lab = cv2.cvtColor(crop_rgb, cv2.COLOR_RGB2LAB).astype(np.float32)
             text_ref = cv2.cvtColor(
                 np.uint8([[[255, 255, 255]]]), cv2.COLOR_RGB2LAB
@@ -716,7 +714,7 @@ class BotWorker(QThread):
             )[0, 0].astype(np.float32)
             text_distance = np.linalg.norm(image_lab - text_ref, axis=2)
             background_distance = np.linalg.norm(image_lab - background_ref, axis=2)
-            text_mask = (text_distance <= 100.0) & (text_distance < background_distance)
+            text_mask = (text_distance <= 38.0) & (text_distance < background_distance)
             processed = np.where(text_mask, 0, 255).astype(np.uint8)
             processed = cv2.resize(
                 processed, None, fx=3, fy=3, interpolation=cv2.INTER_NEAREST
@@ -725,75 +723,33 @@ class BotWorker(QThread):
                 processed, 18, 18, 18, 18, cv2.BORDER_CONSTANT, value=255
             )
             try:
-                recognized = pytesseract.image_to_string(
+                recognized_header = pytesseract.image_to_string(
                     processed, lang="vie+eng", config="--oem 3 --psm 11"
                 ).strip()
             except pytesseract.TesseractError:
-                recognized = pytesseract.image_to_string(
+                recognized_header = pytesseract.image_to_string(
                     processed, lang="eng", config="--oem 3 --psm 11"
                 ).strip()
 
-            targets = ("vao_quan_doan", "quan_doan", "quan_d")
-            matched_target = next(
+            header_targets = ("quan_doan", "thanh_vien", "tim_quan_doan")
+            matched_header = next(
                 (
-                    target for target in targets
-                    if self._fuzzy_ocr_target_match(recognized, target, 0.25)
+                    candidate for candidate in header_targets
+                    if self._fuzzy_ocr_target_match(recognized_header, candidate, 0.25)
                 ),
                 None,
             )
-            if not matched_target:
+            if not matched_header:
                 raise RuntimeError(
-                    "Đã click open_chat_quan_doan nhưng OCR color_text không xác nhận "
-                    "được màn hình Quân đoàn (>25%). "
-                    f"OCR: {recognized or '(trống)'}"
+                    "Đã click 'Vào quân đoàn' nhưng OCR không xác nhận được giao diện "
+                    "Quân đoàn; cần khớp ít nhất một trong quan_doan / thanh_vien / "
+                    f"tim_quan_doan. OCR: {recognized_header or '(trống)'}"
                 )
 
             self.log_message.emit(
-                "Đã xác nhận nút 'Vào quân đoàn': OCR color_text khớp "
-                f"{matched_target} (>25%); nội dung OCR: {recognized}"
+                f"Đã xác nhận giao diện Quân đoàn: khớp {matched_header} (>25%); "
+                f"nội dung OCR: {recognized_header}"
             )
-
-            # Chỉ click sau khi OCR xác nhận đúng nhãn, dùng tọa độ đã lưu
-            # trong regions.json để tránh hardcode và có thể tái sử dụng.
-            enter_target = None
-            for region_data in regions_data.get("regions", {}).values():
-                for element in region_data.get("elements", []):
-                    if element.get("name") == "vao_quan_doan":
-                        enter_target = element
-                        break
-                if enter_target:
-                    break
-            if enter_target is None:
-                raise RuntimeError(
-                    f"Đã nhận diện nút 'Vào quân đoàn' nhưng không tìm thấy "
-                    f"tọa độ 'vao_quan_doan' trong {regions_path}."
-                )
-
-            enter_center = enter_target.get("center", {})
-            enter_ratio = enter_target.get("center_ratio", {})
-            if "x" in enter_ratio and "y" in enter_ratio:
-                enter_x = round(float(enter_ratio["x"]) * screen_width)
-                enter_y = round(float(enter_ratio["y"]) * screen_height)
-            else:
-                base_width, base_height = regions_data.get(
-                    "reference_resolution", [1920, 1080]
-                )
-                enter_x = round(
-                    float(enter_center.get("x_px", 1406)) / base_width * screen_width
-                )
-                enter_y = round(
-                    float(enter_center.get("y_px", 993)) / base_height * screen_height
-                )
-
-            if not self._wait_if_paused():
-                return False
-            device.shell(f"input tap {enter_x} {enter_y}")
-            self.log_message.emit(
-                f"Đã click nút 'Vào quân đoàn' theo regions.json tại "
-                f"({enter_x}, {enter_y}) trên màn hình "
-                f"{screen_width}x{screen_height}."
-            )
-            time.sleep(1.0)
             return True
         except Exception as exc:
             self.log_message.emit(f"Vào quân đoàn thất bại, dừng luồng: {exc}")
