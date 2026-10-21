@@ -904,14 +904,45 @@ class ScreenshotAnnotator(QDialog):
         background_color_input = QLineEdit("#202020")
         border_color_input = QLineEdit("")
         tolerance_input = QDoubleSpinBox()
+
+        def add_color_preview(input_widget: QLineEdit, initial_color: str) -> QWidget:
+            container = QWidget()
+            row = QHBoxLayout(container)
+            row.setContentsMargins(0, 0, 0, 0)
+            row.setSpacing(8)
+            row.addWidget(input_widget, 1)
+            preview = QLabel()
+            preview.setFixedSize(24, 24)
+            preview.setToolTip("Xem trước màu")
+            preview.setStyleSheet(
+                f"background-color: {initial_color}; border: 1px solid #777; border-radius: 3px;"
+            )
+            row.addWidget(preview)
+
+            def update_preview(value: str) -> None:
+                color = value.strip()
+                if re.fullmatch(r"#[0-9a-fA-F]{6}", color):
+                    preview.setStyleSheet(
+                        f"background-color: {color}; border: 1px solid #777; border-radius: 3px;"
+                    )
+                else:
+                    preview.setStyleSheet(
+                        "background-color: transparent; border: 1px dashed #dc2626; border-radius: 3px;"
+                    )
+            input_widget.textChanged.connect(update_preview)
+            return container
+
+        text_color_row = add_color_preview(text_color_input, "#FFFFFF")
+        background_color_row = add_color_preview(background_color_input, "#202020")
+        border_color_row = add_color_preview(border_color_input, "#FFFFFF")
         tolerance_input.setRange(1, 255)
         tolerance_input.setDecimals(1)
         tolerance_input.setValue(38.0)
         tolerance_input.setToolTip("Ngưỡng sai khác màu; dùng cho bước color_text và lọc viền.")
         form.addRow("Text cần phát hiện:", target_text_input)
-        form.addRow("Text-color (#RRGGBB hoặc R,G,B):", text_color_input)
-        form.addRow("Background-color:", background_color_input)
-        form.addRow("Border-color (để trống nếu không có):", border_color_input)
+        form.addRow("Text-color (#RRGGBB hoặc R,G,B):", text_color_row)
+        form.addRow("Background-color:", background_color_row)
+        form.addRow("Border-color (để trống nếu không có):", border_color_row)
         form.addRow("Color-tolerance:", tolerance_input)
         layout.addLayout(form)
 
