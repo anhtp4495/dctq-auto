@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 import json
 import re
 import unicodedata
@@ -913,6 +914,10 @@ class ScreenshotAnnotator(QDialog):
         form.addRow("Color-tolerance:", tolerance_input)
         layout.addLayout(form)
 
+        save_files_checkbox = QCheckBox("Lưu file xử lý và kết quả OCR (giống scripts/ocr_debug.py)")
+        save_files_checkbox.setChecked(False)
+        layout.addWidget(save_files_checkbox)
+
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
@@ -1008,8 +1013,24 @@ class ScreenshotAnnotator(QDialog):
                     mask = cv2.resize(mask, None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST)
                     variants["white_text"] = cv2.copyMakeBorder(cv2.bitwise_not(mask), 18, 18, 18, 18, cv2.BORDER_CONSTANT, value=255)
 
+            output_dir = self._image_path.parent / f"ocr_debug_{self._image_path.stem}"
+            if save_files_checkbox.isChecked():
+                output_dir.mkdir(parents=True, exist_ok=True)
+                cv2.imwrite(str(output_dir / "00_original_crop.png"), bgr_image)
+                (output_dir / "results.txt").write_text(
+                    f"Image: {self._image_path}\\n"
+                    f"RECT: ({left}, {top}, {right}, {bottom})\\n"
+                    f"Language: vie+eng; scale: {scale}; PSM: {selected_psms}\\n"
+                    f"Steps: {selected_steps}\\n"
+                    f"Text RGB: {text_rgb}; background RGB: {background_rgb}; "
+                    f"border RGB: {border_rgb}; color tolerance: {tolerance_input.value()}\\n\\n",
+                    encoding="utf-8",
+                )
+
             grouped_candidates = []
             for variant_name, processed in variants.items():
+                if save_files_checkbox.isChecked():
+                    cv2.imwrite(str(output_dir / f"{self._image_path.stem}.{variant_name}.png"), processed)
                 for psm in selected_psms:
                     try:
                         data = pytesseract.image_to_data(
@@ -1020,6 +1041,51 @@ class ScreenshotAnnotator(QDialog):
                         data = pytesseract.image_to_data(
                             processed, lang="eng", config=f"--oem 3 --psm {psm}",
                             output_type=pytesseract.Output.DICT,
+                        )
+                    if save_files_checkbox.isChecked():
+                        words = []
+                        confidences = []
+                        for i, raw_text in enumerate(data["text"]):
+                            word = raw_text.strip()
+                            try:
+                                confidence = float(data["conf"][i])
+                            except (ValueError, TypeError):
+                                confidence = -1
+                            if word and confidence >= 0:
+                                words.append(word)
+                                confidences.append(confidence)
+                        recognized = " ".join(words)
+                        avg_conf = sum(confidences) / len(confidences) if confidences else 0.0
+                        with (output_dir / "results.txt").open("a", encoding="utf-8") as summary:
+                            summary.write(
+                                f"[{variant_name} | PSM {psm}] confidence trung bình: {avg_conf:.1f}\\n"
+                                f"{recognized or '(không nhận diện được chữ)'}\\n\\n"
+                            )
+                        csv_path = output_dir / f"{self._image_path.stem}.{variant_name}.psm{psm}.csv"
+                        with csv_path.open("w", newline="", encoding="utf-8-sig") as csv_file:
+                            writer = csv.writer(csv_file)
+                            writer.writerow([
+                                "text", "confidence", "left_processed", "top_processed",
+                                "width_processed", "height_processed",
+                            ])
+                            for i, raw_text in enumerate(data["text"]):
+                                word = raw_text.strip()
+                                if not word:
+                                    continue
+                                writer.writerow([
+                                    word, data["conf"][i], data["left"][i], data["top"][i],
+                                    data["width"][i], data["height"][i],
+                                ])
+                        annotated = cv2.cvtColor(processed, cv2.COLOR_GRAY2BGR)
+                        for i, raw_text in enumerate(data["text"]):
+                            if not raw_text.strip():
+                                continue
+                            x, y = int(data["left"][i]), int(data["top"][i])
+                            w, h = int(data["width"][i]), int(data["height"][i])
+                            cv2.rectangle(annotated, (x, y), (x + w, y + h), (0, 180, 0), 1)
+                        cv2.imwrite(
+                            str(output_dir / f"{self._image_path.stem}.{variant_name}.psm{psm}.boxes.png"),
+                            annotated,
                         )
                     for item in self._split_ocr_words(data, min_confidence=45.0):
                         # Combine results from selected steps/PSMs and remove duplicate boxes below.
@@ -1071,10 +1137,14 @@ class ScreenshotAnnotator(QDialog):
                 for item in self._ocr_elements:
                     item["matched"] = target_normalized in item["name"]
                 self.image_view.set_ocr_boxes(self._ocr_elements)
+            saved_message = (
+                f" File debug đã lưu tại: {output_dir}"
+                if save_files_checkbox.isChecked() else ""
+            )
             self.instruction.setText(
                 f"OCR hoàn tất: {len(matches)} dòng khớp / {len(self._ocr_elements)} dòng nhận diện. "
                 f"Steps={', '.join(selected_steps)}; PSM={', '.join(map(str, selected_psms))}. "
-                "Nhấp vào hộp chữ để chọn tọa độ."
+                "Nhấp vào hộp chữ để chọn tọa độ." + saved_message
             )
         except Exception as exc:
             QMessageBox.critical(self, "Lỗi OCR", f"Không thể phân tích OCR: {exc}")
