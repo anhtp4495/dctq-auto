@@ -1087,7 +1087,7 @@ class ScreenshotAnnotator(QDialog):
                     # Chữ được giữ là đen; các pixel còn lại dùng màu nền đầu ra người dùng chọn.
                     output_background = np.array(output_background_rgb, dtype=np.uint8)
                     color_output = np.empty((*mask.shape, 3), dtype=np.uint8)
-                    color_output[:] = output_background
+                    color_output[:] = output_background[::-1]  # RGB input -> BGR image for OpenCV/Tesseract
                     color_output[mask] = (0, 0, 0)
                     color_output = cv2.resize(
                         color_output, None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST
