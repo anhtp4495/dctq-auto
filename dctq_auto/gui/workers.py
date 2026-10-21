@@ -1325,65 +1325,103 @@ class BotWorker(QThread):
 
         if self._config.get("task_close_guild"):
             if not self._wait_if_paused():
-                self.log_message.emit("Đã dừng theo yêu cầu.")
+                self.log_message.emit("Đã dừng trước khi thoát màn hình Quân đoàn.")
                 return
             try:
+                import json
+
+                regions_path = Path(__file__).resolve().parents[1] / "tasks" / "common" / "regions.json"
+                try:
+                    regions_data = json.loads(regions_path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError) as exc:
+                    raise RuntimeError(f"Không đọc được {regions_path}: {exc}") from exc
+
+                def find_region_element(element_name):
+                    for region_data in regions_data.get("regions", {}).values():
+                        for element in region_data.get("elements", []):
+                            if element.get("name") == element_name:
+                                return element
+                    return None
+
+                def center_for_element(element, width, height):
+                    center_ratio = element.get("center_ratio", {})
+                    center = element.get("center", {})
+                    if "x" in center_ratio and "y" in center_ratio:
+                        return (
+                            round(float(center_ratio["x"]) * width),
+                            round(float(center_ratio["y"]) * height),
+                        )
+                    base_width, base_height = regions_data.get(
+                        "reference_resolution", [1920, 1080]
+                    )
+                    return (
+                        round(float(center.get("x_px", 0)) / base_width * width),
+                        round(float(center.get("y_px", 0)) / base_height * height),
+                    )
+
                 self.log_message.emit(
-                    "Tác vụ: đóng giao diện Quân đoàn bằng tọa độ đã lưu."
+                    "Thoát Quân đoàn — BƯỚC 1: Đóng màn hình Quân đoàn bằng close_quan_doan "
+                    "lấy từ regions.json."
                 )
                 ocr_client.tap_ocr_target("close_quan_doan")
                 time.sleep(0.8)
 
                 if not self._wait_if_paused():
-                    self.log_message.emit("Đã dừng trước khi kiểm tra chat Quân đoàn.")
+                    self.log_message.emit("Đã dừng trước khi đóng chat Quân đoàn.")
                     return
 
-                self.log_message.emit(
-                    "Kiểm tra chat_quan_doan: OCR tìm chữ 'vao_quan_doan' "
-                    "để xác nhận màn hình Quân đoàn đã đóng."
+                # The previous check for 'vao_quan_doan' was not a valid chat-state
+                # check: that label may be visible while the chat overlay is still open.
+                # Tap the saved chat-toggle target to close the overlay explicitly.
+                chat_toggle = find_region_element("open_chat_quan_doan")
+                if chat_toggle is None:
+                    raise RuntimeError(
+                        f"Không tìm thấy 'open_chat_quan_doan' trong {regions_path}."
+                    )
+
+                screenshot = device.screenshot()
+                screen_width, screen_height = screenshot.size
+                chat_x, chat_y = center_for_element(
+                    chat_toggle, screen_width, screen_height
                 )
+                self.log_message.emit(
+                    "Thoát Quân đoàn — BƯỚC 2: Click nút toggle open_chat_quan_doan "
+                    f"lấy từ regions.json tại ({chat_x}, {chat_y}) trên màn hình "
+                    f"{screen_width}x{screen_height} để đóng khung chat."
+                )
+                device.shell(f"input tap {chat_x} {chat_y}")
+                time.sleep(1.0)
+
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng sau thao tác đóng chat Quân đoàn.")
+                    return
+
+                # Capture post-action OCR for diagnostics. Do not claim that a generic
+                # 'Vào quân đoàn' label proves the chat overlay is closed.
                 screen_text = self._screen_text(device)
-                if not self._fuzzy_ocr_target_match(screen_text, "vao_quan_doan", 0.25):
-                    screenshot = device.screenshot()
-                    screen_width, screen_height = screenshot.size
-                    chat_x = round(181 / 1920 * screen_width)
-                    chat_y = round(64 / 1080 * screen_height)
-                    self.log_message.emit(
-                        "Chưa thấy chữ 'vao_quan_doan'; có thể chat_quan_doan "
-                        "vẫn đang mở. Click tọa độ (181, 64) để đóng chat."
-                    )
-                    device.shell(f"input tap {chat_x} {chat_y}")
-                    time.sleep(0.8)
-
-                    if not self._wait_if_paused():
-                        self.log_message.emit("Đã dừng sau thao tác đóng chat Quân đoàn.")
-                        return
-
-                    screen_text = self._screen_text(device)
-                    if not self._fuzzy_ocr_target_match(screen_text, "vao_quan_doan", 0.25):
-                        raise RuntimeError(
-                            "Đã click (181, 64) nhưng OCR vẫn không tìm thấy "
-                            "'vao_quan_doan'; chưa xác nhận chat Quân đoàn đã đóng. "
-                            f"OCR: {screen_text[:180] or '(trống)'}"
-                        )
-                    self.log_message.emit(
-                        "Đã xác nhận chat_quan_doan đóng: OCR tìm thấy 'vao_quan_doan'."
-                    )
-                else:
-                    self.log_message.emit(
-                        "Chat_quan_doan không còn che màn hình: OCR đã thấy 'vao_quan_doan'."
+                normalized = self._normalize_screen_text(screen_text)
+                chat_indicators = ("tim quan doan", "thanh vien", "quan doan")
+                still_shows_guild_panel = any(
+                    self._normalize_screen_text(marker) in normalized
+                    for marker in chat_indicators
+                )
+                if still_shows_guild_panel:
+                    raise RuntimeError(
+                        "Đã click nút open_chat_quan_doan để đóng chat nhưng OCR vẫn "
+                        "thấy dấu hiệu giao diện Quân đoàn/chat. Chưa xác nhận đã đóng; "
+                        f"OCR: {screen_text[:220] or '(trống)'}"
                     )
 
                 completed += 1
                 self.progress_changed.emit(
-                    completed, max(1, total), "Đã đóng Quân đoàn và kiểm tra chat"
+                    completed, max(1, total), "Đã thao tác đóng màn hình và chat Quân đoàn"
                 )
                 self.task_progress_changed.emit(
                     "Thoát màn hình Quân đoàn", "done", 1, 1
                 )
                 self.log_message.emit(
-                    "Đã đóng giao diện Quân đoàn và kiểm tra trạng thái chat. "
-                    "Đây không phải thao tác rời bang hội."
+                    "Đã click close_quan_doan và open_chat_quan_doan theo tọa độ đã lưu; "
+                    "OCR sau thao tác không còn thấy nhãn giao diện Quân đoàn."
                 )
             except Exception as exc:
                 self.log_message.emit(
