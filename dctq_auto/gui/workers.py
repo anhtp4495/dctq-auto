@@ -643,17 +643,44 @@ class BotWorker(QThread):
                 return False
 
             self.log_message.emit(
-                "Vào quân đoàn — BƯỚC 1: Click tọa độ open_chat_quan_doan "
-                "(1888, 568) theo màn hình gốc 1920x1080."
+                "Vào quân đoàn — BƯỚC 1: Đọc tọa độ open_chat_quan_doan từ regions.json."
             )
+            import json
+
+            regions_path = Path(__file__).resolve().parents[1] / "tasks" / "common" / "regions.json"
+            try:
+                regions_data = json.loads(regions_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                raise RuntimeError(f"Không đọc được {regions_path}: {exc}") from exc
+
+            target = None
+            for region_data in regions_data.get("regions", {}).values():
+                for element in region_data.get("elements", []):
+                    if element.get("name") == "open_chat_quan_doan":
+                        target = element
+                        break
+                if target:
+                    break
+            if target is None:
+                raise RuntimeError(
+                    f"Không tìm thấy OCR target 'open_chat_quan_doan' trong {regions_path}."
+                )
+
             screenshot = device.screenshot()
             screen_width, screen_height = screenshot.size
-            click_x = round(1888 / 1920 * screen_width)
-            click_y = round(568 / 1080 * screen_height)
+            center = target.get("center", {})
+            center_ratio = target.get("center_ratio", {})
+            if "x" in center_ratio and "y" in center_ratio:
+                click_x = round(float(center_ratio["x"]) * screen_width)
+                click_y = round(float(center_ratio["y"]) * screen_height)
+            else:
+                base_width, base_height = regions_data.get("reference_resolution", [1920, 1080])
+                click_x = round(float(center.get("x_px", 1888)) / base_width * screen_width)
+                click_y = round(float(center.get("y_px", 568)) / base_height * screen_height)
             device.shell(f"input tap {click_x} {click_y}")
             self.log_message.emit(
-                f"Đã click open_chat_quan_doan tại ({click_x}, {click_y}) "
-                f"trên màn hình {screen_width}x{screen_height}."
+                f"Đã click open_chat_quan_doan lấy từ regions.json tại "
+                f"({click_x}, {click_y}) trên màn hình {screen_width}x{screen_height}."
             )
             time.sleep(1.0)
 
