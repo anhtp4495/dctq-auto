@@ -176,7 +176,7 @@ def preprocess(
         # Output is RGB: retained text pixels are black and rejected pixels use
         # the user-selected background color.
         color_output = np.empty((*text_mask.shape, 3), dtype=np.uint8)
-        color_output[:] = output_background_color
+        color_output[:] = output_background_color[::-1]  # RGB input -> BGR image for OpenCV/Tesseract
         color_output[text_mask] = (0, 0, 0)
         if scale > 1:
             color_output = cv2.resize(
