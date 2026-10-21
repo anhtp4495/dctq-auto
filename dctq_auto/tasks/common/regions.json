@@ -665,6 +665,31 @@
             "x": 0.602083,
             "y": 0.653704
           }
+        },
+        {
+          "name": "open_chat_quan_doan",
+          "text": "Nút mở chat quân đoàn",
+          "confidence": null,
+          "bounds": {
+            "left": 1868,
+            "top": 548,
+            "right": 1908,
+            "bottom": 588
+          },
+          "rect": {
+            "x": 1868,
+            "y": 548,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 1888,
+            "y_px": 568
+          },
+          "center_ratio": {
+            "x": 0.983333,
+            "y": 0.525926
+          }
         }
       ],
       "screenshot": "user-provided OCR coordinates",
