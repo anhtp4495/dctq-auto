@@ -55,3 +55,69 @@ def _color_distance(rgb, color):
     ref = cv2.cvtColor(np.uint8([[list(color)]]), cv2.COLOR_RGB2LAB)[0, 0].astype(np.float32)
     lab = cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB).astype(np.float32)
     return np.linalg.norm(lab - ref, axis=2)
+
+def preprocess_region(crop, config):
+    """Prepare a crop for Tesseract using the selected OCR method."""
+    if isinstance(crop, Image.Image):
+        rgb = np.asarray(crop.convert("RGB"))
+    else:
+        array = np.asarray(crop)
+        if array.ndim == 2:
+            rgb = cv2.cvtColor(array, cv2.COLOR_GRAY2RGB)
+        elif array.ndim == 3 and array.shape[2] == 3:
+            rgb = cv2.cvtColor(array, cv2.COLOR_BGR2RGB)
+        else:
+            raise ValueError(f"Unsupported image shape: {array.shape}")
+    scale = int(config.get("scale", 3))
+    method = config.get("method", "color_text")
+    if method == "grayscale":
+        output = cv2.createCLAHE(clipLimit=2, tileGridSize=(8, 8)).apply(
+            cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY))
+        if scale > 1:
+            output = cv2.resize(output, None, fx=scale, fy=scale, interpolation=cv2.INTER_LANCZOS4)
+    elif method == "color_text":
+        text_distance = _color_distance(rgb, config["text_color"])
+        background_distance = _color_distance(rgb, config["background_color"])
+        tolerance = float(config.get("color_tolerance", 38))
+        mask = (text_distance <= tolerance) & (text_distance < background_distance)
+        border_color = config.get("border_color")
+        if border_color is not None:
+            mask &= _color_distance(rgb, border_color) > tolerance
+        output = np.where(mask, 0, 255).astype(np.uint8)
+        if scale > 1:
+            output = cv2.resize(output, None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST)
+    else:
+        raise ValueError(f"Unsupported OCR method: {method}")
+    return cv2.copyMakeBorder(output, 18, 18, 18, 18, cv2.BORDER_CONSTANT, value=255)
+
+def read_region_ocr(crop, *, region_key=None, lang=None, override=None):
+    """Return OCR tokens with confidence and boxes relative to the crop."""
+    config = get_ocr_config(region_key, override)
+    image = preprocess_region(crop, config)
+    scale = int(config.get("scale", 3))
+    results, seen = [], set()
+    for psm in config["psm"]:
+        data = pytesseract.image_to_data(
+            image, lang=lang or config.get("lang", "vie+eng"),
+            config=f"--oem 3 --psm {psm}", output_type=pytesseract.Output.DICT)
+        for index, raw_text in enumerate(data["text"]):
+            word = raw_text.strip()
+            try:
+                confidence = float(data["conf"][index])
+            except (ValueError, TypeError):
+                continue
+            if not word or confidence < float(config.get("min_confidence", 10)):
+                continue
+            box = (
+                max(0, int((int(data["left"][index]) - 18) / scale)),
+                max(0, int((int(data["top"][index]) - 18) / scale)),
+                max(0, round(int(data["width"][index]) / scale)),
+                max(0, round(int(data["height"][index]) / scale)),
+            )
+            key = (word.lower(), box)
+            if key in seen:
+                continue
+            seen.add(key)
+            results.append({"text": word, "confidence": round(confidence, 1),
+                "box": {"x": box[0], "y": box[1], "w": box[2], "h": box[3]}, "psm": psm})
+    return results
