@@ -1200,7 +1200,9 @@ class BotWorker(QThread):
 
                 account = SimpleNamespace(username="Tác vụ")
                 if not run_guild_logistics(self, account, device, ocr_client):
-                    return False
+                    raise RuntimeError(
+                        "Không hoàn tất được Cầu vận; xem nhật ký OCR ở phía trên."
+                    )
 
             self.task_progress_changed.emit(label, "done", 1, 1)
             self.log_message.emit(
