@@ -759,7 +759,7 @@ class BotWorker(QThread):
             return True
         except Exception as exc:
             self.log_message.emit(
-                f"Nhận lễ bao Quốc vận thất bại, dừng flow (không retry): {exc}"
+                f"Nhận lễ bao Quốc vận thất bại; bỏ qua tác vụ này và tiếp tục các tác vụ tiếp theo (không retry): {exc}"
             )
             return False
 
