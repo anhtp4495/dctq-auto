@@ -312,6 +312,45 @@ class BotWorker(QThread):
         return re.sub(r"[^a-z0-9]+", " ", text).strip()
 
     @staticmethod
+    def _normalize_ocr_match_text(text: str) -> str:
+        """Normalize OCR text to lowercase ASCII letters/digits only."""
+        normalized = unicodedata.normalize("NFD", text.lower())
+        normalized = "".join(
+            char for char in normalized
+            if unicodedata.category(char) != "Mn"
+        ).replace("đ", "d")
+        return re.sub(r"[^a-z0-9]", "", normalized)
+
+    @staticmethod
+    def _fuzzy_ocr_target_match(
+        recognized_text: str,
+        target_text: str,
+        threshold: float = 0.50,
+    ) -> bool:
+        """Match a target against any OCR substring, ignoring invalid characters."""
+        from difflib import SequenceMatcher
+
+        target = BotWorker._normalize_ocr_match_text(target_text)
+        recognized = BotWorker._normalize_ocr_match_text(recognized_text)
+        if not target or not recognized:
+            return False
+        if target in recognized:
+            return True
+
+        # Partial matching: OCR often appends adjacent labels/noise to the target.
+        # Compare windows close to the target length so surrounding text does not
+        # reduce the score of an otherwise recognizable label.
+        min_len = max(1, int(len(target) * threshold))
+        max_len = min(len(recognized), len(target) + max(2, int(len(target) * 0.5)))
+        for window_len in range(min_len, max_len + 1):
+            for start in range(0, len(recognized) - window_len + 1):
+                candidate = recognized[start:start + window_len]
+                score = SequenceMatcher(None, target, candidate).ratio()
+                if score >= threshold:
+                    return True
+        return False
+
+    @staticmethod
     def _screen_text(device) -> str:
         """Read visible game text using multiple Tesseract layouts for small UI labels."""
         image = ImageOps.autocontrast(device.screenshot().convert("L"))
