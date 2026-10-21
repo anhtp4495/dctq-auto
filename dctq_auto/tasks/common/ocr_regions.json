@@ -39,13 +39,33 @@
       ],
       "min_confidence": 10
     },
-    "example.black_text_light_gray": {
+    "hoat_dong.phuc_loi.diem_danh": {
+      "bounds": {
+        "left": 202,
+        "top": 421,
+        "right": 472,
+        "bottom": 875
+      },
       "method": "color_text",
-      "text_color": "#000000",
-      "background_color": "#D3D3D3",
-      "border_color": null,
-      "color_tolerance": 100,
+      "color_profiles": [
+        {
+          "text_color": "#FFFFFF",
+          "background_color": "#202020",
+          "color_tolerance": 38
+        },
+        {
+          "text_color": "#FFFFFF",
+          "background_color": "#E0B52A",
+          "color_tolerance": 38
+        },
+        {
+          "text_color": "#000000",
+          "background_color": "#D3D3D3",
+          "color_tolerance": 100
+        }
+      ],
       "psm": 6,
+      "min_confidence": 10,
       "lang": "vie+eng",
       "scale": 3
     }
