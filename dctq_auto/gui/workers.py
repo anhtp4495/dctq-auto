@@ -559,9 +559,10 @@ class BotWorker(QThread):
         return True
 
     def _tap_fuzzy_ocr_target(
-        self, device, target_text: str, threshold: float = 0.25
+        self, device, target_text: str, threshold: float = 0.25,
+        *, tap: bool = True,
     ) -> tuple[int, int] | None:
-        """Find the best OCR word-window for a target and tap its center."""
+        """Find the best OCR word-window for a target; optionally tap its center."""
         from difflib import SequenceMatcher
 
         image = ImageOps.autocontrast(device.screenshot().convert("L"))
@@ -622,7 +623,8 @@ class BotWorker(QThread):
             return None
         _score, left, top, right, bottom = best
         x, y = round((left + right) / 2), round((top + bottom) / 2)
-        device.shell(f"input tap {x} {y}")
+        if tap:
+            device.shell(f"input tap {x} {y}")
         return x, y
 
     def _run_receive_quoc_van(self, device, ocr_client) -> bool:
@@ -694,6 +696,13 @@ class BotWorker(QThread):
                     "Không xác nhận được giao diện lễ bao Quốc vận: text chuẩn "
                     f"không tương đồng > 25%. OCR: {screen_text[:220] or '(trống)'}"
                 )
+            title_position = self._tap_fuzzy_ocr_target(
+                device, target_title, 0.25, tap=False
+            )
+            if title_position is None:
+                raise RuntimeError(
+                    "Text OCR đạt ngưỡng nhưng không lấy được vị trí để click xác nhận."
+                )
 
             if not self._wait_if_paused():
                 return False
@@ -720,11 +729,10 @@ class BotWorker(QThread):
             self.log_message.emit(
                 "Lễ bao Quốc vận — BƯỚC 6: Click vị trí text OCR và nhấn ENTER."
             )
-            clicked_at = self._tap_fuzzy_ocr_target(device, target_title, 0.25)
-            if clicked_at is None:
-                raise RuntimeError(
-                    "Không tìm được vị trí OCR của text chuẩn để click xác nhận."
-                )
+            # Dùng lại tọa độ đã lấy ở Bước 4; không OCR tìm lại sau khi dialog
+            # xuất hiện vì lúc đó chính dòng text này có thể đã biến mất.
+            title_x, title_y = title_position
+            device.shell(f"input tap {title_x} {title_y}")
             device.shell("input keyevent KEYCODE_ENTER")
             time.sleep(1.0)
 
