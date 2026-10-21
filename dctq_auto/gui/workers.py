@@ -244,13 +244,29 @@ class BotWorker(QThread):
             ("clone_login", "Đăng nhập"),
             ("clone_receive_quoc_van", "Hoạt động -> Phúc lợi -> Nhận lễ bao quốc vận"),
             ("clone_daily_check_in", "Hoạt động -> Phúc lợi -> Điểm danh"),
-            ("clone_guild_check_in", "Báo danh quân đoàn"),
-            ("clone_receive_lucky_bag", "Nhận túi phúc"),
             ("clone_logout", "Đăng xuất"),
         )
         selected = [
-            (key, label) for key, label in task_specs if self._config.get(key)
+            (key, label) for key, label in task_specs
+            if key != "clone_logout" and self._config.get(key)
         ]
+        guild_mock_tasks = (
+            ("clone_guild_check_in", "Báo danh quân đoàn"),
+            ("clone_receive_lucky_bag", "Nhận túi phúc"),
+            ("clone_guild_fortune", "Cầu vận quân đoàn (5 lần)"),
+        )
+        selected_guild = [
+            (key, label) for key, label in guild_mock_tasks
+            if self._config.get(key)
+        ]
+        if selected_guild:
+            selected.extend([
+                ("clone_enter_guild", "Vào màn hình Quân đoàn"),
+                *selected_guild,
+                ("clone_close_guild", "Thoát màn hình Quân đoàn"),
+            ])
+        if self._config.get("clone_logout", True):
+            selected.append(("clone_logout", "Đăng xuất"))
         total = len(accounts)
         if total == 0:
             self.log_message.emit("Tab Clone: không có tài khoản hoặc nhiệm vụ để chạy.")
