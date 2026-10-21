@@ -1750,7 +1750,10 @@ class MainWindow(QMainWindow):
             task_labels = (
                 ("task_login", "Đăng nhập"),
                 ("diem_danh", "Điểm danh"),
+                ("task_enter_guild", "Vào quân đoàn"),
                 ("bao_danh_quan_doan", "Báo danh quân đoàn"),
+                ("task_receive_lucky_bag", "Nhận túi phúc"),
+                ("task_guild_fortune", "Cầu vận quân đoàn (5 lần)"),
                 ("dong_gop_knb", "Đóng góp KNB"),
                 ("tham_do_lanh_dia", "Thăm dò lãnh địa"),
                 ("nhiem_vu_luu_ly_thap", "Lưu Ly Tháp"),
