@@ -1336,92 +1336,52 @@ class BotWorker(QThread):
                 except (OSError, json.JSONDecodeError) as exc:
                     raise RuntimeError(f"Không đọc được {regions_path}: {exc}") from exc
 
-                def find_region_element(element_name):
-                    for region_data in regions_data.get("regions", {}).values():
-                        for element in region_data.get("elements", []):
-                            if element.get("name") == element_name:
-                                return element
-                    return None
-
-                def center_for_element(element, width, height):
-                    center_ratio = element.get("center_ratio", {})
-                    center = element.get("center", {})
-                    if "x" in center_ratio and "y" in center_ratio:
-                        return (
-                            round(float(center_ratio["x"]) * width),
-                            round(float(center_ratio["y"]) * height),
-                        )
-                    base_width, base_height = regions_data.get(
-                        "reference_resolution", [1920, 1080]
-                    )
-                    return (
-                        round(float(center.get("x_px", 0)) / base_width * width),
-                        round(float(center.get("y_px", 0)) / base_height * height),
-                    )
-
                 self.log_message.emit(
                     "Thoát Quân đoàn — BƯỚC 1: Đóng màn hình Quân đoàn bằng close_quan_doan "
                     "lấy từ regions.json."
                 )
-                ocr_client.tap_ocr_target("close_quan_doan")
+                ocr_client.tap_ocr_target("close_quan_doan", regions_path=regions_path)
                 time.sleep(0.8)
 
                 if not self._wait_if_paused():
-                    self.log_message.emit("Đã dừng trước khi đóng chat Quân đoàn.")
+                    self.log_message.emit("Đã dừng trước khi kiểm tra chat Quân đoàn.")
                     return
 
-                # The previous check for 'vao_quan_doan' was not a valid chat-state
-                # check: that label may be visible while the chat overlay is still open.
-                # Tap the saved chat-toggle target to close the overlay explicitly.
-                chat_toggle = find_region_element("open_chat_quan_doan")
-                if chat_toggle is None:
-                    raise RuntimeError(
-                        f"Không tìm thấy 'open_chat_quan_doan' trong {regions_path}."
-                    )
-
-                screenshot = device.screenshot()
-                screen_width, screen_height = screenshot.size
-                chat_x, chat_y = center_for_element(
-                    chat_toggle, screen_width, screen_height
-                )
-                self.log_message.emit(
-                    "Thoát Quân đoàn — BƯỚC 2: Click nút toggle open_chat_quan_doan "
-                    f"lấy từ regions.json tại ({chat_x}, {chat_y}) trên màn hình "
-                    f"{screen_width}x{screen_height} để đóng khung chat."
-                )
-                device.shell(f"input tap {chat_x} {chat_y}")
-                time.sleep(1.0)
-
-                if not self._wait_if_paused():
-                    self.log_message.emit("Đã dừng sau thao tác đóng chat Quân đoàn.")
-                    return
-
-                # Capture post-action OCR for diagnostics. Do not claim that a generic
-                # 'Vào quân đoàn' label proves the chat overlay is closed.
+                # Chỉ click nút thoát chat nếu OCR thực sự thấy nhãn "Vào quân đoàn".
+                # Nhãn này được dùng làm điều kiện theo yêu cầu; tọa độ click được
+                # lấy theo tên thoat_chat_quan_doan trong regions.json.
                 screen_text = self._screen_text(device)
                 normalized = self._normalize_screen_text(screen_text)
-                chat_indicators = ("tim quan doan", "thanh vien", "quan doan")
-                still_shows_guild_panel = any(
-                    self._normalize_screen_text(marker) in normalized
-                    for marker in chat_indicators
-                )
-                if still_shows_guild_panel:
-                    raise RuntimeError(
-                        "Đã click nút open_chat_quan_doan để đóng chat nhưng OCR vẫn "
-                        "thấy dấu hiệu giao diện Quân đoàn/chat. Chưa xác nhận đã đóng; "
+                has_enter_guild_label = "vao quan doan" in normalized
+                if has_enter_guild_label:
+                    self.log_message.emit(
+                        "Thoát Quân đoàn — OCR tìm thấy 'vao_quan_doan'; "
+                        "click tọa độ thoat_chat_quan_doan đã lưu trong regions.json."
+                    )
+                    x, y = ocr_client.tap_ocr_target(
+                        "thoat_chat_quan_doan", regions_path=regions_path
+                    )
+                    self.log_message.emit(
+                        f"Đã click thoat_chat_quan_doan tại ({x}, {y})."
+                    )
+                    time.sleep(0.8)
+                else:
+                    self.log_message.emit(
+                        "OCR không tìm thấy 'vao_quan_doan'; bỏ qua click "
+                        "thoat_chat_quan_doan vì không cần đóng chat theo điều kiện đã đặt. "
                         f"OCR: {screen_text[:220] or '(trống)'}"
                     )
 
                 completed += 1
                 self.progress_changed.emit(
-                    completed, max(1, total), "Đã thao tác đóng màn hình và chat Quân đoàn"
+                    completed, max(1, total), "Đã xử lý trạng thái chat Quân đoàn"
                 )
                 self.task_progress_changed.emit(
                     "Thoát màn hình Quân đoàn", "done", 1, 1
                 )
                 self.log_message.emit(
-                    "Đã click close_quan_doan và open_chat_quan_doan theo tọa độ đã lưu; "
-                    "OCR sau thao tác không còn thấy nhãn giao diện Quân đoàn."
+                    "Hoàn tất flow thoát Quân đoàn: kiểm tra 'vao_quan_doan'; "
+                    "nếu có thì click thoat_chat_quan_doan theo regions.json."
                 )
             except Exception as exc:
                 self.log_message.emit(
