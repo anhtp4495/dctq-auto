@@ -686,9 +686,12 @@ class BotWorker(QThread):
             )
             full_rect = (0, 0, screen_width, screen_height)
             if not self._tap_ocr_phrase_in_rect(
-                device, ("le bao quoc van", "le bao"), full_rect
+                device, ("le bao quoc van",), full_rect
             ):
-                raise RuntimeError("OCR không tìm thấy mục le_bao_quoc_van để click.")
+                self.log_message.emit(
+                    "Không tìm thấy mục Lễ bao Quốc vận bằng OCR; bỏ qua tác vụ này."
+                )
+                return False
 
             time.sleep(1.2)
             if not self._wait_if_paused():
@@ -699,10 +702,16 @@ class BotWorker(QThread):
             )
             screen_text = self._screen_text(device)
             if not self._fuzzy_ocr_target_match(screen_text, target_title, 0.25):
-                raise RuntimeError(
-                    "Không xác nhận được giao diện lễ bao Quốc vận: text chuẩn "
-                    f"không tương đồng > 25%. OCR: {screen_text[:220] or '(trống)'}"
+                self.log_message.emit(
+                    "OCR không khớp text chuẩn trên 25%; bỏ qua tác vụ Lễ bao Quốc vận. "
+                    f"OCR nhận diện được: {screen_text[:220] or '(trống)'}"
                 )
+                return False
+
+            self.log_message.emit(
+                "OCR khớp text chuẩn (>25%): "
+                f"{target_title}"
+            )
             title_position = self._tap_fuzzy_ocr_target(
                 device, target_title, 0.25, tap=False
             )
