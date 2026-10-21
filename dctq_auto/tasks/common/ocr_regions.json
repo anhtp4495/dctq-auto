@@ -41,10 +41,10 @@
     },
     "hoat_dong.phuc_loi.cac_tinh_nang": {
       "bounds": {
-        "left": 202,
-        "top": 421,
-        "right": 472,
-        "bottom": 875
+        "left": 199,
+        "top": 123,
+        "right": 477,
+        "bottom": 1008
       },
       "steps": [
         "gray",
