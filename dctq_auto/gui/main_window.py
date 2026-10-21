@@ -1607,6 +1607,7 @@ class MainWindow(QMainWindow):
         if config.get("utility_tasks_mode") and not any(
             config.get(key) for key in (
                 "task_login", "task_close_guild", "task_switch_account",
+                "task_enter_guild", "task_receive_lucky_bag", "task_guild_fortune",
                 "diem_danh", "nhan_le_bao_quoc_van", "bao_danh_quan_doan", "dong_gop_knb",
                 "tham_do_lanh_dia", "nhiem_vu_luu_ly_thap",
                 "thuc_hien_giao_tranh", "thuc_hien_tranh_ba",
