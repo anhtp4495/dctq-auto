@@ -1089,6 +1089,129 @@ class BotWorker(QThread):
             self.log_message.emit(f"Điểm danh thất bại, dừng ngay (không retry): {exc}")
             return False
 
+    def _ensure_guild_screen(self, device, task_label: str) -> str:
+        """Only run guild actions when OCR confirms the guild screen is already open."""
+        screen_text = self._normalize_screen_text(self._screen_text(device))
+        trusted_markers = (
+            "thanh vien",
+            "tim quan doan",
+            "doan truong",
+            "doan pho",
+            "quan su",
+            "tinh anh",
+            "toi can tang vien",
+        )
+        if not any(marker in screen_text for marker in trusted_markers):
+            raise RuntimeError(
+                f"Chưa xác nhận màn hình Quân đoàn; không thao tác '{task_label}'. "
+                f"OCR: {screen_text[:220] or '(trống)'}"
+            )
+        self.log_message.emit(
+            f"{task_label}: đã xác nhận màn hình Quân đoàn bằng OCR: {screen_text[:180]}"
+        )
+        return screen_text
+
+    def _run_guild_screen_task(self, task_key: str, device, ocr_client) -> bool:
+        """Run one guild action without opening or closing the guild screen itself."""
+        task_labels = {
+            "bao_danh_quan_doan": "Báo danh quân đoàn",
+            "task_receive_lucky_bag": "Nhận túi phúc",
+            "task_guild_fortune": "Cầu vận quân đoàn (5 lần)",
+        }
+        label = task_labels[task_key]
+        self.task_progress_changed.emit(label, "running", 0, 1)
+        try:
+            if not self._wait_if_paused():
+                self.log_message.emit(f"{label}: đã dừng theo yêu cầu.")
+                return False
+
+            self._ensure_guild_screen(device, label)
+
+            if task_key == "bao_danh_quan_doan":
+                self.log_message.emit(
+                    "Báo danh quân đoàn — click bao_danh_nhan_thuong từ regions.json."
+                )
+                x, y = ocr_client.tap_ocr_target("bao_danh_nhan_thuong")
+                time.sleep(1.5)
+                if not self._wait_if_paused():
+                    self.log_message.emit("Báo danh quân đoàn đã dừng theo yêu cầu.")
+                    return False
+                after_text = self._normalize_screen_text(self._screen_text(device))
+                self.log_message.emit(
+                    f"Đã click Báo danh nhận thưởng tại ({x}, {y}). "
+                    "Thao tác đã gửi; OCR sau click (không tự suy diễn trạng thái nhận thưởng): "
+                    f"{after_text[:220] or '(trống)'}"
+                )
+
+            elif task_key == "task_receive_lucky_bag":
+                self.log_message.emit(
+                    "Nhận túi phúc — mở mục tui_phuc theo tọa độ đã lưu trong regions.json."
+                )
+                ocr_client.tap_ocr_target("tui_phuc")
+                time.sleep(1.2)
+                bag_text = ""
+                bag_screen_found = False
+                bag_markers = (
+                    "tui phuc tuong",
+                    "tui phuc truong thanh",
+                    "tui phuc knb",
+                    "co so",
+                )
+                for attempt in range(5):
+                    if not self._wait_if_paused():
+                        self.log_message.emit("Nhận túi phúc đã dừng theo yêu cầu.")
+                        return False
+                    bag_text = self._normalize_screen_text(self._screen_text(device))
+                    if any(marker in bag_text for marker in bag_markers):
+                        bag_screen_found = True
+                        break
+                    if attempt < 4:
+                        time.sleep(1)
+                if not bag_screen_found:
+                    raise RuntimeError(
+                        "Đã mở mục Túi phúc nhưng OCR chưa xác nhận được màn hình Túi phúc; "
+                        f"không click các nút nhận. OCR: {bag_text[:220] or '(trống)'}"
+                    )
+
+                self.log_message.emit(
+                    f"Đã xác nhận màn hình Túi phúc: {bag_text[:180]}"
+                )
+                for target in ("tui_phuc_thuong", "tui_phuc_truong_thanh", "tui_phuc_knb"):
+                    if not self._wait_if_paused():
+                        self.log_message.emit("Nhận túi phúc đã dừng theo yêu cầu.")
+                        return False
+                    x, y = ocr_client.tap_ocr_target(target)
+                    self.log_message.emit(
+                        f"Đã click {target} theo regions.json tại ({x}, {y})."
+                    )
+                    time.sleep(1)
+                if not self._wait_if_paused():
+                    self.log_message.emit("Nhận túi phúc đã dừng trước khi đóng cửa sổ.")
+                    return False
+                ocr_client.tap_ocr_target("close_tui_phuc")
+                time.sleep(0.8)
+                self.log_message.emit(
+                    "Đã xử lý 3 mục Túi phúc (tướng, trưởng thành, KNB) và đóng cửa sổ Túi phúc; "
+                    "không đóng màn hình Quân đoàn."
+                )
+
+            elif task_key == "task_guild_fortune":
+                from dctq_auto.tasks.common.guild_logistics import run_guild_logistics
+
+                account = SimpleNamespace(username="Tác vụ")
+                if not run_guild_logistics(self, account, device, ocr_client):
+                    return False
+
+            self.task_progress_changed.emit(label, "done", 1, 1)
+            self.log_message.emit(
+                f"Hoàn tất tác vụ '{label}'. Màn hình Quân đoàn vẫn được giữ nguyên."
+            )
+            return True
+        except Exception as exc:
+            self.log_message.emit(f"{label} thất bại: {exc}")
+            self.task_progress_changed.emit(label, "failed", 0, 1)
+            return False
+
     @staticmethod
     def _is_login_screen(text: str) -> bool:
         normalized = BotWorker._normalize_screen_text(text)
@@ -1207,6 +1330,7 @@ class BotWorker(QThread):
         # ADB flow yet. Report an explicit failed status for each selected task.
         implemented = {
             "task_login", "nhan_le_bao_quoc_van", "diem_danh", "task_enter_guild",
+            "bao_danh_quan_doan", "task_receive_lucky_bag", "task_guild_fortune",
             "task_close_guild", "task_switch_account", "task_click_coordinates",
         }
         for key, label in selected:
@@ -1321,6 +1445,36 @@ class BotWorker(QThread):
                 self.task_progress_changed.emit(label, "failed", 0, 1)
                 self.progress_changed.emit(
                     completed, max(1, total), "Lỗi: Vào quân đoàn"
+                )
+
+        for guild_task_key in (
+            "bao_danh_quan_doan",
+            "task_receive_lucky_bag",
+            "task_guild_fortune",
+        ):
+            if not self._config.get(guild_task_key):
+                continue
+            if not self._wait_if_paused():
+                self.log_message.emit("Đã dừng trước khi chạy tác vụ Quân đoàn.")
+                return
+            task_ok = self._run_guild_screen_task(guild_task_key, device, ocr_client)
+            completed += 1
+            status_label = {
+                "bao_danh_quan_doan": "Báo danh quân đoàn",
+                "task_receive_lucky_bag": "Nhận túi phúc",
+                "task_guild_fortune": "Cầu vận quân đoàn (5 lần)",
+            }[guild_task_key]
+            if task_ok:
+                self.progress_changed.emit(
+                    completed, max(1, total), f"Hoàn tất: {status_label}"
+                )
+            else:
+                # A requested stop is cooperative; don't continue with later actions.
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng theo yêu cầu.")
+                    return
+                self.progress_changed.emit(
+                    completed, max(1, total), f"Lỗi: {status_label}"
                 )
 
         if self._config.get("task_close_guild"):
