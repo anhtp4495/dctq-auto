@@ -126,6 +126,22 @@ class BotWorker(QThread):
 
     def _run_mock(self) -> None:
         """Simulate configured tasks and update progress without connecting to ADB."""
+        if self._config.get("strategy_mode"):
+            selected = ["Vào màn hình Mưu Binh"]
+            if self._config.get("thiet_lap_muu_binh"):
+                selected.append("Thiết lập phòng thủ")
+            if self._config.get("vuot_ai_muu_binh"):
+                selected.append("Vượt Ải")
+            selected.append("Thoát màn hình Mưu Binh")
+            self.progress_changed.emit(0, len(selected), "Bắt đầu Mưu Binh")
+            for index, task in enumerate(selected, start=1):
+                self.task_progress_changed.emit(task, "running", 0, 1)
+                if not self._mock_tick(f"[Chạy thử] Thực hiện: {task}"):
+                    self.task_progress_changed.emit(task, "stopped", 0, 1)
+                    return
+                self.task_progress_changed.emit(task, "done", 1, 1)
+                self.progress_changed.emit(index, len(selected), task)
+            return
         if self._config.get("utility_tasks_mode"):
             selected = []
             if self._config.get("task_login"):
@@ -147,7 +163,17 @@ class BotWorker(QThread):
             if self._config.get("thuc_hien_tranh_ba"):
                 selected.append("Tranh bá")
             if self._config.get("thiet_lap_muu_binh"):
-                selected.append("Mưu binh")
+                selected.append("Thiết lập phòng thủ Mưu Binh")
+            if self._config.get("vuot_ai_muu_binh"):
+                selected.append("Vượt Ải Mưu Binh")
+            if self._config.get("task_enter_strategy"):
+                selected.append("Vào màn hình Mưu Binh")
+            if self._config.get("task_detect_strategy_status"):
+                selected.append("Phát hiện trạng thái Mưu Binh")
+            if self._config.get("task_receive_strategy_reward"):
+                selected.append("Nhận thưởng Mưu Binh")
+            if self._config.get("task_close_strategy"):
+                selected.append("Thoát màn hình Mưu Binh")
             if self._config.get("task_close_guild"):
                 selected.append("Thoát màn hình Quân đoàn")
             if self._config.get("task_switch_account"):
@@ -1415,7 +1441,10 @@ class BotWorker(QThread):
             ("nhiem_vu_luu_ly_thap", "Lưu Ly Tháp"),
             ("thuc_hien_giao_tranh", "Giao tranh"),
             ("thuc_hien_tranh_ba", "Tranh bá"),
-            ("thiet_lap_muu_binh", "Mưu binh"),
+            ("task_enter_strategy", "Vào màn hình Mưu Binh"),
+            ("task_detect_strategy_status", "Phát hiện trạng thái Mưu Binh"),
+            ("task_receive_strategy_reward", "Nhận thưởng Mưu Binh"),
+            ("task_close_strategy", "Thoát màn hình Mưu Binh"),
             ("task_close_guild", "Thoát màn hình Quân đoàn"),
             ("task_switch_account", "Đổi tài khoản"),
             ("task_click_coordinates", "Click theo tọa độ"),
@@ -1740,6 +1769,12 @@ class BotWorker(QThread):
             client = AdbClient(serial=self._serial)
             device = client.connect()
             self.log_message.emit(f"Đã kết nối ADB: {self._serial}")
+            if self._config.get("strategy_mode"):
+                self.log_message.emit(
+                    "Tab Mưu Binh: giao diện và thứ tự tác vụ đã cấu hình; "
+                    "luồng ADB sẽ được triển khai ở bước sau."
+                )
+                return
             if self._config.get("utility_tasks_mode"):
                 self._run_utility_tasks(device)
                 return
