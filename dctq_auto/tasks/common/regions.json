@@ -1050,6 +1050,81 @@
             "x": 0.000521,
             "y": 0.000926
           }
+        },
+        {
+          "name": "bat_dau_tro_ve",
+          "text": "RECT OCR text bat_dau hoặc tro_ve",
+          "confidence": null,
+          "bounds": {
+            "left": 1,
+            "top": 1,
+            "right": 1,
+            "bottom": 1
+          },
+          "rect": {
+            "x": 1,
+            "y": 1,
+            "width": 1,
+            "height": 1
+          },
+          "center": {
+            "x_px": 1,
+            "y_px": 1
+          },
+          "center_ratio": {
+            "x": 0.000521,
+            "y": 0.000926
+          }
+        },
+        {
+          "name": "hoi_thanh",
+          "text": "RECT OCR text hoi_thanh",
+          "confidence": null,
+          "bounds": {
+            "left": 1,
+            "top": 1,
+            "right": 1,
+            "bottom": 1
+          },
+          "rect": {
+            "x": 1,
+            "y": 1,
+            "width": 1,
+            "height": 1
+          },
+          "center": {
+            "x_px": 1,
+            "y_px": 1
+          },
+          "center_ratio": {
+            "x": 0.000521,
+            "y": 0.000926
+          }
+        },
+        {
+          "name": "nhan_thuong",
+          "text": "RECT OCR text nhan_thuong",
+          "confidence": null,
+          "bounds": {
+            "left": 1,
+            "top": 1,
+            "right": 1,
+            "bottom": 1
+          },
+          "rect": {
+            "x": 1,
+            "y": 1,
+            "width": 1,
+            "height": 1
+          },
+          "center": {
+            "x_px": 1,
+            "y_px": 1
+          },
+          "center_ratio": {
+            "x": 0.000521,
+            "y": 0.000926
+          }
         }
       ],
       "screenshot": "placeholder coordinates; replace when user provides actual Mưu Binh coordinates",
@@ -1057,7 +1132,7 @@
         1920,
         1080
       ],
-      "note": "All Mưu Binh coordinates are placeholders (1,1) or RECT (1,1,1,1); do not execute clicks/OCR against them until replaced."
+      "note": "All Mưu Binh coordinates are placeholders (1,1); replace OCR rectangles and click points with real coordinates before running."
     }
   }
 }
