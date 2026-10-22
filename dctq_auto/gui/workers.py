@@ -162,14 +162,14 @@ class BotWorker(QThread):
                 selected.append("Giao tranh")
             if self._config.get("thuc_hien_tranh_ba"):
                 selected.append("Tranh bá")
-            if self._config.get("thiet_lap_muu_binh"):
-                selected.append("Thiết lập phòng thủ Mưu Binh")
-            if self._config.get("vuot_ai_muu_binh"):
-                selected.append("Vượt Ải Mưu Binh")
             if self._config.get("task_enter_strategy"):
                 selected.append("Vào màn hình Mưu Binh")
+            if self._config.get("task_strategy_defense"):
+                selected.append("Thiết lập phòng thủ")
             if self._config.get("task_detect_strategy_status"):
                 selected.append("Phát hiện trạng thái Mưu Binh")
+            if self._config.get("task_strategy_vuot_ai"):
+                selected.append("Vượt Ải")
             if self._config.get("task_receive_strategy_reward"):
                 selected.append("Nhận thưởng Mưu Binh")
             if self._config.get("task_close_strategy"):
@@ -1442,7 +1442,9 @@ class BotWorker(QThread):
             ("thuc_hien_giao_tranh", "Giao tranh"),
             ("thuc_hien_tranh_ba", "Tranh bá"),
             ("task_enter_strategy", "Vào màn hình Mưu Binh"),
+            ("task_strategy_defense", "Thiết lập phòng thủ"),
             ("task_detect_strategy_status", "Phát hiện trạng thái Mưu Binh"),
+            ("task_strategy_vuot_ai", "Vượt Ải"),
             ("task_receive_strategy_reward", "Nhận thưởng Mưu Binh"),
             ("task_close_strategy", "Thoát màn hình Mưu Binh"),
             ("task_close_guild", "Thoát màn hình Quân đoàn"),
