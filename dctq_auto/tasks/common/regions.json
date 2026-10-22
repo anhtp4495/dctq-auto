@@ -792,6 +792,272 @@
         1920,
         1080
       ]
+    },
+    "muu_binh": {
+      "name": "muu_binh",
+      "serial": "emulator-5554",
+      "recognized_text": "",
+      "normalized_text": "",
+      "recognized_items": [],
+      "normalized_items": [],
+      "elements": [
+        {
+          "name": "main_menu",
+          "text": "RECT vùng nhận diện menu chính",
+          "confidence": null,
+          "bounds": {
+            "left": 1,
+            "top": 1,
+            "right": 1,
+            "bottom": 1
+          },
+          "rect": {
+            "x": 1,
+            "y": 1,
+            "width": 1,
+            "height": 1
+          },
+          "center": {
+            "x_px": 1,
+            "y_px": 1
+          },
+          "center_ratio": {
+            "x": 0.000521,
+            "y": 0.000926
+          }
+        },
+        {
+          "name": "menu_chien_tranh",
+          "text": "RECT vùng nhận diện menu Chiến Tranh",
+          "confidence": null,
+          "bounds": {
+            "left": 1,
+            "top": 1,
+            "right": 1,
+            "bottom": 1
+          },
+          "rect": {
+            "x": 1,
+            "y": 1,
+            "width": 1,
+            "height": 1
+          },
+          "center": {
+            "x_px": 1,
+            "y_px": 1
+          },
+          "center_ratio": {
+            "x": 0.000521,
+            "y": 0.000926
+          }
+        },
+        {
+          "name": "man_hinh_muu_binh",
+          "text": "RECT vùng nhận diện màn hình Mưu Binh",
+          "confidence": null,
+          "bounds": {
+            "left": 1,
+            "top": 1,
+            "right": 1,
+            "bottom": 1
+          },
+          "rect": {
+            "x": 1,
+            "y": 1,
+            "width": 1,
+            "height": 1
+          },
+          "center": {
+            "x_px": 1,
+            "y_px": 1
+          },
+          "center_ratio": {
+            "x": 0.000521,
+            "y": 0.000926
+          }
+        },
+        {
+          "name": "trang_thai_muu_binh",
+          "text": "RECT vùng OCR trạng thái Mưu Binh",
+          "confidence": null,
+          "bounds": {
+            "left": 1,
+            "top": 1,
+            "right": 1,
+            "bottom": 1
+          },
+          "rect": {
+            "x": 1,
+            "y": 1,
+            "width": 1,
+            "height": 1
+          },
+          "center": {
+            "x_px": 1,
+            "y_px": 1
+          },
+          "center_ratio": {
+            "x": 0.000521,
+            "y": 0.000926
+          }
+        },
+        {
+          "name": "ai_hien_tai",
+          "text": "RECT vùng OCR số ải hiện tại",
+          "confidence": null,
+          "bounds": {
+            "left": 1,
+            "top": 1,
+            "right": 1,
+            "bottom": 1
+          },
+          "rect": {
+            "x": 1,
+            "y": 1,
+            "width": 1,
+            "height": 1
+          },
+          "center": {
+            "x_px": 1,
+            "y_px": 1
+          },
+          "center_ratio": {
+            "x": 0.000521,
+            "y": 0.000926
+          }
+        },
+        {
+          "name": "button_vuot_ai",
+          "text": "Nút Vượt Ải",
+          "confidence": null,
+          "bounds": {
+            "left": 1,
+            "top": 1,
+            "right": 1,
+            "bottom": 1
+          },
+          "rect": {
+            "x": 1,
+            "y": 1,
+            "width": 0,
+            "height": 0
+          },
+          "center": {
+            "x_px": 1,
+            "y_px": 1
+          },
+          "center_ratio": {
+            "x": 0.000521,
+            "y": 0.000926
+          }
+        },
+        {
+          "name": "phan_thuong_1",
+          "text": "Vị trí phần thưởng Mưu Binh 1",
+          "confidence": null,
+          "bounds": {
+            "left": 1,
+            "top": 1,
+            "right": 1,
+            "bottom": 1
+          },
+          "rect": {
+            "x": 1,
+            "y": 1,
+            "width": 0,
+            "height": 0
+          },
+          "center": {
+            "x_px": 1,
+            "y_px": 1
+          },
+          "center_ratio": {
+            "x": 0.000521,
+            "y": 0.000926
+          }
+        },
+        {
+          "name": "phan_thuong_2",
+          "text": "Vị trí phần thưởng Mưu Binh 2",
+          "confidence": null,
+          "bounds": {
+            "left": 1,
+            "top": 1,
+            "right": 1,
+            "bottom": 1
+          },
+          "rect": {
+            "x": 1,
+            "y": 1,
+            "width": 0,
+            "height": 0
+          },
+          "center": {
+            "x_px": 1,
+            "y_px": 1
+          },
+          "center_ratio": {
+            "x": 0.000521,
+            "y": 0.000926
+          }
+        },
+        {
+          "name": "phan_thuong_3",
+          "text": "Vị trí phần thưởng Mưu Binh 3",
+          "confidence": null,
+          "bounds": {
+            "left": 1,
+            "top": 1,
+            "right": 1,
+            "bottom": 1
+          },
+          "rect": {
+            "x": 1,
+            "y": 1,
+            "width": 0,
+            "height": 0
+          },
+          "center": {
+            "x_px": 1,
+            "y_px": 1
+          },
+          "center_ratio": {
+            "x": 0.000521,
+            "y": 0.000926
+          }
+        },
+        {
+          "name": "close_muu_binh",
+          "text": "Nút thoát màn hình Mưu Binh",
+          "confidence": null,
+          "bounds": {
+            "left": 1,
+            "top": 1,
+            "right": 1,
+            "bottom": 1
+          },
+          "rect": {
+            "x": 1,
+            "y": 1,
+            "width": 0,
+            "height": 0
+          },
+          "center": {
+            "x_px": 1,
+            "y_px": 1
+          },
+          "center_ratio": {
+            "x": 0.000521,
+            "y": 0.000926
+          }
+        }
+      ],
+      "screenshot": "placeholder coordinates; replace when user provides actual Mưu Binh coordinates",
+      "image_resolution": [
+        1920,
+        1080
+      ],
+      "note": "All Mưu Binh coordinates are placeholders (1,1) or RECT (1,1,1,1); do not execute clicks/OCR against them until replaced."
     }
   }
 }
