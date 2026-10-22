@@ -1657,7 +1657,10 @@ class BotWorker(QThread):
                         return False
 
                     if stage > 0:
-                        current_stage = stage
+                        # After claiming a reward, do not roll back the stage
+                        # counter if the UI briefly still shows the previous stage.
+                        if not (reward_clicked and stage < current_stage):
+                            current_stage = stage
                     if status == "hoan_thanh_muu_binh":
                         self.log_message.emit(
                             f"Mưu Binh hoàn thành: ải đang lưu là {current_stage}/100 "
