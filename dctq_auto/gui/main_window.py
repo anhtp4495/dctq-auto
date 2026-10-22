@@ -1118,7 +1118,9 @@ class MainWindow(QMainWindow):
         self.task_receive_lucky_bag = QCheckBox("Nhận túi phúc")
         self.task_guild_fortune = QCheckBox("Cầu vận quân đoàn (5 lần)")
         self.task_enter_strategy = QCheckBox("Vào màn hình Mưu Binh")
+        self.task_strategy_defense = QCheckBox("Thiết lập phòng thủ")
         self.task_detect_strategy_status = QCheckBox("Phát hiện trạng thái Mưu Binh")
+        self.task_strategy_vuot_ai = QCheckBox("Vượt Ải")
         self.task_receive_strategy_reward = QCheckBox("Nhận thưởng Mưu Binh")
         self.task_close_strategy = QCheckBox("Thoát màn hình Mưu Binh")
         self.task_knb_contribution = QCheckBox("Đóng góp KNB")
@@ -1299,7 +1301,9 @@ class MainWindow(QMainWindow):
         strategy_tasks_layout = QVBoxLayout(strategy_tasks_group)
         for task_checkbox in (
             self.task_enter_strategy,
+            self.task_strategy_defense,
             self.task_detect_strategy_status,
+            self.task_strategy_vuot_ai,
             self.task_receive_strategy_reward,
             self.task_close_strategy,
         ):
@@ -1429,7 +1433,9 @@ class MainWindow(QMainWindow):
                 "task_receive_lucky_bag": self.task_receive_lucky_bag.isChecked(),
                 "task_guild_fortune": self.task_guild_fortune.isChecked(),
                 "task_enter_strategy": self.task_enter_strategy.isChecked(),
+                "task_strategy_defense": self.task_strategy_defense.isChecked(),
                 "task_detect_strategy_status": self.task_detect_strategy_status.isChecked(),
+                "task_strategy_vuot_ai": self.task_strategy_vuot_ai.isChecked(),
                 "task_receive_strategy_reward": self.task_receive_strategy_reward.isChecked(),
                 "task_close_strategy": self.task_close_strategy.isChecked(),
                 "task_switch_account": self.doi_tai_khoan_task.isChecked(),
@@ -1642,7 +1648,8 @@ class MainWindow(QMainWindow):
                 "diem_danh", "nhan_le_bao_quoc_van", "bao_danh_quan_doan", "dong_gop_knb",
                 "tham_do_lanh_dia", "nhiem_vu_luu_ly_thap",
                 "thuc_hien_giao_tranh", "thuc_hien_tranh_ba",
-                "task_enter_strategy", "task_detect_strategy_status",
+                "task_enter_strategy", "task_strategy_defense",
+                "task_detect_strategy_status", "task_strategy_vuot_ai",
                 "task_receive_strategy_reward", "task_close_strategy",
                 "task_click_coordinates",
             )
