@@ -1467,6 +1467,45 @@ class BotWorker(QThread):
             return None
         return left, top, right, bottom
 
+    @staticmethod
+    def _read_strategy_stage_rect(device, rect: tuple[int, int, int, int]) -> tuple[str, int]:
+        """OCR stage text from Rect(x, y, w, h) using the validated AI-label pipeline."""
+        x, y, width, height = (int(value) for value in rect)
+        if x < 0 or y < 0 or width <= 0 or height <= 0:
+            return "", -1
+
+        screenshot = device.screenshot().convert("RGB")
+        image_width, image_height = screenshot.size
+        x = min(x, image_width - 1)
+        y = min(y, image_height - 1)
+        right = min(x + width, image_width)
+        bottom = min(y + height, image_height)
+        if right <= x or bottom <= y:
+            return "", -1
+
+        crop = np.asarray(screenshot.crop((x, y, right, bottom)))
+        gray = cv2.cvtColor(crop, cv2.COLOR_RGB2GRAY)
+        scaled = cv2.resize(gray, None, fx=4, fy=4, interpolation=cv2.INTER_CUBIC)
+        try:
+            raw_text = pytesseract.image_to_string(
+                scaled,
+                lang="eng",
+                config="--oem 3 --psm 8 -c tessedit_char_whitelist=AIai0123456789",
+            ).strip()
+        except pytesseract.TesseractError:
+            return "", -1
+
+        compact = re.sub(r"\\s+", "", raw_text).lower()
+        match = re.fullmatch(r"ai(\\d{1,3})", compact)
+        if not match:
+            # Permit a digit-only result if OCR omits the "Ai" prefix entirely.
+            match = re.fullmatch(r"(\\d{1,3})", compact)
+        if match:
+            candidate = int(match.group(1))
+            if 1 <= candidate <= 100:
+                return raw_text, candidate
+        return raw_text, -1
+
     def _detect_strategy_status(self, device, elements, log_result=True):
         """Return (status, stage) from configured OCR rectangles."""
         status_rect = self._strategy_rect(elements, "trang_thai_muu_binh")
@@ -1487,19 +1526,22 @@ class BotWorker(QThread):
             status = "chuan_bi"
 
         stage = -1
-        stage_rect = self._strategy_rect(elements, "ai_hien_tai")
-        if stage_rect is not None:
-            raw_stage = self._screen_text_in_rect(device, stage_rect)
-            match = re.search(r"(?<!\d)(\d{1,3})\s*(?:/\s*100)?", raw_stage)
-            if match:
-                candidate = int(match.group(1))
-                if 1 <= candidate <= 100:
-                    stage = candidate
+        raw_stage = ""
+        stage_bounds = self._strategy_rect(elements, "ai_hien_tai")
+        if stage_bounds is not None:
+            left, top, right, bottom = stage_bounds
+            raw_stage, stage = self._read_strategy_stage_rect(
+                device, (left, top, right - left, bottom - top)
+            )
         if log_result:
             if stage > 0:
-                self.log_message.emit(f"Đã phát hiện ải hiện tại: {stage}/100.")
+                self.log_message.emit(
+                    f"Đã phát hiện ải hiện tại: {stage}/100 (OCR: {raw_stage or '(trống)'})."
+                )
             else:
-                self.log_message.emit("Chưa xác định được ải hiện tại.")
+                self.log_message.emit(
+                    f"Chưa xác định được ải hiện tại (OCR: {raw_stage or '(trống)'})."
+                )
             self.log_message.emit(
                 f"Trạng thái Mưu Binh: {status}; OCR: {raw_status[:180] or '(trống)'}"
             )
