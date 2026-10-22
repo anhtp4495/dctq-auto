@@ -1418,6 +1418,272 @@ class BotWorker(QThread):
 
         run_clone_flow(self, device)
 
+
+    @staticmethod
+    def _strategy_regions():
+        """Load Mưu Binh coordinates from regions.json and reject placeholders."""
+        import json
+
+        path = Path(__file__).resolve().parents[1] / "tasks" / "common" / "regions.json"
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise RuntimeError(f"Không đọc được regions.json: {exc}") from exc
+        section = data.get("regions", {}).get("muu_binh", {})
+        elements = {
+            item.get("name"): item
+            for item in section.get("elements", [])
+            if isinstance(item, dict) and item.get("name")
+        }
+        return path, elements
+
+    @staticmethod
+    def _strategy_point(elements, name):
+        item = elements.get(name, {})
+        center = item.get("center", {})
+        x, y = center.get("x_px"), center.get("y_px")
+        if not isinstance(x, (int, float)) or not isinstance(y, (int, float)):
+            return None
+        if (int(x), int(y)) == (1, 1) or int(x) < 2 or int(y) < 2:
+            return None
+        return int(x), int(y)
+
+    @staticmethod
+    def _strategy_rect(elements, name):
+        item = elements.get(name, {})
+        bounds = item.get("bounds", {})
+        try:
+            left, top, right, bottom = (
+                int(bounds["left"]), int(bounds["top"]),
+                int(bounds["right"]), int(bounds["bottom"]),
+            )
+        except (KeyError, TypeError, ValueError):
+            return None
+        if left < 0 or top < 0 or right <= left or bottom <= top:
+            return None
+        if (left, top, right, bottom) == (1, 1, 1, 1):
+            return None
+        if right - left < 5 or bottom - top < 5:
+            return None
+        return left, top, right, bottom
+
+    def _detect_strategy_status(self, device, elements, log_result=True):
+        """Return (status, stage) from configured OCR rectangles."""
+        status_rect = self._strategy_rect(elements, "trang_thai_muu_binh")
+        if status_rect is None:
+            raise RuntimeError(
+                "RECT trang_thai_muu_binh vẫn là placeholder; hãy cập nhật regions.json."
+            )
+        raw_status = self._screen_text_in_rect(device, status_rect)
+        normalized = self._normalize_screen_text(raw_status)
+        status = "khong_xac_dinh"
+        if "hoan thanh vuot ai" in normalized or "hoan thanh vuot" in normalized:
+            status = "hoan_thanh_vuot_ai"
+        elif "cho nhan thuong" in normalized or "nhan thuong" in normalized:
+            status = "cho_nhan_thuong"
+        elif "dang chien dau" in normalized or "chien dau" in normalized:
+            status = "dang_chien_dau"
+        elif "chuan bi" in normalized:
+            status = "chuan_bi"
+
+        stage = -1
+        stage_rect = self._strategy_rect(elements, "ai_hien_tai")
+        if stage_rect is not None:
+            raw_stage = self._screen_text_in_rect(device, stage_rect)
+            match = re.search(r"(?<!\\d)(\\d{1,3})\\s*(?:/\\s*100)?", raw_stage)
+            if match:
+                candidate = int(match.group(1))
+                if 1 <= candidate <= 100:
+                    stage = candidate
+        if log_result:
+            if stage > 0:
+                self.log_message.emit(f"Đã phát hiện ải hiện tại: {stage}/100.")
+            else:
+                self.log_message.emit("Chưa xác định được ải hiện tại.")
+            self.log_message.emit(
+                f"Trạng thái Mưu Binh: {status}; OCR: {raw_status[:180] or '(trống)'}"
+            )
+        return status, stage
+
+    def _run_strategy_reward(self, device, elements=None):
+        """Claim one random Mưu Binh reward using its configured click point."""
+        import random
+
+        if elements is None:
+            _regions_path, elements = self._strategy_regions()
+        candidates = [
+            (name, self._strategy_point(elements, name))
+            for name in ("phan_thuong_1", "phan_thuong_2", "phan_thuong_3")
+        ]
+        candidates = [(name, point) for name, point in candidates if point is not None]
+        if not candidates:
+            self.log_message.emit(
+                "Nhận thưởng Mưu Binh thất bại: các tọa độ phan_thuong_1/2/3 "
+                "chưa được cập nhật khỏi placeholder (1, 1)."
+            )
+            return False
+        name, (x, y) = random.choice(candidates)
+        try:
+            if not self._wait_if_paused():
+                self.log_message.emit("Đã dừng trước khi nhận thưởng Mưu Binh.")
+                return False
+            device.shell(f"input tap {x} {y}")
+            self.log_message.emit(
+                f"Nhận thưởng Mưu Binh: chọn ngẫu nhiên {name}, click ({x}, {y})."
+            )
+            time.sleep(1)
+            return True
+        except Exception as exc:
+            self.log_message.emit(f"Nhận thưởng Mưu Binh thất bại: {exc}")
+            return False
+
+    def _run_strategy_vuot_ai(self, device):
+        """Run the Vượt Ải state loop; reward handling must be explicitly selected."""
+        import time as _time
+
+        _regions_path, elements = self._strategy_regions()
+        button = self._strategy_point(elements, "button_vuot_ai")
+        if button is None:
+            self.log_message.emit(
+                "Vượt Ải thất bại: tọa độ button_vuot_ai chưa được cập nhật khỏi placeholder."
+            )
+            return False
+        consecutive_failures = 0
+        battle_started = None
+        reward_clicked = False
+        last_stage = -1
+
+        try:
+            while True:
+                if not self._wait_if_paused():
+                    self.log_message.emit("Vượt Ải đã dừng theo yêu cầu.")
+                    return False
+
+                self.log_message.emit(
+                    f"Vượt Ải: click nút Vượt Ải tại ({button[0]}, {button[1]})."
+                )
+                device.shell(f"input tap {button[0]} {button[1]}")
+                consecutive_failures = consecutive_failures
+                battle_started = None
+                reward_clicked = False
+
+                while True:
+                    if not self._wait_if_paused():
+                        self.log_message.emit("Vượt Ải đã dừng theo yêu cầu.")
+                        return False
+                    try:
+                        status, stage = self._detect_strategy_status(
+                            device, elements, log_result=False
+                        )
+                    except Exception as exc:
+                        self.log_message.emit(f"Vượt Ải thất bại khi phát hiện trạng thái: {exc}")
+                        return False
+
+                    if stage > 0:
+                        last_stage = stage
+                    if status == "dang_chien_dau":
+                        if battle_started is None:
+                            battle_started = _time.monotonic()
+                        if last_stage > 0:
+                            self.log_message.emit(f"Đang vượt ải {last_stage}/100")
+                        else:
+                            self.log_message.emit(
+                                "Đang chiến đấu — chưa xác định được ải hiện tại"
+                            )
+                        consecutive_failures = 0
+                        if _time.monotonic() - battle_started >= 180:
+                            self.log_message.emit(
+                                "Vượt Ải thất bại: chiến đấu quá 3 phút; yêu cầu thoát Mưu Binh."
+                            )
+                            self._try_close_strategy(device, elements)
+                            return False
+                        if not self._strategy_wait(15):
+                            self.log_message.emit("Vượt Ải đã dừng theo yêu cầu.")
+                            return False
+                        continue
+
+                    if status == "cho_nhan_thuong":
+                        if not self._config.get("task_receive_strategy_reward"):
+                            self.log_message.emit(
+                                "Vượt Ải thất bại: trạng thái cho_nhan_thuong nhưng "
+                                "chưa tích chọn 'Nhận thưởng Mưu Binh' trong tab Tác Vụ. "
+                                "Dừng xử lý Vượt Ải."
+                            )
+                            return False
+                        if reward_clicked:
+                            self.log_message.emit(
+                                "Vượt Ải thất bại: đã gọi nhận thưởng nhưng trạng thái "
+                                "cho_nhan_thuong vẫn còn; dừng để tránh click lặp."
+                            )
+                            return False
+                        if not self._run_strategy_reward(device, elements):
+                            self.log_message.emit(
+                                "Vượt Ải thất bại do chức năng Nhận thưởng Mưu Binh thất bại; "
+                                "dừng xử lý."
+                            )
+                            return False
+                        reward_clicked = True
+                        if not self._strategy_wait(2):
+                            return False
+                        continue
+
+                    if status == "chuan_bi":
+                        if battle_started is not None or reward_clicked:
+                            consecutive_failures += 1
+                        else:
+                            consecutive_failures += 1
+                        if consecutive_failures >= 3:
+                            self.log_message.emit(
+                                "Vượt Ải thất bại 3 lần liên tiếp; yêu cầu thoát Mưu Binh."
+                            )
+                            self._try_close_strategy(device, elements)
+                            return False
+                        self.log_message.emit(
+                            f"Vượt Ải chưa thành công (lần thất bại liên tiếp "
+                            f"{consecutive_failures}/3); sẽ thử lại."
+                        )
+                        break
+
+                    if status == "hoan_thanh_vuot_ai":
+                        self.log_message.emit(
+                            "Mưu Binh đã hoàn thành vượt ải; không thực hiện thêm thao tác nào."
+                        )
+                        return True
+
+                    self.log_message.emit(
+                        "Vượt Ải dừng an toàn: không xác định được trạng thái Mưu Binh; "
+                        "không tự suy đoán thắng/thua."
+                    )
+                    return False
+        except Exception as exc:
+            self.log_message.emit(f"Vượt Ải gặp lỗi: {exc}")
+            return False
+
+    def _strategy_wait(self, seconds):
+        deadline = time.monotonic() + seconds
+        while time.monotonic() < deadline:
+            if not self._wait_if_paused():
+                return False
+            time.sleep(min(0.25, max(0.01, deadline - time.monotonic())))
+        return True
+
+    def _try_close_strategy(self, device, elements):
+        point = self._strategy_point(elements, "close_muu_binh")
+        if point is None:
+            self.log_message.emit(
+                "Không thể tự thoát Mưu Binh: close_muu_binh vẫn là placeholder."
+            )
+            return False
+        try:
+            device.shell(f"input tap {point[0]} {point[1]}")
+            self.log_message.emit(
+                f"Đã click thoát màn hình Mưu Binh tại ({point[0]}, {point[1]})."
+            )
+            return True
+        except Exception as exc:
+            self.log_message.emit(f"Không thể thoát màn hình Mưu Binh: {exc}")
+            return False
+
     def _run_utility_tasks(self, device) -> None:
         """Run standalone actions on the currently logged-in game account."""
         from dctq_auto.tasks.common.logout import run_logout_flow
@@ -1461,6 +1727,8 @@ class BotWorker(QThread):
         implemented = {
             "task_login", "nhan_le_bao_quoc_van", "diem_danh", "task_enter_guild",
             "bao_danh_quan_doan", "task_receive_lucky_bag", "task_guild_fortune",
+            "task_detect_strategy_status", "task_strategy_vuot_ai",
+            "task_receive_strategy_reward",
             "task_close_guild", "task_switch_account", "task_click_coordinates",
         }
         for key, label in selected:
@@ -1606,6 +1874,56 @@ class BotWorker(QThread):
                 self.progress_changed.emit(
                     completed, max(1, total), f"Lỗi: {status_label}"
                 )
+
+        if self._config.get("task_detect_strategy_status"):
+            label = "Phát hiện trạng thái Mưu Binh"
+            self.task_progress_changed.emit(label, "running", 0, 1)
+            try:
+                _regions_path, elements = self._strategy_regions()
+                status, stage = self._detect_strategy_status(device, elements)
+                if status == "khong_xac_dinh":
+                    raise RuntimeError("OCR chưa xác định được trạng thái Mưu Binh.")
+                completed += 1
+                self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), f"Trạng thái Mưu Binh: {status}"
+                )
+            except Exception as exc:
+                completed += 1
+                self.log_message.emit(f"{label} thất bại: {exc}")
+                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), f"Lỗi: {label}"
+                )
+
+        if self._config.get("task_strategy_vuot_ai"):
+            label = "Vượt Ải"
+            self.task_progress_changed.emit(label, "running", 0, 1)
+            if self._run_strategy_vuot_ai(device):
+                completed += 1
+                self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(completed, max(1, total), "Hoàn tất Vượt Ải")
+            else:
+                completed += 1
+                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.progress_changed.emit(completed, max(1, total), "Lỗi: Vượt Ải")
+
+        if self._config.get("task_receive_strategy_reward"):
+            label = "Nhận thưởng Mưu Binh"
+            self.task_progress_changed.emit(label, "running", 0, 1)
+            try:
+                _regions_path, elements = self._strategy_regions()
+                reward_ok = self._run_strategy_reward(device, elements)
+            except Exception as exc:
+                self.log_message.emit(f"{label} thất bại: {exc}")
+                reward_ok = False
+            completed += 1
+            if reward_ok:
+                self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(completed, max(1, total), "Đã nhận thưởng Mưu Binh")
+            else:
+                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.progress_changed.emit(completed, max(1, total), f"Lỗi: {label}")
 
         if self._config.get("task_close_guild"):
             if not self._wait_if_paused():
