@@ -86,8 +86,10 @@ def remove_straight_lines(gray: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     )
     diagonal_mask = np.zeros_like(gray)
     if lines is not None:
-        for line in lines[:, 0]:
-            x1, y1, x2, y2 = map(int, line)
+        # OpenCV versions/builds may return different array shapes; normalize
+        # every detected segment to a flat sequence of four coordinates.
+        for segment in np.asarray(lines).reshape(-1, 4):
+            x1, y1, x2, y2 = (int(value) for value in segment)
             length = float(np.hypot(x2 - x1, y2 - y1))
             if length < min_length:
                 continue
