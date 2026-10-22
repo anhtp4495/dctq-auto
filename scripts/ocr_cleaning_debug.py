@@ -7,7 +7,6 @@ writes images plus OCR results to an output folder.
 
 Examples:
   python scripts/ocr_cleaning_debug.py resources/screens/muu_binh/ai_31.png
-  python scripts/ocr_cleaning_debug.py screenshot.png --rect 100 200 360 280
   python scripts/ocr_cleaning_debug.py screenshot.png --psm 6 7 8 11 13
   python scripts/ocr_cleaning_debug.py screenshot.png --remove-lines
   python scripts/ocr_cleaning_debug.py screenshot.png --lang eng --tesseract-cmd "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
@@ -45,10 +44,6 @@ def parse_args() -> argparse.Namespace:
         description="Thử nhiều cách xử lý nhiễu ảnh và so sánh kết quả OCR."
     )
     parser.add_argument("image", nargs="?", help="Đường dẫn ảnh; bỏ trống để mở hộp thoại chọn ảnh.")
-    parser.add_argument(
-        "--rect", nargs=4, type=int, metavar=("LEFT", "TOP", "RIGHT", "BOTTOM"),
-        help="Chỉ xử lý vùng chữ trong ảnh gốc (left top right bottom).",
-    )
     parser.add_argument("--lang", default="vie+eng", help="Ngôn ngữ Tesseract (mặc định: vie+eng).")
     parser.add_argument(
         "--psm", nargs="+", type=int, choices=range(14), default=[6, 7, 8, 11, 13],
@@ -62,28 +57,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--tesseract-cmd", help="Đường dẫn tesseract.exe nếu không có trong PATH.")
     parser.add_argument("--output", help="Thư mục lưu ảnh xử lý và results.txt.")
     return parser.parse_args()
-
-
-def select_rect(image: np.ndarray) -> tuple[int, int, int, int] | None:
-    preview = image.copy()
-    height, width = preview.shape[:2]
-    factor = min(1400 / width, 850 / height, 1.0)
-    if factor < 1:
-        preview = cv2.resize(
-            preview, (max(1, int(width * factor)), max(1, int(height * factor))),
-            interpolation=cv2.INTER_AREA,
-        )
-    print("Kéo chọn vùng chữ, nhấn ENTER/SPACE để xác nhận.")
-    x, y, rw, rh = cv2.selectROI("Chon vung OCR - ENTER/SPACE", preview, False, False)
-    cv2.destroyWindow("Chon vung OCR - ENTER/SPACE")
-    if rw <= 0 or rh <= 0:
-        return None
-    return (
-        max(0, int(round(x / factor))),
-        max(0, int(round(y / factor))),
-        min(width, int(round((x + rw) / factor))),
-        min(height, int(round((y + rh) / factor))),
-    )
 
 
 def remove_straight_lines(gray: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -214,29 +187,16 @@ def main() -> int:
         return 1
     image_h, image_w = image.shape[:2]
 
-    if args.rect:
-        left, top, right, bottom = args.rect
-    else:
-        selected = select_rect(image)
-        if selected is None:
-            left, top, right, bottom = 0, 0, image_w, image_h
-            print("Không chọn vùng; sẽ xử lý toàn bộ ảnh.")
-        else:
-            left, top, right, bottom = selected
-
-    left, right = sorted((max(0, left), min(image_w, right)))
-    top, bottom = sorted((max(0, top), min(image_h, bottom)))
-    if right <= left or bottom <= top:
-        print(f"RECT không hợp lệ: ({left}, {top}, {right}, {bottom})")
-        return 2
-
-    crop = image[top:bottom, left:right]
+    # Process the complete input image; this utility intentionally has no crop/ROI mode.
+    left, top, right, bottom = 0, 0, image_w, image_h
+    full_image = image
+    crop = full_image
     output_dir = (
         Path(args.output).expanduser()
         if args.output else image_path.parent / f"ocr_cleaning_{image_path.stem}"
     )
     output_dir.mkdir(parents=True, exist_ok=True)
-    cv2.imwrite(str(output_dir / "00_original_crop.png"), crop)
+    cv2.imwrite(str(output_dir / "00_original_image.png"), crop)
 
     try:
         installed = set(pytesseract.get_languages(config=""))
@@ -260,7 +220,7 @@ def main() -> int:
     ]
 
     print(f"Ảnh: {image_path}")
-    print(f"RECT: ({left}, {top}, {right}, {bottom}); scale={args.scale}; lang={args.lang}")
+    print(f"Xử lý toàn ảnh: {image_w}x{image_h}; scale={args.scale}; lang={args.lang}")
     print(f"Lưu ảnh và kết quả tại: {output_dir.resolve()}")
     for name, processed in variants.items():
         image_file = output_dir / f"{name}.png"
