@@ -1506,33 +1506,62 @@ class BotWorker(QThread):
                 return raw_text, candidate
         return raw_text, -1
 
-    def _detect_strategy_status(self, device, elements, log_result=True):
-        """Return (status, stage) from configured OCR rectangles."""
-        status_rect = self._strategy_rect(elements, "trang_thai_muu_binh")
-        if status_rect is None:
-            raise RuntimeError(
-                "RECT trang_thai_muu_binh vẫn là placeholder; hãy cập nhật regions.json."
-            )
-        raw_status = self._screen_text_in_rect(device, status_rect)
-        normalized = self._normalize_screen_text(raw_status)
-        status = "khong_xac_dinh"
-        if "hoan thanh vuot ai" in normalized or "hoan thanh vuot" in normalized:
-            status = "hoan_thanh_vuot_ai"
-        elif "cho nhan thuong" in normalized or "nhan thuong" in normalized:
-            status = "cho_nhan_thuong"
-        elif "dang chien dau" in normalized or "chien dau" in normalized:
-            status = "dang_chien_dau"
-        elif "chuan bi" in normalized:
-            status = "chuan_bi"
-
-        stage = -1
+    def _detect_strategy_status(
+        self, device, elements, log_result=True, last_known_stage=-1
+    ):
+        """Detect Mưu Binh state from stage OCR and three independent text OCRs."""
+        # OCR 1: current stage. Keep the caller's last known stage if this read fails.
         raw_stage = ""
+        stage = -1
         stage_bounds = self._strategy_rect(elements, "ai_hien_tai")
         if stage_bounds is not None:
             left, top, right, bottom = stage_bounds
             raw_stage, stage = self._read_strategy_stage_rect(
                 device, (left, top, right - left, bottom - top)
             )
+        remembered_stage = stage if stage > 0 else last_known_stage
+
+        # OCR 2: one region can contain either "bat_dau" or "tro_ve".
+        # OCR 3: "hoi_thanh".
+        # OCR 4: "nhan_thuong".
+        def read_text_region(name):
+            rect = self._strategy_rect(elements, name)
+            if rect is None:
+                return ""
+            try:
+                return self._screen_text_in_rect(device, rect)
+            except Exception as exc:
+                if log_result:
+                    self.log_message.emit(f"OCR {name} thất bại: {exc}")
+                return ""
+
+        raw_start_return = read_text_region("bat_dau_tro_ve")
+        raw_hall = read_text_region("hoi_thanh")
+        raw_reward = read_text_region("nhan_thuong")
+        start_return = self._normalize_ocr_match_text(raw_start_return)
+        hall = self._normalize_ocr_match_text(raw_hall)
+        reward = self._normalize_ocr_match_text(raw_reward)
+
+        has_start = "batdau" in start_return
+        has_return = "trove" in start_return
+        has_hall = "hoithanh" in hall
+        has_reward = "nhanthuong" in reward
+
+        if has_reward:
+            status = "cho_nhan_thuong"
+        elif has_return:
+            status = "dang_chien_dau"
+        elif has_start and has_hall:
+            status = "cho_chien_dau"
+        elif stage <= 0 and not has_start and not has_return and not has_hall and not has_reward:
+            status = (
+                "hoan_thanh_muu_binh"
+                if remembered_stage == 100
+                else "that_bai_muu_binh"
+            )
+        else:
+            status = "khong_xac_dinh"
+
         if log_result:
             if stage > 0:
                 self.log_message.emit(
@@ -1540,10 +1569,15 @@ class BotWorker(QThread):
                 )
             else:
                 self.log_message.emit(
-                    f"Chưa xác định được ải hiện tại (OCR: {raw_stage or '(trống)'})."
+                    f"Không nhận diện được ải ở lần OCR này; ải đang lưu: "
+                    f"{remembered_stage if remembered_stage > 0 else 'chưa có'} "
+                    f"(OCR: {raw_stage or '(trống)'})."
                 )
             self.log_message.emit(
-                f"Trạng thái Mưu Binh: {status}; OCR: {raw_status[:180] or '(trống)'}"
+                "OCR trạng thái Mưu Binh: "
+                f"bat_dau/tro_ve='{raw_start_return or '(trống)'}', "
+                f"hoi_thanh='{raw_hall or '(trống)'}', "
+                f"nhan_thuong='{raw_reward or '(trống)'}'; kết quả={status}."
             )
         return status, stage
 
@@ -1593,7 +1627,7 @@ class BotWorker(QThread):
         consecutive_failures = 0
         battle_started = None
         reward_clicked = False
-        last_stage = -1
+        current_stage = -1
 
         try:
             while True:
@@ -1615,19 +1649,33 @@ class BotWorker(QThread):
                         return False
                     try:
                         status, stage = self._detect_strategy_status(
-                            device, elements, log_result=False
+                            device, elements, log_result=False,
+                            last_known_stage=current_stage,
                         )
                     except Exception as exc:
                         self.log_message.emit(f"Vượt Ải thất bại khi phát hiện trạng thái: {exc}")
                         return False
 
                     if stage > 0:
-                        last_stage = stage
+                        current_stage = stage
+                    if status == "hoan_thanh_muu_binh":
+                        self.log_message.emit(
+                            f"Mưu Binh hoàn thành: ải đang lưu là {current_stage}/100 "
+                            "và cả 4 OCR đều không nhận diện được."
+                        )
+                        return True
+                    if status == "that_bai_muu_binh":
+                        self.log_message.emit(
+                            f"Vượt Ải thất bại: cả 4 OCR đều không nhận diện được "
+                            f"nhưng ải đang lưu là {current_stage if current_stage > 0 else 'không xác định'}, "
+                            "khác 100."
+                        )
+                        return False
                     if status == "dang_chien_dau":
                         if battle_started is None:
                             battle_started = _time.monotonic()
-                        if last_stage > 0:
-                            self.log_message.emit(f"Đang vượt ải {last_stage}/100")
+                        if current_stage > 0:
+                            self.log_message.emit(f"Đang vượt ải {current_stage}/100")
                         else:
                             self.log_message.emit(
                                 "Đang chiến đấu — chưa xác định được ải hiện tại"
@@ -1665,11 +1713,21 @@ class BotWorker(QThread):
                             )
                             return False
                         reward_clicked = True
+                        if current_stage > 0:
+                            current_stage = min(current_stage + 1, 100)
+                            self.log_message.emit(
+                                f"Đã nhận thưởng thành công; cập nhật ải kế tiếp: "
+                                f"{current_stage}/100."
+                            )
+                        else:
+                            self.log_message.emit(
+                                "Đã nhận thưởng nhưng chưa có số ải để tăng biến theo dõi."
+                            )
                         if not self._strategy_wait(2):
                             return False
                         continue
 
-                    if status == "chuan_bi":
+                    if status in ("chuan_bi", "cho_chien_dau"):
                         if battle_started is not None or reward_clicked:
                             consecutive_failures += 1
                         else:
@@ -1685,12 +1743,6 @@ class BotWorker(QThread):
                             f"{consecutive_failures}/3); sẽ thử lại."
                         )
                         break
-
-                    if status == "hoan_thanh_vuot_ai":
-                        self.log_message.emit(
-                            "Mưu Binh đã hoàn thành vượt ải; không thực hiện thêm thao tác nào."
-                        )
-                        return True
 
                     self.log_message.emit(
                         "Vượt Ải dừng an toàn: không xác định được trạng thái Mưu Binh; "
