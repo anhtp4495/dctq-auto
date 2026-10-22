@@ -1490,7 +1490,7 @@ class BotWorker(QThread):
         stage_rect = self._strategy_rect(elements, "ai_hien_tai")
         if stage_rect is not None:
             raw_stage = self._screen_text_in_rect(device, stage_rect)
-            match = re.search(r"(?<!\\d)(\\d{1,3})\\s*(?:/\\s*100)?", raw_stage)
+            match = re.search(r"(?<!\d)(\d{1,3})\s*(?:/\s*100)?", raw_stage)
             if match:
                 candidate = int(match.group(1))
                 if 1 <= candidate <= 100:
