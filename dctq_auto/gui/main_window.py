@@ -352,11 +352,12 @@ class MainWindow(QMainWindow):
             self._update_luu_ly_thap_description
         )
         self._update_luu_ly_thap_description()
-        self.thiet_lap_muu_binh = QCheckBox("Thiết lập mưu binh")
+        self.thiet_lap_muu_binh = QCheckBox("Thiết lập phòng thủ")
         self.thiet_lap_muu_binh.setChecked(True)
+        self.vuot_ai_muu_binh = QCheckBox("Vượt Ải")
 
         self.tabs.addTab(self._build_daily_tab(), "Nhiệm vụ hằng ngày")
-        self.tabs.addTab(self._build_strategy_tab(), "Mưu binh")
+        self.tabs.addTab(self._build_strategy_tab(), "Mưu Binh")
         self.tabs.addTab(self._build_war_tab(), "Quốc chiến")
         self.clone_tab = CloneTab()
         self.tabs.addTab(self.clone_tab, "Clone")
@@ -841,9 +842,16 @@ class MainWindow(QMainWindow):
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        group = QGroupBox("Mưu binh")
+        group = QGroupBox("Tác vụ trong màn hình Mưu Binh")
         group_layout = QVBoxLayout(group)
         group_layout.addWidget(self.thiet_lap_muu_binh)
+        group_layout.addWidget(self.vuot_ai_muu_binh)
+        note = QLabel(
+            "Khi chạy tab này: vào màn hình Mưu Binh, thực hiện các chức năng "
+            "được chọn, sau đó thoát màn hình."
+        )
+        note.setWordWrap(True)
+        group_layout.addWidget(note)
         layout.addWidget(group)
         layout.addStretch(1)
         return self._make_scrollable_tab(page)
@@ -1109,6 +1117,10 @@ class MainWindow(QMainWindow):
         self.task_guild_checkin = QCheckBox("Báo danh quân đoàn")
         self.task_receive_lucky_bag = QCheckBox("Nhận túi phúc")
         self.task_guild_fortune = QCheckBox("Cầu vận quân đoàn (5 lần)")
+        self.task_enter_strategy = QCheckBox("Vào màn hình Mưu Binh")
+        self.task_detect_strategy_status = QCheckBox("Phát hiện trạng thái Mưu Binh")
+        self.task_receive_strategy_reward = QCheckBox("Nhận thưởng Mưu Binh")
+        self.task_close_strategy = QCheckBox("Thoát màn hình Mưu Binh")
         self.task_knb_contribution = QCheckBox("Đóng góp KNB")
         self.task_knb_contribution_count = QSpinBox()
         self.task_knb_contribution_count.setRange(1, 10)
@@ -1252,7 +1264,6 @@ class MainWindow(QMainWindow):
         self._toggle_task_championship_options(
             self.task_championship.isChecked()
         )
-        self.task_strategy = QCheckBox("Mưu binh")
 
         daily_group = QGroupBox("Nhiệm vụ")
         daily_layout = QVBoxLayout(daily_group)
@@ -1283,6 +1294,17 @@ class MainWindow(QMainWindow):
         ):
             guild_layout.addWidget(task_checkbox)
         daily_layout.addWidget(guild_group)
+
+        strategy_tasks_group = QGroupBox("Mưu Binh")
+        strategy_tasks_layout = QVBoxLayout(strategy_tasks_group)
+        for task_checkbox in (
+            self.task_enter_strategy,
+            self.task_detect_strategy_status,
+            self.task_receive_strategy_reward,
+            self.task_close_strategy,
+        ):
+            strategy_tasks_layout.addWidget(task_checkbox)
+        daily_layout.addWidget(strategy_tasks_group)
 
         knb_contribution_row = QHBoxLayout()
         knb_contribution_row.addWidget(self.task_knb_contribution)
@@ -1360,7 +1382,6 @@ class MainWindow(QMainWindow):
         )
         daily_layout.addLayout(championship_options)
 
-        daily_layout.addWidget(self.task_strategy)
 
         layout.addWidget(daily_group)
 
@@ -1407,6 +1428,10 @@ class MainWindow(QMainWindow):
                 "task_enter_guild": self.task_enter_guild.isChecked(),
                 "task_receive_lucky_bag": self.task_receive_lucky_bag.isChecked(),
                 "task_guild_fortune": self.task_guild_fortune.isChecked(),
+                "task_enter_strategy": self.task_enter_strategy.isChecked(),
+                "task_detect_strategy_status": self.task_detect_strategy_status.isChecked(),
+                "task_receive_strategy_reward": self.task_receive_strategy_reward.isChecked(),
+                "task_close_strategy": self.task_close_strategy.isChecked(),
                 "task_switch_account": self.doi_tai_khoan_task.isChecked(),
                 "task_click_coordinates": self.task_click_coordinates.isChecked(),
                 "task_click_x": self.task_click_x.value(),
@@ -1468,7 +1493,14 @@ class MainWindow(QMainWindow):
                     )
                     else None
                 ),
-                "thiet_lap_muu_binh": self.task_strategy.isChecked(),
+            })
+            return config
+        if self.tabs.tabText(self.tabs.currentIndex()) == "Mưu Binh":
+            config = self._game_config()
+            config.update({
+                "strategy_mode": True,
+                "thiet_lap_muu_binh": self.thiet_lap_muu_binh.isChecked(),
+                "vuot_ai_muu_binh": self.vuot_ai_muu_binh.isChecked(),
             })
             return config
         return self._game_config()
@@ -1527,7 +1559,6 @@ class MainWindow(QMainWindow):
             "nhiem_vu_luu_ly_thap": self.nhiem_vu_luu_ly_thap.isChecked(),
             "so_lan_luu_ly_thap": self.so_lan_luu_ly_thap.value(),
             "luu_ly_thap_knb": self.luu_ly_thap_knb.isChecked(),
-            "thiet_lap_muu_binh": self.thiet_lap_muu_binh.isChecked(),
         }
 
     def _prompt_login_credentials(self) -> tuple[str, str] | None:
@@ -1611,7 +1642,9 @@ class MainWindow(QMainWindow):
                 "diem_danh", "nhan_le_bao_quoc_van", "bao_danh_quan_doan", "dong_gop_knb",
                 "tham_do_lanh_dia", "nhiem_vu_luu_ly_thap",
                 "thuc_hien_giao_tranh", "thuc_hien_tranh_ba",
-                "thiet_lap_muu_binh", "task_click_coordinates",
+                "task_enter_strategy", "task_detect_strategy_status",
+                "task_receive_strategy_reward", "task_close_strategy",
+                "task_click_coordinates",
             )
         ):
             QMessageBox.warning(
