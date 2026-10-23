@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QInputDialog,
+    QIntValidator,
     QListWidget,
     QListWidgetItem,
     QPlainTextEdit,
@@ -505,7 +506,7 @@ class MainWindow(QMainWindow):
 
     def _settings_widgets(self) -> dict[str, QWidget]:
         """Return named controls whose values should persist between launches."""
-        supported = (QCheckBox, QRadioButton, QSpinBox, QComboBox, QGroupBox)
+        supported = (QCheckBox, QRadioButton, QSpinBox, QComboBox, QGroupBox, QLineEdit)
         widgets: dict[str, QWidget] = {}
         for name, widget in self.__dict__.items():
             if not isinstance(widget, supported):
@@ -536,6 +537,8 @@ class MainWindow(QMainWindow):
                     index = widget.findText(str(value))
                 if index >= 0:
                     widget.setCurrentIndex(index)
+            elif isinstance(widget, QLineEdit):
+                widget.setText(str(value))
 
         tab_index = self._ui_settings.value("ui/selected_tab", 0)
         try:
@@ -581,6 +584,8 @@ class MainWindow(QMainWindow):
                 widget.valueChanged.connect(self._save_settings)
             elif isinstance(widget, QComboBox):
                 widget.currentIndexChanged.connect(self._save_settings)
+            elif isinstance(widget, QLineEdit):
+                widget.editingFinished.connect(self._save_settings)
         for widget in self._clone_settings_widgets().values():
             widget.toggled.connect(self._save_settings)
 
@@ -594,6 +599,8 @@ class MainWindow(QMainWindow):
                 value = widget.currentData()
                 if value is None:
                     value = widget.currentText()
+            elif isinstance(widget, QLineEdit):
+                value = widget.text()
             else:
                 continue
             self._ui_settings.setValue(f"controls/{name}", value)
@@ -1409,20 +1416,24 @@ class MainWindow(QMainWindow):
         coordinate_group = QGroupBox("Click theo tọa độ")
         coordinate_layout = QHBoxLayout(coordinate_group)
         self.task_click_coordinates = QCheckBox("Click")
-        self.task_click_x = QSpinBox()
-        self.task_click_x.setRange(0, 10000)
-        self.task_click_x.setPrefix("X: ")
-        self.task_click_x.setKeyboardTracking(False)
-        self.task_click_y = QSpinBox()
-        self.task_click_y.setRange(0, 10000)
-        self.task_click_y.setPrefix("Y: ")
-        self.task_click_y.setKeyboardTracking(False)
+        self.task_click_x = QLineEdit()
+        self.task_click_x.setPlaceholderText("X")
+        self.task_click_x.setValidator(QIntValidator(0, 10000, self.task_click_x))
+        self.task_click_x.setMaximumWidth(100)
+        self.task_click_x.setText("0")
+        self.task_click_y = QLineEdit()
+        self.task_click_y.setPlaceholderText("Y")
+        self.task_click_y.setValidator(QIntValidator(0, 10000, self.task_click_y))
+        self.task_click_y.setMaximumWidth(100)
+        self.task_click_y.setText("0")
         self.task_click_x.setEnabled(False)
         self.task_click_y.setEnabled(False)
         self.task_click_coordinates.toggled.connect(self.task_click_x.setEnabled)
         self.task_click_coordinates.toggled.connect(self.task_click_y.setEnabled)
         coordinate_layout.addWidget(self.task_click_coordinates)
+        coordinate_layout.addWidget(QLabel("X:"))
         coordinate_layout.addWidget(self.task_click_x)
+        coordinate_layout.addWidget(QLabel("Y:"))
         coordinate_layout.addWidget(self.task_click_y)
         coordinate_layout.addStretch(1)
         layout.addWidget(coordinate_group)
@@ -1462,8 +1473,8 @@ class MainWindow(QMainWindow):
                 "task_close_strategy": self.task_close_strategy.isChecked(),
                 "task_switch_account": self.doi_tai_khoan_task.isChecked(),
                 "task_click_coordinates": self.task_click_coordinates.isChecked(),
-                "task_click_x": self.task_click_x.value(),
-                "task_click_y": self.task_click_y.value(),
+                "task_click_x": int(self.task_click_x.text() or 0),
+                "task_click_y": int(self.task_click_y.text() or 0),
                 "diem_danh": self.task_daily_checkin.isChecked(),
                 "nhan_le_bao_quoc_van": self.task_receive_quoc_van.isChecked(),
                 "bao_danh_quan_doan": self.task_guild_checkin.isChecked(),
