@@ -35,6 +35,8 @@ class UtilityTaskRunnerMixin:
             ("dong_gop_knb", "Đóng góp KNB"),
             ("tham_do_lanh_dia", "Thăm dò lãnh địa"),
             ("nhiem_vu_luu_ly_thap", "Lưu Ly Tháp"),
+            ("task_open_battle", "Mở màn hình Giao Tranh"),
+            ("task_close_battle", "Thoát màn hình Giao Tranh"),
             ("thuc_hien_giao_tranh", "Giao tranh"),
             ("thuc_hien_tranh_ba", "Tranh bá"),
             ("task_enter_strategy", "Vào màn hình Mưu Binh"),
