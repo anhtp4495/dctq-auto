@@ -18,7 +18,7 @@ class GuildWorkerMixin:
 
             import json
 
-            regions_path = Path(__file__).resolve().parents[1] / "tasks" / "common" / "regions.json"
+            regions_path = Path(__file__).resolve().parents[1] / "common" / "regions.json"
             try:
                 regions_data = json.loads(regions_path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError) as exc:
