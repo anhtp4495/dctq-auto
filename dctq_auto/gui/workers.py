@@ -148,6 +148,8 @@ class BotWorker(QThread):
                 selected.append("Đăng nhập")
             if self._config.get("task_open_activity"):
                 selected.append("Mở màn hình Hoạt động")
+            if self._config.get("task_select_phuc_loi"):
+                selected.append("Chọn Phúc Lợi")
             if self._config.get("nhan_le_bao_quoc_van"):
                 selected.append("Nhận lễ bao quốc vận")
             if self._config.get("diem_danh"):
@@ -934,6 +936,39 @@ class BotWorker(QThread):
             return True
         except Exception as exc:
             self.log_message.emit(f"Mở màn hình Hoạt động thất bại: {exc}")
+            return False
+
+    def _run_select_phuc_loi(self, device) -> bool:
+        """Select Phúc Lợi by OCR after ensuring Hoạt động is open."""
+        try:
+            if not self._wait_if_paused():
+                return False
+            visible, detected_text = self._activity_phuc_loi_visible(device)
+            if visible:
+                self.log_message.emit("Đã ở mục Phúc Lợi; không cần chọn lại.")
+                return True
+            if not self._run_open_activity(device):
+                return False
+            time.sleep(1.0)
+            if not self._wait_if_paused():
+                return False
+            screenshot = device.screenshot()
+            screen_width, screen_height = screenshot.size
+            full_rect = (0, 0, screen_width, screen_height)
+            self.log_message.emit("Tìm và chọn mục Phúc Lợi bằng OCR.")
+            if not self._tap_ocr_phrase_in_rect(device, ("phuc loi",), full_rect):
+                raise RuntimeError("OCR không tìm thấy mục Phúc Lợi để chọn.")
+            time.sleep(2.0)
+            visible, detected_text = self._activity_phuc_loi_visible(device)
+            if not visible:
+                raise RuntimeError(
+                    "Đã click Phúc Lợi nhưng OCR chưa xác nhận được màn hình Phúc Lợi: "
+                    f"{detected_text[:180] or '(trống)'}"
+                )
+            self.log_message.emit("Đã chọn và xác nhận mục Phúc Lợi.")
+            return True
+        except Exception as exc:
+            self.log_message.emit(f"Chọn Phúc Lợi thất bại: {exc}")
             return False
 
     def _run_close_activity(self, device) -> bool:
@@ -1856,6 +1891,7 @@ class BotWorker(QThread):
         task_labels = (
             ("task_login", "Đăng nhập"),
             ("task_open_activity", "Mở màn hình Hoạt động"),
+            ("task_select_phuc_loi", "Chọn Phúc Lợi"),
             ("nhan_le_bao_quoc_van", "Nhận lễ bao quốc vận"),
             ("task_close_activity", "Tắt màn hình Hoạt động"),
             ("diem_danh", "Điểm danh"),
@@ -1886,7 +1922,7 @@ class BotWorker(QThread):
         # Gameplay automation for these actions is not implemented in the real
         # ADB flow yet. Report an explicit failed status for each selected task.
         implemented = {
-            "task_login", "task_open_activity", "task_close_activity",
+            "task_login", "task_open_activity", "task_select_phuc_loi", "task_close_activity",
             "nhan_le_bao_quoc_van", "diem_danh", "task_enter_guild",
             "bao_danh_quan_doan", "task_receive_lucky_bag", "task_guild_fortune",
             "task_detect_strategy_status", "task_strategy_vuot_ai",
@@ -1962,6 +1998,18 @@ class BotWorker(QThread):
                 completed += 1
                 self.task_progress_changed.emit(label, "failed", 0, 1)
                 self.progress_changed.emit(completed, max(1, total), "Lỗi: Mở màn hình Hoạt động")
+
+        if self._config.get("task_select_phuc_loi"):
+            label = "Chọn Phúc Lợi"
+            self.task_progress_changed.emit(label, "running", 0, 1)
+            if self._run_select_phuc_loi(device):
+                completed += 1
+                self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(completed, max(1, total), "Đã chọn Phúc Lợi")
+            else:
+                completed += 1
+                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.progress_changed.emit(completed, max(1, total), "Lỗi: Chọn Phúc Lợi")
 
         if self._config.get("nhan_le_bao_quoc_van"):
             label = "Nhận lễ bao quốc vận"
