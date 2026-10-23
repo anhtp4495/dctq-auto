@@ -1167,6 +1167,9 @@ class MainWindow(QMainWindow):
         )
         self.task_open_battle = QCheckBox("Mở màn hình Giao Tranh")
         self.task_close_battle = QCheckBox("Thoát màn hình Giao Tranh")
+        self.task_find_battle_opponent = QCheckBox("Tìm đối thủ Giao Tranh")
+        self.task_start_battle = QCheckBox("Bắt đầu trận Giao Tranh")
+        self.task_end_battle = QCheckBox("Kết thúc trận Giao Tranh")
         self.task_battle = QCheckBox("Giao tranh")
         self.task_battle_count = QSpinBox()
         self.task_battle_count.setRange(1, 60)
@@ -1382,6 +1385,9 @@ class MainWindow(QMainWindow):
         battle_screen_layout = QVBoxLayout(battle_screen_group)
         battle_screen_layout.addWidget(self.task_open_battle)
         battle_screen_layout.addWidget(self.task_close_battle)
+        battle_screen_layout.addWidget(self.task_find_battle_opponent)
+        battle_screen_layout.addWidget(self.task_start_battle)
+        battle_screen_layout.addWidget(self.task_end_battle)
         daily_layout.addWidget(battle_screen_group)
         daily_layout.addLayout(task_battle_options)
 
@@ -1461,6 +1467,9 @@ class MainWindow(QMainWindow):
                 "task_close_guild": self.thoat_quan_doan_task.isChecked(),
                 "task_open_battle": self.task_open_battle.isChecked(),
                 "task_close_battle": self.task_close_battle.isChecked(),
+                "task_find_battle_opponent": self.task_find_battle_opponent.isChecked(),
+                "task_start_battle": self.task_start_battle.isChecked(),
+                "task_end_battle": self.task_end_battle.isChecked(),
                 "task_enter_guild": self.task_enter_guild.isChecked(),
                 "task_receive_lucky_bag": self.task_receive_lucky_bag.isChecked(),
                 "task_guild_fortune": self.task_guild_fortune.isChecked(),
@@ -1678,6 +1687,7 @@ class MainWindow(QMainWindow):
                 "task_login", "task_open_activity", "task_select_phuc_loi", "task_close_activity",
                 "task_close_guild", "task_switch_account",
                 "task_open_battle", "task_close_battle",
+                "task_find_battle_opponent", "task_start_battle", "task_end_battle",
                 "task_enter_guild", "task_receive_lucky_bag", "task_guild_fortune",
                 "diem_danh", "nhan_le_bao_quoc_van", "bao_danh_quan_doan", "dong_gop_knb",
                 "tham_do_lanh_dia", "nhiem_vu_luu_ly_thap",
@@ -1838,6 +1848,9 @@ class MainWindow(QMainWindow):
                 ("nhiem_vu_luu_ly_thap", "Lưu Ly Tháp"),
                 ("task_open_battle", "Mở màn hình Giao Tranh"),
                 ("task_close_battle", "Thoát màn hình Giao Tranh"),
+                ("task_find_battle_opponent", "Tìm đối thủ Giao Tranh"),
+                ("task_start_battle", "Bắt đầu trận Giao Tranh"),
+                ("task_end_battle", "Kết thúc trận Giao Tranh"),
                 ("thuc_hien_giao_tranh", "Giao tranh"),
                 ("thuc_hien_tranh_ba", "Tranh bá"),
                 ("thiet_lap_muu_binh", "Mưu binh"),
