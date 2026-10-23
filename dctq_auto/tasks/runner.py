@@ -282,6 +282,9 @@ class UtilityTaskRunnerMixin:
                         f"OCR không tìm thấy 'giao_tranh' trong RECT {rect}; không click."
                     )
                 tap_x, tap_y, found_rect = match
+                # Điểm giữa chữ OCR đôi khi không nằm trên vùng bấm; click cao hơn 10 px.
+                tap_y -= 10
+                device.shell(f"input tap {tap_x} {tap_y}")
                 self.log_message.emit(
                     "OCR tìm thấy 'giao_tranh' — "
                     f"RECT {found_rect}; đã click tại ({tap_x}, {tap_y})."
