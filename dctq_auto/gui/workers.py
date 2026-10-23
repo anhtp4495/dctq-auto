@@ -150,10 +150,10 @@ class BotWorker(QThread):
                 selected.append("Mở màn hình Hoạt động")
             if self._config.get("nhan_le_bao_quoc_van"):
                 selected.append("Nhận lễ bao quốc vận")
-            if self._config.get("task_close_activity"):
-                selected.append("Tắt màn hình Hoạt động")
             if self._config.get("diem_danh"):
                 selected.append("Điểm danh")
+            if self._config.get("task_close_activity"):
+                selected.append("Tắt màn hình Hoạt động")
             if self._config.get("bao_danh_quan_doan"):
                 selected.append("Báo danh quân đoàn")
             if self._config.get("dong_gop_knb"):
@@ -998,6 +998,8 @@ class BotWorker(QThread):
             self.log_message.emit(
                 "Lễ bao Quốc vận — BƯỚC 3: Tìm và click mục Lễ bao Quốc vận bằng OCR."
             )
+            screenshot = device.screenshot()
+            screen_width, screen_height = screenshot.size
             full_rect = (0, 0, screen_width, screen_height)
             if not self._tap_ocr_phrase_in_rect(
                 device, ("le bao quoc van",), full_rect
