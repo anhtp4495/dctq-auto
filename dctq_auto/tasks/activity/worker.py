@@ -179,10 +179,11 @@ class ActivityWorkerMixin:
             self.log_message.emit(
                 "Lễ bao Quốc vận — BƯỚC 3: Tìm và click mục Lễ bao Quốc vận bằng OCR "
                 f"Rect ({selected_rect[0]}; {selected_rect[1]}; "
-                f"{selected_rect[2]}; {selected_rect[3]}) steps: [gray] psm [11]."
+                f"{selected_rect[2]}; {selected_rect[3]}) steps: [gray, white_text] psm [11]."
             )
             if not self._tap_ocr_phrase_in_rect(
-                device, ("le bao quoc van",), selected_rect
+                device, ("le bao quoc van",), selected_rect,
+                steps=("gray", "white_text"), psm=(11,),
             ):
                 self.log_message.emit(
                     "Không tìm thấy mục Lễ bao Quốc vận bằng OCR; bỏ qua tác vụ này."
