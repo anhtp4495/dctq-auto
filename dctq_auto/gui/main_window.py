@@ -1113,9 +1113,9 @@ class MainWindow(QMainWindow):
         self.task_login = QCheckBox("Đăng nhập (nhập tài khoản khi bắt đầu)")
         self.task_daily_checkin = QCheckBox("Điểm danh")
         self.task_open_activity = QCheckBox("Mở màn hình Hoạt động")
+        self.task_close_activity = QCheckBox("Tắt màn hình Hoạt động")
         self.task_select_phuc_loi = QCheckBox("Chọn Phúc Lợi")
         self.task_receive_quoc_van = QCheckBox("Nhận Lễ Bao Quốc Vận")
-        self.task_close_activity = QCheckBox("Tắt màn hình Hoạt động")
         self.task_enter_guild = QCheckBox("Vào quân đoàn")
         self.task_guild_checkin = QCheckBox("Báo danh quân đoàn")
         self.task_receive_lucky_bag = QCheckBox("Nhận túi phúc")
@@ -1285,6 +1285,7 @@ class MainWindow(QMainWindow):
         activity_group = QGroupBox("Hoạt động")
         activity_layout = QVBoxLayout(activity_group)
         activity_layout.addWidget(self.task_open_activity)
+        activity_layout.addWidget(self.task_close_activity)
 
         phuc_loi_group = QGroupBox("Phúc Lợi")
         phuc_loi_layout = QVBoxLayout(phuc_loi_group)
@@ -1292,7 +1293,6 @@ class MainWindow(QMainWindow):
         phuc_loi_layout.addWidget(self.task_receive_quoc_van)
         phuc_loi_layout.addWidget(self.task_daily_checkin)
         activity_layout.addWidget(phuc_loi_group)
-        activity_layout.addWidget(self.task_close_activity)
         daily_layout.addWidget(activity_group)
 
         guild_group = QGroupBox("Quân đoàn")
@@ -1805,7 +1805,7 @@ class MainWindow(QMainWindow):
             task_labels = (
                 ("task_login", "Đăng nhập"),
                 ("task_open_activity", "Mở màn hình Hoạt động"),
-                ("task_select_phuc_loi", "Chọn Phúc Lợi"),
+                ("task_select_phuc_loi", "Chọn mục Phúc Lợi"),
                 ("nhan_le_bao_quoc_van", "Nhận lễ bao quốc vận"),
                 ("diem_danh", "Điểm danh"),
                 ("task_close_activity", "Tắt màn hình Hoạt động"),
