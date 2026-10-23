@@ -256,7 +256,7 @@ class UtilityTaskRunnerMixin:
                 x, y = 100, 966
                 device.shell(f"input tap {x} {y}")
                 self.log_message.emit(
-                    f"Mở màn hình Giao Tranh — BƯỚC 1: đã click Quan Sư tại ({x}, {y})."
+                    f"Mở màn hình Giao Tranh — BƯỚC 1: đã click [Quân Sự] tại ({x}, {y})."
                 )
                 time.sleep(1)
 
@@ -268,7 +268,7 @@ class UtilityTaskRunnerMixin:
                 rect = (200, 730, 381, 919)
                 self.log_message.emit(
                     "Mở màn hình Giao Tranh — BƯỚC 2: OCR RECT "
-                    f"{rect}, tìm 'giao_tranh' và click vào chữ."
+                    f"{rect}, tìm 'giao_tranh'."
                 )
                 match = self._tap_ocr_phrase_in_rect(
                     device,
@@ -284,8 +284,7 @@ class UtilityTaskRunnerMixin:
                 tap_x, tap_y, found_rect = match
                 self.log_message.emit(
                     "OCR tìm thấy 'giao_tranh' — "
-                    f"RECT phát hiện (left, top, right, bottom)={found_rect}; "
-                    f"đã click tại X={tap_x}, Y={tap_y}."
+                    f"RECT {found_rect}; đã click tại ({tap_x}, {tap_y})."
                 )
                 time.sleep(0.8)
                 completed += 1
