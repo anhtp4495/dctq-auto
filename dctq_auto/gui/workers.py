@@ -1,17 +1,9 @@
 """Background workers for GUI actions."""
 
-import re
 import shlex
 import time
-import unicodedata
-from types import SimpleNamespace
 from pathlib import Path
 from threading import Event
-
-import cv2
-import numpy as np
-import pytesseract
-from PIL import ImageOps
 from PySide6.QtCore import QThread, Signal
 
 from dctq_auto.adb.client import AdbClient
@@ -25,7 +17,14 @@ from dctq_auto.tasks.strategy.worker import StrategyWorkerMixin
 from dctq_auto.tasks.runner import UtilityTaskRunnerMixin
 
 
-class BotWorker(OcrWorkerMixin, ActivityWorkerMixin, GuildWorkerMixin, StrategyWorkerMixin, UtilityTaskRunnerMixin, QThread):
+class BotWorker(
+    OcrWorkerMixin,
+    ActivityWorkerMixin,
+    GuildWorkerMixin,
+    StrategyWorkerMixin,
+    UtilityTaskRunnerMixin,
+    QThread,
+):
     """Run test battle logic or the current ADB preparation flow."""
 
     log_message = Signal(str)
