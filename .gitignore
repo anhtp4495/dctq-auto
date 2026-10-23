@@ -8,3 +8,4 @@ logs/
 artifacts/
 build/
 dist/
+*.spec
