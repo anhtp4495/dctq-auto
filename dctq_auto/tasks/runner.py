@@ -66,7 +66,7 @@ class UtilityTaskRunnerMixin:
             "task_detect_strategy_status", "task_strategy_vuot_ai",
             "task_receive_strategy_reward",
             "task_close_guild", "task_switch_account", "task_click_coordinates",
-            "task_open_battle",
+            "task_open_battle", "task_find_battle_opponent",
         }
         for key, label in selected:
             if key in implemented:
@@ -361,6 +361,59 @@ class UtilityTaskRunnerMixin:
                 )
                 self.log_message.emit(
                     "Bước 2 thành công: OCR tìm thấy 'giao_tranh' và đã click vào chữ."
+                )
+            except Exception as exc:
+                completed += 1
+                self.log_message.emit(f"{label} thất bại: {exc}")
+                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), f"Lỗi: {label}"
+                )
+
+        if self._config.get("task_find_battle_opponent"):
+            label = "Tìm đối thủ Giao Tranh"
+            self.task_progress_changed.emit(label, "running", 0, 1)
+            try:
+                import json
+
+                regions_path = Path(__file__).resolve().parent / "common" / "regions.json"
+                try:
+                    regions_data = json.loads(regions_path.read_text(encoding="utf-8"))
+                    battle_config = regions_data["regions"]["giao_tranh"]
+                    elements = {
+                        item["name"]: item for item in battle_config.get("elements", [])
+                    }
+                    use_bazhen = elements["su_dung_canh_bat_tran"]["center"]
+                    find_opponent = elements["tim_doi_thu_button"]["center"]
+                    use_x, use_y = int(use_bazhen["x_px"]), int(use_bazhen["y_px"])
+                    find_x, find_y = int(find_opponent["x_px"]), int(find_opponent["y_px"])
+                except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+                    raise RuntimeError(
+                        f"Không đọc được tọa độ Tìm đối thủ từ {regions_path}: {exc}"
+                    ) from exc
+
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng trước khi tìm đối thủ Giao Tranh.")
+                    return
+                device.shell(f"input tap {use_x} {use_y}")
+                self.log_message.emit(
+                    f"Tìm đối thủ Giao Tranh — BƯỚC 1: click "
+                    f"[su_dung_canh_bat_tran] tại ({use_x}, {use_y})."
+                )
+                time.sleep(0.5)
+
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng trước khi click Tìm đối thủ.")
+                    return
+                device.shell(f"input tap {find_x} {find_y}")
+                self.log_message.emit(
+                    f"Tìm đối thủ Giao Tranh — BƯỚC 2: click "
+                    f"[tim_doi_thu] tại ({find_x}, {find_y})."
+                )
+                completed += 1
+                self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), "Đã click Tìm đối thủ Giao Tranh"
                 )
             except Exception as exc:
                 completed += 1
