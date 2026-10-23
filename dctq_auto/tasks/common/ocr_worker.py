@@ -1,4 +1,4 @@
-"""OCR helpers mixed into the GUI worker; orchestration stays in BotWorker."""
+"""OCR helpers mixed into the GUI worker; orchestration stays in the GUI worker."""
 
 import re
 import unicodedata
@@ -36,8 +36,8 @@ class OcrWorkerMixin:
         """Match a target against any OCR substring when similarity is above 25% by default."""
         from difflib import SequenceMatcher
 
-        target = BotWorker._normalize_ocr_match_text(target_text)
-        recognized = BotWorker._normalize_ocr_match_text(recognized_text)
+        target = OcrWorkerMixin._normalize_ocr_match_text(target_text)
+        recognized = OcrWorkerMixin._normalize_ocr_match_text(recognized_text)
         if not target or not recognized:
             return False
         if target in recognized:
@@ -122,7 +122,7 @@ class OcrWorkerMixin:
                 output_type=pytesseract.Output.DICT,
             )
 
-        wanted = {BotWorker._normalize_screen_text(word) for word in words}
+        wanted = {OcrWorkerMixin._normalize_screen_text(word) for word in words}
         candidates = []
         lines = {}
         total_words = len(data.get("text", []))
@@ -130,7 +130,7 @@ class OcrWorkerMixin:
         paragraphs = data.get("par_num", [0] * total_words)
         line_numbers = data.get("line_num", [0] * total_words)
         for i, raw in enumerate(data.get("text", [])):
-            normalized = BotWorker._normalize_screen_text(raw)
+            normalized = OcrWorkerMixin._normalize_screen_text(raw)
             if not normalized:
                 continue
             try:
@@ -199,7 +199,7 @@ class OcrWorkerMixin:
             )
         words = []
         for i, raw in enumerate(data.get("text", [])):
-            normalized = BotWorker._normalize_screen_text(raw)
+            normalized = OcrWorkerMixin._normalize_screen_text(raw)
             if not normalized:
                 continue
             try:
@@ -221,8 +221,8 @@ class OcrWorkerMixin:
     @staticmethod
     def _tap_ocr_phrase_in_rect(device, words: tuple[str, ...], rect: tuple[int, int, int, int]) -> bool:
         """Find and tap a word or contiguous phrase inside a specified rectangle."""
-        wanted = {BotWorker._normalize_screen_text(word) for word in words}
-        detected = BotWorker._ocr_words_in_rect(device, rect)
+        wanted = {OcrWorkerMixin._normalize_screen_text(word) for word in words}
+        detected = OcrWorkerMixin._ocr_words_in_rect(device, rect)
         matches = [
             word for word in detected if word["text"] in wanted
         ]
@@ -249,7 +249,7 @@ class OcrWorkerMixin:
         line_numbers = data.get("line_num", [0] * count)
         lines = {}
         for i, raw in enumerate(data.get("text", [])):
-            normalized = BotWorker._normalize_screen_text(raw)
+            normalized = OcrWorkerMixin._normalize_screen_text(raw)
             if not normalized:
                 continue
             try:
