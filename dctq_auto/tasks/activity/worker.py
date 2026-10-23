@@ -182,7 +182,7 @@ class ActivityWorkerMixin:
                 f"{selected_rect[2]}; {selected_rect[3]}) steps: [gray, white_text] psm [11]."
             )
             if not self._tap_ocr_phrase_in_rect(
-                device, ("le bao quoc van",), selected_rect,
+                device, ("le bao quoc",), selected_rect,
                 steps=("gray", "white_text"), psm=(11,),
             ):
                 self.log_message.emit(
