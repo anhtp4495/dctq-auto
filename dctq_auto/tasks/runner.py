@@ -410,10 +410,42 @@ class UtilityTaskRunnerMixin:
                     f"Tìm đối thủ Giao Tranh — BƯỚC 2: click "
                     f"[tim_doi_thu] tại ({find_x}, {find_y})."
                 )
+                time.sleep(0.5)
+
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng trước khi kiểm tra xác nhận tìm đối thủ.")
+                    return
+
+                # Bước 3: nếu xuất hiện hộp xác nhận thì click; nếu không có,
+                # coi như đã vào trận và bỏ qua xác nhận.
+                confirm_rect = (617, 644, 1292, 722)
+                self.log_message.emit(
+                    "Tìm đối thủ Giao Tranh — BƯỚC 3: OCR RECT "
+                    f"{confirm_rect}, tìm 'xac_nhan'."
+                )
+                confirm_match = self._tap_ocr_phrase_in_rect(
+                    device,
+                    ("xac_nhan",),
+                    confirm_rect,
+                    steps=("gray", "white_text"),
+                    psm=(11,),
+                )
+                if confirm_match is None:
+                    self.log_message.emit(
+                        "Không tìm thấy 'xac_nhan' trong hộp xác nhận; "
+                        "coi như đã ở trong trận, bỏ qua xác nhận."
+                    )
+                else:
+                    confirm_x, confirm_y, confirm_found_rect = confirm_match
+                    self.log_message.emit(
+                        "Đã tìm thấy và click 'xac_nhan' tại "
+                        f"({confirm_x}, {confirm_y}); RECT OCR {confirm_found_rect}."
+                    )
+
                 completed += 1
                 self.task_progress_changed.emit(label, "done", 1, 1)
                 self.progress_changed.emit(
-                    completed, max(1, total), "Đã click Tìm đối thủ Giao Tranh"
+                    completed, max(1, total), "Đã hoàn tất Tìm đối thủ Giao Tranh"
                 )
             except Exception as exc:
                 completed += 1
