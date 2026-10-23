@@ -1200,7 +1200,7 @@
           }
         },
         {
-          "name": "tim_doi_thu_button",
+          "name": "tim_doi_thu",
           "text": "Nút Tìm đối thủ trong màn hình Giao Tranh",
           "center": {
             "x_px": 1381,
