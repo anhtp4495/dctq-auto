@@ -63,6 +63,7 @@ class UtilityTaskRunnerMixin:
             "task_detect_strategy_status", "task_strategy_vuot_ai",
             "task_receive_strategy_reward",
             "task_close_guild", "task_switch_account", "task_click_coordinates",
+            "task_open_battle",
         }
         for key, label in selected:
             if key in implemented:
@@ -293,6 +294,59 @@ class UtilityTaskRunnerMixin:
             else:
                 self.task_progress_changed.emit(label, "failed", 0, 1)
                 self.progress_changed.emit(completed, max(1, total), f"Lỗi: {label}")
+
+        if self._config.get("task_open_battle"):
+            label = "Mở màn hình Giao Tranh"
+            self.task_progress_changed.emit(label, "running", 0, 1)
+            try:
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng trước khi mở màn hình Giao Tranh.")
+                    return
+                # Bước 1: mở menu Quan Sư bằng tọa độ cố định đã xác nhận.
+                x, y = 100, 966
+                device.shell(f"input tap {x} {y}")
+                self.log_message.emit(
+                    f"Mở màn hình Giao Tranh — BƯỚC 1: đã click Quan Sư tại ({x}, {y})."
+                )
+                time.sleep(1)
+
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng trước khi OCR mục Giao Tranh.")
+                    return
+
+                # Bước 2: RECT dùng định dạng (left, top, right, bottom).
+                rect = (200, 730, 381, 919)
+                self.log_message.emit(
+                    "Mở màn hình Giao Tranh — BƯỚC 2: OCR RECT "
+                    f"{rect}, tìm 'giao_tranh' và click vào chữ."
+                )
+                found = self._tap_ocr_phrase_in_rect(
+                    device,
+                    ("giao_tranh",),
+                    rect,
+                    steps=("gray", "white_text"),
+                    psm=(6, 7, 11),
+                )
+                if not found:
+                    raise RuntimeError(
+                        f"OCR không tìm thấy 'giao_tranh' trong RECT {rect}; không click."
+                    )
+                time.sleep(0.8)
+                completed += 1
+                self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), "Đã click mục Giao Tranh"
+                )
+                self.log_message.emit(
+                    "Bước 2 thành công: OCR tìm thấy 'giao_tranh' và đã click vào chữ."
+                )
+            except Exception as exc:
+                completed += 1
+                self.log_message.emit(f"{label} thất bại: {exc}")
+                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), f"Lỗi: {label}"
+                )
 
         if self._config.get("task_close_guild"):
             if not self._wait_if_paused():
