@@ -264,6 +264,7 @@ class UtilityTaskRunnerMixin:
                     }
                     quan_su_center = elements["quan_su"]["center"]
                     ocr_rect_data = battle_config["ocr_rect"]
+                    main_screen_rect_data = battle_config["main_screen_ocr_rect"]
                     tap_offset_data = battle_config.get("tap_offset", {"x": 0, "y": 0})
                     x, y = int(quan_su_center["x_px"]), int(quan_su_center["y_px"])
                     rect = (
@@ -275,6 +276,12 @@ class UtilityTaskRunnerMixin:
                     tap_offset = (
                         int(tap_offset_data.get("x", 0)),
                         int(tap_offset_data.get("y", 0)),
+                    )
+                    main_screen_rect = (
+                        int(main_screen_rect_data["left"]),
+                        int(main_screen_rect_data["top"]),
+                        int(main_screen_rect_data["right"]),
+                        int(main_screen_rect_data["bottom"]),
                     )
                 except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
                     raise RuntimeError(
@@ -315,6 +322,35 @@ class UtilityTaskRunnerMixin:
                     f"RECT {found_rect}; đã click tại ({tap_x}, {tap_y})."
                 )
                 time.sleep(0.8)
+
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng trước khi xác minh giao diện chính Giao Tranh.")
+                    return
+
+                # Bước 3: chỉ xác nhận mở đúng màn hình khi OCR thấy tim_doi_thu.
+                self.log_message.emit(
+                    "Mở màn hình Giao Tranh — BƯỚC 3: OCR RECT "
+                    f"{main_screen_rect}, tìm 'tim_doi_thu'."
+                )
+                main_screen_match = self._tap_ocr_phrase_in_rect(
+                    device,
+                    ("tim_doi_thu",),
+                    main_screen_rect,
+                    steps=("gray", "white_text"),
+                    psm=(11,),
+                    tap=False,
+                )
+                if main_screen_match is None:
+                    raise RuntimeError(
+                        "OCR không tìm thấy 'tim_doi_thu' trong RECT "
+                        f"{main_screen_rect}; chưa xác nhận giao diện chính Giao Tranh."
+                    )
+                _target_x, _target_y, main_screen_found_rect = main_screen_match
+                self.log_message.emit(
+                    "Bước 3 xác nhận đang ở giao diện chính Giao Tranh: "
+                    f"tìm thấy 'tim_doi_thu' — RECT {main_screen_found_rect}."
+                )
+
                 completed += 1
                 self.task_progress_changed.emit(label, "done", 1, 1)
                 self.progress_changed.emit(
