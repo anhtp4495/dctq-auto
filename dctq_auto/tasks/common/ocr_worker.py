@@ -282,6 +282,7 @@ class OcrWorkerMixin:
         rect: tuple[int, int, int, int],
         steps: tuple[str, ...] = ("gray", "white_text"),
         psm: tuple[int, ...] = (11,),
+        tap_offset: tuple[int, int] = (0, 0),
     ) -> tuple[int, int, tuple[int, int, int, int]] | None:
         """Find and tap a word or contiguous phrase; return tap point and detected rectangle."""
         wanted = {OcrWorkerMixin._normalize_screen_text(word) for word in words}
@@ -314,8 +315,8 @@ class OcrWorkerMixin:
         if not matches:
             return None
         match = max(matches, key=lambda item: (item["confidence"], item["width"]))
-        x = match["left"] + match["width"] // 2
-        y = match["top"] + match["height"] // 2
+        x = match["left"] + match["width"] // 2 + tap_offset[0]
+        y = match["top"] + match["height"] // 2 + tap_offset[1]
         detected_rect = (
             int(match["left"]),
             int(match["top"]),
