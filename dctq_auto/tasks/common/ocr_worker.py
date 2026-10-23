@@ -177,115 +177,142 @@ class OcrWorkerMixin:
         return True
 
     @staticmethod
-    def _ocr_words_in_rect(device, rect: tuple[int, int, int, int]) -> list[dict]:
-        """Recognize words only inside a screenshot rectangle; return full-screen boxes."""
+    def _ocr_words_in_rect(
+        device,
+        rect: tuple[int, int, int, int],
+        steps: tuple[str, ...] = ("gray", "white_text"),
+        psm: tuple[int, ...] = (11,),
+    ) -> list[dict]:
+        """OCR a screenshot rectangle using the selected preprocessing steps and PSMs."""
+        import cv2
+        import numpy as np
+
         image = device.screenshot().convert("RGB")
         screen_width, screen_height = image.size
         left, top, right, bottom = rect
-        left = max(0, min(screen_width - 1, left))
-        top = max(0, min(screen_height - 1, top))
-        right = max(left + 1, min(screen_width, right))
-        bottom = max(top + 1, min(screen_height, bottom))
-        crop = ImageOps.autocontrast(image.crop((left, top, right, bottom)).convert("L"))
-        try:
-            data = pytesseract.image_to_data(
-                crop, lang="vie+eng", config="--psm 11",
-                output_type=pytesseract.Output.DICT,
+        left = max(0, min(screen_width - 1, int(left)))
+        top = max(0, min(screen_height - 1, int(top)))
+        right = max(left + 1, min(screen_width, int(right)))
+        bottom = max(top + 1, min(screen_height, int(bottom)))
+        crop_rgb = np.array(image.crop((left, top, right, bottom)))
+        crop_bgr = cv2.cvtColor(crop_rgb, cv2.COLOR_RGB2BGR)
+        crop_height, crop_width = crop_bgr.shape[:2]
+        scale = 3
+        variants = {}
+
+        if "gray" in steps:
+            gray = cv2.cvtColor(crop_bgr, cv2.COLOR_BGR2GRAY)
+            gray = cv2.resize(
+                gray, None, fx=scale, fy=scale, interpolation=cv2.INTER_LANCZOS4
             )
-        except pytesseract.TesseractError:
-            data = pytesseract.image_to_data(
-                crop, lang="eng", config="--psm 11",
-                output_type=pytesseract.Output.DICT,
+            variants["gray"] = cv2.copyMakeBorder(
+                gray, 18, 18, 18, 18, cv2.BORDER_CONSTANT, value=255
             )
+
+        if "white_text" in steps:
+            hsv = cv2.cvtColor(crop_bgr, cv2.COLOR_BGR2HSV)
+            white_mask = cv2.inRange(
+                hsv,
+                np.array([0, 0, 135], dtype=np.uint8),
+                np.array([180, 120, 255], dtype=np.uint8),
+            )
+            white_mask = cv2.resize(
+                white_mask, None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST
+            )
+            white_mask = cv2.copyMakeBorder(
+                white_mask, 18, 18, 18, 18, cv2.BORDER_CONSTANT, value=0
+            )
+            variants["white_text"] = cv2.bitwise_not(white_mask)
+
         words = []
-        for i, raw in enumerate(data.get("text", [])):
-            normalized = OcrWorkerMixin._normalize_screen_text(raw)
-            if not normalized:
-                continue
-            try:
-                confidence = float(data["conf"][i])
-            except (ValueError, TypeError):
-                confidence = 0.0
-            if confidence < 0:
-                continue
-            x = left + int(data["left"][i])
-            y = top + int(data["top"][i])
-            width = int(data["width"][i])
-            height = int(data["height"][i])
-            words.append({
-                "text": normalized, "confidence": confidence,
-                "left": x, "top": y, "width": width, "height": height,
-            })
+        for variant_name, processed in variants.items():
+            for page_mode in psm:
+                data = None
+                for language in ("vie+eng", "eng"):
+                    try:
+                        data = pytesseract.image_to_data(
+                            processed,
+                            lang=language,
+                            config=f"--oem 3 --psm {page_mode}",
+                            output_type=pytesseract.Output.DICT,
+                        )
+                        break
+                    except pytesseract.TesseractError:
+                        continue
+                if data is None:
+                    continue
+
+                count = len(data.get("text", []))
+                blocks = data.get("block_num", [0] * count)
+                paragraphs = data.get("par_num", [0] * count)
+                line_numbers = data.get("line_num", [0] * count)
+                for i, raw in enumerate(data.get("text", [])):
+                    normalized = OcrWorkerMixin._normalize_screen_text(raw)
+                    if not normalized:
+                        continue
+                    try:
+                        confidence = float(data["conf"][i])
+                    except (ValueError, TypeError):
+                        confidence = 0.0
+                    if confidence < 0:
+                        continue
+
+                    # Reverse the scale and 18px padding used by ocr_debug.py.
+                    x0 = max(0, (int(data["left"][i]) - 18) / scale)
+                    y0 = max(0, (int(data["top"][i]) - 18) / scale)
+                    x1 = min(crop_width, (int(data["left"][i]) + int(data["width"][i]) - 18) / scale)
+                    y1 = min(crop_height, (int(data["top"][i]) + int(data["height"][i]) - 18) / scale)
+                    if x1 <= x0 or y1 <= y0:
+                        continue
+                    words.append({
+                        "text": normalized,
+                        "confidence": confidence,
+                        "left": left + round(x0),
+                        "top": top + round(y0),
+                        "width": max(1, round(x1) - round(x0)),
+                        "height": max(1, round(y1) - round(y0)),
+                        "line_key": (variant_name, page_mode, blocks[i], paragraphs[i], line_numbers[i]),
+                    })
         return words
 
     @staticmethod
-    def _tap_ocr_phrase_in_rect(device, words: tuple[str, ...], rect: tuple[int, int, int, int]) -> bool:
-        """Find and tap a word or contiguous phrase inside a specified rectangle."""
+    def _tap_ocr_phrase_in_rect(
+        device,
+        words: tuple[str, ...],
+        rect: tuple[int, int, int, int],
+        steps: tuple[str, ...] = ("gray", "white_text"),
+        psm: tuple[int, ...] = (11,),
+    ) -> bool:
+        """Find and tap a word or contiguous phrase using configured OCR preprocessing."""
         wanted = {OcrWorkerMixin._normalize_screen_text(word) for word in words}
-        detected = OcrWorkerMixin._ocr_words_in_rect(device, rect)
-        matches = [
-            word for word in detected if word["text"] in wanted
-        ]
-        # OCR often separates multi-word Vietnamese labels; join adjacent words on a line.
-        image = device.screenshot().convert("RGB")
-        screen_width, screen_height = image.size
-        left, top, right, bottom = rect
-        left, top = max(0, left), max(0, top)
-        right, bottom = min(screen_width, right), min(screen_height, bottom)
-        crop = ImageOps.autocontrast(image.crop((left, top, right, bottom)).convert("L"))
-        try:
-            data = pytesseract.image_to_data(
-                crop, lang="vie+eng", config="--psm 11",
-                output_type=pytesseract.Output.DICT,
-            )
-        except pytesseract.TesseractError:
-            data = pytesseract.image_to_data(
-                crop, lang="eng", config="--psm 11",
-                output_type=pytesseract.Output.DICT,
-            )
-        count = len(data.get("text", []))
-        blocks = data.get("block_num", [0] * count)
-        paragraphs = data.get("par_num", [0] * count)
-        line_numbers = data.get("line_num", [0] * count)
+        detected = OcrWorkerMixin._ocr_words_in_rect(device, rect, steps=steps, psm=psm)
+        matches = [word for word in detected if word["text"] in wanted]
+
+        # OCR often separates Vietnamese labels into adjacent words on the same line.
         lines = {}
-        for i, raw in enumerate(data.get("text", [])):
-            normalized = OcrWorkerMixin._normalize_screen_text(raw)
-            if not normalized:
-                continue
-            try:
-                confidence = float(data["conf"][i])
-            except (ValueError, TypeError):
-                confidence = 0.0
-            if confidence < 0:
-                continue
-            x = left + int(data["left"][i])
-            y = top + int(data["top"][i])
-            width = int(data["width"][i])
-            height = int(data["height"][i])
-            lines.setdefault((blocks[i], paragraphs[i], line_numbers[i]), []).append(
-                (x, y, width, height, confidence, normalized)
-            )
+        for word in detected:
+            lines.setdefault(word["line_key"], []).append(word)
         for line in lines.values():
-            line.sort(key=lambda item: item[0])
+            line.sort(key=lambda item: item["left"])
             for start in range(len(line)):
                 phrase_parts = []
                 for end in range(start, min(len(line), start + 4)):
-                    phrase_parts.append(line[end][5])
-                    if " ".join(phrase_parts) in wanted:
-                        group = line[start:end + 1]
-                        x1 = min(item[0] for item in group)
-                        y1 = min(item[1] for item in group)
-                        x2 = max(item[0] + item[2] for item in group)
-                        y2 = max(item[1] + item[3] for item in group)
-                        matches.append({
-                            "text": " ".join(phrase_parts),
-                            "confidence": sum(item[4] for item in group) / len(group),
-                            "left": x1, "top": y1,
-                            "width": x2 - x1, "height": y2 - y1,
-                        })
+                    phrase_parts.append(line[end]["text"])
+                    phrase = " ".join(phrase_parts)
+                    if phrase not in wanted:
+                        continue
+                    group = line[start:end + 1]
+                    x1 = min(item["left"] for item in group)
+                    y1 = min(item["top"] for item in group)
+                    x2 = max(item["left"] + item["width"] for item in group)
+                    y2 = max(item["top"] + item["height"] for item in group)
+                    matches.append({
+                        "text": phrase,
+                        "confidence": sum(item["confidence"] for item in group) / len(group),
+                        "left": x1, "top": y1, "width": x2 - x1, "height": y2 - y1,
+                    })
         if not matches:
             return False
-        # Prefer multiword label matches when confidence is comparable.
         match = max(matches, key=lambda item: (item["confidence"], item["width"]))
         x = match["left"] + match["width"] // 2
         y = match["top"] + match["height"] // 2
