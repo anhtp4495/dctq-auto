@@ -1112,7 +1112,9 @@ class MainWindow(QMainWindow):
 
         self.task_login = QCheckBox("Đăng nhập (nhập tài khoản khi bắt đầu)")
         self.task_daily_checkin = QCheckBox("Điểm danh")
-        self.task_receive_quoc_van = QCheckBox("Nhận lễ bao quốc vận")
+        self.task_open_activity = QCheckBox("Mở màn hình Hoạt động")
+        self.task_receive_quoc_van = QCheckBox("Nhận Lễ Bao Quốc Vận")
+        self.task_close_activity = QCheckBox("Tắt màn hình Hoạt động")
         self.task_enter_guild = QCheckBox("Vào quân đoàn")
         self.task_guild_checkin = QCheckBox("Báo danh quân đoàn")
         self.task_receive_lucky_bag = QCheckBox("Nhận túi phúc")
@@ -1279,11 +1281,17 @@ class MainWindow(QMainWindow):
         ):
             daily_layout.addWidget(task_checkbox)
 
-        phuc_loi_group = QGroupBox("Hoạt động - Phúc lợi")
+        activity_group = QGroupBox("Hoạt động")
+        activity_layout = QVBoxLayout(activity_group)
+        activity_layout.addWidget(self.task_open_activity)
+
+        phuc_loi_group = QGroupBox("Phúc Lợi")
         phuc_loi_layout = QVBoxLayout(phuc_loi_group)
         phuc_loi_layout.addWidget(self.task_receive_quoc_van)
         phuc_loi_layout.addWidget(self.task_daily_checkin)
-        daily_layout.addWidget(phuc_loi_group)
+        activity_layout.addWidget(phuc_loi_group)
+        activity_layout.addWidget(self.task_close_activity)
+        daily_layout.addWidget(activity_group)
 
         guild_group = QGroupBox("Quân đoàn")
         guild_layout = QVBoxLayout(guild_group)
@@ -1428,6 +1436,8 @@ class MainWindow(QMainWindow):
             config.update({
                 "utility_tasks_mode": True,
                 "task_login": self.task_login.isChecked(),
+                "task_open_activity": self.task_open_activity.isChecked(),
+                "task_close_activity": self.task_close_activity.isChecked(),
                 "task_close_guild": self.thoat_quan_doan_task.isChecked(),
                 "task_enter_guild": self.task_enter_guild.isChecked(),
                 "task_receive_lucky_bag": self.task_receive_lucky_bag.isChecked(),
@@ -1643,7 +1653,8 @@ class MainWindow(QMainWindow):
             config["login_username"], config["login_password"] = credentials
         if config.get("utility_tasks_mode") and not any(
             config.get(key) for key in (
-                "task_login", "task_close_guild", "task_switch_account",
+                "task_login", "task_open_activity", "task_close_activity",
+                "task_close_guild", "task_switch_account",
                 "task_enter_guild", "task_receive_lucky_bag", "task_guild_fortune",
                 "diem_danh", "nhan_le_bao_quoc_van", "bao_danh_quan_doan", "dong_gop_knb",
                 "tham_do_lanh_dia", "nhiem_vu_luu_ly_thap",
