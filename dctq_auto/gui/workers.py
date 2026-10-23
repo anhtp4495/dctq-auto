@@ -972,24 +972,63 @@ class BotWorker(QThread):
             return False
 
     def _run_close_activity(self, device) -> bool:
-        """Close Hoạt động with Android Back and verify its Phúc lợi screen is gone."""
+        """Close Hoạt động with Back; use the Quan chức profile marker to verify."""
         try:
             if not self._wait_if_paused():
                 return False
-            visible, detected_text = self._activity_phuc_loi_visible(device)
-            if not visible:
-                self.log_message.emit("Không phát hiện màn hình Phúc lợi đang mở; bỏ qua thao tác đóng.")
+
+            def profile_marker_found() -> tuple[bool, str]:
+                screenshot = device.screenshot()
+                screen_width, screen_height = screenshot.size
+                profile_rect = (
+                    0,
+                    0,
+                    max(1, round(200 / 1920 * screen_width)),
+                    max(1, round(200 / 1080 * screen_height)),
+                )
+                detected_text = self._screen_text_in_rect(device, profile_rect)
+                normalized = self._normalize_screen_text(detected_text)
+                return "quan chuc" in normalized, detected_text
+
+            # If the profile marker is already visible, Hoạt động is already closed.
+            profile_found, detected_text = profile_marker_found()
+            if not profile_found:
+                self.log_message.emit(
+                    "OCR vùng hồ sơ chưa thấy 'Quan chức'; thử kiểm tra lại một lần."
+                )
+                if not self._wait_if_paused():
+                    return False
+                time.sleep(0.5)
+                profile_found, detected_text = profile_marker_found()
+
+            if profile_found:
+                self.log_message.emit(
+                    "OCR tìm thấy 'Quan chức' trong vùng hồ sơ; xác nhận Hoạt động đã đóng."
+                )
                 return True
-            self.log_message.emit("Tắt màn hình Hoạt động bằng phím Back.")
+
+            self.log_message.emit(
+                "Sau hai lần kiểm tra chưa thấy 'Quan chức'; gửi phím Back để đóng Hoạt động."
+            )
             device.shell("input keyevent KEYCODE_BACK")
             time.sleep(1.5)
-            still_visible, after_text = self._activity_phuc_loi_visible(device)
-            if still_visible:
+
+            profile_found, after_text = profile_marker_found()
+            if not profile_found:
+                self.log_message.emit(
+                    "Sau khi nhấn Back chưa thấy 'Quan chức'; kiểm tra lại lần cuối."
+                )
+                if not self._wait_if_paused():
+                    return False
+                time.sleep(0.5)
+                profile_found, after_text = profile_marker_found()
+
+            if not profile_found:
                 raise RuntimeError(
-                    "Sau khi nhấn Back, OCR vẫn nhận diện màn hình Phúc lợi: "
+                    "Sau khi nhấn Back, OCR vẫn chưa tìm thấy dấu hiệu hồ sơ 'Quan chức': "
                     f"{after_text[:180] or '(trống)'}"
                 )
-            self.log_message.emit("Đã đóng màn hình Hoạt động.")
+            self.log_message.emit("Đã xác nhận đóng màn hình Hoạt động qua OCR 'Quan chức'.")
             return True
         except Exception as exc:
             self.log_message.emit(f"Tắt màn hình Hoạt động thất bại: {exc}")
