@@ -171,9 +171,8 @@ class ActivityWorkerMixin:
             screen_width, screen_height = screenshot.size
             full_rect = (0, 0, screen_width, screen_height)
             self.log_message.emit(
-                "Lễ bao Quốc vận — BƯỚC 3: Tìm và click mục Lễ bao Quốc vận bằng OCR; "
-                f"Rect (X; Y; W; H) = (0; 0; {screen_width}; {screen_height}); "
-                "thuật toán gray + autocontrast, color_text=không dùng, psm=11, lang=vie+eng (fallback eng)."
+                "Lễ bao Quốc vận — BƯỚC 3: Tìm và click mục Lễ bao Quốc vận bằng OCR "
+                f"Rect ({full_rect[0]}; {full_rect[1]}; {screen_width}; {screen_height})."
             )
             if not self._tap_ocr_phrase_in_rect(
                 device, ("le bao quoc van",), full_rect
