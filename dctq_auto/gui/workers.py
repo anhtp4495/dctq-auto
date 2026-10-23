@@ -146,8 +146,12 @@ class BotWorker(QThread):
             selected = []
             if self._config.get("task_login"):
                 selected.append("Đăng nhập")
+            if self._config.get("task_open_activity"):
+                selected.append("Mở màn hình Hoạt động")
             if self._config.get("nhan_le_bao_quoc_van"):
                 selected.append("Nhận lễ bao quốc vận")
+            if self._config.get("task_close_activity"):
+                selected.append("Tắt màn hình Hoạt động")
             if self._config.get("diem_danh"):
                 selected.append("Điểm danh")
             if self._config.get("bao_danh_quan_doan"):
@@ -888,6 +892,74 @@ class BotWorker(QThread):
             self.log_message.emit(f"Vào quân đoàn thất bại, dừng luồng: {exc}")
             return False
 
+    def _activity_phuc_loi_visible(self, device) -> tuple[bool, str]:
+        """Return whether OCR can identify the Hoạt động > Phúc lợi screen."""
+        screenshot = device.screenshot()
+        screen_width, screen_height = screenshot.size
+        phuc_loi_rect = (
+            round(14 / 1920 * screen_width),
+            round(128 / 1080 * screen_height),
+            round(488 / 1920 * screen_width),
+            round(988 / 1080 * screen_height),
+        )
+        detected = self._ocr_words_in_rect(device, phuc_loi_rect)
+        detected_text = " ".join(word["text"] for word in detected)
+        markers = ("tranh ba", "qua online", "diem danh", "hoan the")
+        normalized = self._normalize_screen_text(detected_text)
+        return any(self._normalize_screen_text(marker) in normalized for marker in markers), detected_text
+
+    def _run_open_activity(self, device) -> bool:
+        """Open Hoạt động only when OCR does not already show its Phúc lợi screen."""
+        try:
+            if not self._wait_if_paused():
+                return False
+            visible, detected_text = self._activity_phuc_loi_visible(device)
+            if visible:
+                self.log_message.emit("Hoạt động đã mở sẵn; không click mở lần nữa.")
+                return True
+            screenshot = device.screenshot()
+            screen_width, screen_height = screenshot.size
+            x = round(0.035937 * screen_width)
+            y = round(0.732407 * screen_height)
+            self.log_message.emit(f"Mở màn hình Hoạt động tại ({x}, {y}).")
+            device.shell(f"input tap {x} {y}")
+            time.sleep(3.0)
+            visible, detected_text = self._activity_phuc_loi_visible(device)
+            if not visible:
+                raise RuntimeError(
+                    "OCR chưa xác nhận được màn hình Phúc lợi: "
+                    f"{detected_text[:180] or '(trống)'}"
+                )
+            self.log_message.emit("Đã xác nhận mở màn hình Hoạt động > Phúc lợi.")
+            return True
+        except Exception as exc:
+            self.log_message.emit(f"Mở màn hình Hoạt động thất bại: {exc}")
+            return False
+
+    def _run_close_activity(self, device) -> bool:
+        """Close Hoạt động with Android Back and verify its Phúc lợi screen is gone."""
+        try:
+            if not self._wait_if_paused():
+                return False
+            visible, detected_text = self._activity_phuc_loi_visible(device)
+            if not visible:
+                self.log_message.emit("Không phát hiện màn hình Phúc lợi đang mở; bỏ qua thao tác đóng.")
+                return True
+            self.log_message.emit("Tắt màn hình Hoạt động bằng phím Back.")
+            device.shell("input keyevent KEYCODE_BACK")
+            time.sleep(1.5)
+            still_visible, after_text = self._activity_phuc_loi_visible(device)
+            if still_visible:
+                raise RuntimeError(
+                    "Sau khi nhấn Back, OCR vẫn nhận diện màn hình Phúc lợi: "
+                    f"{after_text[:180] or '(trống)'}"
+                )
+            self.log_message.emit("Đã đóng màn hình Hoạt động.")
+            return True
+        except Exception as exc:
+            self.log_message.emit(f"Tắt màn hình Hoạt động thất bại: {exc}")
+            return False
+
     def _run_receive_quoc_van(self, device, ocr_client) -> bool:
         """Receive the free Quốc vận gift and verify that its dialog has closed."""
         target_title = "mua_tich_luy_10_ngay_nhan_them_qua"
@@ -896,15 +968,22 @@ class BotWorker(QThread):
                 return False
 
             self.log_message.emit(
-                "Lễ bao Quốc vận — BƯỚC 1: Mở mục Hoạt động."
+                "Lễ bao Quốc vận — BƯỚC 1: Kiểm tra màn hình Hoạt động > Phúc lợi."
             )
-            screenshot = device.screenshot()
-            screen_width, screen_height = screenshot.size
-            device.shell(
-                f"input tap {round(0.035937 * screen_width)} "
-                f"{round(0.732407 * screen_height)}"
-            )
-            time.sleep(5.0)
+            visible, detected_text = self._activity_phuc_loi_visible(device)
+            if not visible:
+                self.log_message.emit(
+                    "Chưa ở màn hình Phúc lợi; mở Hoạt động trước khi tiếp tục."
+                )
+                if not self._run_open_activity(device):
+                    return False
+                time.sleep(2.0)
+                visible, detected_text = self._activity_phuc_loi_visible(device)
+            if not visible:
+                raise RuntimeError(
+                    "OCR không xác nhận được cac_tinh_nang của hoat_dong.phuc_loi. "
+                    f"OCR: {detected_text[:180] or '(trống)'}"
+                )
 
             if not self._wait_if_paused():
                 return False
@@ -912,25 +991,6 @@ class BotWorker(QThread):
             self.log_message.emit(
                 "Lễ bao Quốc vận — BƯỚC 2: OCR xác nhận các tính năng của hoat_dong.phuc_loi."
             )
-            screenshot = device.screenshot()
-            screen_width, screen_height = screenshot.size
-            phuc_loi_rect = (
-                round(14 / 1920 * screen_width),
-                round(128 / 1080 * screen_height),
-                round(488 / 1920 * screen_width),
-                round(988 / 1080 * screen_height),
-            )
-            detected = self._ocr_words_in_rect(device, phuc_loi_rect)
-            detected_text = " ".join(word["text"] for word in detected)
-            phuc_loi_markers = ("tranh ba", "qua online", "diem danh", "hoan the")
-            if not any(
-                self._normalize_screen_text(marker) in self._normalize_screen_text(detected_text)
-                for marker in phuc_loi_markers
-            ):
-                raise RuntimeError(
-                    "OCR không xác nhận được cac_tinh_nang của hoat_dong.phuc_loi. "
-                    f"OCR: {detected_text[:180] or '(trống)'}"
-                )
 
             if not self._wait_if_paused():
                 return False
@@ -1793,7 +1853,9 @@ class BotWorker(QThread):
         # in the progress panel instead of silently being skipped.
         task_labels = (
             ("task_login", "Đăng nhập"),
+            ("task_open_activity", "Mở màn hình Hoạt động"),
             ("nhan_le_bao_quoc_van", "Nhận lễ bao quốc vận"),
+            ("task_close_activity", "Tắt màn hình Hoạt động"),
             ("diem_danh", "Điểm danh"),
             ("task_enter_guild", "Vào quân đoàn"),
             ("bao_danh_quan_doan", "Báo danh quân đoàn"),
@@ -1822,7 +1884,8 @@ class BotWorker(QThread):
         # Gameplay automation for these actions is not implemented in the real
         # ADB flow yet. Report an explicit failed status for each selected task.
         implemented = {
-            "task_login", "nhan_le_bao_quoc_van", "diem_danh", "task_enter_guild",
+            "task_login", "task_open_activity", "task_close_activity",
+            "nhan_le_bao_quoc_van", "diem_danh", "task_enter_guild",
             "bao_danh_quan_doan", "task_receive_lucky_bag", "task_guild_fortune",
             "task_detect_strategy_status", "task_strategy_vuot_ai",
             "task_receive_strategy_reward",
@@ -1886,6 +1949,18 @@ class BotWorker(QThread):
                 # Do not retain the password in the worker configuration after use.
                 self._config.pop("login_password", None)
 
+        if self._config.get("task_open_activity"):
+            label = "Mở màn hình Hoạt động"
+            self.task_progress_changed.emit(label, "running", 0, 1)
+            if self._run_open_activity(device):
+                completed += 1
+                self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(completed, max(1, total), "Đã mở màn hình Hoạt động")
+            else:
+                completed += 1
+                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.progress_changed.emit(completed, max(1, total), "Lỗi: Mở màn hình Hoạt động")
+
         if self._config.get("nhan_le_bao_quoc_van"):
             label = "Nhận lễ bao quốc vận"
             self.task_progress_changed.emit(label, "running", 0, 1)
@@ -1922,6 +1997,18 @@ class BotWorker(QThread):
                 self.progress_changed.emit(
                     completed, max(1, total), "Lỗi: Điểm danh"
                 )
+
+        if self._config.get("task_close_activity"):
+            label = "Tắt màn hình Hoạt động"
+            self.task_progress_changed.emit(label, "running", 0, 1)
+            if self._run_close_activity(device):
+                completed += 1
+                self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(completed, max(1, total), "Đã tắt màn hình Hoạt động")
+            else:
+                completed += 1
+                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.progress_changed.emit(completed, max(1, total), "Lỗi: Tắt màn hình Hoạt động")
 
         if self._config.get("task_enter_guild"):
             label = "Vào quân đoàn"
