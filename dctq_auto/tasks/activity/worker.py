@@ -167,29 +167,19 @@ class ActivityWorkerMixin:
             if not self._wait_if_paused():
                 return False
 
-            self.log_message.emit(
-                "Lễ bao Quốc vận — BƯỚC 3: Tìm và click mục Lễ bao Quốc vận bằng OCR."
-            )
             screenshot = device.screenshot()
             screen_width, screen_height = screenshot.size
             full_rect = (0, 0, screen_width, screen_height)
+            self.log_message.emit(
+                "Lễ bao Quốc vận — BƯỚC 3: Tìm và click mục Lễ bao Quốc vận bằng OCR; "
+                f"Rect (X; Y; W; H) = (0; 0; {screen_width}; {screen_height}); "
+                "thuật toán gray + autocontrast, color_text=không dùng, psm=11, lang=vie+eng (fallback eng)."
+            )
             if not self._tap_ocr_phrase_in_rect(
                 device, ("le bao quoc van",), full_rect
             ):
-                detected_words = self._ocr_words_in_rect(device, full_rect)
-                detected_text = " ".join(word["text"] for word in detected_words)
-                detected_details = "; ".join(
-                    f"text='{word['text']}' "
-                    f"(x={word['left']}, y={word['top']}, "
-                    f"w={word['width']}, h={word['height']}), "
-                    f"confidence={word['confidence']:.1f}"
-                    for word in detected_words
-                )
                 self.log_message.emit(
-                    "Không tìm thấy mục Lễ bao Quốc vận bằng OCR; "
-                    f"text OCR nhận diện được: {detected_text[:500] or '(trống)'}; "
-                    f"tọa độ từng từ: {detected_details[:2500] or '(không có từ)'}; "
-                    "bỏ qua tác vụ này."
+                    "Không tìm thấy mục Lễ bao Quốc vận bằng OCR; bỏ qua tác vụ này."
                 )
                 return False
 
