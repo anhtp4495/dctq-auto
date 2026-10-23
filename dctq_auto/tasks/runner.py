@@ -252,8 +252,36 @@ class UtilityTaskRunnerMixin:
                 if not self._wait_if_paused():
                     self.log_message.emit("Đã dừng trước khi mở màn hình Giao Tranh.")
                     return
-                # Bước 1: mở menu Quan Sư bằng tọa độ cố định đã xác nhận.
-                x, y = 100, 966
+                # Đọc cấu hình màn hình Giao Tranh từ regions.json để dễ hiệu chỉnh sau này.
+                import json
+
+                regions_path = Path(__file__).resolve().parent / "common" / "regions.json"
+                try:
+                    regions_data = json.loads(regions_path.read_text(encoding="utf-8"))
+                    battle_config = regions_data["regions"]["giao_tranh"]
+                    elements = {
+                        item["name"]: item for item in battle_config.get("elements", [])
+                    }
+                    quan_su_center = elements["quan_su"]["center"]
+                    ocr_rect_data = battle_config["ocr_rect"]
+                    tap_offset_data = battle_config.get("tap_offset", {"x": 0, "y": 0})
+                    x, y = int(quan_su_center["x_px"]), int(quan_su_center["y_px"])
+                    rect = (
+                        int(ocr_rect_data["left"]),
+                        int(ocr_rect_data["top"]),
+                        int(ocr_rect_data["right"]),
+                        int(ocr_rect_data["bottom"]),
+                    )
+                    tap_offset = (
+                        int(tap_offset_data.get("x", 0)),
+                        int(tap_offset_data.get("y", 0)),
+                    )
+                except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+                    raise RuntimeError(
+                        f"Không đọc được cấu hình Giao Tranh từ {regions_path}: {exc}"
+                    ) from exc
+
+                # Bước 1: mở menu Quân Sự bằng tọa độ đã lưu trong regions.json.
                 device.shell(f"input tap {x} {y}")
                 self.log_message.emit(
                     f"Mở màn hình Giao Tranh — BƯỚC 1: đã click [Quân Sự] tại ({x}, {y})."
@@ -264,8 +292,7 @@ class UtilityTaskRunnerMixin:
                     self.log_message.emit("Đã dừng trước khi OCR mục Giao Tranh.")
                     return
 
-                # Bước 2: RECT dùng định dạng (left, top, right, bottom).
-                rect = (200, 730, 381, 919)
+                # Bước 2: RECT dùng định dạng (left, top, right, bottom), lấy từ regions.json.
                 self.log_message.emit(
                     "Mở màn hình Giao Tranh — BƯỚC 2: OCR RECT "
                     f"{rect}, tìm 'giao_tranh'."
@@ -276,7 +303,7 @@ class UtilityTaskRunnerMixin:
                     rect,
                     steps=("gray", "white_text"),
                     psm=(6, 7, 11),
-                    tap_offset=(0, -10),
+                    tap_offset=tap_offset,
                 )
                 if match is None:
                     raise RuntimeError(
