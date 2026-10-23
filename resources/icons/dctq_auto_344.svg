@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#090909"/><stop offset=".55" stop-color="#3a100b"/><stop offset="1" stop-color="#080808"/></linearGradient>
+ <radialGradient id="halo"><stop stop-color="#ffdf83"/><stop offset=".55" stop-color="#d58a23"/><stop offset="1" stop-color="#4b160a"/></radialGradient>
+ <linearGradient id="gold" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#fff0b0"/><stop offset=".5" stop-color="#e9ad3c"/><stop offset="1" stop-color="#8b3f12"/></linearGradient>
+ <linearGradient id="red" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff563b"/><stop offset="1" stop-color="#730b12"/></linearGradient>
+ <filter id="glow"><feGaussianBlur stdDeviation="5"/></filter>
+</defs>
+<rect width="512" height="512" rx="86" fill="url(#bg)"/>
+<circle cx="256" cy="215" r="177" fill="none" stroke="#e4a33b" stroke-width="11" opacity=".85"/>
+<circle cx="256" cy="215" r="164" fill="url(#halo)" opacity=".28"/>
+<path d="M43 270 Q103 177 171 145 L137 80 224 123 278 53 305 126 384 86 359 157 Q427 188 470 271 L429 244 450 308 382 282 338 326 171 326 118 289 64 310Z" fill="#170d0b" stroke="url(#gold)" stroke-width="5"/>
+<!-- stylized Three Kingdoms warrior helmet and face -->
+<path d="M157 173 Q166 93 256 84 Q345 91 357 173 L321 151 301 123 278 151 255 113 230 151 205 126 190 155Z" fill="url(#gold)" stroke="#2b1208" stroke-width="7"/>
+<path d="M183 168 Q256 133 329 168 L318 240 Q300 286 256 304 Q211 284 194 240Z" fill="#c77a3d" stroke="#32140d" stroke-width="8"/>
+<path d="M190 192 L235 202 220 214 190 208Z M322 192 L277 202 292 214 322 208Z" fill="#180d0b"/>
+<path d="M251 199 L239 239 259 244 270 235" fill="none" stroke="#5b2114" stroke-width="8" stroke-linecap="round"/>
+<path d="M207 254 Q256 275 305 254 Q287 296 256 295 Q224 290 207 254Z" fill="#1b0d0b"/>
+<path d="M216 260 Q256 272 296 260" fill="none" stroke="#f2bd63" stroke-width="4"/>
+<path d="M190 233 Q174 271 201 309 L166 333 128 298 146 250Z M322 233 Q338 271 311 309 L346 333 384 298 366 250Z" fill="url(#red)" stroke="#6f1a12" stroke-width="5"/>
+<path d="M147 300 L196 327 256 345 316 327 365 300 345 368 256 392 167 368Z" fill="#20100d" stroke="url(#gold)" stroke-width="7"/>
+<path d="M82 365 L160 345 210 371 256 390 301 371 352 345 430 365 395 402 117 402Z" fill="url(#red)" stroke="#2a0c0b" stroke-width="7"/>
+<text x="256" y="442" text-anchor="middle" font-family="Georgia,serif" font-size="77" font-weight="900" letter-spacing="5" fill="url(#gold)" stroke="#241006" stroke-width="2">344</text>
+<text x="256" y="477" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" font-weight="700" letter-spacing="5" fill="#ffe7a0">DCTQ · AUTO</text>
+</svg>
