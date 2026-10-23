@@ -1170,6 +1170,26 @@
             "x_px": 293,
             "y_px": 860
           }
+        },
+        {
+          "name": "tim_doi_thu",
+          "text": "OCR xác nhận đang ở giao diện chính Giao Tranh",
+          "bounds": {
+            "left": 1282,
+            "top": 746,
+            "right": 1492,
+            "bottom": 780
+          },
+          "rect": {
+            "x": 1282,
+            "y": 746,
+            "width": 210,
+            "height": 34
+          },
+          "center": {
+            "x_px": 1387,
+            "y_px": 763
+          }
         }
       ],
       "ocr_rect": {
@@ -1182,7 +1202,14 @@
         "x": 0,
         "y": -10
       },
-      "note": "Tọa độ Quân Sự và RECT OCR đã xác nhận; điểm click Giao Tranh lệch lên 10 px so với tâm chữ."
+      "note": "Tọa độ Quân Sự và RECT OCR đã xác nhận; điểm click Giao Tranh lệch lên 10 px so với tâm chữ.",
+      "main_screen_ocr_rect": {
+        "left": 1234,
+        "top": 700,
+        "right": 1542,
+        "bottom": 811
+      },
+      "main_screen_target": "tim_doi_thu"
     }
   }
 }
