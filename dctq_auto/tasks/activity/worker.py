@@ -91,9 +91,9 @@ class ActivityWorkerMixin:
                 screen_width, screen_height = screenshot.size
                 profile_rect = (
                     0,
-                    0,
-                    max(1, round(200 / 1920 * screen_width)),
-                    max(1, round(200 / 1080 * screen_height)),
+                    round(145 / 1080 * screen_height),
+                    max(1, round(384 / 1920 * screen_width)),
+                    max(1, round(269 / 1080 * screen_height)),
                 )
                 detected_text = self._screen_text_in_rect(device, profile_rect)
                 normalized = self._normalize_screen_text(detected_text)
