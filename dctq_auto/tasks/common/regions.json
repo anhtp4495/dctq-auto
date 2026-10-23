@@ -1190,6 +1190,22 @@
             "x_px": 1387,
             "y_px": 763
           }
+        },
+        {
+          "name": "su_dung_canh_bat_tran",
+          "text": "Nút Sử dụng Canh Bát Trân trong màn hình Giao Tranh",
+          "center": {
+            "x_px": 1770,
+            "y_px": 861
+          }
+        },
+        {
+          "name": "tim_doi_thu_button",
+          "text": "Nút Tìm đối thủ trong màn hình Giao Tranh",
+          "center": {
+            "x_px": 1381,
+            "y_px": 775
+          }
         }
       ],
       "ocr_rect": {
@@ -1202,7 +1218,7 @@
         "x": 0,
         "y": -10
       },
-      "note": "Tọa độ Quân Sự và RECT OCR đã xác nhận; điểm click Giao Tranh lệch lên 10 px so với tâm chữ.",
+      "note": "Tọa độ Quân Sự và RECT OCR đã xác nhận; điểm click Giao Tranh lệch lên 10 px so với tâm chữ. Tọa độ tác vụ Tìm đối thủ: su_dung_canh_bat_tran (1770, 861), tim_doi_thu (1381, 775).",
       "main_screen_ocr_rect": {
         "left": 1234,
         "top": 700,
