@@ -40,6 +40,7 @@ class UtilityTaskRunnerMixin:
             ("task_find_battle_opponent", "Tìm đối thủ Giao Tranh"),
             ("task_start_battle", "Bắt đầu trận Giao Tranh"),
             ("task_end_battle", "Kết thúc trận Giao Tranh"),
+            ("xuat_chien", "Xuất chiến"),
             ("thuc_hien_giao_tranh", "Giao tranh"),
             ("thuc_hien_tranh_ba", "Tranh bá"),
             ("task_enter_strategy", "Vào màn hình Mưu Binh"),
@@ -66,7 +67,7 @@ class UtilityTaskRunnerMixin:
             "task_detect_strategy_status", "task_strategy_vuot_ai",
             "task_receive_strategy_reward",
             "task_close_guild", "task_switch_account", "task_click_coordinates",
-            "task_open_battle", "task_find_battle_opponent",
+            "task_open_battle", "task_find_battle_opponent", "xuat_chien",
         }
         for key, label in selected:
             if key in implemented:
@@ -446,6 +447,57 @@ class UtilityTaskRunnerMixin:
                 self.task_progress_changed.emit(label, "done", 1, 1)
                 self.progress_changed.emit(
                     completed, max(1, total), "Đã hoàn tất Tìm đối thủ Giao Tranh"
+                )
+            except Exception as exc:
+                completed += 1
+                self.log_message.emit(f"{label} thất bại: {exc}")
+                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), f"Lỗi: {label}"
+                )
+
+        if self._config.get("xuat_chien"):
+            label = "Xuất chiến"
+            self.task_progress_changed.emit(label, "running", 0, 1)
+            rect = (1433, 970, 1614, 1016)
+            try:
+                # Thử OCR tối đa 3 lần; chỉ click khi OCR xác nhận được nút.
+                match = None
+                for attempt in range(1, 4):
+                    if not self._wait_if_paused():
+                        self.log_message.emit("Đã dừng trước khi thực hiện Xuất chiến.")
+                        return
+                    self.log_message.emit(
+                        f"Xuất chiến — lần thử {attempt}/3: OCR RECT {rect}, "
+                        "tìm 'xuat_chien'."
+                    )
+                    match = self._tap_ocr_phrase_in_rect(
+                        device,
+                        ("xuat_chien",),
+                        rect,
+                        steps=("gray", "white_text"),
+                        psm=(11,),
+                    )
+                    if match is not None:
+                        x, y, found_rect = match
+                        self.log_message.emit(
+                            f"Đã phát hiện và click 'xuat_chien' tại ({x}, {y}); "
+                            f"RECT nhận diện {found_rect}."
+                        )
+                        break
+                    self.log_message.emit(
+                        f"Lần thử {attempt}/3 chưa OCR được 'xuat_chien'."
+                    )
+                    if attempt < 3:
+                        time.sleep(0.5)
+                if match is None:
+                    raise RuntimeError(
+                        f"Không phát hiện được 'xuat_chien' sau 3 lần OCR tại RECT {rect}."
+                    )
+                completed += 1
+                self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), "Đã hoàn tất Xuất chiến"
                 )
             except Exception as exc:
                 completed += 1
