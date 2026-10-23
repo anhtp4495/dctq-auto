@@ -270,17 +270,23 @@ class UtilityTaskRunnerMixin:
                     "Mở màn hình Giao Tranh — BƯỚC 2: OCR RECT "
                     f"{rect}, tìm 'giao_tranh' và click vào chữ."
                 )
-                found = self._tap_ocr_phrase_in_rect(
+                match = self._tap_ocr_phrase_in_rect(
                     device,
                     ("giao_tranh",),
                     rect,
                     steps=("gray", "white_text"),
                     psm=(6, 7, 11),
                 )
-                if not found:
+                if match is None:
                     raise RuntimeError(
                         f"OCR không tìm thấy 'giao_tranh' trong RECT {rect}; không click."
                     )
+                tap_x, tap_y, found_rect = match
+                self.log_message.emit(
+                    "OCR tìm thấy 'giao_tranh' — "
+                    f"RECT phát hiện (left, top, right, bottom)={found_rect}; "
+                    f"đã click tại X={tap_x}, Y={tap_y}."
+                )
                 time.sleep(0.8)
                 completed += 1
                 self.task_progress_changed.emit(label, "done", 1, 1)
