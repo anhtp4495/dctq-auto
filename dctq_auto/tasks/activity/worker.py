@@ -172,7 +172,8 @@ class ActivityWorkerMixin:
             full_rect = (0, 0, screen_width, screen_height)
             self.log_message.emit(
                 "Lễ bao Quốc vận — BƯỚC 3: Tìm và click mục Lễ bao Quốc vận bằng OCR "
-                f"Rect ({full_rect[0]}; {full_rect[1]}; {screen_width}; {screen_height})."
+                f"Rect ({full_rect[0]}; {full_rect[1]}; {screen_width}; {screen_height}) "
+                "steps: [gray] psm [11]."
             )
             if not self._tap_ocr_phrase_in_rect(
                 device, ("le bao quoc van",), full_rect
