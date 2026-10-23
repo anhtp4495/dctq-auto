@@ -176,8 +176,12 @@ class ActivityWorkerMixin:
             if not self._tap_ocr_phrase_in_rect(
                 device, ("le bao quoc van",), full_rect
             ):
+                detected_words = self._ocr_words_in_rect(device, full_rect)
+                detected_text = " ".join(word["text"] for word in detected_words)
                 self.log_message.emit(
-                    "Không tìm thấy mục Lễ bao Quốc vận bằng OCR; bỏ qua tác vụ này."
+                    "Không tìm thấy mục Lễ bao Quốc vận bằng OCR; "
+                    f"text OCR nhận diện được: {detected_text[:500] or '(trống)'}; "
+                    "bỏ qua tác vụ này."
                 )
                 return False
 
