@@ -178,9 +178,17 @@ class ActivityWorkerMixin:
             ):
                 detected_words = self._ocr_words_in_rect(device, full_rect)
                 detected_text = " ".join(word["text"] for word in detected_words)
+                detected_details = "; ".join(
+                    f"text='{word['text']}' "
+                    f"(x={word['left']}, y={word['top']}, "
+                    f"w={word['width']}, h={word['height']}), "
+                    f"confidence={word['confidence']:.1f}"
+                    for word in detected_words
+                )
                 self.log_message.emit(
                     "Không tìm thấy mục Lễ bao Quốc vận bằng OCR; "
                     f"text OCR nhận diện được: {detected_text[:500] or '(trống)'}; "
+                    f"tọa độ từng từ: {detected_details[:2500] or '(không có từ)'}; "
                     "bỏ qua tác vụ này."
                 )
                 return False
