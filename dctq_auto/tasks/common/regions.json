@@ -1133,6 +1133,56 @@
         1080
       ],
       "note": "All Mưu Binh coordinates are placeholders (1,1); replace OCR rectangles and click points with real coordinates before running."
+    },
+    "giao_tranh": {
+      "name": "giao_tranh",
+      "serial": "emulator-5554",
+      "description": "Cấu hình mở màn hình Giao Tranh",
+      "image_resolution": [
+        1920,
+        1080
+      ],
+      "elements": [
+        {
+          "name": "quan_su",
+          "text": "Nút Quân Sự ở menu chính",
+          "center": {
+            "x_px": 100,
+            "y_px": 966
+          }
+        },
+        {
+          "name": "giao_tranh",
+          "text": "Nhãn OCR giao_tranh",
+          "bounds": {
+            "left": 238,
+            "top": 851,
+            "right": 348,
+            "bottom": 870
+          },
+          "rect": {
+            "x": 238,
+            "y": 851,
+            "width": 110,
+            "height": 19
+          },
+          "center": {
+            "x_px": 293,
+            "y_px": 860
+          }
+        }
+      ],
+      "ocr_rect": {
+        "left": 200,
+        "top": 730,
+        "right": 381,
+        "bottom": 919
+      },
+      "tap_offset": {
+        "x": 0,
+        "y": -10
+      },
+      "note": "Tọa độ Quân Sự và RECT OCR đã xác nhận; điểm click Giao Tranh lệch lên 10 px so với tâm chữ."
     }
   }
 }
