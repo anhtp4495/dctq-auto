@@ -384,7 +384,7 @@ class UtilityTaskRunnerMixin:
                         item["name"]: item for item in battle_config.get("elements", [])
                     }
                     use_bazhen = elements["su_dung_canh_bat_tran"]["center"]
-                    find_opponent = elements["tim_doi_thu_button"]["center"]
+                    find_opponent = elements["tim_doi_thu"]["center"]
                     use_x, use_y = int(use_bazhen["x_px"]), int(use_bazhen["y_px"])
                     find_x, find_y = int(find_opponent["x_px"]), int(find_opponent["y_px"])
                 except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
