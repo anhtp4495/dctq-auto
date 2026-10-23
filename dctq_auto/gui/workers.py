@@ -168,6 +168,10 @@ class BotWorker(
                 selected.append("Thăm dò lãnh địa")
             if self._config.get("nhiem_vu_luu_ly_thap"):
                 selected.append("Lưu Ly Tháp")
+            if self._config.get("task_open_battle"):
+                selected.append("Mở màn hình Giao Tranh")
+            if self._config.get("task_close_battle"):
+                selected.append("Thoát màn hình Giao Tranh")
             if self._config.get("thuc_hien_giao_tranh"):
                 selected.append("Giao tranh")
             if self._config.get("thuc_hien_tranh_ba"):
