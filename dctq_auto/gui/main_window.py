@@ -1113,6 +1113,7 @@ class MainWindow(QMainWindow):
         self.task_login = QCheckBox("Đăng nhập (nhập tài khoản khi bắt đầu)")
         self.task_daily_checkin = QCheckBox("Điểm danh")
         self.task_open_activity = QCheckBox("Mở màn hình Hoạt động")
+        self.task_select_phuc_loi = QCheckBox("Chọn Phúc Lợi")
         self.task_receive_quoc_van = QCheckBox("Nhận Lễ Bao Quốc Vận")
         self.task_close_activity = QCheckBox("Tắt màn hình Hoạt động")
         self.task_enter_guild = QCheckBox("Vào quân đoàn")
@@ -1287,6 +1288,7 @@ class MainWindow(QMainWindow):
 
         phuc_loi_group = QGroupBox("Phúc Lợi")
         phuc_loi_layout = QVBoxLayout(phuc_loi_group)
+        phuc_loi_layout.addWidget(self.task_select_phuc_loi)
         phuc_loi_layout.addWidget(self.task_receive_quoc_van)
         phuc_loi_layout.addWidget(self.task_daily_checkin)
         activity_layout.addWidget(phuc_loi_group)
@@ -1437,6 +1439,7 @@ class MainWindow(QMainWindow):
                 "utility_tasks_mode": True,
                 "task_login": self.task_login.isChecked(),
                 "task_open_activity": self.task_open_activity.isChecked(),
+                "task_select_phuc_loi": self.task_select_phuc_loi.isChecked(),
                 "task_close_activity": self.task_close_activity.isChecked(),
                 "task_close_guild": self.thoat_quan_doan_task.isChecked(),
                 "task_enter_guild": self.task_enter_guild.isChecked(),
@@ -1653,7 +1656,7 @@ class MainWindow(QMainWindow):
             config["login_username"], config["login_password"] = credentials
         if config.get("utility_tasks_mode") and not any(
             config.get(key) for key in (
-                "task_login", "task_open_activity", "task_close_activity",
+                "task_login", "task_open_activity", "task_select_phuc_loi", "task_close_activity",
                 "task_close_guild", "task_switch_account",
                 "task_enter_guild", "task_receive_lucky_bag", "task_guild_fortune",
                 "diem_danh", "nhan_le_bao_quoc_van", "bao_danh_quan_doan", "dong_gop_knb",
@@ -1802,6 +1805,7 @@ class MainWindow(QMainWindow):
             task_labels = (
                 ("task_login", "Đăng nhập"),
                 ("task_open_activity", "Mở màn hình Hoạt động"),
+                ("task_select_phuc_loi", "Chọn Phúc Lợi"),
                 ("nhan_le_bao_quoc_van", "Nhận lễ bao quốc vận"),
                 ("diem_danh", "Điểm danh"),
                 ("task_close_activity", "Tắt màn hình Hoạt động"),
