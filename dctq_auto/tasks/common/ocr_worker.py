@@ -282,8 +282,8 @@ class OcrWorkerMixin:
         rect: tuple[int, int, int, int],
         steps: tuple[str, ...] = ("gray", "white_text"),
         psm: tuple[int, ...] = (11,),
-    ) -> bool:
-        """Find and tap a word or contiguous phrase using configured OCR preprocessing."""
+    ) -> tuple[int, int, tuple[int, int, int, int]] | None:
+        """Find and tap a word or contiguous phrase; return tap point and detected rectangle."""
         wanted = {OcrWorkerMixin._normalize_screen_text(word) for word in words}
         detected = OcrWorkerMixin._ocr_words_in_rect(device, rect, steps=steps, psm=psm)
         matches = [word for word in detected if word["text"] in wanted]
@@ -312,12 +312,18 @@ class OcrWorkerMixin:
                         "left": x1, "top": y1, "width": x2 - x1, "height": y2 - y1,
                     })
         if not matches:
-            return False
+            return None
         match = max(matches, key=lambda item: (item["confidence"], item["width"]))
         x = match["left"] + match["width"] // 2
         y = match["top"] + match["height"] // 2
+        detected_rect = (
+            int(match["left"]),
+            int(match["top"]),
+            int(match["left"] + match["width"]),
+            int(match["top"] + match["height"]),
+        )
         device.shell(f"input tap {x} {y}")
-        return True
+        return x, y, detected_rect
 
     def _tap_fuzzy_ocr_target(
         self, device, target_text: str, threshold: float = 0.25,
