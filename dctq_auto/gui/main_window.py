@@ -1801,7 +1801,10 @@ class MainWindow(QMainWindow):
         if config.get("utility_tasks_mode"):
             task_labels = (
                 ("task_login", "Đăng nhập"),
+                ("task_open_activity", "Mở màn hình Hoạt động"),
+                ("nhan_le_bao_quoc_van", "Nhận lễ bao quốc vận"),
                 ("diem_danh", "Điểm danh"),
+                ("task_close_activity", "Tắt màn hình Hoạt động"),
                 ("task_enter_guild", "Vào quân đoàn"),
                 ("bao_danh_quan_doan", "Báo danh quân đoàn"),
                 ("task_receive_lucky_bag", "Nhận túi phúc"),
