@@ -169,14 +169,20 @@ class ActivityWorkerMixin:
 
             screenshot = device.screenshot()
             screen_width, screen_height = screenshot.size
-            full_rect = (0, 0, screen_width, screen_height)
+            # RECT đã chọn trong công cụ phân tích OCR (x, y, width, height)
+            selected_rect = (
+                round(200 / 1920 * screen_width),
+                round(125 / 1080 * screen_height),
+                round(470 / 1920 * screen_width),
+                round(1002 / 1080 * screen_height),
+            )
             self.log_message.emit(
                 "Lễ bao Quốc vận — BƯỚC 3: Tìm và click mục Lễ bao Quốc vận bằng OCR "
-                f"Rect ({full_rect[0]}; {full_rect[1]}; {screen_width}; {screen_height}) "
-                "steps: [gray] psm [11]."
+                f"Rect ({selected_rect[0]}; {selected_rect[1]}; "
+                f"{selected_rect[2]}; {selected_rect[3]}) steps: [gray] psm [11]."
             )
             if not self._tap_ocr_phrase_in_rect(
-                device, ("le bao quoc van",), full_rect
+                device, ("le bao quoc van",), selected_rect
             ):
                 self.log_message.emit(
                     "Không tìm thấy mục Lễ bao Quốc vận bằng OCR; bỏ qua tác vụ này."
