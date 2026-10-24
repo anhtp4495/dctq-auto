@@ -1346,6 +1346,78 @@
             "x_px": 1381,
             "y_px": 775
           }
+        },
+        {
+          "name": "b2_3",
+          "text": "Tọa độ b2.3",
+          "center": {
+            "x_px": 436,
+            "y_px": 418
+          },
+          "bounds": {
+            "left": 436,
+            "top": 418,
+            "right": 436,
+            "bottom": 418
+          },
+          "rect": {
+            "x": 436,
+            "y": 418,
+            "width": 0,
+            "height": 0
+          },
+          "center_ratio": {
+            "x": 0.22708333333333333,
+            "y": 0.387037037037037
+          }
+        },
+        {
+          "name": "b2_4",
+          "text": "Tọa độ b2.4",
+          "center": {
+            "x_px": 1491,
+            "y_px": 395
+          },
+          "bounds": {
+            "left": 1491,
+            "top": 395,
+            "right": 1491,
+            "bottom": 395
+          },
+          "rect": {
+            "x": 1491,
+            "y": 395,
+            "width": 0,
+            "height": 0
+          },
+          "center_ratio": {
+            "x": 0.7765625,
+            "y": 0.36574074074074076
+          }
+        },
+        {
+          "name": "b2_5",
+          "text": "Tọa độ b2.5",
+          "center": {
+            "x_px": 950,
+            "y_px": 744
+          },
+          "bounds": {
+            "left": 950,
+            "top": 744,
+            "right": 950,
+            "bottom": 744
+          },
+          "rect": {
+            "x": 950,
+            "y": 744,
+            "width": 0,
+            "height": 0
+          },
+          "center_ratio": {
+            "x": 0.4947916666666667,
+            "y": 0.6888888888888889
+          }
         }
       ],
       "ocr_rect": {
@@ -1365,7 +1437,8 @@
         "right": 1542,
         "bottom": 811
       },
-      "main_screen_target": "tim_doi_thu"
+      "main_screen_target": "tim_doi_thu",
+      "notes": " Bước 5: click vo_tuong_3 → b2_3 → vo_tuong_4 → b2_4 → vo_tuong_5 → b2_5; chọn bộ võ tướng theo kết quả OCR TRUE/FALSE."
     }
   }
 }
