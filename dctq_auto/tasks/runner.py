@@ -558,25 +558,61 @@ class UtilityTaskRunnerMixin:
                     )
                     if duration_ms <= 0:
                         raise ValueError("thời gian kéo phải lớn hơn 0")
+                    hero_point = elements["vo_tuong_1"]["center"]
+                    no_hero_point = elements["vo_tuong_1_1"]["center"]
                 except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
                     raise RuntimeError(
                         f"Không đọc được cấu hình kéo Bắt đầu trận từ {regions_path}: {exc}"
                     ) from exc
 
+                # BƯỚC 1: OCR chỉ báo võ tướng một lần cho mỗi tài khoản cấu hình.
+                account_key = str(self._config.get("login_username", "")).strip() or "__current_account_unspecified__"
+                cache = getattr(self, "_battle_hero_flag_cache", {})
+                if account_key not in cache:
+                    if not self._wait_if_paused():
+                        self.log_message.emit("Đã dừng trước OCR xác định võ tướng.")
+                        return
+                    screenshot = device.screenshot().convert("RGB")
+                    roi = screenshot.crop((302, 978, 411, 1009)).convert("L")
+                    ocr_text = pytesseract.image_to_string(roi, config="--psm 8").strip()
+                    cache[account_key] = bool(ocr_text)
+                    self._battle_hero_flag_cache = cache
+                    self.log_message.emit(
+                        f"OCR chỉ báo võ tướng cho tài khoản '{account_key}': "
+                        f"text={ocr_text!r}, kết quả={'TRUE' if cache[account_key] else 'FALSE'}."
+                    )
+                else:
+                    self.log_message.emit(
+                        f"Dùng cache võ tướng cho tài khoản '{account_key}': "
+                        f"{'TRUE' if cache[account_key] else 'FALSE'}."
+                    )
+                has_hero_text = cache[account_key]
                 if not self._wait_if_paused():
-                    self.log_message.emit("Đã dừng trước khi kéo để bắt đầu trận Giao Tranh.")
+                    self.log_message.emit("Đã dừng trước khi chọn vị trí võ tướng.")
+                    return
+                selected_point = hero_point if has_hero_text else no_hero_point
+                hero_x, hero_y = int(selected_point["x_px"]), int(selected_point["y_px"])
+                device.shell(f"input tap {hero_x} {hero_y}")
+                self.log_message.emit(
+                    f"Bắt đầu trận Giao Tranh — BƯỚC 1: click "
+                    f"{'vo_tuong_1' if has_hero_text else 'vo_tuong_1_1'} tại ({hero_x}, {hero_y})."
+                )
+                time.sleep(0.5)
+
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng trước Bước 2 kéo để bắt đầu trận Giao Tranh.")
                     return
                 device.shell(
                     f"input swipe {start_x} {start_y} {end_x} {end_y} {duration_ms}"
                 )
                 self.log_message.emit(
-                    "Bắt đầu trận Giao Tranh — BƯỚC 1: kéo từ điểm A "
+                    "Bắt đầu trận Giao Tranh — BƯỚC 2: kéo từ điểm A "
                     f"({start_x}, {start_y}) đến điểm B ({end_x}, {end_y}) "
                     f"trong {duration_ms} ms."
                 )
                 time.sleep(0.5)
 
-                # BƯỚC 2: click lần lượt hai điểm đã lưu trong regions.json.
+                # BƯỚC 3: click lần lượt hai điểm đã lưu trong regions.json.
                 point_21 = elements["bat_dau_tran_b2_1"]["center"]
                 point_22 = elements["bat_dau_tran_b2_2"]["center"]
                 b21_x, b21_y = int(point_21["x_px"]), int(point_21["y_px"])
@@ -587,7 +623,7 @@ class UtilityTaskRunnerMixin:
                     return
                 device.shell(f"input tap {b21_x} {b21_y}")
                 self.log_message.emit(
-                    f"Bắt đầu trận Giao Tranh — BƯỚC 2.1: click ({b21_x}, {b21_y})."
+                    f"Bắt đầu trận Giao Tranh — BƯỚC 3.1: click ({b21_x}, {b21_y})."
                 )
                 time.sleep(0.3)
 
@@ -596,11 +632,11 @@ class UtilityTaskRunnerMixin:
                     return
                 device.shell(f"input tap {b22_x} {b22_y}")
                 self.log_message.emit(
-                    f"Bắt đầu trận Giao Tranh — BƯỚC 2.2: click ({b22_x}, {b22_y})."
+                    f"Bắt đầu trận Giao Tranh — BƯỚC 3.2: click ({b22_x}, {b22_y})."
                 )
                 time.sleep(0.5)
 
-                # BƯỚC 3: swipe từ b3.1 đến b3.3 theo tọa độ đã lưu.
+                # BƯỚC 4: swipe từ b3.1 đến b3.3 theo tọa độ đã lưu.
                 point_31 = elements["bat_dau_tran_b3_1"]["center"]
                 point_33 = elements["bat_dau_tran_b3_3"]["center"]
                 b31_x, b31_y = int(point_31["x_px"]), int(point_31["y_px"])
@@ -616,7 +652,7 @@ class UtilityTaskRunnerMixin:
                         return
                     device.shell(f"input swipe {b31_x} {b31_y} {b33_x} {b33_y} {duration_ms}")
                     self.log_message.emit(
-                        f"Bắt đầu trận Giao Tranh — BƯỚC 3: swipe lần {swipe_index + 1}/2 từ "
+                        f"Bắt đầu trận Giao Tranh — BƯỚC 4: swipe lần {swipe_index + 1}/2 từ "
                         f"({b31_x}, {b31_y}) đến ({b33_x}, {b33_y}) trong {duration_ms} ms."
                     )
                     time.sleep(0.5)
@@ -624,7 +660,7 @@ class UtilityTaskRunnerMixin:
                 completed += 1
                 self.task_progress_changed.emit(label, "done", 1, 1)
                 self.progress_changed.emit(
-                    completed, max(1, total), "Đã hoàn tất Bước 1, Bước 2 và Bước 3 Bắt đầu trận Giao Tranh"
+                    completed, max(1, total), "Đã hoàn tất Bước 1 đến Bước 4 Bắt đầu trận Giao Tranh"
                 )
             except Exception as exc:
                 completed += 1
