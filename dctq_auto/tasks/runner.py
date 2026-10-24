@@ -905,8 +905,15 @@ class UtilityTaskRunnerMixin:
                         time.sleep(0.5)
 
                     click_sequence = [
-                        (f"vo_tuong_{index}{suffix}", hero_points[f"vo_tuong_{index}{suffix}"])
+                        item
                         for index in (3, 4, 5)
+                        for item in (
+                            (f"vo_tuong_{index}{suffix}", hero_points[f"vo_tuong_{index}{suffix}"]),
+                            (
+                                f"vi_tri_chien_dau_vo_tuong_{index}",
+                                elements[f"vi_tri_chien_dau_vo_tuong_{index}"]["center"],
+                            ),
+                        )
                     ]
                     for point_name, point in click_sequence:
                         if not self._wait_if_paused():
