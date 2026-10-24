@@ -1380,15 +1380,17 @@ class MainWindow(QMainWindow):
         battle_count_row.addWidget(QLabel("trận"))
         battle_count_row.addStretch(1)
         battle_screen_layout.addLayout(battle_count_row)
+        # Hiển thị các tác vụ Giao Tranh theo đúng thứ tự quy trình người dùng chọn.
         battle_screen_layout.addWidget(self.task_open_battle)
-        battle_screen_layout.addWidget(self.task_close_battle)
+        battle_screen_layout.addWidget(self.task_use_bazhen)
         battle_screen_layout.addWidget(self.task_find_battle_opponent)
+        battle_screen_layout.addWidget(self.task_xuat_chien)
         battle_screen_layout.addWidget(self.task_start_battle)
         battle_screen_layout.addWidget(task_battle_mode_row)
         battle_screen_layout.addWidget(self.task_battle_mode_description)
         battle_screen_layout.addWidget(self.task_end_battle)
-        battle_screen_layout.addWidget(self.task_xuat_chien)
-        battle_screen_layout.addWidget(self.task_use_bazhen)
+        # Tác vụ phụ, không thuộc chuỗi 7 bước chính.
+        battle_screen_layout.addWidget(self.task_close_battle)
         daily_layout.addWidget(battle_screen_group)
         daily_layout.addLayout(task_battle_options)
 
