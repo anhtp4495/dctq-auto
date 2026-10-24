@@ -1204,6 +1204,16 @@
           }
         },
         {
+          "name": "vo_tuong_1",
+          "text": "Vị trí chọn võ tướng khi OCR vùng chỉ báo có chữ",
+          "center": { "x_px": 589, "y_px": 938 }
+        },
+        {
+          "name": "vo_tuong_1_1",
+          "text": "Vị trí chọn võ tướng khi OCR vùng chỉ báo không có chữ",
+          "center": { "x_px": 434, "y_px": 938 }
+        },
+        {
           "name": "bat_dau_tran_b3_1",
           "text": "Điểm bắt đầu swipe Bước 3 khi bắt đầu trận Giao Tranh",
           "center": {
