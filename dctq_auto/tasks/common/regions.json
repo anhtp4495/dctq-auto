@@ -1204,6 +1204,22 @@
           }
         },
         {
+          "name": "bat_dau_tran_diem_a",
+          "text": "Điểm bắt đầu kéo khi bắt đầu trận Giao Tranh",
+          "center": {
+            "x_px": 958,
+            "y_px": 434
+          }
+        },
+        {
+          "name": "bat_dau_tran_diem_b",
+          "text": "Điểm kết thúc kéo khi bắt đầu trận Giao Tranh",
+          "center": {
+            "x_px": 960,
+            "y_px": 804
+          }
+        },
+        {
           "name": "su_dung_canh_bat_tran",
           "text": "Nút Sử dụng Canh Bát Trân trong màn hình Giao Tranh",
           "center": {
@@ -1230,7 +1246,7 @@
         "x": 0,
         "y": 0
       },
-      "note": "Tọa độ button_giao_tranh đã được người dùng xác nhận (289, 795); OCR giao_tranh chỉ dùng nhận diện, không dùng tâm OCR làm điểm click. Tọa độ tác vụ Tìm đối thủ: su_dung_canh_bat_tran (1770, 861), tim_doi_thu (1381, 775).",
+      "note": "Tọa độ button_giao_tranh đã được người dùng xác nhận (289, 795); OCR giao_tranh chỉ dùng nhận diện, không dùng tâm OCR làm điểm click. Bắt đầu trận dùng swipe từ bat_dau_tran_diem_a (958, 434) đến bat_dau_tran_diem_b (960, 804), thời gian 500 ms. Tọa độ tác vụ Tìm đối thủ: su_dung_canh_bat_tran (1770, 861), tim_doi_thu (1381, 775).",
       "main_screen_ocr_rect": {
         "left": 1234,
         "top": 700,
