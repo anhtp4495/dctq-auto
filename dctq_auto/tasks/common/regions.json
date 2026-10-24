@@ -1419,7 +1419,43 @@
             "y": 0.6888888888888889
           }
         }
+        {
+          "name": "button_rut_lui",
+          "text": "Nút Rút lui khi kết thúc trận Giao Tranh",
+          "center": { "x_px": 167, "y_px": 726 },
+          "center_ratio": { "x": 0.087, "y": 0.672222 }
+        },
+        {
+          "name": "button_xac_nhan",
+          "text": "Nút xác nhận hộp thoại Rút lui trong Giao Tranh",
+          "center": { "x_px": 1158, "y_px": 698 },
+          "center_ratio": { "x": 0.603125, "y": 0.646296 }
+        },
+        {
+          "name": "button_tran_sau",
+          "text": "Nút Trận sau sau khi kết thúc trận Giao Tranh",
+          "center": { "x_px": 118, "y_px": 993 },
+          "center_ratio": { "x": 0.061458, "y": 0.919444 }
+        },
+        {
+          "name": "button_hoi_thanh",
+          "text": "Nút Hồi thành khi đã đủ số trận Giao Tranh",
+          "center": { "x_px": 1553, "y_px": 993 },
+          "center_ratio": { "x": 0.808854, "y": 0.919444 }
+        }
       ],
+      "end_battle_ocr_rect": {
+        "left": 0,
+        "top": 623,
+        "right": 280,
+        "bottom": 1034
+      },
+      "retreat_confirm_ocr_rect": {
+        "left": 844,
+        "top": 246,
+        "right": 1073,
+        "bottom": 313
+      },
       "ocr_rect": {
         "left": 200,
         "top": 730,
