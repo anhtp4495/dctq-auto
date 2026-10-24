@@ -581,26 +581,29 @@ class UtilityTaskRunnerMixin:
                         for word in words if str(word.get("text", "")).strip()
                     )
 
-                # So khớp tương đồng với "thu_quan"/"rut_lui", ngưỡng lớn hơn 25%.
+                # Chỉ so khớp các cụm ngắn; tránh nhận nhầm chữ khác trong vùng OCR.
+                # Ngưỡng cao hơn để "xuat chien a 232 240" không bị coi là "rut_lui".
                 from difflib import SequenceMatcher
 
                 def fuzzy_battle_phrase(text):
                     normalized = self._normalize_screen_text(text)
                     tokens = normalized.split()
                     candidates = list(tokens)
-                    # OCR đôi khi tách/ghép sai từ; kiểm tra cả các cửa sổ 2-3 từ.
-                    for width in (2, 3):
-                        candidates.extend(
-                            " ".join(tokens[index:index + width])
-                            for index in range(max(0, len(tokens) - width + 1))
-                        )
+                    # OCR có thể tách cụm thành 2 từ; không ghép cả cụm dài 3 từ
+                    # vì dễ tạo điểm tương đồng giả từ các từ không liên quan.
+                    candidates.extend(
+                        " ".join(tokens[index:index + 2])
+                        for index in range(max(0, len(tokens) - 1))
+                    )
                     best_phrase = None
+                    best_candidate = ""
                     best_score = 0.0
                     for expected in ("rut lui", "thu quan"):
                         expected_compact = expected.replace(" ", "")
                         for candidate in candidates:
                             candidate_compact = candidate.replace(" ", "")
-                            if len(candidate_compact) < 4:
+                            # Bỏ qua ứng viên dài/ngắn quá xa cụm cần nhận diện.
+                            if abs(len(candidate_compact) - len(expected_compact)) > 2:
                                 continue
                             score = max(
                                 SequenceMatcher(None, expected, candidate).ratio(),
@@ -609,9 +612,10 @@ class UtilityTaskRunnerMixin:
                             if score > best_score:
                                 best_score = score
                                 best_phrase = expected
-                    if best_phrase and best_score > 0.25:
-                        return best_phrase, best_score
-                    return None, best_score
+                                best_candidate = candidate
+                    if best_phrase and best_score >= 0.60:
+                        return best_phrase, best_score, best_candidate
+                    return None, best_score, best_candidate
 
                 battle_loaded = False
                 last_battle_ocr_text = ""
@@ -620,19 +624,19 @@ class UtilityTaskRunnerMixin:
                         self.log_message.emit("Đã dừng trước khi xác nhận trận Giao Tranh tải thành công.")
                         return
                     last_battle_ocr_text = read_start_battle_rect_text(end_battle_rect)
-                    found_phrase, similarity = fuzzy_battle_phrase(last_battle_ocr_text)
+                    found_phrase, similarity, best_candidate = fuzzy_battle_phrase(last_battle_ocr_text)
                     self.log_message.emit(
                         f"Bắt đầu trận Giao Tranh — BƯỚC 1: OCR lần {attempt}/5 "
-                        f"RECT {end_battle_rect}: "
-                        f"{last_battle_ocr_text[:180] or '(trống)'}; "
-                        f"độ tương đồng cao nhất={similarity:.1%}."
+                        f"RECT {end_battle_rect}: {last_battle_ocr_text[:180] or '(trống)'}; "
+                        f"ứng viên gần nhất={best_candidate or '(không có)'}; "
+                        f"độ tương đồng cao nhất={similarity:.1%} (ngưỡng >=60%)."
                     )
                     if found_phrase:
                         battle_loaded = True
                         self.log_message.emit(
                             f"Xác nhận trận Giao Tranh tải thành công: OCR tương đồng "
                             f"{similarity:.1%} với '{found_phrase.replace(' ', '_')}' "
-                            f"(ngưỡng >25%) ở lần {attempt}/5."
+                            f"(ngưỡng >=60%, ứng viên OCR='{best_candidate}') ở lần {attempt}/5."
                         )
                         break
                     if attempt < 5:
@@ -640,7 +644,7 @@ class UtilityTaskRunnerMixin:
 
                 if not battle_loaded:
                     raise RuntimeError(
-                        "OCR không đạt độ tương đồng >25% với 'thu_quan' hoặc 'rut_lui' "
+                        "OCR không đạt độ tương đồng >=60% với 'thu_quan' hoặc 'rut_lui' "
                         f"sau 5 lần thử trong RECT {end_battle_rect}. "
                         f"OCR cuối: {last_battle_ocr_text[:180] or '(trống)'}"
                     )
@@ -655,6 +659,11 @@ class UtilityTaskRunnerMixin:
                     screenshot = device.screenshot().convert("RGB")
                     roi = screenshot.crop((302, 978, 411, 1009)).convert("L")
                     ocr_text = pytesseract.image_to_string(roi, config="--psm 8").strip()
+                    # Ghi nguyên văn OCR thành một dòng để xác định nội dung chỉ báo thật.
+                    self.log_message.emit(
+                        f"OCR chỉ báo võ tướng RECT (302, 978, 411, 1009): "
+                        f"text={ocr_text!r}."
+                    )
                     cache[account_key] = bool(ocr_text)
                     self._battle_hero_flag_cache = cache
                     self.log_message.emit(
