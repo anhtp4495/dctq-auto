@@ -535,40 +535,9 @@ class UtilityTaskRunnerMixin:
                 )
 
         def run_start_battle_sequence():
-            import json
-
-            regions_path = Path(__file__).resolve().parent / "common" / "regions.json"
-            try:
-                regions_data = json.loads(regions_path.read_text(encoding="utf-8"))
-                elements = {
-                    item["name"]: item
-                    for item in regions_data["regions"]["giao_tranh"].get("elements", [])
-                }
-                point_a = elements["bat_dau_tran_diem_a"]["center"]
-                point_b = elements["bat_dau_tran_diem_b"]["center"]
-                start_x, start_y = int(point_a["x_px"]), int(point_a["y_px"])
-                end_x, end_y = int(point_b["x_px"]), int(point_b["y_px"])
-                duration_ms = int(
-                    regions_data["regions"]["giao_tranh"].get("start_battle_swipe_duration_ms", 500)
-                )
-                if duration_ms <= 0:
-                    raise ValueError("thời gian kéo phải lớn hơn 0")
-                hero_points = {f"vo_tuong_{index}": elements[f"vo_tuong_{index}"]["center"] for index in range(1, 6)}
-                end_battle_rect_data = regions_data["regions"]["giao_tranh"]["end_battle_ocr_rect"]
-                end_battle_rect = (
-                    int(end_battle_rect_data["left"]),
-                    int(end_battle_rect_data["top"]),
-                    int(end_battle_rect_data["right"]),
-                    int(end_battle_rect_data["bottom"]),
-                )
-            except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
-                raise RuntimeError(
-                    f"Không đọc được cấu hình kéo Bắt đầu trận từ {regions_path}: {exc}"
-                ) from exc
-
-            # BƯỚC 1: xác nhận trận tải thành công bằng OCR vùng trạng thái.
-            # Hàm OCR được khai báo riêng trong tác vụ này để không phụ thuộc
-            # việc người dùng có bật "Kết thúc trận Giao Tranh" hay không.
+            # BƯỚC 1: OCR xác nhận trận tải thành công PHẢI chạy trước khi đọc regions.json.
+            # RECT trạng thái mặc định đã biết; bước này không phụ thuộc cấu hình regions.
+            end_battle_rect = (0, 629, 287, 1075)
             def read_start_battle_rect_text(rect):
                 words = self._ocr_words_in_rect(
                     device, rect, steps=("gray", "white_text"), psm=(11,)
@@ -616,6 +585,30 @@ class UtilityTaskRunnerMixin:
                 return None, best_score, best_candidate
 
 
+
+            import json
+
+            regions_path = Path(__file__).resolve().parent / "common" / "regions.json"
+            try:
+                regions_data = json.loads(regions_path.read_text(encoding="utf-8"))
+                elements = {
+                    item["name"]: item
+                    for item in regions_data["regions"]["giao_tranh"].get("elements", [])
+                }
+                point_a = elements["bat_dau_tran_diem_a"]["center"]
+                point_b = elements["bat_dau_tran_diem_b"]["center"]
+                start_x, start_y = int(point_a["x_px"]), int(point_a["y_px"])
+                end_x, end_y = int(point_b["x_px"]), int(point_b["y_px"])
+                duration_ms = int(
+                    regions_data["regions"]["giao_tranh"].get("start_battle_swipe_duration_ms", 500)
+                )
+                if duration_ms <= 0:
+                    raise ValueError("thời gian kéo phải lớn hơn 0")
+                hero_points = {f"vo_tuong_{index}": elements[f"vo_tuong_{index}"]["center"] for index in range(1, 6)}
+            except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+                raise RuntimeError(
+                    f"Không đọc được cấu hình kéo Bắt đầu trận từ {regions_path}: {exc}"
+                ) from exc
 
             # BƯỚC 2: OCR chỉ báo để chọn bộ tọa độ võ tướng; không click.
             account_key = str(self._config.get("login_username", "")).strip() or "__current_account_unspecified__"
