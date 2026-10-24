@@ -68,7 +68,7 @@ class UtilityTaskRunnerMixin:
             "task_detect_strategy_status", "task_strategy_vuot_ai",
             "task_receive_strategy_reward",
             "task_close_guild", "task_switch_account", "task_click_coordinates",
-            "task_open_battle", "task_find_battle_opponent", "xuat_chien", "task_use_bazhen",
+            "task_open_battle", "task_find_battle_opponent", "task_start_battle", "xuat_chien", "task_use_bazhen",
         }
         for key, label in selected:
             if key in implemented:
@@ -527,6 +527,58 @@ class UtilityTaskRunnerMixin:
                 self.task_progress_changed.emit(label, "done", 1, 1)
                 self.progress_changed.emit(
                     completed, max(1, total), "Đã hoàn tất Xuất chiến"
+                )
+            except Exception as exc:
+                completed += 1
+                self.log_message.emit(f"{label} thất bại: {exc}")
+                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), f"Lỗi: {label}"
+                )
+
+        if self._config.get("task_start_battle"):
+            label = "Bắt đầu trận Giao Tranh"
+            self.task_progress_changed.emit(label, "running", 0, 1)
+            try:
+                import json
+
+                regions_path = Path(__file__).resolve().parent / "common" / "regions.json"
+                try:
+                    regions_data = json.loads(regions_path.read_text(encoding="utf-8"))
+                    elements = {
+                        item["name"]: item
+                        for item in regions_data["regions"]["giao_tranh"].get("elements", [])
+                    }
+                    point_a = elements["bat_dau_tran_diem_a"]["center"]
+                    point_b = elements["bat_dau_tran_diem_b"]["center"]
+                    start_x, start_y = int(point_a["x_px"]), int(point_a["y_px"])
+                    end_x, end_y = int(point_b["x_px"]), int(point_b["y_px"])
+                    duration_ms = int(
+                        regions_data["regions"]["giao_tranh"].get("start_battle_swipe_duration_ms", 500)
+                    )
+                    if duration_ms <= 0:
+                        raise ValueError("thời gian kéo phải lớn hơn 0")
+                except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+                    raise RuntimeError(
+                        f"Không đọc được cấu hình kéo Bắt đầu trận từ {regions_path}: {exc}"
+                    ) from exc
+
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng trước khi kéo để bắt đầu trận Giao Tranh.")
+                    return
+                device.shell(
+                    f"input swipe {start_x} {start_y} {end_x} {end_y} {duration_ms}"
+                )
+                self.log_message.emit(
+                    "Bắt đầu trận Giao Tranh — BƯỚC 1: kéo từ điểm A "
+                    f"({start_x}, {start_y}) đến điểm B ({end_x}, {end_y}) "
+                    f"trong {duration_ms} ms."
+                )
+                time.sleep(0.5)
+                completed += 1
+                self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), "Đã thực hiện bước kéo Bắt đầu trận Giao Tranh"
                 )
             except Exception as exc:
                 completed += 1
