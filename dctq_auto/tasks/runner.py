@@ -608,12 +608,18 @@ class UtilityTaskRunnerMixin:
                 if not self._wait_if_paused():
                     self.log_message.emit("Đã dừng trước Bước 3 của Bắt đầu trận Giao Tranh.")
                     return
-                device.shell(f"input swipe {b31_x} {b31_y} {b33_x} {b33_y} {duration_ms}")
-                self.log_message.emit(
-                    "Bắt đầu trận Giao Tranh — BƯỚC 3: swipe từ "
-                    f"({b31_x}, {b31_y}) đến ({b33_x}, {b33_y}) trong {duration_ms} ms."
-                )
-                time.sleep(0.5)
+                for swipe_index in range(2):
+                    if not self._wait_if_paused():
+                        self.log_message.emit(
+                            f"Đã dừng trước lần swipe {swipe_index + 1}/2 của Bước 3 Bắt đầu trận Giao Tranh."
+                        )
+                        return
+                    device.shell(f"input swipe {b31_x} {b31_y} {b33_x} {b33_y} {duration_ms}")
+                    self.log_message.emit(
+                        f"Bắt đầu trận Giao Tranh — BƯỚC 3: swipe lần {swipe_index + 1}/2 từ "
+                        f"({b31_x}, {b31_y}) đến ({b33_x}, {b33_y}) trong {duration_ms} ms."
+                    )
+                    time.sleep(0.5)
 
                 completed += 1
                 self.task_progress_changed.emit(label, "done", 1, 1)
