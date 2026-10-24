@@ -575,10 +575,35 @@ class UtilityTaskRunnerMixin:
                     f"trong {duration_ms} ms."
                 )
                 time.sleep(0.5)
+
+                # BƯỚC 2: click lần lượt hai điểm đã lưu trong regions.json.
+                point_21 = elements["bat_dau_tran_b2_1"]["center"]
+                point_22 = elements["bat_dau_tran_b2_2"]["center"]
+                b21_x, b21_y = int(point_21["x_px"]), int(point_21["y_px"])
+                b22_x, b22_y = int(point_22["x_px"]), int(point_22["y_px"])
+
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng trước Bước 2.1 của Bắt đầu trận Giao Tranh.")
+                    return
+                device.shell(f"input tap {b21_x} {b21_y}")
+                self.log_message.emit(
+                    f"Bắt đầu trận Giao Tranh — BƯỚC 2.1: click ({b21_x}, {b21_y})."
+                )
+                time.sleep(0.3)
+
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng trước Bước 2.2 của Bắt đầu trận Giao Tranh.")
+                    return
+                device.shell(f"input tap {b22_x} {b22_y}")
+                self.log_message.emit(
+                    f"Bắt đầu trận Giao Tranh — BƯỚC 2.2: click ({b22_x}, {b22_y})."
+                )
+                time.sleep(0.5)
+
                 completed += 1
                 self.task_progress_changed.emit(label, "done", 1, 1)
                 self.progress_changed.emit(
-                    completed, max(1, total), "Đã thực hiện bước kéo Bắt đầu trận Giao Tranh"
+                    completed, max(1, total), "Đã hoàn tất Bước 1 kéo và Bước 2 click Bắt đầu trận Giao Tranh"
                 )
             except Exception as exc:
                 completed += 1
