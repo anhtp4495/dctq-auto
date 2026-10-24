@@ -1166,6 +1166,10 @@ class MainWindow(QMainWindow):
             self.task_glass_tower_knb.setEnabled
         )
         self.task_open_battle = QCheckBox("Mở màn hình Giao Tranh")
+        self.task_open_battle_count = QSpinBox()
+        self.task_open_battle_count.setRange(1, 60)
+        self.task_open_battle_count.setValue(1)
+        self.task_open_battle_count.setKeyboardTracking(False)
         self.task_close_battle = QCheckBox("Thoát màn hình Giao Tranh")
         self.task_find_battle_opponent = QCheckBox("Tìm đối thủ Giao Tranh")
         self.task_start_battle = QCheckBox("Bắt đầu trận Giao Tranh")
@@ -1368,9 +1372,17 @@ class MainWindow(QMainWindow):
             self.task_battle_time_mode,
             self.task_battle_time_limit_control,
         )
-        battle_screen_group = QGroupBox("Màn hình Giao Tranh")
+        battle_screen_group = QGroupBox("Giao Tranh 1 trận")
         battle_screen_layout = QVBoxLayout(battle_screen_group)
-        battle_screen_layout.addWidget(self.task_open_battle)
+        battle_count_row = QHBoxLayout()
+        battle_count_row.addWidget(self.task_open_battle)
+        battle_count_row.addWidget(QLabel("Số trận:"))
+        battle_count_row.addWidget(self.task_open_battle_count)
+        battle_count_row.addStretch(1)
+        battle_screen_layout.addLayout(battle_count_row)
+        self.task_open_battle_count.valueChanged.connect(
+            lambda count: battle_screen_group.setTitle(f"Giao Tranh {count} trận")
+        )
         battle_screen_layout.addWidget(self.task_close_battle)
         battle_screen_layout.addWidget(self.task_find_battle_opponent)
         battle_screen_layout.addWidget(self.task_start_battle)
@@ -1457,6 +1469,7 @@ class MainWindow(QMainWindow):
                 "task_close_activity": self.task_close_activity.isChecked(),
                 "task_close_guild": self.thoat_quan_doan_task.isChecked(),
                 "task_open_battle": self.task_open_battle.isChecked(),
+            "task_open_battle_count": self.task_open_battle_count.value(),
                     "task_close_battle": self.task_close_battle.isChecked(),
                 "task_find_battle_opponent": self.task_find_battle_opponent.isChecked(),
                 "task_start_battle": self.task_start_battle.isChecked(),
