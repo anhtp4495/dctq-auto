@@ -600,10 +600,25 @@ class UtilityTaskRunnerMixin:
                 )
                 time.sleep(0.5)
 
+                # BƯỚC 3: swipe từ b3.1 đến b3.3 theo tọa độ đã lưu.
+                point_31 = elements["bat_dau_tran_b3_1"]["center"]
+                point_33 = elements["bat_dau_tran_b3_3"]["center"]
+                b31_x, b31_y = int(point_31["x_px"]), int(point_31["y_px"])
+                b33_x, b33_y = int(point_33["x_px"]), int(point_33["y_px"])
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng trước Bước 3 của Bắt đầu trận Giao Tranh.")
+                    return
+                device.shell(f"input swipe {b31_x} {b31_y} {b33_x} {b33_y} {duration_ms}")
+                self.log_message.emit(
+                    "Bắt đầu trận Giao Tranh — BƯỚC 3: swipe từ "
+                    f"({b31_x}, {b31_y}) đến ({b33_x}, {b33_y}) trong {duration_ms} ms."
+                )
+                time.sleep(0.5)
+
                 completed += 1
                 self.task_progress_changed.emit(label, "done", 1, 1)
                 self.progress_changed.emit(
-                    completed, max(1, total), "Đã hoàn tất Bước 1 kéo và Bước 2 click Bắt đầu trận Giao Tranh"
+                    completed, max(1, total), "Đã hoàn tất Bước 1, Bước 2 và Bước 3 Bắt đầu trận Giao Tranh"
                 )
             except Exception as exc:
                 completed += 1
