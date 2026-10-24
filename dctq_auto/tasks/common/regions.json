@@ -1204,6 +1204,46 @@
           }
         },
         {
+          "name": "vo_tuong_1_1",
+          "text": "Vị trí chọn võ tướng thứ 1 khi OCR FALSE",
+          "center": {
+            "x_px": 435,
+            "y_px": 955
+          }
+        },
+        {
+          "name": "vo_tuong_2_1",
+          "text": "Vị trí chọn võ tướng thứ 2 khi OCR FALSE",
+          "center": {
+            "x_px": 577,
+            "y_px": 959
+          }
+        },
+        {
+          "name": "vo_tuong_3_1",
+          "text": "Vị trí chọn võ tướng thứ 3 khi OCR FALSE",
+          "center": {
+            "x_px": 716,
+            "y_px": 959
+          }
+        },
+        {
+          "name": "vo_tuong_4_1",
+          "text": "Vị trí chọn võ tướng thứ 4 khi OCR FALSE",
+          "center": {
+            "x_px": 870,
+            "y_px": 962
+          }
+        },
+        {
+          "name": "vo_tuong_5_1",
+          "text": "Vị trí chọn võ tướng thứ 5 khi OCR FALSE",
+          "center": {
+            "x_px": 1010,
+            "y_px": 967
+          }
+        },
+        {
           "name": "vo_tuong_1",
           "text": "Vị trí chọn võ tướng thứ 1",
           "center": {
@@ -1318,7 +1358,7 @@
         "x": 0,
         "y": 0
       },
-      "note": "Tọa độ button_giao_tranh đã được người dùng xác nhận (289, 795); OCR giao_tranh chỉ dùng nhận diện, không dùng tâm OCR làm điểm click. Bắt đầu trận: Bước 1 OCR vùng chỉ báo; Bước 2 kéo bat_dau_tran_diem_a (958, 434) đến bat_dau_tran_diem_b (960, 804), 500 ms; Bước 3 click vo_tuong_1 (594, 951), bat_dau_tran_b2_1 (488, 512), vo_tuong_2 (733, 950), bat_dau_tran_b2_2 (1366, 487); Bước 4 swipe bat_dau_tran_b3_1 (943, 818) đến bat_dau_tran_b3_3 (952, 211), 500 ms, hai lần. Các tọa độ vo_tuong_1 đến vo_tuong_5 đã được lưu.",
+      "note": "Tọa độ button_giao_tranh đã được người dùng xác nhận (289, 795); OCR giao_tranh chỉ dùng nhận diện, không dùng tâm OCR làm điểm click. Bắt đầu trận: Bước 1 OCR vùng chỉ báo; Bước 2 kéo bat_dau_tran_diem_a (958, 434) đến bat_dau_tran_diem_b (960, 804), 500 ms; Bước 3 click vo_tuong_1 (594, 951), bat_dau_tran_b2_1 (488, 512), vo_tuong_2 (733, 950), bat_dau_tran_b2_2 (1366, 487); Bước 4 swipe bat_dau_tran_b3_1 (943, 818) đến bat_dau_tran_b3_3 (952, 211), 500 ms, hai lần. Các tọa độ vo_tuong_1 đến vo_tuong_5 đã được lưu. Khi OCR chỉ báo võ tướng là FALSE, dùng bộ tọa độ vo_tuong_1_1 đến vo_tuong_5_1: (435, 955), (577, 959), (716, 959), (870, 962), (1010, 967).",
       "main_screen_ocr_rect": {
         "left": 1234,
         "top": 700,
