@@ -1375,9 +1375,9 @@ class MainWindow(QMainWindow):
         battle_screen_group = QGroupBox("Giao Tranh 1 trận")
         battle_screen_layout = QVBoxLayout(battle_screen_group)
         battle_count_row = QHBoxLayout()
-        battle_count_row.addWidget(self.task_open_battle)
         battle_count_row.addWidget(QLabel("Số trận:"))
         battle_count_row.addWidget(self.task_open_battle_count)
+        battle_count_row.addWidget(self.task_open_battle)
         battle_count_row.addStretch(1)
         battle_screen_layout.addLayout(battle_count_row)
         self.task_open_battle_count.valueChanged.connect(
