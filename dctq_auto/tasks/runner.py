@@ -582,7 +582,8 @@ class UtilityTaskRunnerMixin:
                     )
 
                 # Chỉ so khớp các cụm ngắn; tránh nhận nhầm chữ khác trong vùng OCR.
-                # Ngưỡng cao hơn để "xuat chien a 232 240" không bị coi là "rut_lui".
+                # Ngưỡng 75% giúp loại các ứng viên nhiễu (40–47%) nhưng vẫn nhận
+                # cụm "rut lui" được OCR rõ ràng với độ tương đồng 100%.
                 from difflib import SequenceMatcher
 
                 def fuzzy_battle_phrase(text):
@@ -613,7 +614,7 @@ class UtilityTaskRunnerMixin:
                                 best_score = score
                                 best_phrase = expected
                                 best_candidate = candidate
-                    if best_phrase and best_score >= 0.60:
+                    if best_phrase and best_score >= 0.75:
                         return best_phrase, best_score, best_candidate
                     return None, best_score, best_candidate
 
@@ -629,14 +630,14 @@ class UtilityTaskRunnerMixin:
                         f"Bắt đầu trận Giao Tranh — BƯỚC 1: OCR lần {attempt}/5 "
                         f"RECT {end_battle_rect}: {last_battle_ocr_text[:180] or '(trống)'}; "
                         f"ứng viên gần nhất={best_candidate or '(không có)'}; "
-                        f"độ tương đồng cao nhất={similarity:.1%} (ngưỡng >=60%)."
+                        f"độ tương đồng cao nhất={similarity:.1%} (ngưỡng >=75%)."
                     )
                     if found_phrase:
                         battle_loaded = True
                         self.log_message.emit(
                             f"Xác nhận trận Giao Tranh tải thành công: OCR tương đồng "
                             f"{similarity:.1%} với '{found_phrase.replace(' ', '_')}' "
-                            f"(ngưỡng >=60%, ứng viên OCR='{best_candidate}') ở lần {attempt}/5."
+                            f"(ngưỡng >=75%, ứng viên OCR='{best_candidate}') ở lần {attempt}/5."
                         )
                         break
                     if attempt < 5:
@@ -644,7 +645,7 @@ class UtilityTaskRunnerMixin:
 
                 if not battle_loaded:
                     raise RuntimeError(
-                        "OCR không đạt độ tương đồng >=60% với 'thu_quan' hoặc 'rut_lui' "
+                        "OCR không đạt độ tương đồng >=75% với 'thu_quan' hoặc 'rut_lui' "
                         f"sau 5 lần thử trong RECT {end_battle_rect}. "
                         f"OCR cuối: {last_battle_ocr_text[:180] or '(trống)'}"
                     )
