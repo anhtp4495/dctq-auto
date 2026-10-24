@@ -174,12 +174,13 @@ class BotWorker(
             if self._config.get("task_close_battle"):
                 selected.append("Thoát màn hình Giao Tranh")
             if self._config.get("thuc_hien_giao_tranh"):
-                battle_progress_label = (
-                    f"Bắt đầu trận Giao Tranh (tối đa {int(self._config.get('task_battle_time_limit', 15))} giây)"
-                    if self._config.get("task_battle_time_mode")
-                    else "Bắt đầu trận Giao Tranh"
-                )
-                selected.append(battle_progress_label)
+                selected.append("Bắt đầu trận Giao Tranh")
+                if self._config.get("task_battle_time_mode"):
+                    selected.append(
+                        f"Chờ Giao Tranh tối đa {int(self._config.get('task_battle_time_limit', 15))} giây"
+                    )
+                else:
+                    selected.append("Chờ kết quả Giao Tranh")
             if self._config.get("thuc_hien_tranh_ba"):
                 selected.append("Tranh bá")
             if self._config.get("task_enter_strategy"):
@@ -206,7 +207,7 @@ class BotWorker(
                 if not self._mock_tick(f"[Chạy thử] Thực hiện: {task}"):
                     self.task_progress_changed.emit(task, "stopped", 0, 1)
                     return
-                if task.startswith("Bắt đầu trận Giao Tranh"):
+                if task in ("Bắt đầu trận Giao Tranh",) or task.startswith("Chờ Giao Tranh tối đa ") or task == "Chờ kết quả Giao Tranh":
                     count = max(1, int(self._config.get("task_open_battle_count", 1)))
                     if self._config.get("task_battle_time_mode"):
                         time_limit = int(self._config.get("task_battle_time_limit", 15))
@@ -221,9 +222,12 @@ class BotWorker(
                         f"[Chạy thử] Giao Tranh: mô phỏng {count} trận; "
                         f"chế độ={'thời gian tối đa ' + str(time_limit) + ' giây' if time_limit is not None else str(flags) + ' cờ'}."
                     )
-                    if not self._simulate_battles("Giao tranh", count, flags, time_limit):
-                        self.task_progress_changed.emit(task, "stopped", 0, count)
-                        return
+                    if task == "Bắt đầu trận Giao Tranh":
+                        self.log_message.emit("[Chạy thử] Mô phỏng thao tác bắt đầu trận Giao Tranh.")
+                    elif task.startswith("Chờ Giao Tranh tối đa ") or task == "Chờ kết quả Giao Tranh":
+                        if not self._simulate_battles("Giao tranh", count, flags, time_limit):
+                            self.task_progress_changed.emit(task, "stopped", 0, count)
+                            return
                 elif task == "Tranh bá":
                     count = max(1, int(self._config.get("tranh_ba", 6)))
                     if self._config.get("task_championship_time_mode"):
