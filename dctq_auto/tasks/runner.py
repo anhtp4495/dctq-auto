@@ -684,6 +684,13 @@ class UtilityTaskRunnerMixin:
                 self.progress_changed.emit(
                     completed, max(1, total), "Đã hoàn tất Bước 1 đến Bước 5 Bắt đầu trận Giao Tranh"
                 )
+            except Exception as exc:
+                completed += 1
+                self.log_message.emit(f"{label} thất bại: {exc}")
+                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), f"Lỗi: {label}"
+                )
 
         if self._config.get("task_detect_strategy_status"):
             label = "Phát hiện trạng thái Mưu Binh"
