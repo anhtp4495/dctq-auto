@@ -37,11 +37,11 @@ class UtilityTaskRunnerMixin:
             ("nhiem_vu_luu_ly_thap", "Lưu Ly Tháp"),
             ("task_open_battle", "Mở màn hình Giao Tranh"),
             ("task_close_battle", "Thoát màn hình Giao Tranh"),
+            ("task_use_bazhen", "Sử dụng Canh Bát Trân"),
             ("task_find_battle_opponent", "Tìm đối thủ Giao Tranh"),
             ("task_start_battle", "Bắt đầu trận Giao Tranh"),
             ("task_end_battle", "Kết thúc trận Giao Tranh"),
             ("xuat_chien", "Xuất chiến"),
-            ("task_use_bazhen", "Sử dụng Canh Bát Trân"),
             ("thuc_hien_giao_tranh", "Giao tranh"),
             ("thuc_hien_tranh_ba", "Tranh bá"),
             ("task_enter_strategy", "Vào màn hình Mưu Binh"),
@@ -372,6 +372,47 @@ class UtilityTaskRunnerMixin:
                     completed, max(1, total), f"Lỗi: {label}"
                 )
 
+        if self._config.get("task_use_bazhen"):
+            label = "Sử dụng Canh Bát Trân"
+            self.task_progress_changed.emit(label, "running", 0, 1)
+            try:
+                import json
+
+                regions_path = Path(__file__).resolve().parent / "common" / "regions.json"
+                try:
+                    regions_data = json.loads(regions_path.read_text(encoding="utf-8"))
+                    elements = {
+                        item["name"]: item
+                        for item in regions_data["regions"]["giao_tranh"].get("elements", [])
+                    }
+                    center = elements["su_dung_canh_bat_tran"]["center"]
+                    x, y = int(center["x_px"]), int(center["y_px"])
+                except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+                    raise RuntimeError(
+                        f"Không đọc được tọa độ Sử dụng Canh Bát Trân từ {regions_path}: {exc}"
+                    ) from exc
+
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng trước khi sử dụng Canh Bát Trân.")
+                    return
+                device.shell(f"input tap {x} {y}")
+                self.log_message.emit(
+                    f"Sử dụng Canh Bát Trân: đã click tọa độ cấu hình ({x}, {y})."
+                )
+                time.sleep(0.5)
+                completed += 1
+                self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), "Đã hoàn tất Sử dụng Canh Bát Trân"
+                )
+            except Exception as exc:
+                completed += 1
+                self.log_message.emit(f"{label} thất bại: {exc}")
+                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), f"Lỗi: {label}"
+                )
+
         if self._config.get("task_find_battle_opponent"):
             label = "Tìm đối thủ Giao Tranh"
             self.task_progress_changed.emit(label, "running", 0, 1)
@@ -486,47 +527,6 @@ class UtilityTaskRunnerMixin:
                 self.task_progress_changed.emit(label, "done", 1, 1)
                 self.progress_changed.emit(
                     completed, max(1, total), "Đã hoàn tất Xuất chiến"
-                )
-            except Exception as exc:
-                completed += 1
-                self.log_message.emit(f"{label} thất bại: {exc}")
-                self.task_progress_changed.emit(label, "failed", 0, 1)
-                self.progress_changed.emit(
-                    completed, max(1, total), f"Lỗi: {label}"
-                )
-
-        if self._config.get("task_use_bazhen"):
-            label = "Sử dụng Canh Bát Trân"
-            self.task_progress_changed.emit(label, "running", 0, 1)
-            try:
-                import json
-
-                regions_path = Path(__file__).resolve().parent / "common" / "regions.json"
-                try:
-                    regions_data = json.loads(regions_path.read_text(encoding="utf-8"))
-                    elements = {
-                        item["name"]: item
-                        for item in regions_data["regions"]["giao_tranh"].get("elements", [])
-                    }
-                    center = elements["su_dung_canh_bat_tran"]["center"]
-                    x, y = int(center["x_px"]), int(center["y_px"])
-                except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
-                    raise RuntimeError(
-                        f"Không đọc được tọa độ Sử dụng Canh Bát Trân từ {regions_path}: {exc}"
-                    ) from exc
-
-                if not self._wait_if_paused():
-                    self.log_message.emit("Đã dừng trước khi sử dụng Canh Bát Trân.")
-                    return
-                device.shell(f"input tap {x} {y}")
-                self.log_message.emit(
-                    f"Sử dụng Canh Bát Trân: đã click tọa độ cấu hình ({x}, {y})."
-                )
-                time.sleep(0.5)
-                completed += 1
-                self.task_progress_changed.emit(label, "done", 1, 1)
-                self.progress_changed.emit(
-                    completed, max(1, total), "Đã hoàn tất Sử dụng Canh Bát Trân"
                 )
             except Exception as exc:
                 completed += 1
