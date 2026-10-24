@@ -679,13 +679,18 @@ class UtilityTaskRunnerMixin:
                     )
                     time.sleep(0.3)
 
-                except Exception as exc:
-                    completed += 1
-                    self.log_message.emit(f"{label} thất bại: {exc}")
-                    self.task_progress_changed.emit(label, "failed", 0, 1)
-                    self.progress_changed.emit(
-                        completed, max(1, total), f"Lỗi: {label}"
-                    )
+                completed += 1
+                self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), "Đã hoàn tất Bước 1 đến Bước 5 Bắt đầu trận Giao Tranh"
+                )
+            except Exception as exc:
+                completed += 1
+                self.log_message.emit(f"{label} thất bại: {exc}")
+                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), f"Lỗi: {label}"
+                )
 
 
         if self._config.get("task_start_battle") and self._config.get("task_battle_time_mode", False):
