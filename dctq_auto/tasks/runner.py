@@ -963,14 +963,20 @@ class UtilityTaskRunnerMixin:
                             )
                             time.sleep(3.0)
 
-                            confirm_deadline = time.monotonic() + 12
                             confirm_text = ""
                             confirmed = False
-                            while time.monotonic() < confirm_deadline:
+                            # Chờ 3 giây trước mỗi lần OCR hộp thoại xác nhận.
+                            # Thử tối đa 4 lần: lần đầu và thêm 3 lần nếu chưa thấy.
+                            for confirm_attempt in range(1, 5):
                                 if not self._wait_if_paused():
                                     self.log_message.emit("Đã dừng trước khi xác nhận Rút lui.")
                                     return
+                                time.sleep(3.0)
                                 confirm_text = read_rect_text(confirm_rect)
+                                self.log_message.emit(
+                                    f"OCR hộp thoại Rút lui lần {confirm_attempt}/4 — "
+                                    f"RECT {confirm_rect}: {confirm_text[:160] or '(trống)'}."
+                                )
                                 if has_text(confirm_text, "thu quan"):
                                     confirm_x, confirm_y = button_points["button_xac_nhan"]
                                     device.shell(f"input tap {confirm_x} {confirm_y}")
@@ -982,7 +988,6 @@ class UtilityTaskRunnerMixin:
                                     confirmed = True
                                     retreat_confirmed = True
                                     break
-                                time.sleep(3.0)
                             if not confirmed:
                                 raise RuntimeError(
                                     "Đã click Rút lui nhưng OCR không tìm thấy 'thu_quan' "
