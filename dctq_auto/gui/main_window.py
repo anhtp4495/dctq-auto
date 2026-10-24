@@ -1757,6 +1757,7 @@ class MainWindow(QMainWindow):
         self._worker.progress_changed.connect(self._update_progress)
         self._worker.task_progress_changed.connect(self._update_task_progress)
         self._worker.clone_account_result.connect(self._update_clone_account_result)
+        self._worker.clone_account_status.connect(self._update_clone_account_status)
         self._init_task_progress(config)
         self._worker.finished.connect(self._on_worker_finished)
         self._set_settings_enabled(False)
@@ -1922,6 +1923,20 @@ class MainWindow(QMainWindow):
             self.task_progress_list.scrollToItem(
                 item, QAbstractItemView.ScrollHint.PositionAtCenter
             )
+
+    def _update_clone_account_status(self, username: str, state: str) -> None:
+        """Show which account is currently being processed, like task progress."""
+        for index in range(self.clone_result_list.count()):
+            item = self.clone_result_list.item(index)
+            if item.data(Qt.ItemDataRole.UserRole) == username:
+                if state == "running":
+                    item.setIcon(self._status_icon("→", "#0969da"))
+                    self.clone_result_list.scrollToItem(
+                        item, QAbstractItemView.ScrollHint.PositionAtCenter
+                    )
+                elif state == "pending":
+                    item.setIcon(self._status_icon("·", "#6e7781"))
+                return
 
     def _update_clone_account_result(self, username: str, success: bool) -> None:
         icon = (
