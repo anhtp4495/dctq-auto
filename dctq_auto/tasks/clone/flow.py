@@ -55,6 +55,7 @@ def run_clone_flow(self, device) -> None:
             processed_count, total,
             f"Tài khoản {index}/{total}: {account.username} — Đăng nhập",
         )
+        self.clone_account_status.emit(account.username, "running")
         self.log_message.emit(
             f"[{account.username}] Kiểm tra màn hình đăng nhập ({index}/{total})."
         )
