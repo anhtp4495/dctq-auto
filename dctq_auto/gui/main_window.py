@@ -1881,7 +1881,15 @@ class MainWindow(QMainWindow):
                 ("task_switch_account", "Đổi tài khoản"),
                 ("task_click_coordinates", "Click theo tọa độ"),
             )
-            return [(label, 1) for key, label in task_labels if config.get(key)]
+            return [
+                (label, 1)
+                for key, label in task_labels
+                if (
+                    config.get("thuc_hien_giao_tranh")
+                    if key == "task_battle_wait"
+                    else config.get(key)
+                )
+            ]
         from dctq_auto.tasks.registry import get_enabled_tasks
         return [(spec.label, count) for spec, count in get_enabled_tasks(config)]
 
