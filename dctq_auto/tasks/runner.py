@@ -385,9 +385,7 @@ class UtilityTaskRunnerMixin:
                     elements = {
                         item["name"]: item for item in battle_config.get("elements", [])
                     }
-                    use_bazhen = elements["su_dung_canh_bat_tran"]["center"]
                     find_opponent = elements["tim_doi_thu"]["center"]
-                    use_x, use_y = int(use_bazhen["x_px"]), int(use_bazhen["y_px"])
                     find_x, find_y = int(find_opponent["x_px"]), int(find_opponent["y_px"])
                 except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
                     raise RuntimeError(
@@ -395,22 +393,11 @@ class UtilityTaskRunnerMixin:
                     ) from exc
 
                 if not self._wait_if_paused():
-                    self.log_message.emit("Đã dừng trước khi tìm đối thủ Giao Tranh.")
-                    return
-                device.shell(f"input tap {use_x} {use_y}")
-                self.log_message.emit(
-                    f"Tìm đối thủ Giao Tranh — BƯỚC 1: click "
-                    f"[su_dung_canh_bat_tran] tại ({use_x}, {use_y})."
-                )
-                time.sleep(0.5)
-
-                if not self._wait_if_paused():
                     self.log_message.emit("Đã dừng trước khi click Tìm đối thủ.")
                     return
                 device.shell(f"input tap {find_x} {find_y}")
                 self.log_message.emit(
-                    f"Tìm đối thủ Giao Tranh — BƯỚC 2: click "
-                    f"[tim_doi_thu] tại ({find_x}, {find_y})."
+                    f"Tìm đối thủ Giao Tranh — click [tim_doi_thu] tại ({find_x}, {find_y})."
                 )
                 time.sleep(0.5)
 
