@@ -1381,14 +1381,14 @@ class MainWindow(QMainWindow):
             self.task_battle_time_mode,
             self.task_battle_time_limit,
         )
-        task_battle_options.addWidget(task_battle_mode_row, 2, 0, 1, 4)
-        task_battle_options.addWidget(self.task_battle_mode_description, 3, 0, 1, 4)
         battle_screen_group = QGroupBox("Màn hình Giao Tranh")
         battle_screen_layout = QVBoxLayout(battle_screen_group)
         battle_screen_layout.addWidget(self.task_open_battle)
         battle_screen_layout.addWidget(self.task_close_battle)
         battle_screen_layout.addWidget(self.task_find_battle_opponent)
         battle_screen_layout.addWidget(self.task_start_battle)
+        battle_screen_layout.addWidget(task_battle_mode_row)
+        battle_screen_layout.addWidget(self.task_battle_mode_description)
         battle_screen_layout.addWidget(self.task_end_battle)
         battle_screen_layout.addWidget(self.task_xuat_chien)
         battle_screen_layout.addWidget(self.task_use_bazhen)
