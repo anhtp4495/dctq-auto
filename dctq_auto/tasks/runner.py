@@ -812,17 +812,6 @@ class UtilityTaskRunnerMixin:
                         for word in words if str(word.get("text", "")).strip()
                     )
 
-                def has_retreat_text(text):
-                    normalized = self._normalize_screen_text(text)
-                    compact = normalized.replace(" ", "")
-                    tokens = set(normalized.split())
-                    return (
-                        "rut" in tokens
-                        or "lui" in tokens
-                        or "rutlui" in compact
-                        or "rut lui" in normalized
-                    )
-
                 def has_text(text, expected):
                     normalized = self._normalize_screen_text(text)
                     compact = normalized.replace(" ", "")
@@ -962,11 +951,11 @@ class UtilityTaskRunnerMixin:
                             last_ocr_report = ocr_report
                             last_ocr_report_at = now
 
-                        if has_retreat_text(detected_text):
+                        if has_text(detected_text, "thu quan"):
                             x, y = button_points["button_rut_lui"]
                             device.shell(f"input tap {x} {y}")
                             self.log_message.emit(
-                                "OCR phát hiện text Rút lui (rut/lui/rut_lui) trong "
+                                "OCR phát hiện 'thu_quan' trong "
                                 f"RECT {end_rect}; click button_rut_lui tại ({x}, {y})."
                             )
                             time.sleep(0.8)
@@ -1038,7 +1027,7 @@ class UtilityTaskRunnerMixin:
                         time.sleep(1.0)
                     else:
                         raise RuntimeError(
-                            "Hết 180 giây nhưng OCR không phát hiện được 'rut/lui/rut_lui' "
+                            "Hết 180 giây nhưng OCR không phát hiện được 'thu_quan' "
                             f"hoặc 'tran_sau' trong RECT {end_rect}. "
                             f"OCR cuối: {detected_text[:180] or '(trống)'}"
                         )
