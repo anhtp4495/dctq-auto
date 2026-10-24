@@ -308,7 +308,8 @@ class BotWorker(
             ])
         if self._config.get("clone_logout", True):
             selected.append(("clone_logout", "Đăng xuất"))
-        total = len(accounts)
+        enabled_accounts = [account for account in accounts if account.enabled]
+        total = len(enabled_accounts)
         if total == 0:
             self.log_message.emit("Tab Clone: không có tài khoản hoặc nhiệm vụ để chạy.")
             self.progress_changed.emit(0, 0, "Không có nhiệm vụ được chọn")
@@ -318,10 +319,17 @@ class BotWorker(
         self._progress_completed = 0
         self.progress_changed.emit(0, total, "Bắt đầu chạy thử Clone")
         self.log_message.emit(
-            f"Chạy thử Clone: {len(accounts)} tài khoản, "
+            f"Chạy thử Clone: {len(enabled_accounts)} tài khoản được bật, {len(accounts) - len(enabled_accounts)} tài khoản vô hiệu hóa, "
             f"{len(selected)} nhiệm vụ/tài khoản. Chế độ mô phỏng, không điều khiển game."
         )
-        for account_index, account in enumerate(accounts, start=1):
+        enabled_index = 0
+        for account in accounts:
+            if not account.enabled:
+                self.clone_account_status.emit(account.username, "disabled")
+                self.log_message.emit(f"Tài khoản {account.username}: đã vô hiệu hóa, bỏ qua.")
+                continue
+            enabled_index += 1
+            account_index = enabled_index
             if not self._wait_if_paused():
                 self.log_message.emit("Đã dừng theo yêu cầu.")
                 return
