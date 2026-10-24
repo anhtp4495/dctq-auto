@@ -537,6 +537,7 @@ class UtilityTaskRunnerMixin:
                     completed, max(1, total), f"Lỗi: {label}"
                 )
 
+        start_battle_succeeded = False
         if self._config.get("task_start_battle"):
             label = "Bắt đầu trận Giao Tranh"
             self.task_progress_changed.emit(label, "running", 0, 1)
@@ -680,6 +681,7 @@ class UtilityTaskRunnerMixin:
                     )
                     time.sleep(0.3)
 
+                start_battle_succeeded = True
                 completed += 1
                 self.task_progress_changed.emit(label, "done", 1, 1)
                 self.progress_changed.emit(
@@ -761,7 +763,7 @@ class UtilityTaskRunnerMixin:
                 self.log_message.emit(f"{label} thất bại: {exc}")
                 self.task_progress_changed.emit(label, "failed", 0, 1)
                 self.progress_changed.emit(completed, max(1, total), f"Lỗi: {label}")
-        if self._config.get("task_end_battle"):
+        if self._config.get("task_end_battle") and start_battle_succeeded:
             label = "Kết thúc trận Giao Tranh"
             self.task_progress_changed.emit(label, "running", 0, 1)
             try:
@@ -931,6 +933,14 @@ class UtilityTaskRunnerMixin:
                 self.progress_changed.emit(
                     completed, max(1, total), f"Lỗi: {label}"
                 )
+        elif self._config.get("task_end_battle"):
+            self.log_message.emit(
+                "Bỏ qua Kết thúc trận Giao Tranh vì tác vụ Bắt đầu trận Giao Tranh "
+                "chưa click hoàn tất thành công trong lượt chạy này."
+            )
+            self.task_progress_changed.emit(
+                "Kết thúc trận Giao Tranh", "failed", 0, 1
+            )
 
         if self._config.get("task_detect_strategy_status"):
             label = "Phát hiện trạng thái Mưu Binh"
