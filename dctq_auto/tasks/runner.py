@@ -618,9 +618,9 @@ class UtilityTaskRunnerMixin:
                 # BƯỚC 3: click võ tướng 1, b2.1, võ tướng 2, rồi b2.2.
                 click_sequence = [
                     (f"vo_tuong_1{suffix}", hero_points[f"vo_tuong_1{suffix}"]),
-                    ("bat_dau_tran_b2_1", elements["bat_dau_tran_b2_1"]["center"]),
+                    ("b2_1", elements["b2_1"]["center"]),
                     (f"vo_tuong_2{suffix}", hero_points[f"vo_tuong_2{suffix}"]),
-                    ("bat_dau_tran_b2_2", elements["bat_dau_tran_b2_2"]["center"]),
+                    ("b2_2", elements["b2_2"]["center"]),
                 ]
                 for step_index, (point_name, point) in enumerate(click_sequence, start=1):
                     if not self._wait_if_paused():
