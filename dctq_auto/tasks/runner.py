@@ -569,56 +569,59 @@ class UtilityTaskRunnerMixin:
                         f"Không đọc được cấu hình kéo Bắt đầu trận từ {regions_path}: {exc}"
                     ) from exc
 
-                # BƯỚC 1: xác nhận trận đã tải thành công bằng OCR trạng thái trận.
-                # Chỉ tiếp tục khi vùng trạng thái có "thu_quan" hoặc "rut_lui".
+                # BƯỚC 1: xác nhận trận tải thành công bằng cùng luồng OCR như Kết thúc trận.
+                # So khớp tương đồng với "thu_quan"/"rut_lui", ngưỡng lớn hơn 25%.
+                from difflib import SequenceMatcher
+
+                def fuzzy_battle_phrase(text):
+                    normalized = self._normalize_screen_text(text)
+                    tokens = normalized.split()
+                    candidates = list(tokens)
+                    # OCR đôi khi tách/ghép sai từ; kiểm tra cả các cửa sổ 2-3 từ.
+                    for width in (2, 3):
+                        candidates.extend(
+                            " ".join(tokens[index:index + width])
+                            for index in range(max(0, len(tokens) - width + 1))
+                        )
+                    best_phrase = None
+                    best_score = 0.0
+                    for expected in ("rut lui", "thu quan"):
+                        expected_compact = expected.replace(" ", "")
+                        for candidate in candidates:
+                            candidate_compact = candidate.replace(" ", "")
+                            if len(candidate_compact) < 4:
+                                continue
+                            score = max(
+                                SequenceMatcher(None, expected, candidate).ratio(),
+                                SequenceMatcher(None, expected_compact, candidate_compact).ratio(),
+                            )
+                            if score > best_score:
+                                best_score = score
+                                best_phrase = expected
+                    if best_phrase and best_score > 0.25:
+                        return best_phrase, best_score
+                    return None, best_score
+
                 battle_loaded = False
                 last_battle_ocr_text = ""
                 for attempt in range(1, 6):
                     if not self._wait_if_paused():
                         self.log_message.emit("Đã dừng trước khi xác nhận trận Giao Tranh tải thành công.")
                         return
-                    screenshot = device.screenshot().convert("RGB")
-                    if screenshot.width < end_battle_rect[2] or screenshot.height < end_battle_rect[3]:
-                        raise RuntimeError(
-                            f"Screenshot {screenshot.width}x{screenshot.height} nhỏ hơn "
-                            f"end_battle_ocr_rect {end_battle_rect}"
-                        )
-                    roi = ImageOps.autocontrast(
-                        screenshot.crop(end_battle_rect).convert("L")
-                    )
-                    recognized_texts = []
-                    for language in ("vie+eng", "eng"):
-                        language_failed = False
-                        for page_mode in (6, 7, 11):
-                            try:
-                                text = pytesseract.image_to_string(
-                                    roi, lang=language, config=f"--psm {page_mode}"
-                                ).strip()
-                            except pytesseract.TesseractError:
-                                language_failed = True
-                                break
-                            if text and text not in recognized_texts:
-                                recognized_texts.append(text)
-                        if not language_failed and recognized_texts:
-                            break
-                    last_battle_ocr_text = " ".join(recognized_texts)
-                    normalized_battle_text = self._normalize_screen_text(last_battle_ocr_text)
-                    found_phrase = (
-                        "thu quan" if "thu quan" in normalized_battle_text
-                        else "rut lui" if "rut lui" in normalized_battle_text
-                        else None
-                    )
+                    last_battle_ocr_text = read_rect_text(end_battle_rect)
+                    found_phrase, similarity = fuzzy_battle_phrase(last_battle_ocr_text)
                     self.log_message.emit(
                         f"Bắt đầu trận Giao Tranh — BƯỚC 1: OCR lần {attempt}/5 "
                         f"RECT {end_battle_rect}: "
-                        f"{last_battle_ocr_text[:180] or '(trống)'}."
+                        f"{last_battle_ocr_text[:180] or '(trống)'}; "
+                        f"độ tương đồng cao nhất={similarity:.1%}."
                     )
                     if found_phrase:
                         battle_loaded = True
                         self.log_message.emit(
-                            f"Xác nhận trận Giao Tranh tải thành công: OCR tìm thấy "
-                            f"'{found_phrase.replace(' ', '_')}' ở lần {attempt}/5 "
-                            f"trong RECT {end_battle_rect}."
+                            f"Xác nhận trận Giao Tranh tải thành công: OCR tương đồng "
+                            f"{similarity:.1%} với '{found_phrase.replace(' ', '_')}' "
+                            f"(ngưỡng >25%) ở lần {attempt}/5."
                         )
                         break
                     if attempt < 5:
@@ -626,8 +629,8 @@ class UtilityTaskRunnerMixin:
 
                 if not battle_loaded:
                     raise RuntimeError(
-                        "OCR không tìm thấy 'thu_quan' hoặc 'rut_lui' sau 5 lần thử "
-                        f"(mỗi lần cách nhau 3 giây) trong RECT {end_battle_rect}. "
+                        "OCR không đạt độ tương đồng >25% với 'thu_quan' hoặc 'rut_lui' "
+                        f"sau 5 lần thử trong RECT {end_battle_rect}. "
                         f"OCR cuối: {last_battle_ocr_text[:180] or '(trống)'}"
                     )
 
