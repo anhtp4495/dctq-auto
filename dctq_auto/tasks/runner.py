@@ -280,10 +280,6 @@ class UtilityTaskRunnerMixin:
                         int(ocr_rect_data["right"]),
                         int(ocr_rect_data["bottom"]),
                     )
-                    tap_offset = (
-                        int(tap_offset_data.get("x", 0)),
-                        int(tap_offset_data.get("y", 0)),
-                    )
                     main_screen_rect = (
                         int(main_screen_rect_data["left"]),
                         int(main_screen_rect_data["top"]),
