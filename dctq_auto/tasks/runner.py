@@ -586,6 +586,38 @@ class UtilityTaskRunnerMixin:
 
 
 
+            battle_loaded = False
+            last_battle_ocr_text = ""
+            for attempt in range(1, 6):
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng trước khi xác nhận trận Giao Tranh tải thành công.")
+                    return
+                last_battle_ocr_text = read_start_battle_rect_text(end_battle_rect)
+                found_phrase, similarity, best_candidate = fuzzy_battle_phrase(last_battle_ocr_text)
+                self.log_message.emit(
+                    f"Bắt đầu trận Giao Tranh — BƯỚC 1: OCR lần {attempt}/5 "
+                    f"RECT {end_battle_rect}: {last_battle_ocr_text[:180] or '(trống)'}; "
+                    f"ứng viên gần nhất={best_candidate or '(không có)'}; "
+                    f"độ tương đồng cao nhất={similarity:.1%} (ngưỡng >=75%)."
+                )
+                if found_phrase:
+                    battle_loaded = True
+                    self.log_message.emit(
+                        f"Xác nhận trận Giao Tranh tải thành công: OCR tương đồng "
+                        f"{similarity:.1%} với '{found_phrase.replace(' ', '_')}' "
+                        f"(ngưỡng >=75%, ứng viên OCR='{best_candidate}') ở lần {attempt}/5."
+                    )
+                    break
+                if attempt < 5:
+                    time.sleep(3.0)
+
+            if not battle_loaded:
+                raise RuntimeError(
+                    "OCR không đạt độ tương đồng >=75% với 'thu_quan' hoặc 'rut_lui' "
+                    f"sau 5 lần thử trong RECT {end_battle_rect}. "
+                    f"OCR cuối: {last_battle_ocr_text[:180] or '(trống)'}"
+                )
+
             import json
 
             regions_path = Path(__file__).resolve().parent / "common" / "regions.json"
@@ -730,37 +762,6 @@ class UtilityTaskRunnerMixin:
                 )
                 time.sleep(0.3)
 
-            battle_loaded = False
-            last_battle_ocr_text = ""
-            for attempt in range(1, 6):
-                if not self._wait_if_paused():
-                    self.log_message.emit("Đã dừng trước khi xác nhận trận Giao Tranh tải thành công.")
-                    return
-                last_battle_ocr_text = read_start_battle_rect_text(end_battle_rect)
-                found_phrase, similarity, best_candidate = fuzzy_battle_phrase(last_battle_ocr_text)
-                self.log_message.emit(
-                    f"Bắt đầu trận Giao Tranh — BƯỚC 1: OCR lần {attempt}/5 "
-                    f"RECT {end_battle_rect}: {last_battle_ocr_text[:180] or '(trống)'}; "
-                    f"ứng viên gần nhất={best_candidate or '(không có)'}; "
-                    f"độ tương đồng cao nhất={similarity:.1%} (ngưỡng >=75%)."
-                )
-                if found_phrase:
-                    battle_loaded = True
-                    self.log_message.emit(
-                        f"Xác nhận trận Giao Tranh tải thành công: OCR tương đồng "
-                        f"{similarity:.1%} với '{found_phrase.replace(' ', '_')}' "
-                        f"(ngưỡng >=75%, ứng viên OCR='{best_candidate}') ở lần {attempt}/5."
-                    )
-                    break
-                if attempt < 5:
-                    time.sleep(3.0)
-
-            if not battle_loaded:
-                raise RuntimeError(
-                    "OCR không đạt độ tương đồng >=75% với 'thu_quan' hoặc 'rut_lui' "
-                    f"sau 5 lần thử trong RECT {end_battle_rect}. "
-                    f"OCR cuối: {last_battle_ocr_text[:180] or '(trống)'}"
-                )
             self.log_message.emit(
                 f"Đã xác minh và hoàn tất chuỗi Bắt đầu trận Giao Tranh cho trận "
                 f"{battle_number_for_start[0]}."
