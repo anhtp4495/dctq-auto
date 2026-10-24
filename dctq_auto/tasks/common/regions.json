@@ -1420,8 +1420,8 @@
           }
         },
         {
-          "name": "button_rut_lui",
-          "text": "Nút Rút lui khi kết thúc trận Giao Tranh",
+          "name": "button_thu_quan",
+          "text": "Nút Thu quân khi kết thúc trận Giao Tranh",
           "center": { "x_px": 167, "y_px": 726 },
           "center_ratio": { "x": 0.087, "y": 0.672222 }
         },
