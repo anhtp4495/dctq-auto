@@ -857,7 +857,7 @@ class UtilityTaskRunnerMixin:
                         f"Bắt đầu trận Giao Tranh lại — kéo từ ({start_x}, {start_y}) "
                         f"đến ({end_x}, {end_y}) trong {start_swipe_duration_ms} ms."
                     )
-                    time.sleep(0.5)
+                    time.sleep(3.0)
 
                     click_sequence = [
                         (f"vo_tuong_1{suffix}", hero_points[f"vo_tuong_1{suffix}"]),
@@ -873,7 +873,7 @@ class UtilityTaskRunnerMixin:
                         self.log_message.emit(
                             f"Bắt đầu trận Giao Tranh lại — click {point_name} tại ({x}, {y})."
                         )
-                        time.sleep(0.3)
+                        time.sleep(3.0)
 
                     point_31 = elements["bat_dau_tran_b3_1"]["center"]
                     point_33 = elements["bat_dau_tran_b3_3"]["center"]
@@ -891,7 +891,7 @@ class UtilityTaskRunnerMixin:
                             f"{swipe_index + 1}/2 từ ({b31_x}, {b31_y}) đến "
                             f"({b33_x}, {b33_y}) trong {start_swipe_duration_ms} ms."
                         )
-                        time.sleep(0.5)
+                        time.sleep(3.0)
 
                     click_sequence = [
                         item
@@ -912,7 +912,7 @@ class UtilityTaskRunnerMixin:
                         self.log_message.emit(
                             f"Bắt đầu trận Giao Tranh lại — click {point_name} tại ({x}, {y})."
                         )
-                        time.sleep(0.3)
+                        time.sleep(3.0)
                     self.log_message.emit(
                         f"Đã thực hiện xong chuỗi Bắt đầu trận Giao Tranh cho trận {current_battle}."
                     )
@@ -961,7 +961,7 @@ class UtilityTaskRunnerMixin:
                                 "OCR phát hiện 'thu_quan' trong "
                                 f"RECT {end_rect}; click button_thu_quan tại ({x}, {y})."
                             )
-                            time.sleep(0.8)
+                            time.sleep(3.0)
 
                             confirm_deadline = time.monotonic() + 12
                             confirm_text = ""
@@ -978,11 +978,11 @@ class UtilityTaskRunnerMixin:
                                         "OCR xác nhận 'thu_quan' trong hộp thoại Rút lui; "
                                         f"click button_xac_nhan tại ({confirm_x}, {confirm_y})."
                                     )
-                                    time.sleep(1.2)
+                                    time.sleep(3.0)
                                     confirmed = True
                                     retreat_confirmed = True
                                     break
-                                time.sleep(0.5)
+                                time.sleep(3.0)
                             if not confirmed:
                                 raise RuntimeError(
                                     "Đã click Rút lui nhưng OCR không tìm thấy 'thu_quan' "
@@ -1007,7 +1007,7 @@ class UtilityTaskRunnerMixin:
                                     f"Đã tăng số trận hiện tại lên {current_battle}/{target_battles}."
                                 )
                                 if self._config.get("task_start_battle"):
-                                    time.sleep(1.5)
+                                    time.sleep(3.0)
                                     start_next_battle()
                                     # Tiếp tục OCR để theo dõi kết quả của trận vừa bắt đầu.
                                     break
@@ -1025,10 +1025,10 @@ class UtilityTaskRunnerMixin:
                                 f"click button_hoi_thanh tại ({x}, {y})."
                             )
                             finished = True
-                            time.sleep(0.8)
+                            time.sleep(3.0)
                             break
 
-                        time.sleep(1.0)
+                        time.sleep(3.0)
                     else:
                         raise RuntimeError(
                             "Hết 180 giây nhưng OCR không phát hiện được 'thu_quan' "
