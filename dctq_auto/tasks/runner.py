@@ -641,12 +641,12 @@ class UtilityTaskRunnerMixin:
                 b31_x, b31_y = int(point_31["x_px"]), int(point_31["y_px"])
                 b33_x, b33_y = int(point_33["x_px"]), int(point_33["y_px"])
                 if not self._wait_if_paused():
-                    self.log_message.emit("Đã dừng trước Bước 3 của Bắt đầu trận Giao Tranh.")
+                    self.log_message.emit("Đã dừng trước Bước 4 của Bắt đầu trận Giao Tranh.")
                     return
                 for swipe_index in range(2):
                     if not self._wait_if_paused():
                         self.log_message.emit(
-                            f"Đã dừng trước lần swipe {swipe_index + 1}/2 của Bước 3 Bắt đầu trận Giao Tranh."
+                            f"Đã dừng trước lần swipe {swipe_index + 1}/2 của Bước 4 Bắt đầu trận Giao Tranh."
                         )
                         return
                     device.shell(f"input swipe {b31_x} {b31_y} {b33_x} {b33_y} {duration_ms}")
@@ -656,17 +656,33 @@ class UtilityTaskRunnerMixin:
                     )
                     time.sleep(0.5)
 
+                # BƯỚC 5: lần lượt click võ tướng 3, b2.3, võ tướng 4, b2.4,
+                # võ tướng 5, b2.5. Mỗi lần click cách nhau 300 ms.
+                click_sequence_step5 = [
+                    (f"vo_tuong_3{suffix}", hero_points[f"vo_tuong_3{suffix}"]),
+                    ("b2_3", elements["b2_3"]["center"]),
+                    (f"vo_tuong_4{suffix}", hero_points[f"vo_tuong_4{suffix}"]),
+                    ("b2_4", elements["b2_4"]["center"]),
+                    (f"vo_tuong_5{suffix}", hero_points[f"vo_tuong_5{suffix}"]),
+                    ("b2_5", elements["b2_5"]["center"]),
+                ]
+                for step_index, (point_name, point) in enumerate(click_sequence_step5, start=1):
+                    if not self._wait_if_paused():
+                        self.log_message.emit(
+                            f"Đã dừng trước Bước 5.{step_index} ({point_name}) của Bắt đầu trận Giao Tranh."
+                        )
+                        return
+                    x, y = int(point["x_px"]), int(point["y_px"])
+                    device.shell(f"input tap {x} {y}")
+                    self.log_message.emit(
+                        f"Bắt đầu trận Giao Tranh — BƯỚC 5.{step_index}: click {point_name} tại ({x}, {y})."
+                    )
+                    time.sleep(0.3)
+
                 completed += 1
                 self.task_progress_changed.emit(label, "done", 1, 1)
                 self.progress_changed.emit(
-                    completed, max(1, total), "Đã hoàn tất Bước 1 đến Bước 4 Bắt đầu trận Giao Tranh"
-                )
-            except Exception as exc:
-                completed += 1
-                self.log_message.emit(f"{label} thất bại: {exc}")
-                self.task_progress_changed.emit(label, "failed", 0, 1)
-                self.progress_changed.emit(
-                    completed, max(1, total), f"Lỗi: {label}"
+                    completed, max(1, total), "Đã hoàn tất Bước 1 đến Bước 5 Bắt đầu trận Giao Tranh"
                 )
 
         if self._config.get("task_detect_strategy_status"):
