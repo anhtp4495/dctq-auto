@@ -772,6 +772,11 @@ class UtilityTaskRunnerMixin:
                         item["name"]: item
                         for item in battle_config.get("elements", [])
                     }
+                    start_swipe_duration_ms = int(
+                        battle_config.get("start_battle_swipe_duration_ms", 500)
+                    )
+                    if start_swipe_duration_ms <= 0:
+                        raise ValueError("thời gian kéo phải lớn hơn 0")
                     end_rect_data = battle_config["end_battle_ocr_rect"]
                     confirm_rect_data = battle_config["retreat_confirm_ocr_rect"]
                     end_rect = (
@@ -822,6 +827,99 @@ class UtilityTaskRunnerMixin:
                     normalized = self._normalize_screen_text(text)
                     compact = normalized.replace(" ", "")
                     return expected in normalized or expected.replace(" ", "") in compact
+
+                def start_next_battle():
+                    """Re-run the configured start-battle sequence after selecting the next battle."""
+                    account_key = (
+                        str(self._config.get("login_username", "")).strip()
+                        or "__current_account_unspecified__"
+                    )
+                    cache = getattr(self, "_battle_hero_flag_cache", {})
+                    if account_key not in cache:
+                        if not self._wait_if_paused():
+                            raise RuntimeError("Đã dừng trước OCR xác định bộ võ tướng.")
+                        screenshot = device.screenshot().convert("RGB")
+                        roi = screenshot.crop((302, 978, 411, 1009)).convert("L")
+                        ocr_text = pytesseract.image_to_string(roi, config="--psm 8").strip()
+                        cache[account_key] = bool(ocr_text)
+                        self._battle_hero_flag_cache = cache
+                        self.log_message.emit(
+                            f"Bắt đầu trận Giao Tranh lại — OCR chỉ báo võ tướng: "
+                            f"text={ocr_text!r}, kết quả={'TRUE' if cache[account_key] else 'FALSE'}."
+                        )
+                    has_hero_text = cache[account_key]
+                    suffix = "" if has_hero_text else "_1"
+                    hero_points = {
+                        f"vo_tuong_{index}{suffix}": elements[f"vo_tuong_{index}{suffix}"]["center"]
+                        for index in range(1, 6)
+                    }
+
+                    point_a = elements["bat_dau_tran_diem_a"]["center"]
+                    point_b = elements["bat_dau_tran_diem_b"]["center"]
+                    start_x, start_y = int(point_a["x_px"]), int(point_a["y_px"])
+                    end_x, end_y = int(point_b["x_px"]), int(point_b["y_px"])
+                    if not self._wait_if_paused():
+                        raise RuntimeError("Đã dừng trước khi kéo để bắt đầu trận tiếp theo.")
+                    device.shell(
+                        f"input swipe {start_x} {start_y} {end_x} {end_y} "
+                        f"{start_swipe_duration_ms}"
+                    )
+                    self.log_message.emit(
+                        f"Bắt đầu trận Giao Tranh lại — kéo từ ({start_x}, {start_y}) "
+                        f"đến ({end_x}, {end_y}) trong {start_swipe_duration_ms} ms."
+                    )
+                    time.sleep(0.5)
+
+                    click_sequence = [
+                        (f"vo_tuong_1{suffix}", hero_points[f"vo_tuong_1{suffix}"]),
+                        ("vi_tri_chien_dau_vo_tuong_1", elements["vi_tri_chien_dau_vo_tuong_1"]["center"]),
+                        (f"vo_tuong_2{suffix}", hero_points[f"vo_tuong_2{suffix}"]),
+                        ("vi_tri_chien_dau_vo_tuong_2", elements["vi_tri_chien_dau_vo_tuong_2"]["center"]),
+                    ]
+                    for point_name, point in click_sequence:
+                        if not self._wait_if_paused():
+                            raise RuntimeError(f"Đã dừng trước thao tác {point_name} của trận tiếp theo.")
+                        x, y = int(point["x_px"]), int(point["y_px"])
+                        device.shell(f"input tap {x} {y}")
+                        self.log_message.emit(
+                            f"Bắt đầu trận Giao Tranh lại — click {point_name} tại ({x}, {y})."
+                        )
+                        time.sleep(0.3)
+
+                    point_31 = elements["bat_dau_tran_b3_1"]["center"]
+                    point_33 = elements["bat_dau_tran_b3_3"]["center"]
+                    b31_x, b31_y = int(point_31["x_px"]), int(point_31["y_px"])
+                    b33_x, b33_y = int(point_33["x_px"]), int(point_33["y_px"])
+                    for swipe_index in range(2):
+                        if not self._wait_if_paused():
+                            raise RuntimeError("Đã dừng khi kéo đội hình trận tiếp theo.")
+                        device.shell(
+                            f"input swipe {b31_x} {b31_y} {b33_x} {b33_y} "
+                            f"{start_swipe_duration_ms}"
+                        )
+                        self.log_message.emit(
+                            f"Bắt đầu trận Giao Tranh lại — kéo đội hình lần "
+                            f"{swipe_index + 1}/2 từ ({b31_x}, {b31_y}) đến "
+                            f"({b33_x}, {b33_y}) trong {start_swipe_duration_ms} ms."
+                        )
+                        time.sleep(0.5)
+
+                    click_sequence = [
+                        (f"vo_tuong_{index}{suffix}", hero_points[f"vo_tuong_{index}{suffix}"])
+                        for index in (3, 4, 5)
+                    ]
+                    for point_name, point in click_sequence:
+                        if not self._wait_if_paused():
+                            raise RuntimeError(f"Đã dừng trước thao tác {point_name} của trận tiếp theo.")
+                        x, y = int(point["x_px"]), int(point["y_px"])
+                        device.shell(f"input tap {x} {y}")
+                        self.log_message.emit(
+                            f"Bắt đầu trận Giao Tranh lại — click {point_name} tại ({x}, {y})."
+                        )
+                        time.sleep(0.3)
+                    self.log_message.emit(
+                        f"Đã thực hiện xong chuỗi Bắt đầu trận Giao Tranh cho trận {current_battle}."
+                    )
 
                 current_battle = 1
                 finished = False
@@ -905,7 +1003,19 @@ class UtilityTaskRunnerMixin:
                                     f"click button_tran_sau tại ({x}, {y})."
                                 )
                                 current_battle += 1
-                                time.sleep(1.5)
+                                self.log_message.emit(
+                                    f"Đã tăng số trận hiện tại lên {current_battle}/{target_battles}."
+                                )
+                                if self._config.get("task_start_battle"):
+                                    time.sleep(1.5)
+                                    start_next_battle()
+                                    # Tiếp tục OCR để theo dõi kết quả của trận vừa bắt đầu.
+                                    break
+                                self.log_message.emit(
+                                    "Không chọn 'Bắt đầu trận Giao Tranh'; xem như tác vụ "
+                                    "'Kết thúc trận Giao Tranh' đã hoàn tất sau khi chọn trận tiếp theo."
+                                )
+                                finished = True
                                 break
 
                             x, y = button_points["button_hoi_thanh"]
