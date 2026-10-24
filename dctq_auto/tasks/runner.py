@@ -794,7 +794,7 @@ class UtilityTaskRunnerMixin:
                             int(elements[name]["center"]["y_px"]),
                         )
                         for name in (
-                            "button_rut_lui", "button_xac_nhan",
+                            "button_thu_quan", "button_xac_nhan",
                             "button_tran_sau", "button_hoi_thanh",
                         )
                     }
@@ -952,11 +952,11 @@ class UtilityTaskRunnerMixin:
                             last_ocr_report_at = now
 
                         if has_text(detected_text, "thu quan"):
-                            x, y = button_points["button_rut_lui"]
+                            x, y = button_points["button_thu_quan"]
                             device.shell(f"input tap {x} {y}")
                             self.log_message.emit(
                                 "OCR phát hiện 'thu_quan' trong "
-                                f"RECT {end_rect}; click button_rut_lui tại ({x}, {y})."
+                                f"RECT {end_rect}; click button_thu_quan tại ({x}, {y})."
                             )
                             time.sleep(0.8)
 
