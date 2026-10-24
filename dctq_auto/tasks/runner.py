@@ -592,12 +592,11 @@ class UtilityTaskRunnerMixin:
                     return
                 selected_point = hero_point if has_hero_text else no_hero_point
                 hero_x, hero_y = int(selected_point["x_px"]), int(selected_point["y_px"])
-                device.shell(f"input tap {hero_x} {hero_y}")
+                selected_hero_region = "vo_tuong_1" if has_hero_text else "vo_tuong_1_1"
                 self.log_message.emit(
-                    f"Bắt đầu trận Giao Tranh — BƯỚC 1: click "
-                    f"{'vo_tuong_1' if has_hero_text else 'vo_tuong_1_1'} tại ({hero_x}, {hero_y})."
+                    f"Bắt đầu trận Giao Tranh — BƯỚC 1: đã xác định vị trí "
+                    f"{selected_hero_region} ({hero_x}, {hero_y}); chỉ lưu tọa độ, không click."
                 )
-                time.sleep(0.5)
 
                 if not self._wait_if_paused():
                     self.log_message.emit("Đã dừng trước Bước 2 kéo để bắt đầu trận Giao Tranh.")
@@ -612,27 +611,37 @@ class UtilityTaskRunnerMixin:
                 )
                 time.sleep(0.5)
 
-                # BƯỚC 3: click lần lượt hai điểm đã lưu trong regions.json.
+                # BƯỚC 3: click vị trí võ tướng đã xác định, rồi click b2.1 và b2.2.
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng trước Bước 3 chọn vị trí võ tướng.")
+                    return
+                device.shell(f"input tap {hero_x} {hero_y}")
+                self.log_message.emit(
+                    f"Bắt đầu trận Giao Tranh — BƯỚC 3.1: click vị trí đã lưu "
+                    f"{selected_hero_region} ({hero_x}, {hero_y})."
+                )
+                time.sleep(0.3)
+
                 point_21 = elements["bat_dau_tran_b2_1"]["center"]
                 point_22 = elements["bat_dau_tran_b2_2"]["center"]
                 b21_x, b21_y = int(point_21["x_px"]), int(point_21["y_px"])
                 b22_x, b22_y = int(point_22["x_px"]), int(point_22["y_px"])
 
                 if not self._wait_if_paused():
-                    self.log_message.emit("Đã dừng trước Bước 2.1 của Bắt đầu trận Giao Tranh.")
+                    self.log_message.emit("Đã dừng trước Bước 3.2 của Bắt đầu trận Giao Tranh.")
                     return
                 device.shell(f"input tap {b21_x} {b21_y}")
                 self.log_message.emit(
-                    f"Bắt đầu trận Giao Tranh — BƯỚC 3.1: click ({b21_x}, {b21_y})."
+                    f"Bắt đầu trận Giao Tranh — BƯỚC 3.2: click ({b21_x}, {b21_y})."
                 )
                 time.sleep(0.3)
 
                 if not self._wait_if_paused():
-                    self.log_message.emit("Đã dừng trước Bước 2.2 của Bắt đầu trận Giao Tranh.")
+                    self.log_message.emit("Đã dừng trước Bước 3.3 của Bắt đầu trận Giao Tranh.")
                     return
                 device.shell(f"input tap {b22_x} {b22_y}")
                 self.log_message.emit(
-                    f"Bắt đầu trận Giao Tranh — BƯỚC 3.2: click ({b22_x}, {b22_y})."
+                    f"Bắt đầu trận Giao Tranh — BƯỚC 3.3: click ({b22_x}, {b22_y})."
                 )
                 time.sleep(0.5)
 
