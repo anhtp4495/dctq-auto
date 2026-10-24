@@ -591,7 +591,7 @@ class UtilityTaskRunnerMixin:
             for attempt in range(1, 6):
                 if not self._wait_if_paused():
                     self.log_message.emit("Đã dừng trước khi xác nhận trận Giao Tranh tải thành công.")
-                    return
+                    return False
                 last_battle_ocr_text = read_start_battle_rect_text(end_battle_rect)
                 found_phrase, similarity, best_candidate = fuzzy_battle_phrase(last_battle_ocr_text)
                 self.log_message.emit(
