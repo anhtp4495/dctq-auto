@@ -31,6 +31,7 @@ class BotWorker(
     progress_changed = Signal(int, int, str)
     task_progress_changed = Signal(str, str, int, int)
     clone_account_result = Signal(str, bool)
+    clone_account_status = Signal(str, str)
 
     def __init__(
         self,
@@ -328,6 +329,7 @@ class BotWorker(
                 self._progress_completed, self._progress_total,
                 f"Tài khoản {account_index}/{len(accounts)}: {account.username}",
             )
+            self.clone_account_status.emit(account.username, "running")
             self.log_message.emit(
                 f"Đang xử lý tài khoản: {account.username}"
             )
