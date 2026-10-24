@@ -558,44 +558,21 @@ class UtilityTaskRunnerMixin:
                     )
                     if duration_ms <= 0:
                         raise ValueError("thời gian kéo phải lớn hơn 0")
-                    hero_point = elements["vo_tuong_1"]["center"]
-                    no_hero_point = elements["vo_tuong_1_1"]["center"]
+                    hero_points = {f"vo_tuong_{index}": elements[f"vo_tuong_{index}"]["center"] for index in range(1, 6)}
                 except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
                     raise RuntimeError(
                         f"Không đọc được cấu hình kéo Bắt đầu trận từ {regions_path}: {exc}"
                     ) from exc
 
-                # BƯỚC 1: OCR chỉ báo võ tướng một lần cho mỗi tài khoản cấu hình.
-                account_key = str(self._config.get("login_username", "")).strip() or "__current_account_unspecified__"
-                cache = getattr(self, "_battle_hero_flag_cache", {})
-                if account_key not in cache:
-                    if not self._wait_if_paused():
-                        self.log_message.emit("Đã dừng trước OCR xác định võ tướng.")
-                        return
-                    screenshot = device.screenshot().convert("RGB")
-                    roi = screenshot.crop((302, 978, 411, 1009)).convert("L")
-                    ocr_text = pytesseract.image_to_string(roi, config="--psm 8").strip()
-                    cache[account_key] = bool(ocr_text)
-                    self._battle_hero_flag_cache = cache
-                    self.log_message.emit(
-                        f"OCR chỉ báo võ tướng cho tài khoản '{account_key}': "
-                        f"text={ocr_text!r}, kết quả={'TRUE' if cache[account_key] else 'FALSE'}."
-                    )
-                else:
-                    self.log_message.emit(
-                        f"Dùng cache võ tướng cho tài khoản '{account_key}': "
-                        f"{'TRUE' if cache[account_key] else 'FALSE'}."
-                    )
-                has_hero_text = cache[account_key]
-                if not self._wait_if_paused():
-                    self.log_message.emit("Đã dừng trước khi chọn vị trí võ tướng.")
-                    return
-                selected_point = hero_point if has_hero_text else no_hero_point
-                hero_x, hero_y = int(selected_point["x_px"]), int(selected_point["y_px"])
-                selected_hero_region = "vo_tuong_1" if has_hero_text else "vo_tuong_1_1"
+                # BƯỚC 1: nạp danh sách 5 tọa độ võ tướng; không click.
+                hero_points = {f"vo_tuong_{index}": elements[f"vo_tuong_{index}"]["center"] for index in range(1, 6)}
                 self.log_message.emit(
-                    f"Bắt đầu trận Giao Tranh — BƯỚC 1: đã xác định vị trí "
-                    f"{selected_hero_region} ({hero_x}, {hero_y}); chỉ lưu tọa độ, không click."
+                    "Bắt đầu trận Giao Tranh — BƯỚC 1: đã nạp danh sách 5 võ tướng: "
+                    + ", ".join(
+                        f"{name}=({int(point['x_px'])}, {int(point['y_px'])})"
+                        for name, point in hero_points.items()
+                    )
+                    + "; chỉ lưu tọa độ, không click."
                 )
 
                 if not self._wait_if_paused():
@@ -611,39 +588,25 @@ class UtilityTaskRunnerMixin:
                 )
                 time.sleep(0.5)
 
-                # BƯỚC 3: click vị trí võ tướng đã xác định, rồi click b2.1 và b2.2.
-                if not self._wait_if_paused():
-                    self.log_message.emit("Đã dừng trước Bước 3 chọn vị trí võ tướng.")
-                    return
-                device.shell(f"input tap {hero_x} {hero_y}")
-                self.log_message.emit(
-                    f"Bắt đầu trận Giao Tranh — BƯỚC 3.1: click vị trí đã lưu "
-                    f"{selected_hero_region} ({hero_x}, {hero_y})."
-                )
-                time.sleep(0.3)
-
-                point_21 = elements["bat_dau_tran_b2_1"]["center"]
-                point_22 = elements["bat_dau_tran_b2_2"]["center"]
-                b21_x, b21_y = int(point_21["x_px"]), int(point_21["y_px"])
-                b22_x, b22_y = int(point_22["x_px"]), int(point_22["y_px"])
-
-                if not self._wait_if_paused():
-                    self.log_message.emit("Đã dừng trước Bước 3.2 của Bắt đầu trận Giao Tranh.")
-                    return
-                device.shell(f"input tap {b21_x} {b21_y}")
-                self.log_message.emit(
-                    f"Bắt đầu trận Giao Tranh — BƯỚC 3.2: click ({b21_x}, {b21_y})."
-                )
-                time.sleep(0.3)
-
-                if not self._wait_if_paused():
-                    self.log_message.emit("Đã dừng trước Bước 3.3 của Bắt đầu trận Giao Tranh.")
-                    return
-                device.shell(f"input tap {b22_x} {b22_y}")
-                self.log_message.emit(
-                    f"Bắt đầu trận Giao Tranh — BƯỚC 3.3: click ({b22_x}, {b22_y})."
-                )
-                time.sleep(0.5)
+                # BƯỚC 3: click võ tướng 1, b2.1, võ tướng 2, rồi b2.2.
+                click_sequence = [
+                    ("vo_tuong_1", hero_points["vo_tuong_1"]),
+                    ("bat_dau_tran_b2_1", elements["bat_dau_tran_b2_1"]["center"]),
+                    ("vo_tuong_2", hero_points["vo_tuong_2"]),
+                    ("bat_dau_tran_b2_2", elements["bat_dau_tran_b2_2"]["center"]),
+                ]
+                for step_index, (point_name, point) in enumerate(click_sequence, start=1):
+                    if not self._wait_if_paused():
+                        self.log_message.emit(
+                            f"Đã dừng trước Bước 3.{step_index} ({point_name}) của Bắt đầu trận Giao Tranh."
+                        )
+                        return
+                    x, y = int(point["x_px"]), int(point["y_px"])
+                    device.shell(f"input tap {x} {y}")
+                    self.log_message.emit(
+                        f"Bắt đầu trận Giao Tranh — BƯỚC 3.{step_index}: click {point_name} tại ({x}, {y})."
+                    )
+                    time.sleep(0.3)
 
                 # BƯỚC 4: swipe từ b3.1 đến b3.3 theo tọa độ đã lưu.
                 point_31 = elements["bat_dau_tran_b3_1"]["center"]
