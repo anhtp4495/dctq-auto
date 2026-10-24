@@ -1774,11 +1774,11 @@ class MainWindow(QMainWindow):
             self.progress_bar.setValue(0)
             self.clone_result_list.clear()
             for account in accounts:
-                label = account.username if account.enabled else f"⏸ {account.username} — Đã vô hiệu hóa"
+                label = account.username if account.enabled else f"{account.username} — Đã vô hiệu hóa"
                 item = QListWidgetItem(label)
                 item.setIcon(
                     self._status_icon("·", "#6e7781")
-                    if account.enabled else self._status_icon("⏸", "#8c959f")
+                    if account.enabled else self._status_icon("×", "#8c959f")
                 )
                 item.setData(Qt.ItemDataRole.UserRole, account.username)
                 item.setData(Qt.ItemDataRole.UserRole + 1, account.enabled)
@@ -1935,8 +1935,8 @@ class MainWindow(QMainWindow):
             item = self.clone_result_list.item(index)
             if item.data(Qt.ItemDataRole.UserRole) == username:
                 if state == "disabled":
-                    item.setIcon(self._status_icon("⏸", "#8c959f"))
-                    item.setText(f"⏸ {username} — Đã vô hiệu hóa")
+                    item.setIcon(self._status_icon("×", "#8c959f"))
+                    item.setText(f"{username} — Đã vô hiệu hóa")
                 elif state == "running":
                     item.setIcon(self._status_icon("→", "#0969da"))
                     item.setText(username)
