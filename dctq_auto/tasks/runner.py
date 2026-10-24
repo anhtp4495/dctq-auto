@@ -557,17 +557,86 @@ class UtilityTaskRunnerMixin:
                     if duration_ms <= 0:
                         raise ValueError("thời gian kéo phải lớn hơn 0")
                     hero_points = {f"vo_tuong_{index}": elements[f"vo_tuong_{index}"]["center"] for index in range(1, 6)}
+                    end_battle_rect_data = regions_data["regions"]["giao_tranh"]["end_battle_ocr_rect"]
+                    end_battle_rect = (
+                        int(end_battle_rect_data["left"]),
+                        int(end_battle_rect_data["top"]),
+                        int(end_battle_rect_data["right"]),
+                        int(end_battle_rect_data["bottom"]),
+                    )
                 except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
                     raise RuntimeError(
                         f"Không đọc được cấu hình kéo Bắt đầu trận từ {regions_path}: {exc}"
                     ) from exc
 
-                # BƯỚC 1: OCR chỉ báo để chọn bộ tọa độ võ tướng; không click.
+                # BƯỚC 1: xác nhận trận đã tải thành công bằng OCR trạng thái trận.
+                # Chỉ tiếp tục khi vùng trạng thái có "thu_quan" hoặc "rut_lui".
+                battle_loaded = False
+                last_battle_ocr_text = ""
+                for attempt in range(1, 6):
+                    if not self._wait_if_paused():
+                        self.log_message.emit("Đã dừng trước khi xác nhận trận Giao Tranh tải thành công.")
+                        return
+                    screenshot = device.screenshot().convert("RGB")
+                    if screenshot.width < end_battle_rect[2] or screenshot.height < end_battle_rect[3]:
+                        raise RuntimeError(
+                            f"Screenshot {screenshot.width}x{screenshot.height} nhỏ hơn "
+                            f"end_battle_ocr_rect {end_battle_rect}"
+                        )
+                    roi = ImageOps.autocontrast(
+                        screenshot.crop(end_battle_rect).convert("L")
+                    )
+                    recognized_texts = []
+                    for language in ("vie+eng", "eng"):
+                        language_failed = False
+                        for page_mode in (6, 7, 11):
+                            try:
+                                text = pytesseract.image_to_string(
+                                    roi, lang=language, config=f"--psm {page_mode}"
+                                ).strip()
+                            except pytesseract.TesseractError:
+                                language_failed = True
+                                break
+                            if text and text not in recognized_texts:
+                                recognized_texts.append(text)
+                        if not language_failed and recognized_texts:
+                            break
+                    last_battle_ocr_text = " ".join(recognized_texts)
+                    normalized_battle_text = self._normalize_screen_text(last_battle_ocr_text)
+                    found_phrase = (
+                        "thu quan" if "thu quan" in normalized_battle_text
+                        else "rut lui" if "rut lui" in normalized_battle_text
+                        else None
+                    )
+                    self.log_message.emit(
+                        f"Bắt đầu trận Giao Tranh — BƯỚC 1: OCR lần {attempt}/5 "
+                        f"RECT {end_battle_rect}: "
+                        f"{last_battle_ocr_text[:180] or '(trống)'}."
+                    )
+                    if found_phrase:
+                        battle_loaded = True
+                        self.log_message.emit(
+                            f"Xác nhận trận Giao Tranh tải thành công: OCR tìm thấy "
+                            f"'{found_phrase.replace(' ', '_')}' ở lần {attempt}/5 "
+                            f"trong RECT {end_battle_rect}."
+                        )
+                        break
+                    if attempt < 5:
+                        time.sleep(3.0)
+
+                if not battle_loaded:
+                    raise RuntimeError(
+                        "OCR không tìm thấy 'thu_quan' hoặc 'rut_lui' sau 5 lần thử "
+                        f"(mỗi lần cách nhau 3 giây) trong RECT {end_battle_rect}. "
+                        f"OCR cuối: {last_battle_ocr_text[:180] or '(trống)'}"
+                    )
+
+                # BƯỚC 2: OCR chỉ báo để chọn bộ tọa độ võ tướng; không click.
                 account_key = str(self._config.get("login_username", "")).strip() or "__current_account_unspecified__"
                 cache = getattr(self, "_battle_hero_flag_cache", {})
                 if account_key not in cache:
                     if not self._wait_if_paused():
-                        self.log_message.emit("Đã dừng trước OCR xác định bộ võ tướng.")
+                        self.log_message.emit("Đã dừng trước OCR xác định bộ võ tướng (Bước 2).")
                         return
                     screenshot = device.screenshot().convert("RGB")
                     roi = screenshot.crop((302, 978, 411, 1009)).convert("L")
@@ -590,7 +659,7 @@ class UtilityTaskRunnerMixin:
                     for index in range(1, 6)
                 }
                 self.log_message.emit(
-                    "Bắt đầu trận Giao Tranh — BƯỚC 1: đã chọn bộ tọa độ "
+                    "Bắt đầu trận Giao Tranh — BƯỚC 2: đã chọn bộ tọa độ "
                     + ("TRUE" if has_hero_text else "FALSE") + ": "
                     + ", ".join(
                         f"{name}=({int(point['x_px'])}, {int(point['y_px'])})"
@@ -601,13 +670,13 @@ class UtilityTaskRunnerMixin:
 
 
                 if not self._wait_if_paused():
-                    self.log_message.emit("Đã dừng trước Bước 2 kéo để bắt đầu trận Giao Tranh.")
+                    self.log_message.emit("Đã dừng trước Bước 3 kéo để bắt đầu trận Giao Tranh.")
                     return
                 device.shell(
                     f"input swipe {start_x} {start_y} {end_x} {end_y} {duration_ms}"
                 )
                 self.log_message.emit(
-                    "Bắt đầu trận Giao Tranh — BƯỚC 2: kéo từ điểm A "
+                    "Bắt đầu trận Giao Tranh — BƯỚC 3: kéo từ điểm A "
                     f"({start_x}, {start_y}) đến điểm B ({end_x}, {end_y}) "
                     f"trong {duration_ms} ms."
                 )
@@ -639,7 +708,7 @@ class UtilityTaskRunnerMixin:
                 b31_x, b31_y = int(point_31["x_px"]), int(point_31["y_px"])
                 b33_x, b33_y = int(point_33["x_px"]), int(point_33["y_px"])
                 if not self._wait_if_paused():
-                    self.log_message.emit("Đã dừng trước Bước 4 của Bắt đầu trận Giao Tranh.")
+                    self.log_message.emit("Đã dừng trước Bước 5 của Bắt đầu trận Giao Tranh.")
                     return
                 for swipe_index in range(2):
                     if not self._wait_if_paused():
@@ -649,7 +718,7 @@ class UtilityTaskRunnerMixin:
                         return
                     device.shell(f"input swipe {b31_x} {b31_y} {b33_x} {b33_y} {duration_ms}")
                     self.log_message.emit(
-                        f"Bắt đầu trận Giao Tranh — BƯỚC 4: swipe lần {swipe_index + 1}/2 từ "
+                        f"Bắt đầu trận Giao Tranh — BƯỚC 5: swipe lần {swipe_index + 1}/2 từ "
                         f"({b31_x}, {b31_y}) đến ({b33_x}, {b33_y}) trong {duration_ms} ms."
                     )
                     time.sleep(0.5)
@@ -680,7 +749,7 @@ class UtilityTaskRunnerMixin:
                 completed += 1
                 self.task_progress_changed.emit(label, "done", 1, 1)
                 self.progress_changed.emit(
-                    completed, max(1, total), "Đã hoàn tất Bước 1 đến Bước 5 Bắt đầu trận Giao Tranh"
+                    completed, max(1, total), "Đã hoàn tất Bước 1 đến Bước 6 Bắt đầu trận Giao Tranh"
                 )
             except Exception as exc:
                 completed += 1
