@@ -268,10 +268,12 @@ class UtilityTaskRunnerMixin:
                         item["name"]: item for item in battle_config.get("elements", [])
                     }
                     quan_su_center = elements["quan_su"]["center"]
+                    button_giao_tranh_center = elements["button_giao_tranh"]["center"]
                     ocr_rect_data = battle_config["ocr_rect"]
                     main_screen_rect_data = battle_config["main_screen_ocr_rect"]
-                    tap_offset_data = battle_config.get("tap_offset", {"x": 0, "y": 0})
                     x, y = int(quan_su_center["x_px"]), int(quan_su_center["y_px"])
+                    button_x = int(button_giao_tranh_center["x_px"])
+                    button_y = int(button_giao_tranh_center["y_px"])
                     rect = (
                         int(ocr_rect_data["left"]),
                         int(ocr_rect_data["top"]),
@@ -315,16 +317,18 @@ class UtilityTaskRunnerMixin:
                     rect,
                     steps=("gray", "white_text"),
                     psm=(6, 7, 11),
-                    tap_offset=tap_offset,
+                    tap=False,
                 )
                 if match is None:
                     raise RuntimeError(
                         f"OCR không tìm thấy 'giao_tranh' trong RECT {rect}; không click."
                     )
-                tap_x, tap_y, found_rect = match
+                _ocr_x, _ocr_y, found_rect = match
+                # OCR chỉ xác nhận nhãn hợp lệ; điểm click luôn lấy từ regions.json.
+                device.shell(f"input tap {button_x} {button_y}")
                 self.log_message.emit(
-                    "OCR tìm thấy 'giao_tranh' — "
-                    f"RECT {found_rect}; đã click tại ({tap_x}, {tap_y})."
+                    "OCR xác nhận 'giao_tranh' hợp lệ — "
+                    f"RECT {found_rect}; click button_giao_tranh tại ({button_x}, {button_y})."
                 )
                 time.sleep(0.8)
 
@@ -362,7 +366,7 @@ class UtilityTaskRunnerMixin:
                     completed, max(1, total), "Đã click mục Giao Tranh"
                 )
                 self.log_message.emit(
-                    "Bước 2 thành công: OCR tìm thấy 'giao_tranh' và đã click vào chữ."
+                    "Bước 2 thành công: OCR xác nhận 'giao_tranh' và đã click button_giao_tranh theo tọa độ đã lưu."
                 )
             except Exception as exc:
                 completed += 1
