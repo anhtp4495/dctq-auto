@@ -1152,6 +1152,18 @@
           }
         },
         {
+          "name": "button_giao_tranh",
+          "text": "Nút Giao Tranh cần click",
+          "center": {
+            "x_px": 289,
+            "y_px": 795
+          },
+          "center_ratio": {
+            "x": 0.150521,
+            "y": 0.736111
+          }
+        },
+        {
           "name": "giao_tranh",
           "text": "Nhãn OCR giao_tranh",
           "bounds": {
@@ -1216,9 +1228,9 @@
       },
       "tap_offset": {
         "x": 0,
-        "y": -10
+        "y": 0
       },
-      "note": "Tọa độ Quân Sự và RECT OCR đã xác nhận; điểm click Giao Tranh lệch lên 10 px so với tâm chữ. Tọa độ tác vụ Tìm đối thủ: su_dung_canh_bat_tran (1770, 861), tim_doi_thu (1381, 775).",
+      "note": "Tọa độ button_giao_tranh đã được người dùng xác nhận (289, 795); OCR giao_tranh chỉ dùng nhận diện, không dùng tâm OCR làm điểm click. Tọa độ tác vụ Tìm đối thủ: su_dung_canh_bat_tran (1770, 861), tim_doi_thu (1381, 775).",
       "main_screen_ocr_rect": {
         "left": 1234,
         "top": 700,
