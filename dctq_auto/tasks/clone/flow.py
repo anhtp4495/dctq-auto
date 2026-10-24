@@ -19,7 +19,16 @@ from dctq_auto.tasks.common.accounts import load_accounts
 def run_clone_flow(self, device) -> None:
     """Log in clone accounts using the confirmed login-screen OCR coordinates."""
     accounts = load_accounts(self._config.get("clone_account_file", ""))
-    total = len(accounts)
+    enabled_accounts = [account for account in accounts if account.enabled]
+    total = len(enabled_accounts)
+    for account in accounts:
+        if not account.enabled:
+            self.clone_account_status.emit(account.username, "disabled")
+            self.log_message.emit(f"Tài khoản {account.username}: đã vô hiệu hóa, bỏ qua.")
+    if total == 0:
+        self.log_message.emit("Clone: tất cả tài khoản đều đã vô hiệu hóa; không có tài khoản để chạy.")
+        self.progress_changed.emit(0, 0, "Không có tài khoản được bật")
+        return
     if not self._config.get("clone_login", True):
         self.log_message.emit(
             "Clone: chưa chọn Đăng nhập; các thao tác Clone khác chưa được triển khai."
@@ -44,7 +53,11 @@ def run_clone_flow(self, device) -> None:
         )
 
     emit_account_progress("Bắt đầu")
-    for index, account in enumerate(accounts, start=1):
+    index = 0
+    for account in accounts:
+        if not account.enabled:
+            continue
+        index += 1
         # Per-account flag: the next clone may have a newly opened guild screen.
         self._config["_clone_guild_screen_closed"] = False
         if not self._wait_if_paused():
