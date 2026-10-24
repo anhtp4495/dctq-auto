@@ -836,12 +836,27 @@ class UtilityTaskRunnerMixin:
 
                     deadline = time.monotonic() + 180
                     detected_text = ""
+                    last_ocr_report = None
+                    last_ocr_report_at = 0.0
                     while time.monotonic() < deadline:
                         if not self._wait_if_paused():
                             self.log_message.emit("Đã dừng theo yêu cầu khi OCR trạng thái trận.")
                             return
 
                         detected_text = read_rect_text(end_rect)
+                        # Ghi log chẩn đoán khi OCR đổi kết quả, hoặc tối đa mỗi 5 giây.
+                        # Không tạo mục tiến trình riêng "Chờ giao tranh"; tác vụ vẫn là
+                        # một mục duy nhất: "Kết thúc trận Giao Tranh".
+                        now = time.monotonic()
+                        ocr_report = detected_text.strip() or "(trống)"
+                        if ocr_report != last_ocr_report or now - last_ocr_report_at >= 5:
+                            self.log_message.emit(
+                                f"Kết thúc trận Giao Tranh — OCR RECT {end_rect}: "
+                                f"{ocr_report[:180]}; tiếp tục kiểm tra trạng thái trận."
+                            )
+                            last_ocr_report = ocr_report
+                            last_ocr_report_at = now
+
                         if has_retreat_text(detected_text):
                             x, y = button_points["button_rut_lui"]
                             device.shell(f"input tap {x} {y}")
