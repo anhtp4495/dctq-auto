@@ -792,67 +792,77 @@ class UtilityTaskRunnerMixin:
                 )
 
 
+        def run_battle_time_limit_wait():
+            """Apply the configured time-limit wait after every battle's hero deployment."""
+            time_limit = int(self._config.get("task_battle_time_limit", 15))
+            if time_limit <= 0:
+                raise ValueError("Thời gian tối đa phải lớn hơn 0 giây")
+            import json
+            regions_path = Path(__file__).resolve().parent / "common" / "regions.json"
+            regions_data = json.loads(regions_path.read_text(encoding="utf-8"))
+            elements = {
+                item["name"]: item
+                for item in regions_data["regions"]["giao_tranh"].get("elements", [])
+            }
+            account_key = str(self._config.get("login_username", "")).strip() or "__current_account_unspecified__"
+            has_hero_text = getattr(self, "_battle_hero_flag_cache", {}).get(account_key)
+            if has_hero_text is None:
+                raise RuntimeError("Chưa có kết quả OCR chọn bộ tọa độ võ tướng từ tác vụ Bắt đầu trận Giao Tranh.")
+            suffix = "" if has_hero_text else "_1"
+            hero_points = {
+                f"vo_tuong_{index}{suffix}": elements[f"vo_tuong_{index}{suffix}"]["center"]
+                for index in range(1, 6)
+            }
+
+            def wait_battle_seconds(seconds: int) -> bool:
+                deadline = time.monotonic() + seconds
+                while True:
+                    if not self._wait_if_paused():
+                        return False
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        return True
+                    time.sleep(min(0.25, remaining))
+
+            self.log_message.emit(
+                f"Thời gian tối đa Giao Tranh — chờ 10 giây trước khi click lại đội hình; "
+                f"sau đó chờ thêm {max(0, time_limit - 10)} giây (giới hạn cấu hình {time_limit} giây)."
+            )
+            if time_limit > 10:
+                if not wait_battle_seconds(10):
+                    self.log_message.emit("Đã dừng trong thời gian chờ 10 giây của Giao Tranh.")
+                    return False
+                for hero_index in range(1, 6):
+                    if not self._wait_if_paused():
+                        self.log_message.emit("Đã dừng khi click lại đội hình võ tướng.")
+                        return False
+                    point_name = f"vo_tuong_{hero_index}{suffix}"
+                    point = hero_points[point_name]
+                    hero_x, hero_y = int(point["x_px"]), int(point["y_px"])
+                    device.shell(f"input tap {hero_x} {hero_y}")
+                    self.log_message.emit(
+                        f"Thời gian tối đa Giao Tranh — click {point_name} tại ({hero_x}, {hero_y})."
+                    )
+                    time.sleep(0.3)
+                # Chờ đủ X-10 giây SAU khi click lại đội hình; không trừ thêm 1 giây.
+                remaining_seconds = max(0, time_limit - 10)
+            else:
+                remaining_seconds = time_limit
+            if remaining_seconds and not wait_battle_seconds(remaining_seconds):
+                self.log_message.emit("Đã dừng khi chờ đủ thời gian Giao Tranh.")
+                return False
+            return True
+
         if self._config.get("task_start_battle") and self._config.get("task_battle_time_mode", False):
             label = "Thời gian tối đa Giao Tranh"
             self.task_progress_changed.emit(label, "running", 0, 1)
             try:
-                time_limit = int(self._config.get("task_battle_time_limit", 15))
-                if time_limit <= 0:
-                    raise ValueError("Thời gian tối đa phải lớn hơn 0 giây")
-                import json
-                regions_path = Path(__file__).resolve().parent / "common" / "regions.json"
-                regions_data = json.loads(regions_path.read_text(encoding="utf-8"))
-                elements = {
-                    item["name"]: item
-                    for item in regions_data["regions"]["giao_tranh"].get("elements", [])
-                }
-                account_key = str(self._config.get("login_username", "")).strip() or "__current_account_unspecified__"
-                has_hero_text = getattr(self, "_battle_hero_flag_cache", {}).get(account_key)
-                if has_hero_text is None:
-                    raise RuntimeError("Chưa có kết quả OCR chọn bộ tọa độ võ tướng từ tác vụ Bắt đầu trận Giao Tranh.")
-                suffix = "" if has_hero_text else "_1"
-                hero_points = {
-                    f"vo_tuong_{index}{suffix}": elements[f"vo_tuong_{index}{suffix}"]["center"]
-                    for index in range(1, 6)
-                }
-
-                def wait_battle_seconds(seconds: int) -> bool:
-                    deadline = time.monotonic() + seconds
-                    while True:
-                        if not self._wait_if_paused():
-                            return False
-                        remaining = deadline - time.monotonic()
-                        if remaining <= 0:
-                            return True
-                        time.sleep(min(0.25, remaining))
-
-                self.log_message.emit(
-                    f"Thời gian tối đa Giao Tranh — chờ đủ {time_limit} giây kể từ sau khi bắt đầu trận."
-                )
-                if time_limit > 10:
-                    if not wait_battle_seconds(10):
-                        self.log_message.emit("Đã dừng trong thời gian chờ 10 giây của Giao Tranh.")
-                        return
-                    for hero_index in range(1, 6):
-                        if not self._wait_if_paused():
-                            self.log_message.emit("Đã dừng khi click lại đội hình võ tướng.")
-                            return
-                        point_name = f"vo_tuong_{hero_index}{suffix}"
-                        point = hero_points[point_name]
-                        hero_x, hero_y = int(point["x_px"]), int(point["y_px"])
-                        device.shell(f"input tap {hero_x} {hero_y}")
-                        self.log_message.emit(
-                            f"Thời gian tối đa Giao Tranh — click {point_name} tại ({hero_x}, {hero_y})."
-                        )
-                        time.sleep(0.3)
-                    remaining_seconds = max(0, time_limit - 10 - 1)
-                else:
-                    remaining_seconds = time_limit
-                if remaining_seconds and not wait_battle_seconds(remaining_seconds):
-                    self.log_message.emit("Đã dừng khi chờ đủ thời gian Giao Tranh.")
+                if not run_battle_time_limit_wait():
+                    self.log_message.emit("Đã dừng tác vụ Thời gian tối đa Giao Tranh theo yêu cầu.")
                     return
                 completed += 1
                 self.task_progress_changed.emit(label, "done", 1, 1)
+                time_limit = int(self._config.get("task_battle_time_limit", 15))
                 self.progress_changed.emit(completed, max(1, total), f"Hoàn tất {label} ({time_limit} giây)")
             except Exception as exc:
                 completed += 1
@@ -919,12 +929,20 @@ class UtilityTaskRunnerMixin:
                     return expected in normalized or expected.replace(" ", "") in compact
 
                 def start_next_battle():
-                    """Reuse the same shared start-battle sequence for each subsequent battle."""
+                    """Reuse the shared start sequence and time-limit wait for each next battle."""
                     battle_number_for_start[0] = current_battle
                     if not run_start_battle_sequence():
                         raise RuntimeError(
                             f"Đã dừng khi bắt đầu trận Giao Tranh {current_battle}."
                         )
+                    if self._config.get("task_battle_time_mode", False):
+                        self.log_message.emit(
+                            f"Trận Giao Tranh {current_battle} — bắt đầu chờ theo chế độ thời gian tối đa."
+                        )
+                        if not run_battle_time_limit_wait():
+                            raise RuntimeError(
+                                f"Đã dừng trong thời gian chờ tối đa của trận Giao Tranh {current_battle}."
+                            )
 
                 current_battle = 1
                 finished = False
