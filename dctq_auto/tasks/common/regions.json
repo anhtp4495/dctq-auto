@@ -1446,9 +1446,9 @@
       ],
       "end_battle_ocr_rect": {
         "left": 0,
-        "top": 623,
-        "right": 280,
-        "bottom": 1034
+        "top": 629,
+        "right": 287,
+        "bottom": 1075
       },
       "retreat_confirm_ocr_rect": {
         "left": 844,
