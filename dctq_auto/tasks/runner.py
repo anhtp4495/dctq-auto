@@ -69,7 +69,7 @@ class UtilityTaskRunnerMixin:
             "task_detect_strategy_status", "task_strategy_vuot_ai",
             "task_receive_strategy_reward",
             "task_close_guild", "task_switch_account", "task_click_coordinates",
-            "task_open_battle", "task_find_battle_opponent", "task_start_battle", "xuat_chien", "task_use_bazhen",
+            "task_open_battle", "task_find_battle_opponent", "task_start_battle", "task_end_battle", "xuat_chien", "task_use_bazhen",
         }
         for key, label in selected:
             if key in implemented:
@@ -761,6 +761,177 @@ class UtilityTaskRunnerMixin:
                 self.log_message.emit(f"{label} thất bại: {exc}")
                 self.task_progress_changed.emit(label, "failed", 0, 1)
                 self.progress_changed.emit(completed, max(1, total), f"Lỗi: {label}")
+        if self._config.get("task_end_battle"):
+            label = "Kết thúc trận Giao Tranh"
+            self.task_progress_changed.emit(label, "running", 0, 1)
+            try:
+                import json
+
+                regions_path = Path(__file__).resolve().parent / "common" / "regions.json"
+                try:
+                    regions_data = json.loads(regions_path.read_text(encoding="utf-8"))
+                    battle_config = regions_data["regions"]["giao_tranh"]
+                    elements = {
+                        item["name"]: item
+                        for item in battle_config.get("elements", [])
+                    }
+                    end_rect_data = battle_config["end_battle_ocr_rect"]
+                    confirm_rect_data = battle_config["retreat_confirm_ocr_rect"]
+                    end_rect = (
+                        int(end_rect_data["left"]), int(end_rect_data["top"]),
+                        int(end_rect_data["right"]), int(end_rect_data["bottom"]),
+                    )
+                    confirm_rect = (
+                        int(confirm_rect_data["left"]), int(confirm_rect_data["top"]),
+                        int(confirm_rect_data["right"]), int(confirm_rect_data["bottom"]),
+                    )
+                    target_battles = max(1, int(self._config.get("task_open_battle_count", 1)))
+                    button_points = {
+                        name: (
+                            int(elements[name]["center"]["x_px"]),
+                            int(elements[name]["center"]["y_px"]),
+                        )
+                        for name in (
+                            "button_rut_lui", "button_xac_nhan",
+                            "button_tran_sau", "button_hoi_thanh",
+                        )
+                    }
+                except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+                    raise RuntimeError(
+                        f"Không đọc được cấu hình kết thúc trận Giao Tranh từ {regions_path}: {exc}"
+                    ) from exc
+
+                def read_rect_text(rect):
+                    words = self._ocr_words_in_rect(
+                        device, rect, steps=("gray", "white_text"), psm=(11,)
+                    )
+                    return " ".join(
+                        str(word.get("text", "")).strip()
+                        for word in words if str(word.get("text", "")).strip()
+                    )
+
+                def has_retreat_text(text):
+                    normalized = self._normalize_screen_text(text)
+                    compact = normalized.replace(" ", "")
+                    tokens = set(normalized.split())
+                    return (
+                        "rut" in tokens
+                        or "lui" in tokens
+                        or "rutlui" in compact
+                        or "rut lui" in normalized
+                    )
+
+                def has_text(text, expected):
+                    normalized = self._normalize_screen_text(text)
+                    compact = normalized.replace(" ", "")
+                    return expected in normalized or expected.replace(" ", "") in compact
+
+                current_battle = 1
+                finished = False
+                self.log_message.emit(
+                    f"Kết thúc trận Giao Tranh: mục tiêu {target_battles} trận; "
+                    f"OCR RECT trạng thái {end_rect}, hộp xác nhận {confirm_rect}."
+                )
+                while current_battle <= target_battles:
+                    if not self._wait_if_paused():
+                        self.log_message.emit("Đã dừng theo yêu cầu khi kết thúc trận Giao Tranh.")
+                        return
+
+                    deadline = time.monotonic() + 180
+                    detected_text = ""
+                    while time.monotonic() < deadline:
+                        if not self._wait_if_paused():
+                            self.log_message.emit("Đã dừng theo yêu cầu khi OCR trạng thái trận.")
+                            return
+
+                        detected_text = read_rect_text(end_rect)
+                        if has_retreat_text(detected_text):
+                            x, y = button_points["button_rut_lui"]
+                            device.shell(f"input tap {x} {y}")
+                            self.log_message.emit(
+                                "OCR phát hiện text Rút lui (rut/lui/rut_lui) trong "
+                                f"RECT {end_rect}; click button_rut_lui tại ({x}, {y})."
+                            )
+                            time.sleep(0.8)
+
+                            confirm_deadline = time.monotonic() + 12
+                            confirm_text = ""
+                            confirmed = False
+                            while time.monotonic() < confirm_deadline:
+                                if not self._wait_if_paused():
+                                    self.log_message.emit("Đã dừng trước khi xác nhận Rút lui.")
+                                    return
+                                confirm_text = read_rect_text(confirm_rect)
+                                if has_text(confirm_text, "thu quan"):
+                                    confirm_x, confirm_y = button_points["button_xac_nhan"]
+                                    device.shell(f"input tap {confirm_x} {confirm_y}")
+                                    self.log_message.emit(
+                                        "OCR xác nhận 'thu_quan' trong hộp thoại Rút lui; "
+                                        f"click button_xac_nhan tại ({confirm_x}, {confirm_y})."
+                                    )
+                                    time.sleep(1.2)
+                                    confirmed = True
+                                    break
+                                time.sleep(0.5)
+                            if not confirmed:
+                                raise RuntimeError(
+                                    "Đã click Rút lui nhưng OCR không tìm thấy 'thu_quan' "
+                                    f"trong RECT {confirm_rect}. OCR: {confirm_text[:160] or '(trống)'}"
+                                )
+                            # Sau xác nhận Rút lui, tiếp tục chờ kết quả có nút tran_sau.
+                            continue
+
+                        if has_text(detected_text, "tran sau"):
+                            self.log_message.emit(
+                                f"OCR phát hiện 'tran_sau' (trận {current_battle}/{target_battles})."
+                            )
+                            if current_battle < target_battles:
+                                x, y = button_points["button_tran_sau"]
+                                device.shell(f"input tap {x} {y}")
+                                self.log_message.emit(
+                                    f"Trận {current_battle}/{target_battles}: còn trận cần đánh; "
+                                    f"click button_tran_sau tại ({x}, {y})."
+                                )
+                                current_battle += 1
+                                time.sleep(1.5)
+                                break
+
+                            x, y = button_points["button_hoi_thanh"]
+                            device.shell(f"input tap {x} {y}")
+                            self.log_message.emit(
+                                f"Đã đủ {target_battles}/{target_battles} trận; "
+                                f"click button_hoi_thanh tại ({x}, {y})."
+                            )
+                            finished = True
+                            time.sleep(0.8)
+                            break
+
+                        time.sleep(1.0)
+                    else:
+                        raise RuntimeError(
+                            "Hết 180 giây nhưng OCR không phát hiện được 'rut/lui/rut_lui' "
+                            f"hoặc 'tran_sau' trong RECT {end_rect}. "
+                            f"OCR cuối: {detected_text[:180] or '(trống)'}"
+                        )
+
+                    if finished:
+                        break
+
+                if not finished:
+                    raise RuntimeError("Chưa xác nhận được thao tác Hồi thành sau số trận mục tiêu.")
+                completed += 1
+                self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), "Đã kết thúc đủ số trận Giao Tranh"
+                )
+            except Exception as exc:
+                completed += 1
+                self.log_message.emit(f"{label} thất bại: {exc}")
+                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), f"Lỗi: {label}"
+                )
+
         if self._config.get("task_detect_strategy_status"):
             label = "Phát hiện trạng thái Mưu Binh"
             self.task_progress_changed.emit(label, "running", 0, 1)
