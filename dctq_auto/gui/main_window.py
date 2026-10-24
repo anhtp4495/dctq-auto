@@ -1723,7 +1723,7 @@ class MainWindow(QMainWindow):
                     str(exc),
                 )
                 return
-            self._clone_total_accounts = len(accounts)
+            self._clone_total_accounts = sum(account.enabled for account in accounts)
             selected_tasks = [
                 key for key in (
                     "clone_login",
@@ -1774,9 +1774,14 @@ class MainWindow(QMainWindow):
             self.progress_bar.setValue(0)
             self.clone_result_list.clear()
             for account in accounts:
-                item = QListWidgetItem(account.username)
-                item.setIcon(self._status_icon("·", "#6e7781"))
+                label = account.username if account.enabled else f"⏸ {account.username} — Đã vô hiệu hóa"
+                item = QListWidgetItem(label)
+                item.setIcon(
+                    self._status_icon("·", "#6e7781")
+                    if account.enabled else self._status_icon("⏸", "#8c959f")
+                )
                 item.setData(Qt.ItemDataRole.UserRole, account.username)
+                item.setData(Qt.ItemDataRole.UserRole + 1, account.enabled)
                 self.clone_result_list.addItem(item)
         else:
             self.progress_bar.setRange(0, 100)
@@ -1929,8 +1934,12 @@ class MainWindow(QMainWindow):
         for index in range(self.clone_result_list.count()):
             item = self.clone_result_list.item(index)
             if item.data(Qt.ItemDataRole.UserRole) == username:
-                if state == "running":
+                if state == "disabled":
+                    item.setIcon(self._status_icon("⏸", "#8c959f"))
+                    item.setText(f"⏸ {username} — Đã vô hiệu hóa")
+                elif state == "running":
                     item.setIcon(self._status_icon("→", "#0969da"))
+                    item.setText(username)
                     self.current_activity_label.setText(f"Đang xử lý: {username}")
                     self.clone_result_list.scrollToItem(
                         item, QAbstractItemView.ScrollHint.PositionAtCenter
