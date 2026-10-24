@@ -206,7 +206,7 @@ class MainWindow(QMainWindow):
         self.thoi_gian_giao_tranh = QSpinBox()
         self.thoi_gian_giao_tranh.setRange(15, 180)
         self.thoi_gian_giao_tranh.setValue(15)
-        self.thoi_gian_giao_tranh.setSuffix(" giây")
+        self.thoi_gian_giao_tranh.setSuffix("")
         self.thoi_gian_giao_tranh.setKeyboardTracking(False)
         self.thoi_gian_giao_tranh.editingFinished.connect(
             self.thoi_gian_giao_tranh.clearFocus
@@ -239,11 +239,14 @@ class MainWindow(QMainWindow):
         options_layout.setVerticalSpacing(4)
         options_layout.addWidget(self.chon_nha_npc, 0, 0)
         options_layout.addWidget(self.su_dung_canh_bat_tran, 0, 1)
+        self.thoi_gian_giao_tranh_control = self._build_seconds_control(
+            self.thoi_gian_giao_tranh
+        )
         giao_tranh_mode_row = self._build_mode_row(
             self.giao_tranh_nhanh_1_co,
             self.ba_co,
             self.thoi_gian_mode,
-            self.thoi_gian_giao_tranh,
+            self.thoi_gian_giao_tranh_control,
         )
         options_layout.addWidget(giao_tranh_mode_row, 1, 0, 1, 5)
         options_layout.addWidget(self.giao_tranh_mode_description, 2, 0, 1, 5)
@@ -621,6 +624,16 @@ class MainWindow(QMainWindow):
         self._ui_settings.sync()
         self._save_settings()
         super().closeEvent(event)
+
+    def _build_seconds_control(self, spinbox: QSpinBox) -> QWidget:
+        """Show the seconds unit as a separate label instead of inside the input."""
+        control = QWidget()
+        layout = QHBoxLayout(control)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
+        layout.addWidget(spinbox)
+        layout.addWidget(QLabel("giây"))
+        return control
 
     def _build_mode_row(self, *widgets: QWidget) -> QWidget:
         """Build mode options with the same first-column width and spacing."""
@@ -1205,7 +1218,7 @@ class MainWindow(QMainWindow):
         self.task_battle_time_limit = QSpinBox()
         self.task_battle_time_limit.setRange(15, 180)
         self.task_battle_time_limit.setValue(15)
-        self.task_battle_time_limit.setSuffix(" giây")
+        self.task_battle_time_limit.setSuffix("")
         self.task_battle_time_limit.setKeyboardTracking(False)
         self.task_battle_time_limit.setEnabled(False)
         self.task_battle_time_mode.toggled.connect(
@@ -1375,11 +1388,14 @@ class MainWindow(QMainWindow):
         task_battle_options.addLayout(merit_row, 0, 0, 1, 4)
         task_battle_options.addWidget(self.task_battle_npc_house, 1, 0)
         task_battle_options.addWidget(self.task_battle_use_bazhen, 1, 1)
+        self.task_battle_time_limit_control = self._build_seconds_control(
+            self.task_battle_time_limit
+        )
         task_battle_mode_row = self._build_mode_row(
             self.task_battle_fast_one_flag,
             self.task_battle_three_flags,
             self.task_battle_time_mode,
-            self.task_battle_time_limit,
+            self.task_battle_time_limit_control,
         )
         battle_screen_group = QGroupBox("Màn hình Giao Tranh")
         battle_screen_layout = QVBoxLayout(battle_screen_group)
