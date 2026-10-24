@@ -618,9 +618,9 @@ class UtilityTaskRunnerMixin:
                 # BƯỚC 3: click võ tướng 1, b2.1, võ tướng 2, rồi b2.2.
                 click_sequence = [
                     (f"vo_tuong_1{suffix}", hero_points[f"vo_tuong_1{suffix}"]),
-                    ("b2_1", elements["b2_1"]["center"]),
+                    ("vi_tri_chien_dau_vo_tuong_1", elements["vi_tri_chien_dau_vo_tuong_1"]["center"]),
                     (f"vo_tuong_2{suffix}", hero_points[f"vo_tuong_2{suffix}"]),
-                    ("b2_2", elements["b2_2"]["center"]),
+                    ("vi_tri_chien_dau_vo_tuong_2", elements["vi_tri_chien_dau_vo_tuong_2"]["center"]),
                 ]
                 for step_index, (point_name, point) in enumerate(click_sequence, start=1):
                     if not self._wait_if_paused():
@@ -660,11 +660,11 @@ class UtilityTaskRunnerMixin:
                 # võ tướng 5, b2.5. Mỗi lần click cách nhau 300 ms.
                 click_sequence_step5 = [
                     (f"vo_tuong_3{suffix}", hero_points[f"vo_tuong_3{suffix}"]),
-                    ("b2_3", elements["b2_3"]["center"]),
+                    ("vi_tri_chien_dau_vo_tuong_3", elements["vi_tri_chien_dau_vo_tuong_3"]["center"]),
                     (f"vo_tuong_4{suffix}", hero_points[f"vo_tuong_4{suffix}"]),
-                    ("b2_4", elements["b2_4"]["center"]),
+                    ("vi_tri_chien_dau_vo_tuong_4", elements["vi_tri_chien_dau_vo_tuong_4"]["center"]),
                     (f"vo_tuong_5{suffix}", hero_points[f"vo_tuong_5{suffix}"]),
-                    ("b2_5", elements["b2_5"]["center"]),
+                    ("vi_tri_chien_dau_vo_tuong_5", elements["vi_tri_chien_dau_vo_tuong_5"]["center"]),
                 ]
                 for step_index, (point_name, point) in enumerate(click_sequence_step5, start=1):
                     if not self._wait_if_paused():
