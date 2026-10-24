@@ -163,29 +163,51 @@ class GuildWorkerMixin:
             if not self._wait_if_paused():
                 return False
 
-            # BƯỚC 3: verify a real guild-screen label, not a loose 25% fragment.
-            recognized_header, header_rect, _ = color_text_ocr(
-                (147, 4, 956, 147), 38.0
-            )
-            header_targets = ("quan_doan", "thanh_vien", "tim_quan_doan")
-            matched_header = next(
-                (candidate for candidate in header_targets
-                 if matches_marker(recognized_header, candidate)),
-                None,
-            )
-            self.log_message.emit(
-                "Vào quân đoàn — BƯỚC 3: OCR giao diện trong RECT "
-                f"{header_rect}; nội dung OCR: {recognized_header or '(trống)'}"
-            )
-            if not matched_header:
+            # BƯỚC 3: xác nhận đã vào Quân đoàn bằng OCR nút Báo danh.
+            # Thử tối đa 3 lần vì giao diện có thể tải chậm hoặc mạng yếu.
+            from difflib import SequenceMatcher
+
+            check_rect = (1527, 952, 1848, 999)
+            expected_text = "bao_danh_quan_doan"
+            matched = False
+            last_text = ""
+            last_ratio = 0.0
+
+            for attempt in range(1, 4):
+                if not self._wait_if_paused():
+                    return False
+
+                last_text, actual_rect, _ = color_text_ocr(check_rect, 38.0)
+                normalized_text = self._normalize_ocr_match_text(last_text)
+                normalized_expected = self._normalize_ocr_match_text(expected_text)
+                last_ratio = (
+                    SequenceMatcher(None, normalized_expected, normalized_text).ratio()
+                    if normalized_text and normalized_expected else 0.0
+                )
+
+                self.log_message.emit(
+                    f"Vào quân đoàn — BƯỚC 3: OCR nút bao_danh_quan_doan "
+                    f"lần {attempt}/3 trong RECT {actual_rect}; "
+                    f"text: {last_text or '(trống)'}; độ khớp: {last_ratio:.1%}."
+                )
+
+                if last_ratio > 0.25:
+                    matched = True
+                    break
+
+                if attempt < 3:
+                    time.sleep(1.0)
+
+            if not matched:
                 raise RuntimeError(
-                    "Đã click 'Vào quân đoàn' nhưng OCR không nhận diện được nhãn "
-                    "giao diện Quân đoàn (cần quan_doan / thanh_vien / tim_quan_doan). "
-                    f"OCR: {recognized_header or '(trống)'}"
+                    "Đã click 'Vào quân đoàn' nhưng sau 3 lần OCR, text trong "
+                    f"RECT {check_rect} không khớp '{expected_text}' trên 25%. "
+                    f"Text cuối: {last_text or '(trống)'}; độ khớp cuối: {last_ratio:.1%}."
                 )
 
             self.log_message.emit(
-                f"Đã xác nhận giao diện Quân đoàn bằng nhãn '{matched_header}'."
+                f"Đã xác nhận mở màn hình Quân đoàn thành công: OCR khớp "
+                f"'{expected_text}' ở mức {last_ratio:.1%} (>25%)."
             )
             return True
         except Exception as exc:
