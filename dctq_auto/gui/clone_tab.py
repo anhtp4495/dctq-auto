@@ -38,8 +38,8 @@ class CloneTab(QWidget):
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         intro = QLabel(
-            "Chạy các nhiệm vụ đã chọn lần lượt trên từng tài khoản trong file TXT. "
-            "Mỗi dòng dùng định dạng username|password."
+            "Chạy lần lượt các tài khoản trong file INI. Tài khoản ở [DisabledAccounts] "
+            "được giữ trong danh sách nhưng sẽ không chạy."
         )
         intro.setWordWrap(True)
         layout.addWidget(intro)
@@ -105,7 +105,7 @@ class CloneTab(QWidget):
             self,
             "Chọn danh sách tài khoản",
             str(Path.home()),
-            "Text files (*.txt);;All files (*)",
+            "INI files (*.ini);;All files (*)",
         )
         if filename:
             self.add_account_file(filename)
@@ -168,7 +168,11 @@ class CloneTab(QWidget):
         except (OSError, UnicodeError, ValueError) as exc:
             self.account_status.setText(str(exc))
         else:
-            self.account_status.setText(f"Đã đọc {len(accounts)} tài khoản hợp lệ.")
+            enabled = sum(account.enabled for account in accounts)
+            disabled = len(accounts) - enabled
+            self.account_status.setText(
+                f"Đã đọc {len(accounts)} tài khoản: {enabled} bật, {disabled} vô hiệu hóa."
+            )
 
     def current_config(self) -> dict:
         """Lấy cấu hình clone; không đưa mật khẩu vào cấu hình hoặc nhật ký."""
