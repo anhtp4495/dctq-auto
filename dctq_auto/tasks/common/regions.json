@@ -1300,16 +1300,16 @@
           }
         },
         {
-          "name": "b2_1",
-          "text": "Vị trí chiến đấu võ tướng 1",
+          "name": "vi_tri_chien_dau_vo_tuong_1",
+          "text": "Vị trí chiến đấu của võ tướng 1",
           "center": {
             "x_px": 488,
             "y_px": 512
           }
         },
         {
-          "name": "b2_2",
-          "text": "Vị trí chiến đấu võ tướng 2",
+          "name": "vi_tri_chien_dau_vo_tuong_2",
+          "text": "Vị trí chiến đấu của võ tướng 2",
           "center": {
             "x_px": 1366,
             "y_px": 487
@@ -1348,8 +1348,8 @@
           }
         },
         {
-          "name": "b2_3",
-          "text": "Tọa độ b2.3",
+          "name": "vi_tri_chien_dau_vo_tuong_3",
+          "text": "Vị trí chiến đấu của võ tướng 3",
           "center": {
             "x_px": 436,
             "y_px": 418
@@ -1372,8 +1372,8 @@
           }
         },
         {
-          "name": "b2_4",
-          "text": "Tọa độ b2.4",
+          "name": "vi_tri_chien_dau_vo_tuong_4",
+          "text": "Vị trí chiến đấu của võ tướng 4",
           "center": {
             "x_px": 1491,
             "y_px": 395
@@ -1396,8 +1396,8 @@
           }
         },
         {
-          "name": "b2_5",
-          "text": "Tọa độ b2.5",
+          "name": "vi_tri_chien_dau_vo_tuong_5",
+          "text": "Vị trí chiến đấu của võ tướng 5",
           "center": {
             "x_px": 950,
             "y_px": 744
@@ -1438,7 +1438,7 @@
         "bottom": 811
       },
       "main_screen_target": "tim_doi_thu",
-      "notes": " Bước 5: click vo_tuong_3 → b2_3 → vo_tuong_4 → b2_4 → vo_tuong_5 → b2_5; chọn bộ võ tướng theo kết quả OCR TRUE/FALSE."
+      "notes": " Bước 5: click vo_tuong_3 → vi_tri_chien_dau_vo_tuong_3 → vo_tuong_4 → vi_tri_chien_dau_vo_tuong_4 → vo_tuong_5 → vi_tri_chien_dau_vo_tuong_5; chọn bộ võ tướng theo kết quả OCR TRUE/FALSE."
     }
   }
 }
