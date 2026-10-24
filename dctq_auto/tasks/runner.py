@@ -932,6 +932,9 @@ class UtilityTaskRunnerMixin:
                     detected_text = ""
                     last_ocr_report = None
                     last_ocr_report_at = 0.0
+                    # Sau khi xác nhận thu quân, không click nút này lần nữa
+                    # chỉ vì OCR còn đọc thấy chữ cũ trong lúc giao diện chuyển cảnh.
+                    retreat_confirmed = False
                     while time.monotonic() < deadline:
                         if not self._wait_if_paused():
                             self.log_message.emit("Đã dừng theo yêu cầu khi OCR trạng thái trận.")
@@ -951,7 +954,7 @@ class UtilityTaskRunnerMixin:
                             last_ocr_report = ocr_report
                             last_ocr_report_at = now
 
-                        if has_text(detected_text, "thu quan"):
+                        if has_text(detected_text, "thu quan") and not retreat_confirmed:
                             x, y = button_points["button_thu_quan"]
                             device.shell(f"input tap {x} {y}")
                             self.log_message.emit(
@@ -977,6 +980,7 @@ class UtilityTaskRunnerMixin:
                                     )
                                     time.sleep(1.2)
                                     confirmed = True
+                                    retreat_confirmed = True
                                     break
                                 time.sleep(0.5)
                             if not confirmed:
