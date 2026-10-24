@@ -1862,7 +1862,11 @@ class MainWindow(QMainWindow):
                 ("task_open_battle", "Mở màn hình Giao Tranh"),
                 ("task_close_battle", "Thoát màn hình Giao Tranh"),
                 ("task_find_battle_opponent", "Tìm đối thủ Giao Tranh"),
-                ("task_start_battle", "Bắt đầu trận Giao Tranh"),
+                ("task_start_battle", (
+                    f"Bắt đầu trận Giao Tranh (tối đa {int(config.get('task_battle_time_limit', 15))} giây)"
+                    if config.get("task_battle_time_mode")
+                    else "Bắt đầu trận Giao Tranh"
+                )),
                 ("task_end_battle", "Kết thúc trận Giao Tranh"),
                 ("xuat_chien", "Xuất chiến"),
                 ("task_use_bazhen", "Sử dụng Canh Bát Trân"),
