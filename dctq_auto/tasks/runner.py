@@ -1082,12 +1082,28 @@ class UtilityTaskRunnerMixin:
                                     retreat_confirmed = True
                                     break
                             if not confirmed:
-                                raise RuntimeError(
-                                    "Đã click Rút lui nhưng OCR không tìm thấy 'thu_quan' "
-                                    f"trong RECT {confirm_rect}. OCR: {confirm_text[:160] or '(trống)'}"
-                                )
-                            # Sau xác nhận Rút lui, tiếp tục chờ kết quả có nút tran_sau.
-                            continue
+                                # Hộp thoại xác nhận có thể không xuất hiện nếu trận vừa kết thúc.
+                                # Ưu tiên kiểm tra lại trạng thái chính trước khi kết luận thất bại.
+                                latest_state_text = read_rect_text(end_rect)
+                                if has_text(latest_state_text, "tran sau"):
+                                    self.log_message.emit(
+                                        "Không xác nhận được hộp thoại Rút lui; OCR kiểm tra lại "
+                                        f"RECT trạng thái phát hiện 'tran_sau': "
+                                        f"{latest_state_text[:160] or '(trống)'}. "
+                                        "Bỏ qua xác nhận Rút lui và xử lý trạng thái trận kết thúc."
+                                    )
+                                    detected_text = latest_state_text
+                                else:
+                                    raise RuntimeError(
+                                        "Đã click Rút lui nhưng OCR không tìm thấy 'thu_quan' "
+                                        f"trong RECT {confirm_rect}; kiểm tra lại RECT trạng thái "
+                                        f"cũng không thấy 'tran_sau'. Hộp thoại OCR: "
+                                        f"{confirm_text[:160] or '(trống)'}; trạng thái OCR: "
+                                        f"{latest_state_text[:160] or '(trống)'}"
+                                    )
+                            else:
+                                # Sau xác nhận Rút lui, tiếp tục chờ kết quả có nút tran_sau.
+                                continue
 
                         if has_text(detected_text, "tran sau"):
                             self.log_message.emit(
