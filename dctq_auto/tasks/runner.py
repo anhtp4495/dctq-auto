@@ -18,9 +18,9 @@ class UtilityTaskRunnerMixin:
         from dctq_auto.adb.client import AdbClient
 
         ocr_client = AdbClient(serial=self._serial)
-        # Count every selected task, including gameplay tasks that do not yet
-        # have a real ADB implementation. Those tasks must be visible as failures
-        # in the progress panel instead of silently being skipped.
+        # Count selected standalone tasks. Battle modes are options that modify
+        # "Bắt đầu trận Giao Tranh", not independent tasks; legacy strategy-mode
+        # toggles are handled outside this utility-task runner.
         task_labels = (
             ("task_login", "Đăng nhập"),
             ("task_open_activity", "Mở màn hình Hoạt động"),
@@ -40,11 +40,8 @@ class UtilityTaskRunnerMixin:
             ("task_use_bazhen", "Sử dụng Canh Bát Trân"),
             ("task_find_battle_opponent", "Tìm đối thủ Giao Tranh"),
             ("task_start_battle", "Bắt đầu trận Giao Tranh"),
-            ("task_battle_time_mode", "Thời gian tối đa Giao Tranh"),
             ("task_end_battle", "Kết thúc trận Giao Tranh"),
             ("xuat_chien", "Xuất chiến"),
-            ("thuc_hien_giao_tranh", "Giao tranh"),
-            ("thuc_hien_tranh_ba", "Tranh bá"),
             ("task_enter_strategy", "Vào màn hình Mưu Binh"),
             ("task_strategy_defense", "Thiết lập phòng thủ"),
             ("task_detect_strategy_status", "Phát hiện trạng thái Mưu Binh"),
