@@ -564,16 +564,43 @@ class UtilityTaskRunnerMixin:
                         f"Không đọc được cấu hình kéo Bắt đầu trận từ {regions_path}: {exc}"
                     ) from exc
 
-                # BƯỚC 1: nạp danh sách 5 tọa độ võ tướng; không click.
-                hero_points = {f"vo_tuong_{index}": elements[f"vo_tuong_{index}"]["center"] for index in range(1, 6)}
+                # BƯỚC 1: OCR chỉ báo để chọn bộ tọa độ võ tướng; không click.
+                account_key = str(self._config.get("login_username", "")).strip() or "__current_account_unspecified__"
+                cache = getattr(self, "_battle_hero_flag_cache", {})
+                if account_key not in cache:
+                    if not self._wait_if_paused():
+                        self.log_message.emit("Đã dừng trước OCR xác định bộ võ tướng.")
+                        return
+                    screenshot = device.screenshot().convert("RGB")
+                    roi = screenshot.crop((302, 978, 411, 1009)).convert("L")
+                    ocr_text = pytesseract.image_to_string(roi, config="--psm 8").strip()
+                    cache[account_key] = bool(ocr_text)
+                    self._battle_hero_flag_cache = cache
+                    self.log_message.emit(
+                        f"OCR chỉ báo võ tướng cho tài khoản '{account_key}': "
+                        f"text={ocr_text!r}, kết quả={'TRUE' if cache[account_key] else 'FALSE'}."
+                    )
+                else:
+                    self.log_message.emit(
+                        f"Dùng cache OCR võ tướng cho tài khoản '{account_key}': "
+                        f"{'TRUE' if cache[account_key] else 'FALSE'}."
+                    )
+                has_hero_text = cache[account_key]
+                suffix = "" if has_hero_text else "_1"
+                hero_points = {
+                    f"vo_tuong_{index}{suffix}": elements[f"vo_tuong_{index}{suffix}"]["center"]
+                    for index in range(1, 6)
+                }
                 self.log_message.emit(
-                    "Bắt đầu trận Giao Tranh — BƯỚC 1: đã nạp danh sách 5 võ tướng: "
+                    "Bắt đầu trận Giao Tranh — BƯỚC 1: đã chọn bộ tọa độ "
+                    + ("TRUE" if has_hero_text else "FALSE") + ": "
                     + ", ".join(
                         f"{name}=({int(point['x_px'])}, {int(point['y_px'])})"
                         for name, point in hero_points.items()
                     )
                     + "; chỉ lưu tọa độ, không click."
                 )
+
 
                 if not self._wait_if_paused():
                     self.log_message.emit("Đã dừng trước Bước 2 kéo để bắt đầu trận Giao Tranh.")
@@ -590,9 +617,9 @@ class UtilityTaskRunnerMixin:
 
                 # BƯỚC 3: click võ tướng 1, b2.1, võ tướng 2, rồi b2.2.
                 click_sequence = [
-                    ("vo_tuong_1", hero_points["vo_tuong_1"]),
+                    (f"vo_tuong_1{suffix}", hero_points[f"vo_tuong_1{suffix}"]),
                     ("bat_dau_tran_b2_1", elements["bat_dau_tran_b2_1"]["center"]),
-                    ("vo_tuong_2", hero_points["vo_tuong_2"]),
+                    (f"vo_tuong_2{suffix}", hero_points[f"vo_tuong_2{suffix}"]),
                     ("bat_dau_tran_b2_2", elements["bat_dau_tran_b2_2"]["center"]),
                 ]
                 for step_index, (point_name, point) in enumerate(click_sequence, start=1):
