@@ -1931,6 +1931,7 @@ class MainWindow(QMainWindow):
             if item.data(Qt.ItemDataRole.UserRole) == username:
                 if state == "running":
                     item.setIcon(self._status_icon("→", "#0969da"))
+                    self.current_activity_label.setText(f"Đang xử lý: {username}")
                     self.clone_result_list.scrollToItem(
                         item, QAbstractItemView.ScrollHint.PositionAtCenter
                     )
@@ -1960,8 +1961,8 @@ class MainWindow(QMainWindow):
 
     def _update_progress(self, completed: int, total: int, status: str) -> None:
         if self._active_clone_mode:
-            self.current_activity_label.setText(f"Đang xử lý: {status}")
-            # Account totals live beneath the bar; usernames/details remain in the log.
+            # The account-status signal sets "Đang xử lý: <account>".
+            # Keep detailed task/step progress in the log instead of duplicating it here.
             self.progress_bar.setRange(0, max(1, self._clone_total_accounts))
             self.progress_bar.setFormat("%v/%m (%p%)")
             self.progress_bar.setValue(
