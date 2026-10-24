@@ -417,7 +417,6 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central)
         self._restore_settings()
         # Sync dependent controls after persisted checkbox states are restored.
-        self._toggle_task_battle_options(self.task_battle.isChecked())
         self._place_window_on_right()
         # Restore saved geometry after the native Windows frame has been created.
         # Restoring before show() can shift the outer frame vertically by the
@@ -787,17 +786,7 @@ class MainWindow(QMainWindow):
                 "Đánh đến khi chắc chắn thắng và đạt đủ 3 cờ mới kết thúc."
             )
 
-    def _toggle_task_battle_options(self, enabled: bool) -> None:
-        self.task_battle_lower_merit.setEnabled(enabled)
-        self.task_battle_merit_target.setEnabled(
-            enabled and self.task_battle_lower_merit.isChecked()
-        )
-        self._toggle_task_battle_merit_mode(
-            self.task_battle_lower_merit.isChecked()
-        )
-
     def _toggle_task_battle_merit_mode(self, lower_merit: bool) -> None:
-        battle_enabled = self.task_battle.isChecked()
         for widget in (
             self.task_battle_npc_house,
             self.task_battle_use_bazhen,
@@ -805,11 +794,9 @@ class MainWindow(QMainWindow):
             self.task_battle_three_flags,
             self.task_battle_time_mode,
         ):
-            widget.setEnabled(battle_enabled and not lower_merit)
+            widget.setEnabled(not lower_merit)
         self.task_battle_time_limit.setEnabled(
-            battle_enabled
-            and not lower_merit
-            and self.task_battle_time_mode.isChecked()
+            not lower_merit and self.task_battle_time_mode.isChecked()
         )
 
     def _toggle_task_championship_options(self, enabled: bool) -> None:
@@ -1185,15 +1172,6 @@ class MainWindow(QMainWindow):
         self.task_end_battle = QCheckBox("Kết thúc trận Giao Tranh")
         self.task_xuat_chien = QCheckBox("Xuất chiến")
         self.task_use_bazhen = QCheckBox("Sử dụng Canh Bát Trân")
-        self.task_battle = QCheckBox("Giao tranh")
-        self.task_battle_count = QSpinBox()
-        self.task_battle_count.setRange(1, 60)
-        self.task_battle_count.setValue(15)
-        self.task_battle_count.setEnabled(False)
-        self.task_battle_count.setKeyboardTracking(False)
-        self.task_battle.toggled.connect(self.task_battle_count.setEnabled)
-        self.task_battle.toggled.connect(self._toggle_task_battle_options)
-
         # Giao tranh options are independent from the Daily tab settings.
         self.task_battle_lower_merit = QCheckBox("Hạ chiến công")
         self.task_battle_merit_target = QSpinBox()
@@ -1369,13 +1347,6 @@ class MainWindow(QMainWindow):
         glass_tower_row.addStretch(1)
         daily_layout.addLayout(glass_tower_row)
 
-        battle_row = QHBoxLayout()
-        battle_row.addWidget(self.task_battle)
-        battle_row.addWidget(QLabel("Số trận:"))
-        battle_row.addWidget(self.task_battle_count)
-        battle_row.addStretch(1)
-        daily_layout.addLayout(battle_row)
-
         task_battle_options = QGridLayout()
         task_battle_options.setContentsMargins(20, 0, 0, 0)
         task_battle_options.setHorizontalSpacing(12)
@@ -1516,8 +1487,6 @@ class MainWindow(QMainWindow):
                 "nhiem_vu_luu_ly_thap": self.task_glass_tower.isChecked(),
                 "so_lan_luu_ly_thap": self.task_glass_tower_count.value(),
                 "luu_ly_thap_knb": self.task_glass_tower_knb.isChecked(),
-                "thuc_hien_giao_tranh": self.task_battle.isChecked(),
-                "giao_tranh": self.task_battle_count.value(),
                 "ha_chien_cong": self.task_battle_lower_merit.isChecked(),
                 "chien_cong": self.task_battle_merit_target.value(),
                 "chon_nha_npc": (
@@ -1713,7 +1682,7 @@ class MainWindow(QMainWindow):
                 "task_enter_guild", "task_receive_lucky_bag", "task_guild_fortune",
                 "diem_danh", "nhan_le_bao_quoc_van", "bao_danh_quan_doan", "dong_gop_knb",
                 "tham_do_lanh_dia", "nhiem_vu_luu_ly_thap",
-                "thuc_hien_giao_tranh", "thuc_hien_tranh_ba",
+                "thuc_hien_tranh_ba",
                 "task_enter_strategy", "task_strategy_defense",
                 "task_detect_strategy_status", "task_strategy_vuot_ai",
                 "task_receive_strategy_reward", "task_close_strategy",
@@ -1881,7 +1850,6 @@ class MainWindow(QMainWindow):
                 ("task_end_battle", "Kết thúc trận Giao Tranh"),
                 ("xuat_chien", "Xuất chiến"),
                 ("task_use_bazhen", "Sử dụng Canh Bát Trân"),
-                ("thuc_hien_giao_tranh", "Giao tranh"),
                 ("thuc_hien_tranh_ba", "Tranh bá"),
                 ("thiet_lap_muu_binh", "Mưu binh"),
                 ("task_close_guild", "Thoát màn hình Quân đoàn"),
