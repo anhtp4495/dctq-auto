@@ -1205,13 +1205,43 @@
         },
         {
           "name": "vo_tuong_1",
-          "text": "Vị trí chọn võ tướng khi OCR vùng chỉ báo có chữ",
-          "center": { "x_px": 589, "y_px": 938 }
+          "text": "Vị trí chọn võ tướng thứ 1",
+          "center": {
+            "x_px": 594,
+            "y_px": 951
+          }
         },
         {
-          "name": "vo_tuong_1_1",
-          "text": "Vị trí chọn võ tướng khi OCR vùng chỉ báo không có chữ",
-          "center": { "x_px": 434, "y_px": 938 }
+          "name": "vo_tuong_2",
+          "text": "Vị trí chọn võ tướng thứ 2",
+          "center": {
+            "x_px": 733,
+            "y_px": 950
+          }
+        },
+        {
+          "name": "vo_tuong_3",
+          "text": "Vị trí chọn võ tướng thứ 3",
+          "center": {
+            "x_px": 886,
+            "y_px": 947
+          }
+        },
+        {
+          "name": "vo_tuong_4",
+          "text": "Vị trí chọn võ tướng thứ 4",
+          "center": {
+            "x_px": 1041,
+            "y_px": 948
+          }
+        },
+        {
+          "name": "vo_tuong_5",
+          "text": "Vị trí chọn võ tướng thứ 5",
+          "center": {
+            "x_px": 1168,
+            "y_px": 950
+          }
         },
         {
           "name": "bat_dau_tran_b3_1",
@@ -1288,7 +1318,7 @@
         "x": 0,
         "y": 0
       },
-      "note": "Tọa độ button_giao_tranh đã được người dùng xác nhận (289, 795); OCR giao_tranh chỉ dùng nhận diện, không dùng tâm OCR làm điểm click. Bắt đầu trận: Bước 1 kéo bat_dau_tran_diem_a (958, 434) đến bat_dau_tran_diem_b (960, 804), 500 ms; Bước 2 click bat_dau_tran_b2_1 (488, 512) rồi bat_dau_tran_b2_2 (1366, 487); Bước 3 swipe bat_dau_tran_b3_1 (943, 818) đến bat_dau_tran_b3_3 (952, 211), 500 ms. Tọa độ tác vụ Tìm đối thủ: su_dung_canh_bat_tran (1770, 861), tim_doi_thu (1381, 775).",
+      "note": "Tọa độ button_giao_tranh đã được người dùng xác nhận (289, 795); OCR giao_tranh chỉ dùng nhận diện, không dùng tâm OCR làm điểm click. Bắt đầu trận: Bước 1 OCR vùng chỉ báo; Bước 2 kéo bat_dau_tran_diem_a (958, 434) đến bat_dau_tran_diem_b (960, 804), 500 ms; Bước 3 click vo_tuong_1 (594, 951), bat_dau_tran_b2_1 (488, 512), vo_tuong_2 (733, 950), bat_dau_tran_b2_2 (1366, 487); Bước 4 swipe bat_dau_tran_b3_1 (943, 818) đến bat_dau_tran_b3_3 (952, 211), 500 ms, hai lần. Các tọa độ vo_tuong_1 đến vo_tuong_5 đã được lưu.",
       "main_screen_ocr_rect": {
         "left": 1234,
         "top": 700,
