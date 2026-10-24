@@ -40,6 +40,7 @@ class UtilityTaskRunnerMixin:
             ("task_use_bazhen", "Sử dụng Canh Bát Trân"),
             ("task_find_battle_opponent", "Tìm đối thủ Giao Tranh"),
             ("task_start_battle", "Bắt đầu trận Giao Tranh"),
+            ("task_battle_time_mode", "Thời gian tối đa Giao Tranh"),
             ("task_end_battle", "Kết thúc trận Giao Tranh"),
             ("xuat_chien", "Xuất chiến"),
             ("thuc_hien_giao_tranh", "Giao tranh"),
