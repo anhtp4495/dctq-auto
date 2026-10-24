@@ -569,7 +569,18 @@ class UtilityTaskRunnerMixin:
                         f"Không đọc được cấu hình kéo Bắt đầu trận từ {regions_path}: {exc}"
                     ) from exc
 
-                # BƯỚC 1: xác nhận trận tải thành công bằng cùng luồng OCR như Kết thúc trận.
+                # BƯỚC 1: xác nhận trận tải thành công bằng OCR vùng trạng thái.
+                # Hàm OCR được khai báo riêng trong tác vụ này để không phụ thuộc
+                # việc người dùng có bật "Kết thúc trận Giao Tranh" hay không.
+                def read_start_battle_rect_text(rect):
+                    words = self._ocr_words_in_rect(
+                        device, rect, steps=("gray", "white_text"), psm=(11,)
+                    )
+                    return " ".join(
+                        str(word.get("text", "")).strip()
+                        for word in words if str(word.get("text", "")).strip()
+                    )
+
                 # So khớp tương đồng với "thu_quan"/"rut_lui", ngưỡng lớn hơn 25%.
                 from difflib import SequenceMatcher
 
@@ -608,7 +619,7 @@ class UtilityTaskRunnerMixin:
                     if not self._wait_if_paused():
                         self.log_message.emit("Đã dừng trước khi xác nhận trận Giao Tranh tải thành công.")
                         return
-                    last_battle_ocr_text = read_rect_text(end_battle_rect)
+                    last_battle_ocr_text = read_start_battle_rect_text(end_battle_rect)
                     found_phrase, similarity = fuzzy_battle_phrase(last_battle_ocr_text)
                     self.log_message.emit(
                         f"Bắt đầu trận Giao Tranh — BƯỚC 1: OCR lần {attempt}/5 "
