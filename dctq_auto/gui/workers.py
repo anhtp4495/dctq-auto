@@ -201,6 +201,42 @@ class BotWorker(
                 if not self._mock_tick(f"[Chạy thử] Thực hiện: {task}"):
                     self.task_progress_changed.emit(task, "stopped", 0, 1)
                     return
+                if task == "Giao tranh":
+                    count = max(1, int(self._config.get("task_open_battle_count", 1)))
+                    if self._config.get("task_battle_time_mode"):
+                        time_limit = int(self._config.get("task_battle_time_limit", 15))
+                        flags = 3
+                    elif self._config.get("giao_tranh_nhanh_1_co"):
+                        time_limit = None
+                        flags = 1
+                    else:
+                        time_limit = None
+                        flags = 3
+                    self.log_message.emit(
+                        f"[Chạy thử] Giao Tranh: mô phỏng {count} trận; "
+                        f"chế độ={'thời gian tối đa ' + str(time_limit) + ' giây' if time_limit is not None else str(flags) + ' cờ'}."
+                    )
+                    if not self._simulate_battles(task, count, flags, time_limit):
+                        self.task_progress_changed.emit(task, "stopped", 0, count)
+                        return
+                elif task == "Tranh bá":
+                    count = max(1, int(self._config.get("tranh_ba", 6)))
+                    if self._config.get("task_championship_time_mode"):
+                        time_limit = int(self._config.get("task_championship_time_limit", 15))
+                        flags = 4
+                    elif self._config.get("task_championship_fast_one_flag"):
+                        time_limit = None
+                        flags = 1
+                    else:
+                        time_limit = None
+                        flags = 4
+                    self.log_message.emit(
+                        f"[Chạy thử] Tranh bá: mô phỏng {count} trận; "
+                        f"chế độ={'thời gian tối đa ' + str(time_limit) + ' giây' if time_limit is not None else str(flags) + ' cờ'}."
+                    )
+                    if not self._simulate_battles(task, count, flags, time_limit):
+                        self.task_progress_changed.emit(task, "stopped", 0, count)
+                        return
                 self.task_progress_changed.emit(task, "done", 1, 1)
                 self.progress_changed.emit(index, max(1, len(selected)), task)
             if not selected:
