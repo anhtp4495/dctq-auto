@@ -1007,8 +1007,74 @@ class UtilityTaskRunnerMixin:
                         )
                         time.sleep(3.0)
                     self.log_message.emit(
-                        f"Đã thực hiện xong chuỗi Bắt đầu trận Giao Tranh cho trận {current_battle}."
+                        f"Đã thực hiện xong chuỗi Bắt đầu trận Giao Tranh cho trận {current_battle}; "
+                        "bắt đầu OCR xác minh trạng thái trận."
                     )
+
+                    # Xác minh trận tiếp theo đã vào giao diện chiến đấu.
+                    # Dùng cùng ngưỡng fuzzy 75% của tác vụ Bắt đầu trận để chịu được OCR nhiễu.
+                    from difflib import SequenceMatcher
+
+                    def match_next_battle_phrase(text):
+                        normalized = self._normalize_screen_text(text)
+                        tokens = normalized.split()
+                        candidates = list(tokens)
+                        candidates.extend(
+                            " ".join(tokens[index:index + 2])
+                            for index in range(max(0, len(tokens) - 1))
+                        )
+                        best_phrase = None
+                        best_candidate = ""
+                        best_score = 0.0
+                        for expected in ("rut lui", "thu quan"):
+                            expected_compact = expected.replace(" ", "")
+                            for candidate in candidates:
+                                candidate_compact = candidate.replace(" ", "")
+                                if abs(len(candidate_compact) - len(expected_compact)) > 2:
+                                    continue
+                                score = max(
+                                    SequenceMatcher(None, expected, candidate).ratio(),
+                                    SequenceMatcher(None, expected_compact, candidate_compact).ratio(),
+                                )
+                                if score > best_score:
+                                    best_phrase = expected
+                                    best_candidate = candidate
+                                    best_score = score
+                        if best_score >= 0.75:
+                            return best_phrase, best_candidate, best_score
+                        return None, best_candidate, best_score
+
+                    battle_state_found = False
+                    for verify_attempt in range(1, 6):
+                        if not self._wait_if_paused():
+                            raise RuntimeError(
+                                "Đã dừng trong khi OCR xác minh trận Giao Tranh tiếp theo."
+                            )
+                        verify_text = read_rect_text(end_rect)
+                        phrase, candidate, score = match_next_battle_phrase(verify_text)
+                        self.log_message.emit(
+                            f"OCR xác minh trận {current_battle} lần {verify_attempt}/5 — "
+                            f"RECT {end_rect}: {verify_text[:160] or '(trống)'}; "
+                            f"ứng viên={candidate!r}, độ tương đồng={score:.0%}, "
+                            f"ngưỡng=75%."
+                        )
+                        if phrase:
+                            self.log_message.emit(
+                                f"OCR xác minh trận {current_battle} thành công: "
+                                f"nhận diện '{phrase.replace(' ', '_')}' "
+                                f"(ứng viên={candidate!r}, độ tương đồng={score:.0%})."
+                            )
+                            battle_state_found = True
+                            break
+                        if verify_attempt < 5:
+                            time.sleep(3.0)
+
+                    if not battle_state_found:
+                        raise RuntimeError(
+                            f"Đã thực hiện chuỗi bắt đầu trận {current_battle} nhưng sau "
+                            "5 lần OCR vẫn không phát hiện được 'rut_lui' hoặc 'thu_quan' "
+                            f"trong RECT {end_rect}."
+                        )
 
                 current_battle = 1
                 finished = False
