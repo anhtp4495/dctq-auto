@@ -1300,16 +1300,16 @@
           }
         },
         {
-          "name": "bat_dau_tran_b2_1",
-          "text": "Điểm click Bước 2.1 khi bắt đầu trận Giao Tranh",
+          "name": "b2_1",
+          "text": "Vị trí chiến đấu võ tướng 1",
           "center": {
             "x_px": 488,
             "y_px": 512
           }
         },
         {
-          "name": "bat_dau_tran_b2_2",
-          "text": "Điểm click Bước 2.2 khi bắt đầu trận Giao Tranh",
+          "name": "b2_2",
+          "text": "Vị trí chiến đấu võ tướng 2",
           "center": {
             "x_px": 1366,
             "y_px": 487
