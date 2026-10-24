@@ -1460,6 +1460,11 @@ class MainWindow(QMainWindow):
                 "task_close_battle": self.task_close_battle.isChecked(),
                 "task_find_battle_opponent": self.task_find_battle_opponent.isChecked(),
                 "task_start_battle": self.task_start_battle.isChecked(),
+                "task_battle_time_mode": (
+                    self.task_battle_time_mode.isChecked()
+                    and not self.task_battle_lower_merit.isChecked()
+                ),
+                "task_battle_time_limit": self.task_battle_time_limit.value(),
                 "task_end_battle": self.task_end_battle.isChecked(),
                 "xuat_chien": self.task_xuat_chien.isChecked(),
                 "task_use_bazhen": self.task_use_bazhen.isChecked(),
