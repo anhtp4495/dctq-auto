@@ -378,6 +378,8 @@ class UtilityTaskRunnerMixin:
                     completed, max(1, total), f"Lỗi: {label}"
                 )
 
+        championship_screen_open_failed = False
+
         if self._config.get("thuc_hien_tranh_ba"):
             label = "Mở màn hình Tranh Bá"
             self.task_progress_changed.emit(label, "running", 0, 1)
@@ -556,14 +558,26 @@ class UtilityTaskRunnerMixin:
                     "màn hình chính."
                 )
             except Exception as exc:
+                championship_screen_open_failed = True
                 completed += 1
                 self.log_message.emit(f"{label} thất bại: {exc}")
                 self.task_progress_changed.emit(label, "failed", 0, 1)
                 self.progress_changed.emit(
                     completed, max(1, total), f"Lỗi: {label}"
                 )
+                dependent_championship_tasks = (
+                    "task_find_championship_opponent",
+                    "task_championship_start_battle",
+                    "task_championship_xuat_chien",
+                    "task_championship_end_battle",
+                )
+                if any(self._config.get(key) for key in dependent_championship_tasks):
+                    self.log_message.emit(
+                        "Bỏ qua các tác vụ Tranh Bá tiếp theo vì chưa xác nhận được "
+                        "màn hình chính Tranh Bá."
+                    )
 
-        if self._config.get("task_find_championship_opponent"):
+        if self._config.get("task_find_championship_opponent") and not championship_screen_open_failed:
             label = "Tìm đối thủ Tranh Bá"
             self.task_progress_changed.emit(label, "running", 0, 1)
             try:
@@ -772,7 +786,7 @@ class UtilityTaskRunnerMixin:
                     completed, max(1, total), f"Lỗi: {label}"
                 )
 
-        if self._config.get("task_championship_xuat_chien"):
+        if self._config.get("task_championship_xuat_chien") and not championship_screen_open_failed:
             label = "Xuất chiến Tranh Bá"
             self.task_progress_changed.emit(label, "running", 0, 1)
             rect = (1433, 970, 1614, 1016)
@@ -1085,7 +1099,7 @@ class UtilityTaskRunnerMixin:
                 )
 
 
-        if self._config.get("task_championship_start_battle"):
+        if self._config.get("task_championship_start_battle") and not championship_screen_open_failed:
             label = "Bắt đầu trận Tranh Bá"
             target_championship_battles = max(
                 1, int(self._config.get("tranh_ba", 1))
@@ -1477,7 +1491,7 @@ class UtilityTaskRunnerMixin:
                 self.progress_changed.emit(
                     completed, max(1, total), f"Lỗi: {label}"
                 )
-        if self._config.get("task_championship_end_battle"):
+        if self._config.get("task_championship_end_battle") and not championship_screen_open_failed:
             label = "Kết thúc trận Tranh Bá"
             self.task_progress_changed.emit(label, "running", 0, 1)
             current_battle = 1
