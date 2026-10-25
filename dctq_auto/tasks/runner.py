@@ -492,18 +492,40 @@ class UtilityTaskRunnerMixin:
                     "Mở màn hình Tranh Bá — BƯỚC 3: OCR RECT "
                     f"{main_screen_rect}, tìm 'tranh_ba' bằng color_text."
                 )
-                main_screen_match = self._tap_ocr_phrase_in_rect(
-                    device,
-                    ("tranh_ba",),
-                    main_screen_rect,
-                    steps=("color_text",),
-                    psm=(11,),
-                    tap=False,
-                )
+                main_screen_match = None
+                # Màn hình Tranh Bá có thể tải chậm sau khi bấm nút.
+                # Chờ 5 giây trước mỗi lần OCR và thử tối đa 5 lần.
+                for attempt in range(1, 6):
+                    if not self._wait_if_paused():
+                        self.log_message.emit(
+                            "Đã dừng trong lúc chờ xác minh giao diện chính Tranh Bá."
+                        )
+                        return
+                    time.sleep(5)
+                    self.log_message.emit(
+                        "Mở màn hình Tranh Bá — BƯỚC 3: "
+                        f"thử OCR lần {attempt}/5 trong RECT {main_screen_rect}."
+                    )
+                    main_screen_match = self._tap_ocr_phrase_in_rect(
+                        device,
+                        ("tranh_ba",),
+                        main_screen_rect,
+                        steps=("color_text",),
+                        psm=(11,),
+                        tap=False,
+                    )
+                    if main_screen_match is not None:
+                        break
+                    if attempt < 5:
+                        self.log_message.emit(
+                            "Chưa thấy 'tranh_ba' trên màn hình chính; "
+                            "sẽ chờ 5 giây rồi thử lại."
+                        )
                 if main_screen_match is None:
                     raise RuntimeError(
                         "OCR không tìm thấy 'tranh_ba' trong RECT "
-                        f"{main_screen_rect}; chưa xác nhận giao diện chính Tranh Bá."
+                        f"{main_screen_rect} sau 5 lần thử (mỗi lần cách nhau 5 giây); "
+                        "chưa xác nhận giao diện chính Tranh Bá."
                     )
                 _target_x, _target_y, main_screen_found_rect = main_screen_match
                 self.log_message.emit(
