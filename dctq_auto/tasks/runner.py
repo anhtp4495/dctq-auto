@@ -431,13 +431,16 @@ class UtilityTaskRunnerMixin:
                     device,
                     ("tranh_ba",),
                     rect,
-                    steps=("gray", "white_text"),
+                    # Nhãn menu trong ảnh thực tế là chữ trắng trên nền tối;
+                    # dùng color_text theo cấu hình đã kiểm chứng bằng ocr_debug.py.
+                    steps=("color_text",),
                     psm=(11,),
                     tap=False,
                 )
                 if match is None:
                     raise RuntimeError(
-                        f"OCR không tìm thấy 'tranh_ba' trong RECT {rect}; không click."
+                        f"OCR không tìm thấy 'tranh_ba' trong RECT {rect}; "
+                        "đã thử color_text/PSM 11; không click."
                     )
                 _ocr_x, _ocr_y, found_rect = match
                 device.shell(f"input tap {button_x} {button_y}")
