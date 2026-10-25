@@ -1406,7 +1406,6 @@ class MainWindow(QMainWindow):
         battle_screen_layout.addWidget(self.task_end_battle)
         # Tác vụ phụ, không thuộc chuỗi 7 bước chính.
         daily_layout.addWidget(battle_screen_group)
-        daily_layout.addLayout(task_battle_options)
 
         championship_row = QHBoxLayout()
         championship_row.addWidget(self.task_championship)
