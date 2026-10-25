@@ -427,7 +427,7 @@ class ActivityWorkerMixin:
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
                 return False
 
-            self.log_message.emit("BƯỚC 4/5: Click 30 ô theo thứ tự ngày 30 → ngày 1.")
+            self.log_message.emit("BƯỚC 4/5: Click 31 ô theo thứ tự ngày 31 → ngày 1.")
             calendar_image = device.screenshot()
             calendar_width, calendar_height = calendar_image.size
             grid_left = (484 / 1920) * calendar_width
@@ -435,8 +435,8 @@ class ActivityWorkerMixin:
             grid_width = ((1822 - 484) / 1920) * calendar_width
             grid_height = ((998 - 402) / 1080) * calendar_height
 
-            cells_reverse = tuple(range(30, 0, -1))
-            row_ranges = ((1, 9), (10, 18), (19, 26), (27, 30))
+            cells_reverse = tuple(range(31, 0, -1))
+            row_ranges = ((1, 9), (10, 18), (19, 27), (28, 31))
             cell_positions = {}
             for row_index, (first_cell, last_cell) in enumerate(row_ranges):
                 for cell in range(first_cell, last_cell + 1):
@@ -466,7 +466,7 @@ class ActivityWorkerMixin:
             close_y = round(0.119444 * calendar_height)
             device.shell(f"input tap {close_x} {close_y}")
             time.sleep(0.5)
-            self.log_message.emit("Đã hoàn tất flow Điểm danh: click đủ 30 ô từ ngày 30 đến ngày 1.")
+            self.log_message.emit("Đã hoàn tất flow Điểm danh: click đủ 31 ô từ ngày 31 đến ngày 1.")
             return True
         except Exception as exc:
             self.log_message.emit(f"Điểm danh thất bại, dừng ngay (không retry): {exc}")
