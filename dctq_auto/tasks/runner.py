@@ -903,11 +903,6 @@ class UtilityTaskRunnerMixin:
                             f"Đã thấy hộp thoại mua thể lực nhưng không OCR được lựa chọn nào trong RECT {option_rect}; "
                             "không click để tránh chọn nhầm."
                         )
-                    completed += 1
-                    self.task_progress_changed.emit(label, "done", 1, 1)
-                    self.progress_changed.emit(
-                        completed, max(1, total), "Đã xử lý hộp thoại mua thể lực Tranh Bá"
-                    )
                 else:
                     self.log_message.emit(
                         "Không phát hiện 'mua_the_luc'; tiếp tục OCR tìm 'xuat_chien'."
