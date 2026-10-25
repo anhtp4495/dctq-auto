@@ -421,7 +421,7 @@ class ActivityWorkerMixin:
                 )
             diem_danh_x, diem_danh_y, _ = diem_danh_match
             device.shell(f"input tap {diem_danh_x} {diem_danh_y}")
-            time.sleep(1.0)
+            time.sleep(5.0)
 
             if not self._wait_if_paused():
                 self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
