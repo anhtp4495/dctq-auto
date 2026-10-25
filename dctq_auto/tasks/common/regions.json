@@ -1576,6 +1576,56 @@
             "x": 0.17526,
             "y": 0.521296
           }
+        },
+        {
+          "name": "p1_cac_tinh_nang_hoat_dong",
+          "text": "Điểm A - vuốt danh sách tính năng Hoạt động",
+          "confidence": null,
+          "bounds": {
+            "left": 346,
+            "top": 348,
+            "right": 348,
+            "bottom": 350
+          },
+          "rect": {
+            "x": 346,
+            "y": 348,
+            "width": 2,
+            "height": 2
+          },
+          "center": {
+            "x_px": 347,
+            "y_px": 349
+          },
+          "center_ratio": {
+            "x": 0.180729,
+            "y": 0.323148
+          }
+        },
+        {
+          "name": "p2_cac_tinh_nang_hoat_dong",
+          "text": "Điểm B - vuốt danh sách tính năng Hoạt động",
+          "confidence": null,
+          "bounds": {
+            "left": 361,
+            "top": 746,
+            "right": 363,
+            "bottom": 748
+          },
+          "rect": {
+            "x": 361,
+            "y": 746,
+            "width": 2,
+            "height": 2
+          },
+          "center": {
+            "x_px": 362,
+            "y_px": 747
+          },
+          "center_ratio": {
+            "x": 0.188542,
+            "y": 0.691667
+          }
         }
       ]
     }
