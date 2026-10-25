@@ -1646,7 +1646,7 @@
         "x": 0,
         "y": 0
       },
-      "note": "Tọa độ button_tranh_ba do người dùng xác nhận (385, 1003). OCR nhận diện nhãn tranh_ba trong RECT (328, 1037, 435, 1078); chỉ dùng OCR để xác nhận mục menu, không dùng tâm OCR làm tọa độ click. Tọa độ nút Tìm đối thủ Tranh Bá do người dùng xác nhận: button_chien_dau_tranh_ba (1145, 994). Tọa độ nút kết thúc trận Tranh Bá do người dùng xác nhận: button_tranh_ba_tran_sau (1759, 890), button_tranh_ba_hoi_thanh (947, 876); OCR RECT (845, 843, 1065, 933), steps gray/white_text, PSM 11.",
+      "note": "Tọa độ button_tranh_ba do người dùng xác nhận (385, 1003). OCR nhận diện nhãn tranh_ba trong RECT (328, 1037, 435, 1078); chỉ dùng OCR để xác nhận mục menu, không dùng tâm OCR làm tọa độ click. Tọa độ nút Tìm đối thủ Tranh Bá do người dùng xác nhận: button_chien_dau_tranh_ba (1145, 994). Tọa độ nút kết thúc trận Tranh Bá do người dùng xác nhận: button_tranh_ba_tran_sau (1759, 890), button_tranh_ba_hoi_thanh (947, 876); OCR RECT (845, 843, 1065, 933), steps gray/white_text, PSM 11. Dấu hiệu dự phòng khi không thấy nhãn tranh_ba: OCR RECT (10, 721, 155, 800), tìm nhat_thong; cả hai dấu hiệu đều xác nhận hợp lệ để click button_tranh_ba.",
       "main_screen_ocr_rect": {
         "left": 783,
         "top": 43,
@@ -1663,13 +1663,19 @@
         ],
         "text_color": "#FFFFFF",
         "background_color": "#FFCC00",
-        "color_tolerance": 38.0
+        "color_tolerance": 38
       },
       "end_battle_ocr_rect": {
         "left": 845,
         "top": 843,
         "right": 1065,
         "bottom": 933
+      },
+      "fallback_ocr_rect": {
+        "left": 10,
+        "top": 721,
+        "right": 155,
+        "bottom": 800
       }
     },
     "hoat_dong": {
