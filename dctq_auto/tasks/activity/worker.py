@@ -197,11 +197,13 @@ class ActivityWorkerMixin:
             )
             self.log_message.emit(
                 "Lễ bao Quốc vận — BƯỚC 3: Tìm text le_bao_quoc bằng OCR "
-                f"Rect ({saved_rect['x']}; {saved_rect['y']}; "
-                f"{saved_rect['width']}; {saved_rect['height']}) steps: [gray, white_text] psm [11]."
+                f"Rect ({ocr_rect[0]}; {ocr_rect[1]}; {ocr_rect[2]}; {ocr_rect[3]}) "
+                "steps: [gray, white_text] psm [11]."
             )
+            # OCR đôi khi đọc chữ "quốc" thành "quec" (như log phân tích OCR),
+            # nên chấp nhận biến thể này để không bỏ sót đúng mục Lễ bao Quốc vận.
             if not self._tap_ocr_phrase_in_rect(
-                device, ("le bao quoc",), ocr_rect,
+                device, ("le bao quoc", "le bao quec"), ocr_rect,
                 steps=("gray", "white_text"), psm=(11,),
             ):
                 self.log_message.emit(
