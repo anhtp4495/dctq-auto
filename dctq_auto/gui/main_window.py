@@ -1976,7 +1976,32 @@ class MainWindow(QMainWindow):
     def _render_task_progress(self, name: str, state: str, completed: int, total: int) -> None:
         item = self.task_progress_labels.get(name)
         if item is None:
-            return
+            # Worker status labels can differ slightly in accents/capitalization
+            # or legacy wording; resolve them to the visible progress row.
+            import unicodedata
+
+            def normalize_label(value: str) -> str:
+                value = unicodedata.normalize("NFD", value.casefold())
+                return "".join(
+                    char for char in value
+                    if unicodedata.category(char) != "Mn"
+                ).strip()
+
+            normalized_name = normalize_label(name)
+            aliases = {
+                "ket thuc giao tranh": "ket thuc tran giao tranh",
+                "ket thuc tran": "ket thuc tran giao tranh",
+                "tim doi thu": "tim doi thu giao tranh",
+                "su dung canh bat tran": "su dung canh bat tran",
+            }
+            normalized_name = aliases.get(normalized_name, normalized_name)
+            for visible_name, visible_item in self.task_progress_labels.items():
+                normalized_visible = normalize_label(visible_name)
+                if normalized_name == normalized_visible:
+                    item = visible_item
+                    break
+            if item is None:
+                return
         if state == "done":
             item.setIcon(self._status_icon("✓", "#22863a"))
             prefix = ""
