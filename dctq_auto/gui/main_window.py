@@ -2020,7 +2020,7 @@ class MainWindow(QMainWindow):
             item.setIcon(QIcon())
             prefix = "■ " if state == "stopped" else "· "
         show_count = total > 1 or name == "Thăm dò lãnh địa"
-        if name == "Bắt đầu trận Giao Tranh" and show_count:
+        if name in ("Bắt đầu trận Giao Tranh", "Bắt đầu trận Tranh Bá") and show_count:
             detail = f" [{completed}/{total}]"
         else:
             detail = f" {completed}/{total}" if show_count else ""
