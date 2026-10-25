@@ -438,9 +438,34 @@ class UtilityTaskRunnerMixin:
                     tap=False,
                 )
                 if match is None:
+                    # Chạy lại đúng cấu hình OCR và ghi toàn bộ từ/bounding box
+                    # để đối chiếu kết quả runtime với scripts/ocr_debug.py.
+                    try:
+                        diagnostic_words = self._ocr_words_in_rect(
+                            device, rect, steps=("color_text",), psm=(11,)
+                        )
+                        diagnostic_items = []
+                        for word in diagnostic_words:
+                            text = str(word.get("text", "")).strip()
+                            if text:
+                                diagnostic_items.append(
+                                    f"{text!r} (word={word!r})"
+                                )
+                        diagnostic_text = "; ".join(diagnostic_items) or "(không nhận diện được từ nào)"
+                        self.log_message.emit(
+                            "Mở màn hình Tranh Bá — CHẨN ĐOÁN OCR: "
+                            f"RECT {rect}, steps=color_text, PSM=11; "
+                            f"từ nhận diện: {diagnostic_text[:1200]}"
+                        )
+                    except Exception as diagnostic_exc:
+                        self.log_message.emit(
+                            "Mở màn hình Tranh Bá — CHẨN ĐOÁN OCR thất bại: "
+                            f"{type(diagnostic_exc).__name__}: {diagnostic_exc}"
+                        )
                     raise RuntimeError(
                         f"OCR không tìm thấy 'tranh_ba' trong RECT {rect}; "
-                        "đã thử color_text/PSM 11; không click."
+                        "đã thử color_text/PSM 11; xem log CHẨN ĐOÁN OCR để biết "
+                        "các từ thực tế nhận diện được; không click."
                     )
                 _ocr_x, _ocr_y, found_rect = match
                 device.shell(f"input tap {button_x} {button_y}")
