@@ -1550,6 +1550,68 @@
       "main_screen_target": "tim_doi_thu",
       "notes": " Bước 5: click vo_tuong_3 → vi_tri_chien_dau_vo_tuong_3 → vo_tuong_4 → vi_tri_chien_dau_vo_tuong_4 → vo_tuong_5 → vi_tri_chien_dau_vo_tuong_5; chọn bộ võ tướng theo kết quả OCR TRUE/FALSE."
     },
+    "tranh_ba": {
+      "name": "tranh_ba",
+      "serial": "emulator-5554",
+      "description": "Cấu hình mở màn hình Tranh Bá",
+      "image_resolution": [
+        1920,
+        1080
+      ],
+      "elements": [
+        {
+          "name": "quan_su",
+          "text": "Nút Quân Sự ở menu chính",
+          "center": {
+            "x_px": 100,
+            "y_px": 966
+          }
+        },
+        {
+          "name": "button_tranh_ba",
+          "text": "Nút Tranh Bá cần click",
+          "center": {
+            "x_px": 385,
+            "y_px": 1003
+          },
+          "center_ratio": {
+            "x": 0.200521,
+            "y": 0.928704
+          }
+        },
+        {
+          "name": "tranh_ba",
+          "text": "Nhãn OCR tranh_ba",
+          "bounds": {
+            "left": 334,
+            "top": 1049,
+            "right": 425,
+            "bottom": 1068
+          },
+          "rect": {
+            "x": 334,
+            "y": 1049,
+            "width": 91,
+            "height": 19
+          },
+          "center": {
+            "x_px": 379.5,
+            "y_px": 1058.5
+          }
+        }
+      ],
+      "ocr_rect": {
+        "left": 328,
+        "top": 1037,
+        "right": 435,
+        "bottom": 1078
+      },
+      "tap_offset": {
+        "x": 0,
+        "y": 0
+      },
+      "note": "Tọa độ button_tranh_ba do người dùng xác nhận (385, 1003). OCR nhận diện nhãn tranh_ba trong RECT (328, 1037, 435, 1078); chỉ dùng OCR để xác nhận mục menu, không dùng tâm OCR làm tọa độ click."
+    },
     "hoat_dong": {
       "elements": [
         {
