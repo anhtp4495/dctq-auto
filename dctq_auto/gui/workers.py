@@ -91,6 +91,10 @@ class BotWorker(
     def _simulate_battles(self, task: str, count: int, required_flags: int,
                           time_limit: int | None) -> bool:
         for number in range(1, count + 1):
+            if self._config.get("utility_tasks_mode") and self._config.get("task_end_battle"):
+                self.task_progress_changed.emit(
+                    "Bắt đầu trận Giao Tranh", "running", number, count
+                )
             elapsed = 0
             while True:
                 if not self._wait_if_paused():
@@ -229,7 +233,12 @@ class BotWorker(
                         f"chế độ={'thời gian tối đa ' + str(time_limit) + ' giây' if time_limit is not None else str(flags) + ' cờ'}."
                     )
                     if task == "Bắt đầu trận Giao Tranh":
-                        self.log_message.emit("[Chạy thử] Mô phỏng thao tác bắt đầu trận Giao Tranh.")
+                        self.task_progress_changed.emit(
+                            task, "running", 1, count
+                        )
+                        self.log_message.emit(
+                            f"[Chạy thử] Mô phỏng thao tác bắt đầu trận Giao Tranh 1/{count}."
+                        )
                     elif task == "Thời gian tối đa Giao Tranh" or task.startswith("Chờ Giao Tranh "):
                         if not self._simulate_battles("Giao tranh", count, flags, time_limit):
                             self.task_progress_changed.emit(task, "stopped", 0, count)
@@ -252,7 +261,17 @@ class BotWorker(
                     if not self._simulate_battles(task, count, flags, time_limit):
                         self.task_progress_changed.emit(task, "stopped", 0, count)
                         return
-                self.task_progress_changed.emit(task, "done", 1, 1)
+                if task == "Bắt đầu trận Giao Tranh" and self._config.get("task_end_battle"):
+                    # Dòng bắt đầu trận giữ mũi tên cho đến khi tác vụ kết thúc
+                    # xác nhận mô phỏng đủ tất cả các trận.
+                    pass
+                else:
+                    if task == "Kết thúc trận Giao Tranh" and self._config.get("task_start_battle"):
+                        count = max(1, int(self._config.get("task_open_battle_count", 1)))
+                        self.task_progress_changed.emit(
+                            "Bắt đầu trận Giao Tranh", "done", count, count
+                        )
+                    self.task_progress_changed.emit(task, "done", 1, 1)
                 self.progress_changed.emit(index, max(1, len(selected)), task)
             if not selected:
                 self.log_message.emit("Tab Tác vụ: chưa chọn tác vụ nào.")
