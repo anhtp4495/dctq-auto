@@ -876,6 +876,7 @@ class UtilityTaskRunnerMixin:
         if self._config.get("task_end_battle"):
             label = "Kết thúc trận Giao Tranh"
             self.task_progress_changed.emit(label, "running", 0, 1)
+            current_battle = 1
             try:
                 import json
 
