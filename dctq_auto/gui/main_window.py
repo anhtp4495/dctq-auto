@@ -1248,7 +1248,7 @@ class MainWindow(QMainWindow):
             self._update_task_battle_mode_description
         )
         self._update_task_battle_mode_description()
-        self.task_championship = QCheckBox("Tranh bá")
+        self.task_championship = QCheckBox("Mở màn hình Tranh Bá")
         self.task_championship_count = QSpinBox()
         self.task_championship_count.setRange(1, 15)
         self.task_championship_count.setValue(6)
@@ -1258,10 +1258,25 @@ class MainWindow(QMainWindow):
             self.task_championship_count.setEnabled
         )
         self.task_championship_knb = QCheckBox("Mua lượt bằng KNB")
-        self.task_championship_knb.setEnabled(False)
-        self.task_championship.toggled.connect(
-            self.task_championship_knb.setEnabled
+        self.task_championship_free = QCheckBox("Sử dụng lượt miễn phí")
+        for purchase_option in (
+            self.task_championship_knb,
+            self.task_championship_free,
+        ):
+            purchase_option.setEnabled(False)
+            self.task_championship.toggled.connect(purchase_option.setEnabled)
+        self.task_championship_knb.toggled.connect(
+            lambda checked: self.task_championship_free.setChecked(False)
+            if checked else None
         )
+        self.task_championship_free.toggled.connect(
+            lambda checked: self.task_championship_knb.setChecked(False)
+            if checked else None
+        )
+        self.task_find_championship_opponent = QCheckBox("Tìm đối thủ Tranh Bá")
+        self.task_championship_xuat_chien = QCheckBox("Xuất chiến")
+        self.task_championship_start_battle = QCheckBox("Bắt đầu trận Tranh Bá")
+        self.task_championship_end_battle = QCheckBox("Kết thúc trận Tranh Bá")
         self.task_championship_fast_one_flag = QCheckBox("Nhanh 1 cờ")
         self.task_championship_four_flags = QCheckBox("Bình thường 4 cờ")
         self.task_championship_time_mode = QCheckBox("Thời gian tối đa:")
@@ -1407,16 +1422,28 @@ class MainWindow(QMainWindow):
         # Tác vụ phụ, không thuộc chuỗi 7 bước chính.
         daily_layout.addWidget(battle_screen_group)
 
-        championship_row = QHBoxLayout()
-        championship_row.addWidget(self.task_championship)
-        championship_row.addWidget(QLabel("Số trận:"))
-        championship_row.addWidget(self.task_championship_count)
-        championship_row.addWidget(self.task_championship_knb)
-        championship_row.addStretch(1)
-        daily_layout.addLayout(championship_row)
+        championship_group = QGroupBox()
+        championship_layout = QVBoxLayout(championship_group)
+        championship_layout.setSpacing(6)
+        championship_count_row = QHBoxLayout()
+        championship_count_row.addWidget(QLabel("Tranh Bá"))
+        championship_count_row.addWidget(self.task_championship_count)
+        championship_count_row.addWidget(QLabel("trận"))
+        championship_count_row.addStretch(1)
+        championship_layout.addLayout(championship_count_row)
+        championship_layout.addWidget(self.task_championship)
+
+        championship_purchase_row = QHBoxLayout()
+        championship_purchase_row.addWidget(self.task_championship_knb)
+        championship_purchase_row.addWidget(self.task_championship_free)
+        championship_purchase_row.addStretch(1)
+        championship_layout.addLayout(championship_purchase_row)
+        championship_layout.addWidget(self.task_find_championship_opponent)
+        championship_layout.addWidget(self.task_championship_xuat_chien)
+        championship_layout.addWidget(self.task_championship_start_battle)
 
         championship_options = QGridLayout()
-        championship_options.setContentsMargins(20, 0, 0, 0)
+        championship_options.setContentsMargins(0, 0, 0, 0)
         championship_options.setHorizontalSpacing(12)
         championship_options.setVerticalSpacing(4)
         championship_mode_row = self._build_mode_row(
@@ -1425,11 +1452,10 @@ class MainWindow(QMainWindow):
             self.task_championship_time_mode,
             self.task_championship_time_limit,
         )
-        championship_options.addWidget(championship_mode_row, 0, 0, 1, 4)
-        championship_options.addWidget(
-            self.task_championship_mode_description, 1, 0, 1, 4
-        )
-        daily_layout.addLayout(championship_options)
+        championship_layout.addWidget(championship_mode_row)
+        championship_layout.addWidget(self.task_championship_mode_description)
+        championship_layout.addWidget(self.task_championship_end_battle)
+        daily_layout.addWidget(championship_group)
 
 
         layout.addWidget(daily_group)
@@ -1540,6 +1566,22 @@ class MainWindow(QMainWindow):
                 "mua_luot_knb": (
                     self.task_championship_knb.isChecked()
                     and self.task_championship.isChecked()
+                ),
+                "tranh_ba_luot_mien_phi": (
+                    self.task_championship_free.isChecked()
+                    and self.task_championship.isChecked()
+                ),
+                "task_find_championship_opponent": (
+                    self.task_find_championship_opponent.isChecked()
+                ),
+                "task_championship_xuat_chien": (
+                    self.task_championship_xuat_chien.isChecked()
+                ),
+                "task_championship_start_battle": (
+                    self.task_championship_start_battle.isChecked()
+                ),
+                "task_championship_end_battle": (
+                    self.task_championship_end_battle.isChecked()
                 ),
                 "tranh_ba_fast_mode": (
                     1 if self.task_championship_fast_one_flag.isChecked()
@@ -1704,7 +1746,9 @@ class MainWindow(QMainWindow):
                 "task_enter_guild", "task_receive_lucky_bag", "task_guild_fortune",
                 "diem_danh", "nhan_le_bao_quoc_van", "bao_danh_quan_doan", "dong_gop_knb",
                 "tham_do_lanh_dia", "nhiem_vu_luu_ly_thap",
-                "thuc_hien_tranh_ba",
+                "thuc_hien_tranh_ba", "task_find_championship_opponent",
+                "task_championship_xuat_chien", "task_championship_start_battle",
+                "task_championship_end_battle",
                 "task_enter_strategy", "task_strategy_defense",
                 "task_detect_strategy_status", "task_strategy_vuot_ai",
                 "task_receive_strategy_reward", "task_close_strategy",
