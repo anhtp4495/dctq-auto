@@ -36,7 +36,6 @@ class UtilityTaskRunnerMixin:
             ("tham_do_lanh_dia", "Thăm dò lãnh địa"),
             ("nhiem_vu_luu_ly_thap", "Lưu Ly Tháp"),
             ("task_open_battle", "Mở màn hình Giao Tranh"),
-            ("task_close_battle", "Thoát màn hình Giao Tranh"),
             ("task_use_bazhen", "Sử dụng Canh Bát Trân"),
             ("task_find_battle_opponent", "Tìm đối thủ Giao Tranh"),
             ("task_start_battle", "Bắt đầu trận Giao Tranh"),
