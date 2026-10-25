@@ -182,10 +182,25 @@ class OcrWorkerMixin:
         rect: tuple[int, int, int, int],
         steps: tuple[str, ...] = ("gray", "white_text"),
         psm: tuple[int, ...] = (11,),
+        background_color: str = "#202020",
+        text_color: str = "#FFFFFF",
+        color_tolerance: float = 38.0,
     ) -> list[dict]:
-        """OCR a screenshot rectangle using the selected preprocessing steps and PSMs."""
+        """OCR a screenshot rectangle using selected preprocessing steps and PSMs."""
         import cv2
         import numpy as np
+
+        def parse_rgb(value: str) -> tuple[int, int, int]:
+            value = value.strip()
+            if value.startswith("#") and len(value) == 7:
+                return tuple(int(value[index:index + 2], 16) for index in (1, 3, 5))
+            parts = tuple(int(part.strip()) for part in value.split(","))
+            if len(parts) != 3 or any(channel < 0 or channel > 255 for channel in parts):
+                raise ValueError(f"Màu OCR không hợp lệ: {value}")
+            return parts
+
+        text_rgb = parse_rgb(text_color)
+        background_rgb = parse_rgb(background_color)
 
         image = device.screenshot().convert("RGB")
         screen_width, screen_height = image.size
@@ -207,6 +222,29 @@ class OcrWorkerMixin:
             )
             variants["gray"] = cv2.copyMakeBorder(
                 gray, 18, 18, 18, 18, cv2.BORDER_CONSTANT, value=255
+            )
+
+        if "color_text" in steps:
+            # Phân đoạn màu theo khoảng cách CIE Lab, đồng bộ với scripts/ocr_debug.py.
+            crop_lab = cv2.cvtColor(crop_bgr, cv2.COLOR_BGR2LAB).astype(np.float32)
+
+            def lab_distance(rgb: tuple[int, int, int]) -> "np.ndarray":
+                reference = np.uint8([[list(rgb)]])
+                reference_lab = cv2.cvtColor(reference, cv2.COLOR_RGB2LAB)[0, 0].astype(np.float32)
+                return np.linalg.norm(crop_lab - reference_lab, axis=2)
+
+            text_distance = lab_distance(text_rgb)
+            background_distance = lab_distance(background_rgb)
+            text_mask = (
+                (text_distance <= float(color_tolerance))
+                & (text_distance < background_distance)
+            )
+            mask = np.where(text_mask, 0, 255).astype(np.uint8)
+            mask = cv2.resize(
+                mask, None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST
+            )
+            variants["color_text"] = cv2.copyMakeBorder(
+                mask, 18, 18, 18, 18, cv2.BORDER_CONSTANT, value=255
             )
 
         if "white_text" in steps:
@@ -284,10 +322,17 @@ class OcrWorkerMixin:
         psm: tuple[int, ...] = (11,),
         tap_offset: tuple[int, int] = (0, 0),
         tap: bool = True,
+        background_color: str = "#202020",
+        text_color: str = "#FFFFFF",
+        color_tolerance: float = 38.0,
     ) -> tuple[int, int, tuple[int, int, int, int]] | None:
         """Find a word or contiguous phrase; optionally tap it and return point plus rectangle."""
         wanted = {OcrWorkerMixin._normalize_screen_text(word) for word in words}
-        detected = OcrWorkerMixin._ocr_words_in_rect(device, rect, steps=steps, psm=psm)
+        detected = OcrWorkerMixin._ocr_words_in_rect(
+            device, rect, steps=steps, psm=psm,
+            background_color=background_color, text_color=text_color,
+            color_tolerance=color_tolerance,
+        )
         matches = [word for word in detected if word["text"] in wanted]
 
         # OCR often separates Vietnamese labels into adjacent words on the same line.
