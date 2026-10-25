@@ -905,7 +905,7 @@ class UtilityTaskRunnerMixin:
                             int(elements[name]["center"]["y_px"]),
                         )
                         for name in (
-                            "button_thu_quan", "button_xac_nhan",
+                            "button_thu_quan", "button_xac_nhan_rut_lui",
                             "button_tran_sau", "button_hoi_thanh",
                         )
                     }
@@ -1005,7 +1005,7 @@ class UtilityTaskRunnerMixin:
                                     f"RECT {confirm_rect}: {confirm_text[:160] or '(trống)'}."
                                 )
                                 if has_text(confirm_text, "thu quan"):
-                                    confirm_x, confirm_y = button_points["button_xac_nhan"]
+                                    confirm_x, confirm_y = button_points["button_xac_nhan_rut_lui"]
                                     device.shell(f"input tap {confirm_x} {confirm_y}")
                                     self.log_message.emit(
                                         "OCR xác nhận 'thu_quan' trong hộp thoại Rút lui; "
