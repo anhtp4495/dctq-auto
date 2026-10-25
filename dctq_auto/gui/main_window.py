@@ -1482,7 +1482,7 @@ class MainWindow(QMainWindow):
                 "task_close_activity": self.task_close_activity.isChecked(),
                 "task_close_guild": self.thoat_quan_doan_task.isChecked(),
                 "task_open_battle": self.task_open_battle.isChecked(),
-            "task_open_battle_count": self.task_open_battle_count.value(),
+                "task_open_battle_count": self.task_open_battle_count.value(),
                 "task_find_battle_opponent": self.task_find_battle_opponent.isChecked(),
                 "task_start_battle": self.task_start_battle.isChecked(),
                 "task_battle_time_mode": (
