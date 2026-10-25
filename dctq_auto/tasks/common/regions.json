@@ -1598,6 +1598,18 @@
             "x_px": 379.5,
             "y_px": 1058.5
           }
+        },
+        {
+          "name": "button_chien_dau_tranh_ba",
+          "text": "Nút Tìm đối thủ / Chiến đấu trong màn hình Tranh Bá",
+          "center": {
+            "x_px": 1145,
+            "y_px": 994
+          },
+          "center_ratio": {
+            "x": 0.596354,
+            "y": 0.92037
+          }
         }
       ],
       "ocr_rect": {
@@ -1610,7 +1622,7 @@
         "x": 0,
         "y": 0
       },
-      "note": "Tọa độ button_tranh_ba do người dùng xác nhận (385, 1003). OCR nhận diện nhãn tranh_ba trong RECT (328, 1037, 435, 1078); chỉ dùng OCR để xác nhận mục menu, không dùng tâm OCR làm tọa độ click.",
+      "note": "Tọa độ button_tranh_ba do người dùng xác nhận (385, 1003). OCR nhận diện nhãn tranh_ba trong RECT (328, 1037, 435, 1078); chỉ dùng OCR để xác nhận mục menu, không dùng tâm OCR làm tọa độ click. Tọa độ nút Tìm đối thủ Tranh Bá do người dùng xác nhận: button_chien_dau_tranh_ba (1145, 994).",
       "main_screen_ocr_rect": {
         "left": 783,
         "top": 43,
