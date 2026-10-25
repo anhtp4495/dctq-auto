@@ -187,13 +187,21 @@ class ActivityWorkerMixin:
                 round(saved_rect["width"] / 1920 * screen_width),
                 round(saved_rect["height"] / 1080 * screen_height),
             )
+            # _ocr_words_in_rect expects (left, top, right, bottom), while
+            # regions.json stores RECT as (x, y, width, height).
+            ocr_rect = (
+                selected_rect[0],
+                selected_rect[1],
+                selected_rect[0] + selected_rect[2],
+                selected_rect[1] + selected_rect[3],
+            )
             self.log_message.emit(
                 "Lễ bao Quốc vận — BƯỚC 3: Tìm text le_bao_quoc bằng OCR "
                 f"Rect ({saved_rect['x']}; {saved_rect['y']}; "
                 f"{saved_rect['width']}; {saved_rect['height']}) steps: [gray, white_text] psm [11]."
             )
             if not self._tap_ocr_phrase_in_rect(
-                device, ("le bao quoc",), selected_rect,
+                device, ("le bao quoc",), ocr_rect,
                 steps=("gray", "white_text"), psm=(11,),
             ):
                 self.log_message.emit(
