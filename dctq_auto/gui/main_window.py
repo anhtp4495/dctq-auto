@@ -832,19 +832,6 @@ class MainWindow(QMainWindow):
                 "Đánh đến khi chắc chắn thắng và đạt đủ 3 cờ mới kết thúc."
             )
 
-    def _toggle_task_battle_merit_mode(self, lower_merit: bool) -> None:
-        for widget in (
-            self.task_battle_npc_house,
-            self.task_battle_use_bazhen,
-            self.task_battle_fast_one_flag,
-            self.task_battle_three_flags,
-            self.task_battle_time_mode,
-        ):
-            widget.setEnabled(not lower_merit)
-        self.task_battle_time_limit.setEnabled(
-            not lower_merit and self.task_battle_time_mode.isChecked()
-        )
-
     def _toggle_task_championship_options(self, enabled: bool) -> None:
         self.task_championship_knb.setEnabled(enabled)
         self.task_championship_fast_one_flag.setEnabled(enabled)
@@ -1216,24 +1203,12 @@ class MainWindow(QMainWindow):
         self.task_open_battle_count.setRange(1, 60)
         self.task_open_battle_count.setValue(1)
         self.task_open_battle_count.setKeyboardTracking(False)
-        self.task_close_battle = QCheckBox("Thoát màn hình Giao Tranh")
         self.task_find_battle_opponent = QCheckBox("Tìm đối thủ Giao Tranh")
         self.task_start_battle = QCheckBox("Bắt đầu trận Giao Tranh")
         self.task_end_battle = QCheckBox("Kết thúc trận Giao Tranh")
         self.task_xuat_chien = QCheckBox("Xuất chiến")
         self.task_use_bazhen = QCheckBox("Sử dụng Canh Bát Trân")
-        # Giao tranh options are independent from the Daily tab settings.
-        self.task_battle_lower_merit = QCheckBox("Hạ chiến công")
-        self.task_battle_merit_target = QSpinBox()
-        self.task_battle_merit_target.setRange(200, 4000)
-        self.task_battle_merit_target.setValue(200)
-        self.task_battle_merit_target.setKeyboardTracking(False)
-        self.task_battle_merit_target.setEnabled(False)
-        self.task_battle_lower_merit.toggled.connect(
-            self.task_battle_merit_target.setEnabled
-        )
         self.task_battle_npc_house = QCheckBox("Chọn nhà NPC")
-        self.task_battle_use_bazhen = QCheckBox("Sử dụng Canh Bát Trân")
         self.task_battle_fast_one_flag = QCheckBox("Nhanh 1 cờ")
         self.task_battle_three_flags = QCheckBox("Bình thường 3 cờ")
         self.task_battle_time_mode = QCheckBox("Thời gian tối đa:")
@@ -1271,9 +1246,6 @@ class MainWindow(QMainWindow):
         )
         self.task_battle_time_mode.toggled.connect(
             self._update_task_battle_mode_description
-        )
-        self.task_battle_lower_merit.toggled.connect(
-            self._toggle_task_battle_merit_mode
         )
         self._update_task_battle_mode_description()
         self.task_championship = QCheckBox("Tranh bá")
@@ -1406,18 +1378,6 @@ class MainWindow(QMainWindow):
         glass_tower_row.addStretch(1)
         daily_layout.addLayout(glass_tower_row)
 
-        task_battle_options = QGridLayout()
-        task_battle_options.setContentsMargins(20, 0, 0, 0)
-        task_battle_options.setHorizontalSpacing(12)
-        task_battle_options.setVerticalSpacing(4)
-        merit_row = QHBoxLayout()
-        merit_row.addWidget(self.task_battle_lower_merit)
-        merit_row.addWidget(QLabel("Chiến công cần hạ:"))
-        merit_row.addWidget(self.task_battle_merit_target)
-        merit_row.addStretch(1)
-        task_battle_options.addLayout(merit_row, 0, 0, 1, 4)
-        task_battle_options.addWidget(self.task_battle_npc_house, 1, 0)
-        task_battle_options.addWidget(self.task_battle_use_bazhen, 1, 1)
         self.task_battle_time_limit_control = self._build_seconds_control(
             self.task_battle_time_limit
         )
@@ -1445,7 +1405,6 @@ class MainWindow(QMainWindow):
         battle_screen_layout.addWidget(self.task_battle_mode_description)
         battle_screen_layout.addWidget(self.task_end_battle)
         # Tác vụ phụ, không thuộc chuỗi 7 bước chính.
-        battle_screen_layout.addWidget(self.task_close_battle)
         daily_layout.addWidget(battle_screen_group)
         daily_layout.addLayout(task_battle_options)
 
@@ -1525,12 +1484,10 @@ class MainWindow(QMainWindow):
                 "task_close_guild": self.thoat_quan_doan_task.isChecked(),
                 "task_open_battle": self.task_open_battle.isChecked(),
             "task_open_battle_count": self.task_open_battle_count.value(),
-                    "task_close_battle": self.task_close_battle.isChecked(),
                 "task_find_battle_opponent": self.task_find_battle_opponent.isChecked(),
                 "task_start_battle": self.task_start_battle.isChecked(),
                 "task_battle_time_mode": (
                     self.task_battle_time_mode.isChecked()
-                    and not self.task_battle_lower_merit.isChecked()
                 ),
                 "task_battle_time_limit": self.task_battle_time_limit.value(),
                 "task_end_battle": self.task_end_battle.isChecked(),
@@ -1560,31 +1517,24 @@ class MainWindow(QMainWindow):
                 "nhiem_vu_luu_ly_thap": self.task_glass_tower.isChecked(),
                 "so_lan_luu_ly_thap": self.task_glass_tower_count.value(),
                 "luu_ly_thap_knb": self.task_glass_tower_knb.isChecked(),
-                "ha_chien_cong": self.task_battle_lower_merit.isChecked(),
-                "chien_cong": self.task_battle_merit_target.value(),
                 "chon_nha_npc": (
                     self.task_battle_npc_house.isChecked()
-                    and not self.task_battle_lower_merit.isChecked()
                 ),
                 "giao_tranh_nhanh_1_co": (
                     self.task_battle_fast_one_flag.isChecked()
-                    and not self.task_battle_lower_merit.isChecked()
                 ),
                 "ba_co": (
                     self.task_battle_three_flags.isChecked()
-                    and not self.task_battle_lower_merit.isChecked()
                 ),
                 "thoi_gian_giao_tranh": (
                     self.task_battle_time_limit.value()
                     if (
                         self.task_battle_time_mode.isChecked()
-                        and not self.task_battle_lower_merit.isChecked()
                     )
                     else None
                 ),
                 "su_dung_canh_bat_tran": (
-                    self.task_battle_use_bazhen.isChecked()
-                    and not self.task_battle_lower_merit.isChecked()
+                    self.task_use_bazhen.isChecked()
                 ),
                 "thuc_hien_tranh_ba": self.task_championship.isChecked(),
                 "tranh_ba": self.task_championship_count.value(),
@@ -1750,7 +1700,7 @@ class MainWindow(QMainWindow):
             config.get(key) for key in (
                 "task_login", "task_open_activity", "task_select_phuc_loi", "task_close_activity",
                 "task_close_guild", "task_switch_account",
-                "task_open_battle", "task_close_battle",
+                "task_open_battle",
                 "task_find_battle_opponent", "task_start_battle", "task_end_battle", "xuat_chien", "task_use_bazhen",
                 "task_enter_guild", "task_receive_lucky_bag", "task_guild_fortune",
                 "diem_danh", "nhan_le_bao_quoc_van", "bao_danh_quan_doan", "dong_gop_knb",
@@ -1925,7 +1875,6 @@ class MainWindow(QMainWindow):
                 ("task_battle_time_mode", "Thời gian tối đa Giao Tranh"),
                 ("task_end_battle", "Kết thúc trận Giao Tranh"),
                 # Tác vụ phụ đặt sau nhóm 7 bước chính.
-                ("task_close_battle", "Thoát màn hình Giao Tranh"),
                 ("thuc_hien_tranh_ba", "Tranh bá"),
                 ("thiet_lap_muu_binh", "Mưu binh"),
                 ("task_close_guild", "Thoát màn hình Quân đoàn"),
