@@ -1549,6 +1549,35 @@
       },
       "main_screen_target": "tim_doi_thu",
       "notes": " Bước 5: click vo_tuong_3 → vi_tri_chien_dau_vo_tuong_3 → vo_tuong_4 → vi_tri_chien_dau_vo_tuong_4 → vo_tuong_5 → vi_tri_chien_dau_vo_tuong_5; chọn bộ võ tướng theo kết quả OCR TRUE/FALSE."
+    },
+    "hoat_dong": {
+      "elements": [
+        {
+          "name": "ocr_cac_tinh_nang_hoat_dong",
+          "text": "Vùng OCR các tính năng Hoạt động - tìm le_bao_quoc",
+          "confidence": null,
+          "bounds": {
+            "left": 200,
+            "top": 125,
+            "right": 470,
+            "bottom": 1127
+          },
+          "rect": {
+            "x": 200,
+            "y": 125,
+            "width": 270,
+            "height": 1002
+          },
+          "center": {
+            "x_px": 335,
+            "y_px": 626
+          },
+          "center_ratio": {
+            "x": 0.174479,
+            "y": 0.57963
+          }
+        }
+      ]
     }
   }
 }
