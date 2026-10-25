@@ -1923,8 +1923,15 @@ class MainWindow(QMainWindow):
                 ("task_start_battle", "Bắt đầu trận Giao Tranh"),
                 ("task_battle_time_mode", "Thời gian tối đa Giao Tranh"),
                 ("task_end_battle", "Kết thúc trận Giao Tranh"),
-                # Tác vụ phụ đặt sau nhóm 7 bước chính.
-                ("thuc_hien_tranh_ba", "Tranh bá"),
+                # Các bước Tranh Bá cũng hiển thị riêng trong danh sách tiến trình.
+                ("thuc_hien_tranh_ba", "Mở màn hình Tranh Bá"),
+                ("mua_luot_knb", "Mua lượt Tranh Bá bằng KNB"),
+                ("tranh_ba_luot_mien_phi", "Sử dụng lượt Tranh Bá miễn phí"),
+                ("task_find_championship_opponent", "Tìm đối thủ Tranh Bá"),
+                ("task_championship_xuat_chien", "Xuất chiến Tranh Bá"),
+                ("task_championship_start_battle", "Bắt đầu trận Tranh Bá"),
+                ("thoi_gian_tranh_ba", "Thời gian tối đa Tranh Bá"),
+                ("task_championship_end_battle", "Kết thúc trận Tranh Bá"),
                 ("thiet_lap_muu_binh", "Mưu binh"),
                 ("task_close_guild", "Thoát màn hình Quân đoàn"),
                 ("task_switch_account", "Đổi tài khoản"),
