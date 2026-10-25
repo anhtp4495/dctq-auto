@@ -1925,8 +1925,7 @@ class MainWindow(QMainWindow):
                 ("task_end_battle", "Kết thúc trận Giao Tranh"),
                 # Các bước Tranh Bá cũng hiển thị riêng trong danh sách tiến trình.
                 ("thuc_hien_tranh_ba", "Mở màn hình Tranh Bá"),
-                ("mua_luot_knb", "Mua lượt Tranh Bá bằng KNB"),
-                ("tranh_ba_luot_mien_phi", "Sử dụng lượt Tranh Bá miễn phí"),
+                # Mua lượt KNB / lượt miễn phí là thao tác chuẩn bị, không tạo dòng Tiến trình.
                 ("task_find_championship_opponent", "Tìm đối thủ Tranh Bá"),
                 ("task_championship_xuat_chien", "Xuất chiến Tranh Bá"),
                 ("task_championship_start_battle", "Bắt đầu trận Tranh Bá"),
