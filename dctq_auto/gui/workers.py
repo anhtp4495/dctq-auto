@@ -171,8 +171,12 @@ class BotWorker(
                 selected.append("Lưu Ly Tháp")
             if self._config.get("task_open_battle"):
                 selected.append("Mở màn hình Giao Tranh")
-            if self._config.get("task_close_battle"):
-                selected.append("Thoát màn hình Giao Tranh")
+            if self._config.get("task_use_bazhen"):
+                selected.append("Sử dụng Canh Bát Trân")
+            if self._config.get("task_find_battle_opponent"):
+                selected.append("Tìm đối thủ Giao Tranh")
+            if self._config.get("xuat_chien"):
+                selected.append("Xuất chiến")
             if self._config.get("thuc_hien_giao_tranh"):
                 selected.append("Bắt đầu trận Giao Tranh")
                 if self._config.get("task_battle_time_mode"):
@@ -183,6 +187,8 @@ class BotWorker(
                     selected.append("Chờ Giao Tranh nhanh 1 cờ")
                 else:
                     selected.append("Chờ Giao Tranh bình thường 3 cờ")
+            if self._config.get("task_end_battle"):
+                selected.append("Kết thúc trận Giao Tranh")
             if self._config.get("thuc_hien_tranh_ba"):
                 selected.append("Tranh bá")
             if self._config.get("task_enter_strategy"):
