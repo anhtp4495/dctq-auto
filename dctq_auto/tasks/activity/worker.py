@@ -1,6 +1,8 @@
 """Worker handlers for Hoạt Động and Phúc Lợi tasks."""
 
+import json
 import time
+from pathlib import Path
 
 
 class ActivityWorkerMixin:
@@ -169,17 +171,26 @@ class ActivityWorkerMixin:
 
             screenshot = device.screenshot()
             screen_width, screen_height = screenshot.size
-            # RECT đã chọn trong công cụ phân tích OCR (x, y, width, height)
+            # Đọc RECT đã lưu trong regions.json (tọa độ gốc 1920x1080).
+            regions_path = Path(__file__).resolve().parents[1] / "common" / "regions.json"
+            with regions_path.open("r", encoding="utf-8") as stream:
+                regions_data = json.load(stream)
+            feature_region = next(
+                element
+                for element in regions_data["regions"]["hoat_dong"]["elements"]
+                if element["name"] == "ocr_cac_tinh_nang_hoat_dong"
+            )
+            saved_rect = feature_region["rect"]
             selected_rect = (
-                round(200 / 1920 * screen_width),
-                round(125 / 1080 * screen_height),
-                round(470 / 1920 * screen_width),
-                round(1002 / 1080 * screen_height),
+                round(saved_rect["x"] / 1920 * screen_width),
+                round(saved_rect["y"] / 1080 * screen_height),
+                round(saved_rect["width"] / 1920 * screen_width),
+                round(saved_rect["height"] / 1080 * screen_height),
             )
             self.log_message.emit(
-                "Lễ bao Quốc vận — BƯỚC 3: Tìm và click mục Lễ bao Quốc vận bằng OCR "
-                f"Rect ({selected_rect[0]}; {selected_rect[1]}; "
-                f"{selected_rect[2]}; {selected_rect[3]}) steps: [gray, white_text] psm [11]."
+                "Lễ bao Quốc vận — BƯỚC 3: Tìm text le_bao_quoc bằng OCR "
+                f"Rect ({saved_rect['x']}; {saved_rect['y']}; "
+                f"{saved_rect['width']}; {saved_rect['height']}) steps: [gray, white_text] psm [11]."
             )
             if not self._tap_ocr_phrase_in_rect(
                 device, ("le bao quoc",), selected_rect,
