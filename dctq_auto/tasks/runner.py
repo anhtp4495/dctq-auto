@@ -492,6 +492,16 @@ class UtilityTaskRunnerMixin:
                     "Mở màn hình Tranh Bá — BƯỚC 3: OCR RECT "
                     f"{main_screen_rect}, tìm 'tranh_ba' bằng color_text."
                 )
+                main_screen_ocr_config = championship_config.get("main_screen_ocr", {})
+                main_screen_ocr_steps = tuple(main_screen_ocr_config.get("steps", ["color_text"]))
+                main_screen_ocr_psm = tuple(main_screen_ocr_config.get("psm", [11]))
+                main_screen_ocr_background = main_screen_ocr_config.get(
+                    "background_color", "#202020"
+                )
+                main_screen_ocr_tolerance = float(
+                    main_screen_ocr_config.get("color_tolerance", 38.0)
+                )
+
                 main_screen_match = None
                 # Màn hình Tranh Bá có thể tải chậm sau khi bấm nút.
                 # Chờ 5 giây trước mỗi lần OCR và thử tối đa 5 lần.
@@ -510,10 +520,10 @@ class UtilityTaskRunnerMixin:
                         device,
                         ("tranh_ba",),
                         main_screen_rect,
-                        steps=("color_text",),
-                        background_color="#FFCC00",
-                        color_tolerance=38.0,
-                        psm=(11,),
+                        steps=main_screen_ocr_steps,
+                        background_color=main_screen_ocr_background,
+                        color_tolerance=main_screen_ocr_tolerance,
+                        psm=main_screen_ocr_psm,
                         tap=False,
                     )
                     if main_screen_match is not None:
