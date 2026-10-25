@@ -41,6 +41,7 @@ class UtilityTaskRunnerMixin:
             ("task_find_battle_opponent", "Tìm đối thủ Giao Tranh"),
             ("task_find_championship_opponent", "Tìm đối thủ Tranh Bá"),
             ("task_start_battle", "Bắt đầu trận Giao Tranh"),
+            ("task_championship_start_battle", "Bắt đầu trận Tranh Bá"),
             ("task_end_battle", "Kết thúc trận Giao Tranh"),
             ("xuat_chien", "Xuất chiến"),
             ("task_enter_strategy", "Vào màn hình Mưu Binh"),
@@ -67,7 +68,7 @@ class UtilityTaskRunnerMixin:
             "task_detect_strategy_status", "task_strategy_vuot_ai",
             "task_receive_strategy_reward",
             "task_close_guild", "task_switch_account", "task_click_coordinates",
-            "task_open_battle", "thuc_hien_tranh_ba", "task_find_battle_opponent", "task_find_championship_opponent", "task_start_battle", "task_end_battle", "xuat_chien", "task_use_bazhen",
+            "task_open_battle", "thuc_hien_tranh_ba", "task_find_battle_opponent", "task_find_championship_opponent", "task_start_battle", "task_championship_start_battle", "task_end_battle", "xuat_chien", "task_use_bazhen",
         }
         for key, label in selected:
             if key in implemented:
@@ -764,7 +765,7 @@ class UtilityTaskRunnerMixin:
                 last_battle_ocr_text = read_start_battle_rect_text(end_battle_rect)
                 found_phrase, similarity, best_candidate = fuzzy_battle_phrase(last_battle_ocr_text)
                 self.log_message.emit(
-                    f"Bắt đầu trận Giao Tranh — BƯỚC 1: OCR lần {attempt}/5 "
+                    f"Bắt đầu trận — BƯỚC 1: OCR lần {attempt}/5 "
                     f"RECT {end_battle_rect}: {last_battle_ocr_text[:180] or '(trống)'}; "
                     f"ứng viên gần nhất={best_candidate or '(không có)'}; "
                     f"độ tương đồng cao nhất={similarity:.1%} (ngưỡng >=75%)."
@@ -844,7 +845,7 @@ class UtilityTaskRunnerMixin:
                 for index in range(1, 6)
             }
             self.log_message.emit(
-                "Bắt đầu trận Giao Tranh — BƯỚC 2: đã chọn bộ tọa độ "
+                "Bắt đầu trận — BƯỚC 2: đã chọn bộ tọa độ "
                 + ("TRUE" if has_hero_text else "FALSE") + ": "
                 + ", ".join(
                     f"{name}=({int(point['x_px'])}, {int(point['y_px'])})"
@@ -861,7 +862,7 @@ class UtilityTaskRunnerMixin:
                 f"input swipe {start_x} {start_y} {end_x} {end_y} {duration_ms}"
             )
             self.log_message.emit(
-                "Bắt đầu trận Giao Tranh — BƯỚC 3: kéo từ điểm A "
+                "Bắt đầu trận — BƯỚC 3: kéo từ điểm A "
                 f"({start_x}, {start_y}) đến điểm B ({end_x}, {end_y}) "
                 f"trong {duration_ms} ms."
             )
@@ -877,13 +878,13 @@ class UtilityTaskRunnerMixin:
             for step_index, (point_name, point) in enumerate(click_sequence, start=1):
                 if not self._wait_if_paused():
                     self.log_message.emit(
-                        f"Đã dừng trước Bước 3.{step_index} ({point_name}) của Bắt đầu trận Giao Tranh."
+                        f"Đã dừng trước Bước 3.{step_index} ({point_name}) của Bắt đầu trận."
                     )
                     return False
                 x, y = int(point["x_px"]), int(point["y_px"])
                 device.shell(f"input tap {x} {y}")
                 self.log_message.emit(
-                    f"Bắt đầu trận Giao Tranh — BƯỚC 3.{step_index}: click {point_name} tại ({x}, {y})."
+                    f"Bắt đầu trận — BƯỚC 3.{step_index}: click {point_name} tại ({x}, {y})."
                 )
                 time.sleep(0.3)
 
@@ -893,17 +894,17 @@ class UtilityTaskRunnerMixin:
             b31_x, b31_y = int(point_31["x_px"]), int(point_31["y_px"])
             b33_x, b33_y = int(point_33["x_px"]), int(point_33["y_px"])
             if not self._wait_if_paused():
-                self.log_message.emit("Đã dừng trước Bước 5 của Bắt đầu trận Giao Tranh.")
+                self.log_message.emit("Đã dừng trước Bước 5 của Bắt đầu trận.")
                 return False
             for swipe_index in range(2):
                 if not self._wait_if_paused():
                     self.log_message.emit(
-                        f"Đã dừng trước lần swipe {swipe_index + 1}/2 của Bước 4 Bắt đầu trận Giao Tranh."
+                        f"Đã dừng trước lần swipe {swipe_index + 1}/2 của Bước 4 Bắt đầu trận."
                     )
                     return False
                 device.shell(f"input swipe {b31_x} {b31_y} {b33_x} {b33_y} {duration_ms}")
                 self.log_message.emit(
-                    f"Bắt đầu trận Giao Tranh — BƯỚC 5: swipe lần {swipe_index + 1}/2 từ "
+                    f"Bắt đầu trận — BƯỚC 5: swipe lần {swipe_index + 1}/2 từ "
                     f"({b31_x}, {b31_y}) đến ({b33_x}, {b33_y}) trong {duration_ms} ms."
                 )
                 time.sleep(0.5)
@@ -921,18 +922,18 @@ class UtilityTaskRunnerMixin:
             for step_index, (point_name, point) in enumerate(click_sequence_step5, start=1):
                 if not self._wait_if_paused():
                     self.log_message.emit(
-                        f"Đã dừng trước Bước 5.{step_index} ({point_name}) của Bắt đầu trận Giao Tranh."
+                        f"Đã dừng trước Bước 5.{step_index} ({point_name}) của Bắt đầu trận."
                     )
                     return False
                 x, y = int(point["x_px"]), int(point["y_px"])
                 device.shell(f"input tap {x} {y}")
                 self.log_message.emit(
-                    f"Bắt đầu trận Giao Tranh — BƯỚC 5.{step_index}: click {point_name} tại ({x}, {y})."
+                    f"Bắt đầu trận — BƯỚC 5.{step_index}: click {point_name} tại ({x}, {y})."
                 )
                 time.sleep(0.3)
 
             self.log_message.emit(
-                f"Đã xác minh và hoàn tất chuỗi Bắt đầu trận Giao Tranh cho trận "
+                f"Đã xác minh và hoàn tất chuỗi Bắt đầu trận cho trận "
                 f"{battle_number_for_start[0]}."
             )
             return True
@@ -960,6 +961,29 @@ class UtilityTaskRunnerMixin:
                 completed += 1
                 self.log_message.emit(f"{label} thất bại: {exc}")
                 self.task_progress_changed.emit(label, "failed", 0, target_battles)
+                self.progress_changed.emit(
+                    completed, max(1, total), f"Lỗi: {label}"
+                )
+
+
+        if self._config.get("task_championship_start_battle"):
+            label = "Bắt đầu trận Tranh Bá"
+            self.task_progress_changed.emit(label, "running", 1, 1)
+            try:
+                battle_number_for_start[0] = 1
+                if not run_start_battle_sequence():
+                    self.log_message.emit("Đã dừng tác vụ Bắt đầu trận Tranh Bá theo yêu cầu.")
+                    return
+                completed += 1
+                if not self._config.get("task_championship_end_battle"):
+                    self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), "Đã bắt đầu trận Tranh Bá 1"
+                )
+            except Exception as exc:
+                completed += 1
+                self.log_message.emit(f"{label} thất bại: {exc}")
+                self.task_progress_changed.emit(label, "failed", 0, 1)
                 self.progress_changed.emit(
                     completed, max(1, total), f"Lỗi: {label}"
                 )
