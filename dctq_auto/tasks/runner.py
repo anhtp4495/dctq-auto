@@ -36,6 +36,7 @@ class UtilityTaskRunnerMixin:
             ("tham_do_lanh_dia", "Thăm dò lãnh địa"),
             ("nhiem_vu_luu_ly_thap", "Lưu Ly Tháp"),
             ("task_open_battle", "Mở màn hình Giao Tranh"),
+            ("thuc_hien_tranh_ba", "Mở màn hình Tranh Bá"),
             ("task_use_bazhen", "Sử dụng Canh Bát Trân"),
             ("task_find_battle_opponent", "Tìm đối thủ Giao Tranh"),
             ("task_start_battle", "Bắt đầu trận Giao Tranh"),
@@ -65,7 +66,7 @@ class UtilityTaskRunnerMixin:
             "task_detect_strategy_status", "task_strategy_vuot_ai",
             "task_receive_strategy_reward",
             "task_close_guild", "task_switch_account", "task_click_coordinates",
-            "task_open_battle", "task_find_battle_opponent", "task_start_battle", "task_end_battle", "xuat_chien", "task_use_bazhen",
+            "task_open_battle", "thuc_hien_tranh_ba", "task_find_battle_opponent", "task_start_battle", "task_end_battle", "xuat_chien", "task_use_bazhen",
         }
         for key, label in selected:
             if key in implemented:
@@ -360,6 +361,96 @@ class UtilityTaskRunnerMixin:
                 )
                 self.log_message.emit(
                     "Bước 2 thành công: OCR xác nhận 'giao_tranh' và đã click button_giao_tranh theo tọa độ đã lưu."
+                )
+            except Exception as exc:
+                completed += 1
+                self.log_message.emit(f"{label} thất bại: {exc}")
+                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), f"Lỗi: {label}"
+                )
+
+        if self._config.get("thuc_hien_tranh_ba"):
+            label = "Mở màn hình Tranh Bá"
+            self.task_progress_changed.emit(label, "running", 0, 1)
+            try:
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng trước khi mở màn hình Tranh Bá.")
+                    return
+                # Dùng cấu hình riêng trong regions.json; không dùng tọa độ OCR để click.
+                import json
+
+                regions_path = Path(__file__).resolve().parent / "common" / "regions.json"
+                try:
+                    regions_data = json.loads(regions_path.read_text(encoding="utf-8"))
+                    championship_config = regions_data["regions"]["tranh_ba"]
+                    elements = {
+                        item["name"]: item for item in championship_config.get("elements", [])
+                    }
+                    quan_su_center = elements["quan_su"]["center"]
+                    button_tranh_ba_center = elements["button_tranh_ba"]["center"]
+                    ocr_rect_data = championship_config["ocr_rect"]
+                    x, y = int(quan_su_center["x_px"]), int(quan_su_center["y_px"])
+                    button_x = int(button_tranh_ba_center["x_px"])
+                    button_y = int(button_tranh_ba_center["y_px"])
+                    rect = (
+                        int(ocr_rect_data["left"]),
+                        int(ocr_rect_data["top"]),
+                        int(ocr_rect_data["right"]),
+                        int(ocr_rect_data["bottom"]),
+                    )
+                except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+                    raise RuntimeError(
+                        f"Không đọc được cấu hình Tranh Bá từ {regions_path}: {exc}"
+                    ) from exc
+
+                # Bước 1: mở menu Quân Sự theo tọa độ lưu trong regions.json.
+                device.shell(f"input tap {x} {y}")
+                self.log_message.emit(
+                    f"Mở màn hình Tranh Bá — BƯỚC 1: đã click [Quân Sự] tại ({x}, {y})."
+                )
+                time.sleep(1)
+
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng trước khi OCR mục Tranh Bá.")
+                    return
+
+                # Bước 2: OCR chỉ xác nhận nhãn; điểm click lấy từ regions.json.
+                self.log_message.emit(
+                    "Mở màn hình Tranh Bá — BƯỚC 2: OCR RECT "
+                    f"{rect}, tìm 'tranh_ba'."
+                )
+                match = self._tap_ocr_phrase_in_rect(
+                    device,
+                    ("tranh_ba",),
+                    rect,
+                    steps=("gray", "white_text"),
+                    psm=(11,),
+                    tap=False,
+                )
+                if match is None:
+                    raise RuntimeError(
+                        f"OCR không tìm thấy 'tranh_ba' trong RECT {rect}; không click."
+                    )
+                _ocr_x, _ocr_y, found_rect = match
+                device.shell(f"input tap {button_x} {button_y}")
+                self.log_message.emit(
+                    "OCR xác nhận 'tranh_ba' hợp lệ — "
+                    f"RECT {found_rect}; click button_tranh_ba tại ({button_x}, {button_y})."
+                )
+                time.sleep(0.8)
+
+                # Chưa có RECT/text riêng của giao diện chính Tranh Bá để OCR xác minh.
+                # Ghi rõ rằng bước này xác nhận nhãn menu và thao tác click đã thực hiện.
+                completed += 1
+                self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), "Đã click mục Tranh Bá"
+                )
+                self.log_message.emit(
+                    "Mở màn hình Tranh Bá: đã OCR xác nhận 'tranh_ba' và click "
+                    "button_tranh_ba theo tọa độ đã lưu. Chưa có OCR xác minh riêng "
+                    "cho giao diện sau khi mở."
                 )
             except Exception as exc:
                 completed += 1
