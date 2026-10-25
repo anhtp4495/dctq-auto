@@ -198,10 +198,14 @@ class MainWindow(QMainWindow):
         self.giao_tranh_nhanh_1_co.setChecked(False)
         self.ba_co.setChecked(True)
         self.giao_tranh_mode_group = QButtonGroup(self)
-        self.giao_tranh_mode_group.setExclusive(True)
+        # Cho phép bỏ chọn tất cả, nhưng khi chọn một chế độ thì bỏ hai chế độ còn lại.
+        self.giao_tranh_mode_group.setExclusive(False)
         self.giao_tranh_mode_group.addButton(self.giao_tranh_nhanh_1_co)
         self.giao_tranh_mode_group.addButton(self.ba_co)
         self.giao_tranh_mode_group.addButton(self.thoi_gian_mode)
+        self.giao_tranh_nhanh_1_co.toggled.connect(self._on_giao_tranh_mode_toggled)
+        self.ba_co.toggled.connect(self._on_giao_tranh_mode_toggled)
+        self.thoi_gian_mode.toggled.connect(self._on_giao_tranh_mode_toggled)
         self.su_dung_canh_bat_tran = QCheckBox("Sử dụng Canh Bát Trân")
         self.thoi_gian_giao_tranh = QSpinBox()
         self.thoi_gian_giao_tranh.setRange(15, 180)
@@ -724,8 +728,29 @@ class MainWindow(QMainWindow):
         scroll_area.setWidget(page)
         return scroll_area
 
+    def _on_giao_tranh_mode_toggled(self, checked: bool) -> None:
+        """Keep Giao Tranh modes mutually exclusive while allowing all to be unchecked."""
+        if checked:
+            selected = self.sender()
+            for button in (
+                self.giao_tranh_nhanh_1_co,
+                self.ba_co,
+                self.thoi_gian_mode,
+            ):
+                if button is not selected and button.isChecked():
+                    button.setChecked(False)
+        self._update_giao_tranh_mode_description()
+
     def _update_giao_tranh_mode_description(self, *_args) -> None:
-        if self.thoi_gian_mode.isChecked():
+        if not (
+            self.thoi_gian_mode.isChecked()
+            or self.giao_tranh_nhanh_1_co.isChecked()
+            or self.ba_co.isChecked()
+        ):
+            self.giao_tranh_mode_description.setText(
+                "Không chọn chế độ cụ thể; sử dụng cách kết thúc trận mặc định của game."
+            )
+        elif self.thoi_gian_mode.isChecked():
             self.giao_tranh_mode_description.setText(
                 "Kết thúc trận khi đạt giới hạn thời gian đã chọn, dù đã thắng hay chưa."
             )
