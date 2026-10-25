@@ -463,9 +463,6 @@ class UtilityTaskRunnerMixin:
                     steps=("color_text",),
                     psm=(11,),
                     tap=False,
-                    text_color="#FFFFFF",
-                    background_color="#000000",
-                    color_tolerance=100,
                 )
                 if main_screen_match is None:
                     raise RuntimeError(
