@@ -1557,24 +1557,24 @@
           "text": "Vùng OCR các tính năng Hoạt động - tìm le_bao_quoc",
           "confidence": null,
           "bounds": {
-            "left": 200,
-            "top": 125,
+            "left": 203,
+            "top": 128,
             "right": 470,
-            "bottom": 1127
+            "bottom": 998
           },
           "rect": {
-            "x": 200,
-            "y": 125,
-            "width": 270,
-            "height": 1002
+            "x": 203,
+            "y": 128,
+            "width": 267,
+            "height": 870
           },
           "center": {
-            "x_px": 335,
-            "y_px": 626
+            "x_px": 337,
+            "y_px": 563
           },
           "center_ratio": {
-            "x": 0.174479,
-            "y": 0.57963
+            "x": 0.17526,
+            "y": 0.521296
           }
         }
       ]
