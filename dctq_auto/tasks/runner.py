@@ -43,6 +43,10 @@ class UtilityTaskRunnerMixin:
             ("task_start_battle", "Bắt đầu trận Giao Tranh"),
             ("task_championship_start_battle", "Bắt đầu trận Tranh Bá"),
             ("task_championship_xuat_chien", "Xuất chiến Tranh Bá"),
+            ("mua_luot_knb", "Mua lượt Tranh Bá bằng KNB"),
+            ("tranh_ba_luot_mien_phi", "Sử dụng lượt Tranh Bá miễn phí"),
+            ("thoi_gian_tranh_ba", "Thời gian tối đa Tranh Bá"),
+            ("task_championship_end_battle", "Kết thúc trận Tranh Bá"),
             ("task_end_battle", "Kết thúc trận Giao Tranh"),
             ("xuat_chien", "Xuất chiến"),
             ("task_enter_strategy", "Vào màn hình Mưu Binh"),
@@ -1020,7 +1024,12 @@ class UtilityTaskRunnerMixin:
 
         if self._config.get("task_championship_start_battle"):
             label = "Bắt đầu trận Tranh Bá"
-            self.task_progress_changed.emit(label, "running", 1, 1)
+            target_championship_battles = max(
+                1, int(self._config.get("tranh_ba", 1))
+            )
+            self.task_progress_changed.emit(
+                label, "running", 1, target_championship_battles
+            )
             try:
                 battle_number_for_start[0] = 1
                 if not run_start_battle_sequence():
@@ -1028,14 +1037,18 @@ class UtilityTaskRunnerMixin:
                     return
                 completed += 1
                 if not self._config.get("task_championship_end_battle"):
-                    self.task_progress_changed.emit(label, "done", 1, 1)
+                    self.task_progress_changed.emit(
+                        label, "done", 1, target_championship_battles
+                    )
                 self.progress_changed.emit(
                     completed, max(1, total), "Đã bắt đầu trận Tranh Bá 1"
                 )
             except Exception as exc:
                 completed += 1
                 self.log_message.emit(f"{label} thất bại: {exc}")
-                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.task_progress_changed.emit(
+                    label, "failed", 0, target_championship_battles
+                )
                 self.progress_changed.emit(
                     completed, max(1, total), f"Lỗi: {label}"
                 )
