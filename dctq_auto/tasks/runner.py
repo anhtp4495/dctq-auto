@@ -431,10 +431,10 @@ class UtilityTaskRunnerMixin:
                     device,
                     ("tranh_ba",),
                     rect,
-                    # Nhãn menu trong ảnh thực tế là chữ trắng trên nền tối;
-                    # dùng color_text theo cấu hình đã kiểm chứng bằng ocr_debug.py.
-                    steps=("color_text",),
-                    psm=(11,),
+                    # Dùng cùng pipeline OCR đã hoạt động ổn định với Giao Tranh.
+                    # Chỉ khác RECT và text mục tiêu.
+                    steps=("gray", "white_text"),
+                    psm=(6, 7, 11),
                     tap=False,
                 )
                 if match is None:
@@ -442,7 +442,7 @@ class UtilityTaskRunnerMixin:
                     # để đối chiếu kết quả runtime với scripts/ocr_debug.py.
                     try:
                         diagnostic_words = self._ocr_words_in_rect(
-                            device, rect, steps=("color_text",), psm=(11,)
+                            device, rect, steps=("gray", "white_text"), psm=(6, 7, 11)
                         )
                         diagnostic_items = []
                         for word in diagnostic_words:
@@ -454,7 +454,7 @@ class UtilityTaskRunnerMixin:
                         diagnostic_text = "; ".join(diagnostic_items) or "(không nhận diện được từ nào)"
                         self.log_message.emit(
                             "Mở màn hình Tranh Bá — CHẨN ĐOÁN OCR: "
-                            f"RECT {rect}, steps=color_text, PSM=11; "
+                            f"RECT {rect}, steps=gray/white_text, PSM=6,7,11; "
                             f"từ nhận diện: {diagnostic_text[:1200]}"
                         )
                     except Exception as diagnostic_exc:
@@ -464,7 +464,7 @@ class UtilityTaskRunnerMixin:
                         )
                     raise RuntimeError(
                         f"OCR không tìm thấy 'tranh_ba' trong RECT {rect}; "
-                        "đã thử color_text/PSM 11; xem log CHẨN ĐOÁN OCR để biết "
+                        "đã thử gray/white_text với PSM 6, 7, 11; xem log CHẨN ĐOÁN OCR để biết "
                         "các từ thực tế nhận diện được; không click."
                     )
                 _ocr_x, _ocr_y, found_rect = match
