@@ -1298,11 +1298,14 @@ class MainWindow(QMainWindow):
         self.task_championship_time_limit = QSpinBox()
         self.task_championship_time_limit.setRange(10, 180)
         self.task_championship_time_limit.setValue(15)
-        self.task_championship_time_limit.setSuffix(" giây")
+        self.task_championship_time_limit.setSuffix("")
         self.task_championship_time_limit.setKeyboardTracking(False)
         self.task_championship_time_limit.setEnabled(False)
         self.task_championship_time_mode.toggled.connect(
             self.task_championship_time_limit.setEnabled
+        )
+        self.task_championship_time_limit_control = self._build_seconds_control(
+            self.task_championship_time_limit
         )
         self.task_championship_mode_description = QLabel()
         self.task_championship_mode_description.setWordWrap(True)
@@ -1453,7 +1456,7 @@ class MainWindow(QMainWindow):
             self.task_championship_fast_one_flag,
             self.task_championship_four_flags,
             self.task_championship_time_mode,
-            self.task_championship_time_limit,
+            self.task_championship_time_limit_control,
         )
         championship_layout.addWidget(championship_mode_row)
         championship_layout.addWidget(self.task_championship_mode_description)
