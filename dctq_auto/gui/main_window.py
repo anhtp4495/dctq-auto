@@ -2015,7 +2015,10 @@ class MainWindow(QMainWindow):
             item.setIcon(QIcon())
             prefix = "■ " if state == "stopped" else "· "
         show_count = total > 1 or name == "Thăm dò lãnh địa"
-        detail = f" {completed}/{total}" if show_count else ""
+        if name == "Bắt đầu trận Giao Tranh" and show_count:
+            detail = f" [{completed}/{total}]"
+        else:
+            detail = f" {completed}/{total}" if show_count else ""
         item.setText(f"{prefix}{name}{detail}")
         if state == "running":
             self.task_progress_list.scrollToItem(
@@ -2112,7 +2115,6 @@ class MainWindow(QMainWindow):
             for name, label in self.task_progress_labels.items():
                 if label.text().startswith("→"):
                     self._render_task_progress(name, "stopped", 0, 1)
-                    break
         self._log("Worker đã kết thúc.")
 
     def _log(self, message: str) -> None:
