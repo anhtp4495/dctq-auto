@@ -74,6 +74,7 @@ class UtilityTaskRunnerMixin:
             "task_receive_strategy_reward",
             "task_close_guild", "task_switch_account", "task_click_coordinates",
             "task_open_battle", "thuc_hien_tranh_ba", "task_find_battle_opponent", "task_find_championship_opponent", "task_start_battle", "task_championship_start_battle", "task_championship_xuat_chien", "task_end_battle", "xuat_chien", "task_use_bazhen",
+            "thoi_gian_tranh_ba",
         }
         for key, label in selected:
             if key in implemented:
@@ -1082,9 +1083,15 @@ class UtilityTaskRunnerMixin:
                 )
 
 
-        def run_battle_time_limit_wait():
-            """Apply the configured time-limit wait after every battle's hero deployment."""
-            time_limit = int(self._config.get("task_battle_time_limit", 15))
+        def run_battle_time_limit_wait(mode="giao_tranh"):
+            """Apply the configured time-limit wait after hero deployment."""
+            is_championship = mode == "tranh_ba"
+            time_limit_key = (
+                "thoi_gian_tranh_ba" if is_championship
+                else "task_battle_time_limit"
+            )
+            label = "Thời gian tối đa Tranh Bá" if is_championship else "Thời gian tối đa Giao Tranh"
+            time_limit = int(self._config.get(time_limit_key) or 15)
             if time_limit <= 0:
                 raise ValueError("Thời gian tối đa phải lớn hơn 0 giây")
             import json
@@ -1115,12 +1122,12 @@ class UtilityTaskRunnerMixin:
                     time.sleep(min(0.25, remaining))
 
             self.log_message.emit(
-                f"Thời gian tối đa Giao Tranh — chờ 10 giây trước khi click lại đội hình; "
+                f"{label} — chờ 10 giây trước khi click lại đội hình; "
                 f"sau đó chờ thêm {max(0, time_limit - 10)} giây (giới hạn cấu hình {time_limit} giây)."
             )
             if time_limit > 10:
                 if not wait_battle_seconds(10):
-                    self.log_message.emit("Đã dừng trong thời gian chờ 10 giây của Giao Tranh.")
+                    self.log_message.emit(f"Đã dừng trong thời gian chờ 10 giây của {label}.")
                     return False
                 for hero_index in range(1, 6):
                     if not self._wait_if_paused():
@@ -1131,7 +1138,7 @@ class UtilityTaskRunnerMixin:
                     hero_x, hero_y = int(point["x_px"]), int(point["y_px"])
                     device.shell(f"input tap {hero_x} {hero_y}")
                     self.log_message.emit(
-                        f"Thời gian tối đa Giao Tranh — click {point_name} tại ({hero_x}, {hero_y})."
+                        f"{label} — click {point_name} tại ({hero_x}, {hero_y})."
                     )
                     time.sleep(0.3)
                 # Chờ đủ X-10 giây SAU khi click lại đội hình; không trừ thêm 1 giây.
@@ -1139,7 +1146,7 @@ class UtilityTaskRunnerMixin:
             else:
                 remaining_seconds = time_limit
             if remaining_seconds and not wait_battle_seconds(remaining_seconds):
-                self.log_message.emit("Đã dừng khi chờ đủ thời gian Giao Tranh.")
+                self.log_message.emit(f"Đã dừng khi chờ đủ thời gian {label}.")
                 return False
             return True
 
@@ -1159,6 +1166,30 @@ class UtilityTaskRunnerMixin:
                 self.log_message.emit(f"{label} thất bại: {exc}")
                 self.task_progress_changed.emit(label, "failed", 0, 1)
                 self.progress_changed.emit(completed, max(1, total), f"Lỗi: {label}")
+        if (
+            self._config.get("task_championship_start_battle")
+            and self._config.get("thoi_gian_tranh_ba") is not None
+        ):
+            label = "Thời gian tối đa Tranh Bá"
+            target_battles = max(1, int(self._config.get("tranh_ba", 1)))
+            self.task_progress_changed.emit(label, "running", 0, target_battles)
+            try:
+                if not run_battle_time_limit_wait(mode="tranh_ba"):
+                    self.log_message.emit("Đã dừng tác vụ Thời gian tối đa Tranh Bá theo yêu cầu.")
+                    return
+                completed += 1
+                self.task_progress_changed.emit(label, "done", 1, target_battles)
+                time_limit = int(self._config.get("thoi_gian_tranh_ba") or 15)
+                self.progress_changed.emit(
+                    completed, max(1, total),
+                    f"Hoàn tất {label} ({time_limit} giây)"
+                )
+            except Exception as exc:
+                completed += 1
+                self.log_message.emit(f"{label} thất bại: {exc}")
+                self.task_progress_changed.emit(label, "failed", 0, target_battles)
+                self.progress_changed.emit(completed, max(1, total), f"Lỗi: {label}")
+
         if self._config.get("task_end_battle"):
             label = "Kết thúc trận Giao Tranh"
             self.task_progress_changed.emit(label, "running", 0, 1)
