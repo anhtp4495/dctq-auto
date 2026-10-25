@@ -852,46 +852,25 @@ class UtilityTaskRunnerMixin:
                     self.log_message.emit(
                         "Đã phát hiện hộp thoại 'mua_the_luc'; kiểm tra hai lựa chọn trong hộp thoại."
                     )
-                    # OCR vùng nội dung hộp thoại để xác định lựa chọn đang có.
-                    # Hai lựa chọn có thể thay đổi theo trạng thái lượt trong game.
-                    option_rect = (700, 330, 1220, 740)
-                    mua_knb = self._tap_ocr_phrase_in_rect(
-                        device,
-                        ("mua_luot_bang_knb",),
-                        option_rect,
-                        steps=("color_text",),
-                        psm=(11,),
-                        tap=False,
-                        text_color="#FFFFFF",
-                        background_color="#000000",
-                        color_tolerance=38.0,
-                    )
-                    dung_mien_phi = self._tap_ocr_phrase_in_rect(
-                        device,
-                        ("su_dung_luot_mien_phi",),
-                        option_rect,
-                        steps=("color_text",),
-                        psm=(11,),
-                        tap=False,
-                        text_color="#FFFFFF",
-                        background_color="#000000",
-                        color_tolerance=38.0,
-                    )
-                    if mua_knb is not None:
+                    # Lựa chọn mua KNB / dùng lượt miễn phí lấy từ checkbox cấu hình,
+                    # không OCR chữ của hai lựa chọn trên giao diện game.
+                    mua_knb = bool(self._config.get("mua_luot_knb"))
+                    dung_mien_phi = bool(self._config.get("tranh_ba_luot_mien_phi"))
+                    if mua_knb:
                         if not self._wait_if_paused():
                             self.log_message.emit("Đã dừng trước khi xác nhận mua thể lực bằng KNB.")
                             return
                         device.shell("input tap 1092 702")
                         self.log_message.emit(
-                            "Đã phát hiện lựa chọn 'mua lượt bằng KNB'; click xác nhận tại (1092, 702)."
+                            "Cấu hình đã chọn 'Mua lượt bằng KNB'; click xác nhận tại (1092, 702)."
                         )
-                    elif dung_mien_phi is not None:
+                    elif dung_mien_phi:
                         if not self._wait_if_paused():
                             self.log_message.emit("Đã dừng trước khi hủy hộp thoại mua thể lực.")
                             return
                         device.shell("input tap 730 694")
                         self.log_message.emit(
-                            "Đã phát hiện lựa chọn 'sử dụng lượt miễn phí'; click hủy tại (730, 694)."
+                            "Cấu hình đã chọn 'Sử dụng lượt miễn phí'; click hủy tại (730, 694)."
                         )
                         time.sleep(3)
                         device.shell("input tap 1757 110")
@@ -900,8 +879,8 @@ class UtilityTaskRunnerMixin:
                         )
                     else:
                         raise RuntimeError(
-                            f"Đã thấy hộp thoại mua thể lực nhưng không OCR được lựa chọn nào trong RECT {option_rect}; "
-                            "không click để tránh chọn nhầm."
+                            "Đã thấy hộp thoại mua thể lực nhưng chưa chọn 'Mua lượt bằng KNB' "
+                            "hoặc 'Sử dụng lượt miễn phí' trong cấu hình; không click để tránh chọn nhầm."
                         )
                 else:
                     self.log_message.emit(
