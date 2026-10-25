@@ -913,8 +913,11 @@ class UtilityTaskRunnerMixin:
                         "Không phát hiện 'mua_the_luc'; tiếp tục OCR tìm 'xuat_chien'."
                     )
                     # Dùng cùng luồng OCR và xác nhận như Xuất chiến Giao Tranh.
-                match = None
+                # Hộp thoại mua thể lực đã được xử lý thì không tìm/click Xuất chiến nữa.
+                match = True if mua_the_luc is not None else None
                 for attempt in range(1, 4):
+                    if mua_the_luc is not None:
+                        break
                     if not self._wait_if_paused():
                         self.log_message.emit("Đã dừng trước khi thực hiện Xuất chiến Tranh Bá.")
                         return
@@ -947,7 +950,10 @@ class UtilityTaskRunnerMixin:
                 completed += 1
                 self.task_progress_changed.emit(label, "done", 1, 1)
                 self.progress_changed.emit(
-                    completed, max(1, total), "Đã hoàn tất Xuất chiến Tranh Bá"
+                    completed, max(1, total), (
+                        "Đã xử lý hộp thoại mua thể lực Tranh Bá"
+                        if mua_the_luc is not None else "Đã hoàn tất Xuất chiến Tranh Bá"
+                    )
                 )
             except Exception as exc:
                 completed += 1
