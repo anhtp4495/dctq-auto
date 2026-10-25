@@ -878,9 +878,19 @@ class UtilityTaskRunnerMixin:
                             "Đã chờ 3 giây rồi click đóng màn hành Tranh Bá tại (1757, 110)."
                         )
                     else:
-                        raise RuntimeError(
-                            "Đã thấy hộp thoại mua thể lực nhưng chưa chọn 'Mua lượt bằng KNB' "
-                            "hoặc 'Sử dụng lượt miễn phí' trong cấu hình; không click để tránh chọn nhầm."
+                        # Không xác định lựa chọn hoặc cả hai tùy chọn đều tắt:
+                        # đóng hộp thoại an toàn thay vì xác nhận mua bằng KNB.
+                        if not self._wait_if_paused():
+                            self.log_message.emit("Đã dừng trước khi hủy hộp thoại mua thể lực.")
+                            return
+                        device.shell("input tap 730 694")
+                        self.log_message.emit(
+                            "Không có lựa chọn mua thể lực được xác định; click hủy tại (730, 694)."
+                        )
+                        time.sleep(3)
+                        device.shell("input tap 1757 110")
+                        self.log_message.emit(
+                            "Đã chờ 3 giây rồi click đóng màn hành Tranh Bá tại (1757, 110)."
                         )
                 else:
                     self.log_message.emit(
