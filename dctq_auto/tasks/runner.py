@@ -1169,9 +1169,57 @@ class UtilityTaskRunnerMixin:
                         return True
                     time.sleep(min(0.25, remaining))
 
+            # Chỉ Giao Tranh mới dùng OCR tran_sau để kết thúc sớm phần chờ.
+            # Rect được lấy từ regions.json; Tranh Bá giữ nguyên hành vi chờ theo thời gian.
+            end_battle_rect = None
+            if not is_championship and self._config.get("task_end_battle"):
+                try:
+                    rect_data = regions_data["regions"]["giao_tranh"]["end_battle_ocr_rect"]
+                    end_battle_rect = (
+                        int(rect_data["left"]), int(rect_data["top"]),
+                        int(rect_data["right"]), int(rect_data["bottom"]),
+                    )
+                except (KeyError, TypeError, ValueError):
+                    self.log_message.emit(
+                        f"{label} — không đọc được end_battle_ocr_rect; "
+                        "sẽ chờ đủ thời gian cấu hình mà không kiểm tra OCR sớm."
+                    )
+
+            def wait_remaining_with_ocr(seconds: int) -> bool:
+                deadline = time.monotonic() + seconds
+                while True:
+                    if not self._wait_if_paused():
+                        return False
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        return True
+                    # Chờ từng đoạn tối đa 5 giây, sau đó kiểm tra tran_sau.
+                    time.sleep(min(5.0, remaining))
+                    if end_battle_rect is not None:
+                        words = self._ocr_words_in_rect(
+                            device, end_battle_rect, steps=("gray", "white_text"), psm=(11,)
+                        )
+                        ocr_text = " ".join(
+                            str(word.get("text", "")).strip()
+                            for word in words
+                            if str(word.get("text", "")).strip()
+                        )
+                        normalized = self._normalize_screen_text(ocr_text)
+                        if "tran sau" in normalized or "transau" in normalized.replace(" ", ""):
+                            self.log_message.emit(
+                                f"{label} — OCR RECT {end_battle_rect} phát hiện "
+                                f"'tran_sau' sau khi chờ; kết thúc chờ sớm. OCR: {ocr_text!r}"
+                            )
+                            return True
+                        self.log_message.emit(
+                            f"{label} — kiểm tra OCR sau mỗi đoạn chờ; "
+                            f"chưa thấy 'tran_sau'. OCR: {ocr_text[:160]!r}"
+                        )
+
             self.log_message.emit(
                 f"{label} — chờ 10 giây trước khi click lại đội hình; "
-                f"sau đó chờ thêm {max(0, time_limit - 10)} giây (giới hạn cấu hình {time_limit} giây)."
+                f"sau đó chờ thêm {max(0, time_limit - 10)} giây, kiểm tra OCR mỗi 5 giây "
+                f"(giới hạn cấu hình {time_limit} giây)."
             )
             if time_limit > 10:
                 if not wait_battle_seconds(10):
@@ -1193,9 +1241,15 @@ class UtilityTaskRunnerMixin:
                 remaining_seconds = max(0, time_limit - 10)
             else:
                 remaining_seconds = time_limit
-            if remaining_seconds and not wait_battle_seconds(remaining_seconds):
-                self.log_message.emit(f"Đã dừng khi chờ đủ thời gian {label}.")
-                return False
+            if remaining_seconds:
+                wait_function = (
+                    wait_remaining_with_ocr
+                    if not is_championship and end_battle_rect is not None
+                    else wait_battle_seconds
+                )
+                if not wait_function(remaining_seconds):
+                    self.log_message.emit(f"Đã dừng khi chờ đủ thời gian {label}.")
+                    return False
             return True
 
         if self._config.get("task_start_battle") and self._config.get("task_battle_time_mode", False):
