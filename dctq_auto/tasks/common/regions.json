@@ -740,6 +740,31 @@
             "x": 0.906771,
             "y": 0.057407
           }
+        },
+        {
+          "name": "close_dich_quan_tap_kich",
+          "text": "Nút đóng thông báo dich_quan_tap_kich",
+          "confidence": null,
+          "bounds": {
+            "left": 1564,
+            "top": 129,
+            "right": 1604,
+            "bottom": 169
+          },
+          "rect": {
+            "x": 1564,
+            "y": 129,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 1584,
+            "y_px": 149
+          },
+          "center_ratio": {
+            "x": 0.825,
+            "y": 0.137963
+          }
         }
       ],
       "screenshot": "user-provided OCR coordinates",
