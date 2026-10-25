@@ -39,6 +39,7 @@ class UtilityTaskRunnerMixin:
             ("thuc_hien_tranh_ba", "Mở màn hình Tranh Bá"),
             ("task_use_bazhen", "Sử dụng Canh Bát Trân"),
             ("task_find_battle_opponent", "Tìm đối thủ Giao Tranh"),
+            ("task_find_championship_opponent", "Tìm đối thủ Tranh Bá"),
             ("task_start_battle", "Bắt đầu trận Giao Tranh"),
             ("task_end_battle", "Kết thúc trận Giao Tranh"),
             ("xuat_chien", "Xuất chiến"),
@@ -66,7 +67,7 @@ class UtilityTaskRunnerMixin:
             "task_detect_strategy_status", "task_strategy_vuot_ai",
             "task_receive_strategy_reward",
             "task_close_guild", "task_switch_account", "task_click_coordinates",
-            "task_open_battle", "thuc_hien_tranh_ba", "task_find_battle_opponent", "task_start_battle", "task_end_battle", "xuat_chien", "task_use_bazhen",
+            "task_open_battle", "thuc_hien_tranh_ba", "task_find_battle_opponent", "task_find_championship_opponent", "task_start_battle", "task_end_battle", "xuat_chien", "task_use_bazhen",
         }
         for key, label in selected:
             if key in implemented:
@@ -484,6 +485,51 @@ class UtilityTaskRunnerMixin:
                     "Mở màn hình Tranh Bá thành công: OCR xác nhận nhãn menu "
                     "'tranh_ba', đã click button_tranh_ba và OCR xác minh tiêu đề "
                     "màn hình chính."
+                )
+            except Exception as exc:
+                completed += 1
+                self.log_message.emit(f"{label} thất bại: {exc}")
+                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), f"Lỗi: {label}"
+                )
+
+        if self._config.get("task_find_championship_opponent"):
+            label = "Tìm đối thủ Tranh Bá"
+            self.task_progress_changed.emit(label, "running", 0, 1)
+            try:
+                import json
+
+                regions_path = Path(__file__).resolve().parent / "common" / "regions.json"
+                try:
+                    regions_data = json.loads(regions_path.read_text(encoding="utf-8"))
+                    championship_config = regions_data["regions"]["tranh_ba"]
+                    elements = {
+                        item["name"]: item
+                        for item in championship_config.get("elements", [])
+                    }
+                    button = elements["button_chien_dau_tranh_ba"]["center"]
+                    find_x, find_y = int(button["x_px"]), int(button["y_px"])
+                except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+                    raise RuntimeError(
+                        f"Không đọc được tọa độ Tìm đối thủ Tranh Bá từ {regions_path}: {exc}"
+                    ) from exc
+
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng trước khi click Tìm đối thủ Tranh Bá.")
+                    return
+
+                device.shell(f"input tap {find_x} {find_y}")
+                self.log_message.emit(
+                    "Tìm đối thủ Tranh Bá — đã click "
+                    f"[button_chien_dau_tranh_ba] tại ({find_x}, {find_y})."
+                )
+                time.sleep(0.5)
+
+                completed += 1
+                self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), "Đã click Tìm đối thủ Tranh Bá"
                 )
             except Exception as exc:
                 completed += 1
