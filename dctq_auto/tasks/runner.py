@@ -440,17 +440,53 @@ class UtilityTaskRunnerMixin:
                 )
                 time.sleep(0.8)
 
-                # Chưa có RECT/text riêng của giao diện chính Tranh Bá để OCR xác minh.
-                # Ghi rõ rằng bước này xác nhận nhãn menu và thao tác click đã thực hiện.
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng trước khi xác minh giao diện chính Tranh Bá.")
+                    return
+
+                # Bước 3: xác minh đã vào màn hình Tranh Bá bằng OCR tiêu đề.
+                main_screen_rect_data = championship_config["main_screen_ocr_rect"]
+                main_screen_rect = (
+                    int(main_screen_rect_data["left"]),
+                    int(main_screen_rect_data["top"]),
+                    int(main_screen_rect_data["right"]),
+                    int(main_screen_rect_data["bottom"]),
+                )
+                self.log_message.emit(
+                    "Mở màn hình Tranh Bá — BƯỚC 3: OCR RECT "
+                    f"{main_screen_rect}, tìm 'tranh_ba' bằng color_text."
+                )
+                main_screen_match = self._tap_ocr_phrase_in_rect(
+                    device,
+                    ("tranh_ba",),
+                    main_screen_rect,
+                    steps=("color_text",),
+                    psm=(11,),
+                    tap=False,
+                    text_color="#FFFFFF",
+                    background_color="#000000",
+                    color_tolerance=100,
+                )
+                if main_screen_match is None:
+                    raise RuntimeError(
+                        "OCR không tìm thấy 'tranh_ba' trong RECT "
+                        f"{main_screen_rect}; chưa xác nhận giao diện chính Tranh Bá."
+                    )
+                _target_x, _target_y, main_screen_found_rect = main_screen_match
+                self.log_message.emit(
+                    "Bước 3 xác nhận đang ở giao diện chính Tranh Bá: "
+                    f"tìm thấy 'tranh_ba' — RECT {main_screen_found_rect}."
+                )
+
                 completed += 1
                 self.task_progress_changed.emit(label, "done", 1, 1)
                 self.progress_changed.emit(
-                    completed, max(1, total), "Đã click mục Tranh Bá"
+                    completed, max(1, total), "Đã xác nhận mở màn hình Tranh Bá"
                 )
                 self.log_message.emit(
-                    "Mở màn hình Tranh Bá: đã OCR xác nhận 'tranh_ba' và click "
-                    "button_tranh_ba theo tọa độ đã lưu. Chưa có OCR xác minh riêng "
-                    "cho giao diện sau khi mở."
+                    "Mở màn hình Tranh Bá thành công: OCR xác nhận nhãn menu "
+                    "'tranh_ba', đã click button_tranh_ba và OCR xác minh tiêu đề "
+                    "màn hình chính."
                 )
             except Exception as exc:
                 completed += 1
