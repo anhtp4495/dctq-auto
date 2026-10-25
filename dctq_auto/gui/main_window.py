@@ -797,8 +797,29 @@ class MainWindow(QMainWindow):
                 "Đánh đến khi chắc chắn thắng và đạt đủ 4 cờ mới kết thúc."
             )
 
+    def _on_task_battle_mode_toggled(self, checked: bool) -> None:
+        """Allow zero or one selected battle mode in the Tác vụ tab."""
+        if checked:
+            selected = self.sender()
+            for button in (
+                self.task_battle_fast_one_flag,
+                self.task_battle_three_flags,
+                self.task_battle_time_mode,
+            ):
+                if button is not selected and button.isChecked():
+                    button.setChecked(False)
+        self._update_task_battle_mode_description()
+
     def _update_task_battle_mode_description(self, *_args) -> None:
-        if self.task_battle_time_mode.isChecked():
+        if not (
+            self.task_battle_time_mode.isChecked()
+            or self.task_battle_fast_one_flag.isChecked()
+            or self.task_battle_three_flags.isChecked()
+        ):
+            self.task_battle_mode_description.setText(
+                "Không chọn chế độ cụ thể; sử dụng cách kết thúc trận mặc định của game."
+            )
+        elif self.task_battle_time_mode.isChecked():
             self.task_battle_mode_description.setText(
                 "Kết thúc trận khi đạt giới hạn thời gian đã chọn, dù đã thắng hay chưa."
             )
@@ -1217,11 +1238,20 @@ class MainWindow(QMainWindow):
         self.task_battle_three_flags = QCheckBox("Bình thường 3 cờ")
         self.task_battle_time_mode = QCheckBox("Thời gian tối đa:")
         self.task_battle_mode_group = QButtonGroup(self)
-        self.task_battle_mode_group.setExclusive(True)
+        # Cho phép bỏ chọn cả ba chế độ, đồng thời chỉ cho chọn tối đa một chế độ.
+        self.task_battle_mode_group.setExclusive(False)
         self.task_battle_mode_group.addButton(self.task_battle_fast_one_flag)
         self.task_battle_mode_group.addButton(self.task_battle_three_flags)
         self.task_battle_mode_group.addButton(self.task_battle_time_mode)
-        self.task_battle_three_flags.setChecked(True)
+        self.task_battle_fast_one_flag.toggled.connect(
+            self._on_task_battle_mode_toggled
+        )
+        self.task_battle_three_flags.toggled.connect(
+            self._on_task_battle_mode_toggled
+        )
+        self.task_battle_time_mode.toggled.connect(
+            self._on_task_battle_mode_toggled
+        )
         self.task_battle_time_limit = QSpinBox()
         self.task_battle_time_limit.setRange(10, 180)
         self.task_battle_time_limit.setValue(15)
