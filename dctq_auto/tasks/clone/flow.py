@@ -3,6 +3,7 @@
 Tách khỏi GUI worker để các tab/nhiệm vụ có thể gọi lại cùng một luồng.
 """
 import re
+from difflib import SequenceMatcher
 import shlex
 import time
 import unicodedata
@@ -162,13 +163,11 @@ def run_clone_flow(self, device) -> None:
             continue
 
         # The game may need extra time to finish loading the profile.
-        # "Quan chức" is the trusted profile marker; OCR can include its level
-        # after it (for example, "Quan chức 4768").
+        # Read only the top panel area and use a 75% fuzzy match for its title.
         profile_found = False
         self.log_message.emit(
             f"[{account.username}] Đăng nhập có vẻ thành công; xác minh bằng cách mở mục profile."
         )
-        # Tap the profile icon, then check for the "Thông tin của tôi" panel.
         try:
             ocr_client.tap_ocr_target("profile")
             time.sleep(1)
@@ -177,6 +176,20 @@ def run_clone_flow(self, device) -> None:
                 f"[{account.username}] Không mở được mục profile bằng tọa độ OCR: {exc}"
             )
 
+        # Rect lấy từ ảnh OCR debug ở độ phân giải chuẩn 1920x1080.
+        profile_header_rect = (519, 41, 1394, 200)
+        title_target = "thong tin cua toi"
+
+        def title_match_75(text: str) -> bool:
+            normalized = self._normalize_screen_text(text)
+            normalized = re.sub(r"[^a-z0-9 ]", " ", normalized)
+            normalized = " ".join(normalized.split())
+            target = " ".join(title_target.split())
+            if target in normalized:
+                return True
+            # Compare normalized OCR text against the expected title.
+            return SequenceMatcher(None, normalized, target).ratio() >= 0.75
+
         for profile_attempt in range(30):  # up to ~60 seconds
             if not self._wait_if_paused():
                 self.log_message.emit("Đã dừng theo yêu cầu.")
@@ -184,27 +197,52 @@ def run_clone_flow(self, device) -> None:
             if profile_attempt:
                 time.sleep(2)
             try:
-                profile_text = self._screen_text(device)
+                image = device.screenshot()
+                scale_x, scale_y = image.width / 1920, image.height / 1080
+                scaled_rect = (
+                    round(profile_header_rect[0] * scale_x),
+                    round(profile_header_rect[1] * scale_y),
+                    round(profile_header_rect[2] * scale_x),
+                    round(profile_header_rect[3] * scale_y),
+                )
+                profile_text = self._screen_text_in_rect(device, scaled_rect)
             except Exception as exc:
                 self.log_message.emit(
-                    f"[{account.username}] Lỗi OCR khi chờ profile: {exc}"
+                    f"[{account.username}] Lỗi OCR khi chờ tiêu đề profile: {exc}"
                 )
                 continue
 
             normalized_profile = self._normalize_screen_text(profile_text)
-            # The opened profile panel is identified by its title, then closed
-            # with the saved top-right close target so the game returns to normal.
-            if "thong tin cua toi" in normalized_profile:
+            # If the tap-kich notice overlaps the profile header area, close it first.
+            if "dich quan tap kich" in normalized_profile or "dich_quan_tap_kich" in normalized_profile:
+                try:
+                    ocr_client.tap_ocr_target("close_dich_quan_tap_kich")
+                    time.sleep(0.8)
+                    self.log_message.emit(
+                        f"[{account.username}] OCR vùng profile phát hiện 'dich_quan_tap_kich'; "
+                        "đã bấm đóng thông báo trước khi xử lý profile."
+                    )
+                    # Re-read the same small area after closing the notice.
+                    profile_text = self._screen_text_in_rect(device, scaled_rect)
+                    normalized_profile = self._normalize_screen_text(profile_text)
+                except Exception as exc:
+                    self.log_message.emit(
+                        f"[{account.username}] Không đóng được thông báo 'dich_quan_tap_kich': {exc}"
+                    )
+                    continue
+
+            if title_match_75(normalized_profile):
                 try:
                     ocr_client.tap_ocr_target("close_thong_tin_cua_toi")
                     time.sleep(0.7)
                     profile_found = True
                     self.log_message.emit(
-                        f"[{account.username}] Đã xác minh profile qua tiêu đề 'Thông tin của tôi' và đóng bảng profile."
+                        f"[{account.username}] Đã xác minh profile qua tiêu đề 'Thông tin của tôi' "
+                        "khớp OCR từ 75% trở lên và đóng bảng profile."
                     )
                 except Exception as exc:
                     self.log_message.emit(
-                        f"[{account.username}] Nhận diện được profile nhưng không đóng được bảng thông tin: {exc}"
+                        f"[{account.username}] Nhận diện được tiêu đề profile nhưng không đóng được bảng thông tin: {exc}"
                     )
                 break
 
