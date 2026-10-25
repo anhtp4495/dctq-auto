@@ -312,6 +312,11 @@ class BotWorker(
                         self.task_progress_changed.emit(
                             "Bắt đầu trận Giao Tranh", "done", count, count
                         )
+                    if task == "Thời gian tối đa Tranh Bá" and self._config.get("task_championship_start_battle"):
+                        count = max(1, int(self._config.get("tranh_ba", 6)))
+                        self.task_progress_changed.emit(
+                            "Bắt đầu trận Tranh Bá", "done", count, count
+                        )
                     if task == "Kết thúc trận Tranh Bá" and self._config.get("task_championship_start_battle"):
                         count = max(1, int(self._config.get("tranh_ba", 6)))
                         self.task_progress_changed.emit(
