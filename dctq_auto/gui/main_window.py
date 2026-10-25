@@ -279,7 +279,7 @@ class MainWindow(QMainWindow):
         self.tranh_ba_thoi_gian = QSpinBox()
         self.tranh_ba_thoi_gian.setRange(15, 180)
         self.tranh_ba_thoi_gian.setValue(15)
-        self.tranh_ba_thoi_gian.setSuffix(" giây")
+        self.tranh_ba_thoi_gian.setSuffix("")
         self.tranh_ba_thoi_gian.setKeyboardTracking(False)
         self.tranh_ba_thoi_gian.editingFinished.connect(
             self.tranh_ba_thoi_gian.clearFocus
@@ -287,6 +287,9 @@ class MainWindow(QMainWindow):
         self.tranh_ba_thoi_gian.setEnabled(False)
         self.tranh_ba_thoi_gian_mode.toggled.connect(
             self.tranh_ba_thoi_gian.setEnabled
+        )
+        self.tranh_ba_thoi_gian_control = self._build_seconds_control(
+            self.tranh_ba_thoi_gian
         )
         self.tranh_ba_thoi_gian_mode.setToolTip(
             "Kết thúc trận khi đạt giới hạn thời gian đã chọn."
@@ -694,7 +697,7 @@ class MainWindow(QMainWindow):
             self.tranh_ba_1_co,
             self.tranh_ba_4_co,
             self.tranh_ba_thoi_gian_mode,
-            self.tranh_ba_thoi_gian,
+            self.tranh_ba_thoi_gian_control,
         )
         tranh_ba_layout.addWidget(tranh_ba_mode_row)
         tranh_ba_layout.addWidget(self.tranh_ba_mode_description)
