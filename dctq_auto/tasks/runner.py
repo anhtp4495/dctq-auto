@@ -425,52 +425,76 @@ class UtilityTaskRunnerMixin:
                     self.log_message.emit("Đã dừng trước khi OCR mục Tranh Bá.")
                     return
 
-                # Bước 2: OCR chỉ xác nhận nhãn; điểm click lấy từ regions.json.
-                self.log_message.emit(
-                    "Mở màn hình Tranh Bá — BƯỚC 2: OCR RECT "
-                    f"{rect}, tìm 'tranh_ba'."
-                )
-                match = self._tap_ocr_phrase_in_rect(
-                    device,
-                    ("tranh_ba",),
-                    rect,
-                    # Dùng cùng pipeline OCR đã hoạt động ổn định với Giao Tranh.
-                    # Chỉ khác RECT và text mục tiêu.
-                    steps=("gray", "white_text"),
-                    psm=(6, 7, 11),
-                    tap=False,
-                )
-                if match is None:
-                    # Chạy lại đúng cấu hình OCR và ghi toàn bộ từ/bounding box
-                    # để đối chiếu kết quả runtime với scripts/ocr_debug.py.
-                    try:
-                        diagnostic_words = self._ocr_words_in_rect(
-                            device, rect, steps=("gray", "white_text"), psm=(6, 7, 11)
-                        )
-                        diagnostic_items = []
-                        for word in diagnostic_words:
-                            text = str(word.get("text", "")).strip()
-                            if text:
-                                diagnostic_items.append(
-                                    f"{text!r} (word={word!r})"
-                                )
-                        diagnostic_text = "; ".join(diagnostic_items) or "(không nhận diện được từ nào)"
-                        self.log_message.emit(
-                            "Mở màn hình Tranh Bá — CHẨN ĐOÁN OCR: "
-                            f"RECT {rect}, steps=gray/white_text, PSM=6,7,11; "
-                            f"từ nhận diện: {diagnostic_text[:1200]}"
-                        )
-                    except Exception as diagnostic_exc:
-                        self.log_message.emit(
-                            "Mở màn hình Tranh Bá — CHẨN ĐOÁN OCR thất bại: "
-                            f"{type(diagnostic_exc).__name__}: {diagnostic_exc}"
-                        )
-                    raise RuntimeError(
-                        f"OCR không tìm thấy 'tranh_ba' trong RECT {rect}; "
-                        "đã thử gray/white_text với PSM 6, 7, 11; xem log CHẨN ĐOÁN OCR để biết "
-                        "các từ thực tế nhận diện được; không click."
+                # Bước 2: chấp nhận một trong hai dấu hiệu hợp lệ ở menu Quân Sự.
+                # Ưu tiên nhãn "tranh_ba"; nếu không thấy thì kiểm tra "nhat_thong".
+                fallback_data = championship_config.get("fallback_ocr_rect")
+                ocr_candidates = [("tranh_ba", rect)]
+                if fallback_data:
+                    fallback_rect = (
+                        int(fallback_data["left"]),
+                        int(fallback_data["top"]),
+                        int(fallback_data["right"]),
+                        int(fallback_data["bottom"]),
                     )
-                _ocr_x, _ocr_y, found_rect = match
+                    ocr_candidates.append(("nhat_thong", fallback_rect))
+
+                match = None
+                matched_target = None
+                found_rect = None
+                for target_text, candidate_rect in ocr_candidates:
+                    self.log_message.emit(
+                        "Mở màn hình Tranh Bá — BƯỚC 2: OCR RECT "
+                        f"{candidate_rect}, tìm '{target_text}'."
+                    )
+                    candidate_match = self._tap_ocr_phrase_in_rect(
+                        device,
+                        (target_text,),
+                        candidate_rect,
+                        steps=("gray", "white_text"),
+                        psm=(6, 7, 11),
+                        tap=False,
+                    )
+                    if candidate_match is not None:
+                        match = candidate_match
+                        matched_target = target_text
+                        _ocr_x, _ocr_y, found_rect = candidate_match
+                        self.log_message.emit(
+                            f"OCR xác nhận dấu hiệu '{matched_target}' hợp lệ — "
+                            f"RECT {found_rect}."
+                        )
+                        break
+
+                if match is None:
+                    diagnostics = []
+                    for target_text, candidate_rect in ocr_candidates:
+                        try:
+                            diagnostic_words = self._ocr_words_in_rect(
+                                device,
+                                candidate_rect,
+                                steps=("gray", "white_text"),
+                                psm=(6, 7, 11),
+                            )
+                            diagnostic_items = [
+                                f"{str(word.get('text', '')).strip()!r} (word={word!r})"
+                                for word in diagnostic_words
+                                if str(word.get("text", "")).strip()
+                            ]
+                            diagnostic_text = "; ".join(diagnostic_items) or "(không nhận diện được từ nào)"
+                            diagnostics.append(
+                                f"RECT {candidate_rect}, mục tiêu '{target_text}': {diagnostic_text[:600]}"
+                            )
+                        except Exception as diagnostic_exc:
+                            diagnostics.append(
+                                f"RECT {candidate_rect}, mục tiêu '{target_text}': "
+                                f"CHẨN ĐOÁN LỖI {type(diagnostic_exc).__name__}: {diagnostic_exc}"
+                            )
+                    self.log_message.emit(
+                        "Mở màn hình Tranh Bá — CHẨN ĐOÁN OCR: " + " | ".join(diagnostics)
+                    )
+                    raise RuntimeError(
+                        "OCR không tìm thấy 'tranh_ba' hoặc 'nhat_thong' tại các RECT cấu hình; "
+                        "đã thử gray/white_text với PSM 6, 7, 11; không click."
+                    )
                 device.shell(f"input tap {button_x} {button_y}")
                 self.log_message.emit(
                     "OCR xác nhận 'tranh_ba' hợp lệ — "
