@@ -1622,12 +1622,19 @@ class UtilityTaskRunnerMixin:
                             last_ocr_report = ocr_report
                             last_ocr_report_at = now
 
-                        if championship_has_text(detected_text, "tran sau"):
+                        has_next_battle = championship_has_text(detected_text, "tran sau")
+                        has_return_city = championship_has_text(detected_text, "hoi thanh")
+                        if has_next_battle or has_return_city:
+                            state_name = "tran_sau" if has_next_battle else "hoi_thanh"
+                            self.log_message.emit(
+                                f"OCR phát hiện '{state_name}'; tiến độ hiện tại "
+                                f"{current_battle}/{target_battles} trận."
+                            )
                             if current_battle < target_battles:
                                 x, y = button_points["button_tranh_ba_tran_sau"]
                                 device.shell(f"input tap {x} {y}")
                                 self.log_message.emit(
-                                    f"Trận Tranh Bá {current_battle}/{target_battles}: "
+                                    f"Chưa đủ trận ({current_battle}/{target_battles}); "
                                     f"click button_tranh_ba_tran_sau tại ({x}, {y})."
                                 )
                                 current_battle += 1
@@ -1639,17 +1646,6 @@ class UtilityTaskRunnerMixin:
                             self.log_message.emit(
                                 f"Đã đủ {target_battles}/{target_battles} trận Tranh Bá; "
                                 f"click button_tranh_ba_hoi_thanh tại ({x}, {y})."
-                            )
-                            finished = True
-                            time.sleep(3.0)
-                            break
-
-                        if championship_has_text(detected_text, "hoi thanh"):
-                            x, y = button_points["button_tranh_ba_hoi_thanh"]
-                            device.shell(f"input tap {x} {y}")
-                            self.log_message.emit(
-                                "OCR phát hiện 'hoi_thanh'; click "
-                                f"button_tranh_ba_hoi_thanh tại ({x}, {y})."
                             )
                             finished = True
                             time.sleep(3.0)
