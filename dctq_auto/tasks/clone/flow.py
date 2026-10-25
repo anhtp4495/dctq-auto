@@ -230,6 +230,36 @@ def run_clone_flow(self, device) -> None:
                 break
             continue
 
+        # Dùng đúng flow đã được kiểm chứng ở tab Tác vụ; không nhầm checkbox này
+        # với Điểm danh hằng ngày.
+        if self._config.get("clone_receive_quoc_van"):
+            task_label = f"{account.username} - Nhận lễ bao quốc vận"
+            self.task_progress_changed.emit(task_label, "running", 0, 1)
+            if not self._wait_if_paused():
+                self.log_message.emit("Đã dừng theo yêu cầu trước khi nhận lễ bao Quốc vận.")
+                return
+            self.log_message.emit(
+                f"[{account.username}] Bắt đầu nhận lễ bao Quốc vận."
+            )
+            try:
+                receive_quoc_van_ok = self._run_receive_quoc_van(device, ocr_client)
+            except Exception as exc:
+                receive_quoc_van_ok = False
+                self.log_message.emit(
+                    f"[{account.username}] Lỗi khi nhận lễ bao Quốc vận: {exc}"
+                )
+            if receive_quoc_van_ok:
+                self.task_progress_changed.emit(task_label, "done", 1, 1)
+                self.log_message.emit(
+                    f"[{account.username}] Đã chạy xong luồng nhận lễ bao Quốc vận."
+                )
+            else:
+                self.task_progress_changed.emit(task_label, "failed", 0, 1)
+                self.log_message.emit(
+                    f"[{account.username}] Nhận lễ bao Quốc vận thất bại; "
+                    "tiếp tục các tác vụ Clone khác."
+                )
+
         if self._config.get("clone_daily_check_in"):
             task_label = f"{account.username} - Điểm danh"
             self.task_progress_changed.emit(task_label, "running", 0, 1)
