@@ -772,21 +772,25 @@ class UtilityTaskRunnerMixin:
 
         if self._config.get("task_start_battle"):
             label = "Bắt đầu trận Giao Tranh"
-            self.task_progress_changed.emit(label, "running", 0, 1)
+            target_battles = max(1, int(self._config.get("task_open_battle_count", 1)))
+            self.task_progress_changed.emit(label, "running", 1, target_battles)
             try:
                 battle_number_for_start[0] = 1
                 if not run_start_battle_sequence():
                     self.log_message.emit("Đã dừng tác vụ Bắt đầu trận Giao Tranh theo yêu cầu.")
                     return
                 completed += 1
-                self.task_progress_changed.emit(label, "done", 1, 1)
+                # Khi có tác vụ kết thúc trận, giữ mũi tên chạy cho đến khi
+                # OCR xác nhận hoàn tất toàn bộ số trận mục tiêu.
+                if not self._config.get("task_end_battle"):
+                    self.task_progress_changed.emit(label, "done", 1, 1)
                 self.progress_changed.emit(
-                    completed, max(1, total), "Đã hoàn tất Bắt đầu trận Giao Tranh"
+                    completed, max(1, total), "Đã bắt đầu trận Giao Tranh 1"
                 )
             except Exception as exc:
                 completed += 1
                 self.log_message.emit(f"{label} thất bại: {exc}")
-                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.task_progress_changed.emit(label, "failed", 0, target_battles)
                 self.progress_changed.emit(
                     completed, max(1, total), f"Lỗi: {label}"
                 )
@@ -951,6 +955,11 @@ class UtilityTaskRunnerMixin:
                     f"OCR RECT trạng thái {end_rect}, hộp xác nhận {confirm_rect}."
                 )
                 while current_battle <= target_battles:
+                    if self._config.get("task_start_battle"):
+                        self.task_progress_changed.emit(
+                            "Bắt đầu trận Giao Tranh", "running",
+                            current_battle, target_battles
+                        )
                     if not self._wait_if_paused():
                         self.log_message.emit("Đã dừng theo yêu cầu khi kết thúc trận Giao Tranh.")
                         return
@@ -1051,6 +1060,11 @@ class UtilityTaskRunnerMixin:
                                     f"click button_tran_sau tại ({x}, {y})."
                                 )
                                 current_battle += 1
+                                if self._config.get("task_start_battle"):
+                                    self.task_progress_changed.emit(
+                                        "Bắt đầu trận Giao Tranh", "running",
+                                        current_battle, target_battles
+                                    )
                                 self.log_message.emit(
                                     f"Đã tăng số trận hiện tại lên {current_battle}/{target_battles}."
                                 )
@@ -1091,12 +1105,22 @@ class UtilityTaskRunnerMixin:
                     raise RuntimeError("Chưa xác nhận được thao tác Hồi thành sau số trận mục tiêu.")
                 completed += 1
                 self.task_progress_changed.emit(label, "done", 1, 1)
+                if self._config.get("task_start_battle"):
+                    self.task_progress_changed.emit(
+                        "Bắt đầu trận Giao Tranh", "done",
+                        target_battles, target_battles
+                    )
                 self.progress_changed.emit(
                     completed, max(1, total), "Đã kết thúc đủ số trận Giao Tranh"
                 )
             except Exception as exc:
                 completed += 1
                 self.log_message.emit(f"{label} thất bại: {exc}")
+                if self._config.get("task_start_battle"):
+                    self.task_progress_changed.emit(
+                        "Bắt đầu trận Giao Tranh", "failed",
+                        max(0, current_battle - 1), target_battles
+                    )
                 self.task_progress_changed.emit(label, "failed", 0, 1)
                 self.progress_changed.emit(
                     completed, max(1, total), f"Lỗi: {label}"
