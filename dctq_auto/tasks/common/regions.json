@@ -92,6 +92,31 @@
           }
         },
         {
+          "name": "close_thong_bao_tap_kich",
+          "text": "Nút đóng thông báo dich_quan_tap_kich",
+          "confidence": null,
+          "bounds": {
+            "left": 1564,
+            "top": 129,
+            "right": 1604,
+            "bottom": 169
+          },
+          "rect": {
+            "x": 1564,
+            "y": 129,
+            "width": 40,
+            "height": 40
+          },
+          "center": {
+            "x_px": 1584,
+            "y_px": 149
+          },
+          "center_ratio": {
+            "x": 0.825,
+            "y": 0.137963
+          }
+        },
+        {
           "name": "profile",
           "text": "Thông tin của tôi",
           "confidence": null,
@@ -1422,26 +1447,50 @@
         {
           "name": "button_thu_quan",
           "text": "Nút Thu quân khi kết thúc trận Giao Tranh",
-          "center": { "x_px": 167, "y_px": 726 },
-          "center_ratio": { "x": 0.087, "y": 0.672222 }
+          "center": {
+            "x_px": 167,
+            "y_px": 726
+          },
+          "center_ratio": {
+            "x": 0.087,
+            "y": 0.672222
+          }
         },
         {
           "name": "button_xac_nhan_rut_lui",
           "text": "Nút xác nhận hộp thoại Rút lui trong Giao Tranh",
-          "center": { "x_px": 1158, "y_px": 698 },
-          "center_ratio": { "x": 0.603125, "y": 0.646296 }
+          "center": {
+            "x_px": 1158,
+            "y_px": 698
+          },
+          "center_ratio": {
+            "x": 0.603125,
+            "y": 0.646296
+          }
         },
         {
           "name": "button_tran_sau",
           "text": "Nút Trận sau sau khi kết thúc trận Giao Tranh",
-          "center": { "x_px": 118, "y_px": 993 },
-          "center_ratio": { "x": 0.061458, "y": 0.919444 }
+          "center": {
+            "x_px": 118,
+            "y_px": 993
+          },
+          "center_ratio": {
+            "x": 0.061458,
+            "y": 0.919444
+          }
         },
         {
           "name": "button_hoi_thanh",
           "text": "Nút Hồi thành khi đã đủ số trận Giao Tranh",
-          "center": { "x_px": 1553, "y_px": 993 },
-          "center_ratio": { "x": 0.808854, "y": 0.919444 }
+          "center": {
+            "x_px": 1553,
+            "y_px": 993
+          },
+          "center_ratio": {
+            "x": 0.808854,
+            "y": 0.919444
+          }
         }
       ],
       "end_battle_ocr_rect": {
