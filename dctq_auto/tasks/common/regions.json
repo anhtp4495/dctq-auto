@@ -1610,7 +1610,25 @@
         "x": 0,
         "y": 0
       },
-      "note": "Tọa độ button_tranh_ba do người dùng xác nhận (385, 1003). OCR nhận diện nhãn tranh_ba trong RECT (328, 1037, 435, 1078); chỉ dùng OCR để xác nhận mục menu, không dùng tâm OCR làm tọa độ click."
+      "note": "Tọa độ button_tranh_ba do người dùng xác nhận (385, 1003). OCR nhận diện nhãn tranh_ba trong RECT (328, 1037, 435, 1078); chỉ dùng OCR để xác nhận mục menu, không dùng tâm OCR làm tọa độ click.",
+      "main_screen_ocr_rect": {
+        "left": 783,
+        "top": 43,
+        "right": 1106,
+        "bottom": 131
+      },
+      "main_screen_target": "tranh_ba",
+      "main_screen_ocr": {
+        "steps": [
+          "color_text"
+        ],
+        "psm": [
+          11
+        ],
+        "text_color": "#FFFFFF",
+        "background_color": "#000000",
+        "color_tolerance": 100
+      }
     },
     "hoat_dong": {
       "elements": [
