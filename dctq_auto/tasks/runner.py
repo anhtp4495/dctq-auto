@@ -42,6 +42,7 @@ class UtilityTaskRunnerMixin:
             ("task_find_championship_opponent", "Tìm đối thủ Tranh Bá"),
             ("task_start_battle", "Bắt đầu trận Giao Tranh"),
             ("task_championship_start_battle", "Bắt đầu trận Tranh Bá"),
+            ("task_championship_xuat_chien", "Xuất chiến Tranh Bá"),
             ("task_end_battle", "Kết thúc trận Giao Tranh"),
             ("xuat_chien", "Xuất chiến"),
             ("task_enter_strategy", "Vào màn hình Mưu Binh"),
@@ -68,7 +69,7 @@ class UtilityTaskRunnerMixin:
             "task_detect_strategy_status", "task_strategy_vuot_ai",
             "task_receive_strategy_reward",
             "task_close_guild", "task_switch_account", "task_click_coordinates",
-            "task_open_battle", "thuc_hien_tranh_ba", "task_find_battle_opponent", "task_find_championship_opponent", "task_start_battle", "task_championship_start_battle", "task_end_battle", "xuat_chien", "task_use_bazhen",
+            "task_open_battle", "thuc_hien_tranh_ba", "task_find_battle_opponent", "task_find_championship_opponent", "task_start_battle", "task_championship_start_battle", "task_championship_xuat_chien", "task_end_battle", "xuat_chien", "task_use_bazhen",
         }
         for key, label in selected:
             if key in implemented:
@@ -703,6 +704,57 @@ class UtilityTaskRunnerMixin:
                 self.progress_changed.emit(
                     completed, max(1, total), f"Lỗi: {label}"
                 )
+
+        if self._config.get("task_championship_xuat_chien"):
+            label = "Xuất chiến Tranh Bá"
+            self.task_progress_changed.emit(label, "running", 0, 1)
+            rect = (1433, 970, 1614, 1016)
+            try:
+                # Dùng cùng luồng OCR và xác nhận như Xuất chiến Giao Tranh.
+                match = None
+                for attempt in range(1, 4):
+                    if not self._wait_if_paused():
+                        self.log_message.emit("Đã dừng trước khi thực hiện Xuất chiến Tranh Bá.")
+                        return
+                    self.log_message.emit(
+                        f"{label} — lần thử {attempt}/3: OCR RECT {rect}, tìm 'xuat_chien'."
+                    )
+                    match = self._tap_ocr_phrase_in_rect(
+                        device,
+                        ("xuat_chien",),
+                        rect,
+                        steps=("gray", "white_text"),
+                        psm=(11,),
+                    )
+                    if match is not None:
+                        x, y, found_rect = match
+                        self.log_message.emit(
+                            f"Đã phát hiện và click 'xuat_chien' tại ({x}, {y}); "
+                            f"RECT nhận diện {found_rect}."
+                        )
+                        break
+                    self.log_message.emit(
+                        f"Lần thử {attempt}/3 chưa OCR được 'xuat_chien' trong Tranh Bá."
+                    )
+                    if attempt < 3:
+                        time.sleep(0.5)
+                if match is None:
+                    raise RuntimeError(
+                        f"Không phát hiện được 'xuat_chien' sau 3 lần OCR tại RECT {rect}."
+                    )
+                completed += 1
+                self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), "Đã hoàn tất Xuất chiến Tranh Bá"
+                )
+            except Exception as exc:
+                completed += 1
+                self.log_message.emit(f"{label} thất bại: {exc}")
+                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), f"Lỗi: {label}"
+                )
+
 
         def run_start_battle_sequence():
             # BƯỚC 1: OCR xác nhận trận tải thành công PHẢI chạy trước khi đọc regions.json.
