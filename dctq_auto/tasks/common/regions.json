@@ -1662,8 +1662,8 @@
           11
         ],
         "text_color": "#FFFFFF",
-        "background_color": "#000000",
-        "color_tolerance": 100
+        "background_color": "#FFCC00",
+        "color_tolerance": 38.0
       },
       "end_battle_ocr_rect": {
         "left": 845,
