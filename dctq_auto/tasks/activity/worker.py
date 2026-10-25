@@ -202,14 +202,38 @@ class ActivityWorkerMixin:
             )
             # OCR đôi khi đọc chữ "quốc" thành "quec" (như log phân tích OCR),
             # nên chấp nhận biến thể này để không bỏ sót đúng mục Lễ bao Quốc vận.
-            if not self._tap_ocr_phrase_in_rect(
+            gift_match = self._tap_ocr_phrase_in_rect(
                 device, ("le bao quoc", "le bao quec"), ocr_rect,
-                steps=("gray", "white_text"), psm=(11,),
-            ):
+                steps=("gray", "white_text"), psm=(11,), tap=False,
+            )
+            if gift_match is None:
+                # Lễ bao Quốc vận nằm gần đầu danh sách; vuốt từ A xuống B
+                # để đưa các mục phía trên vào vùng nhìn thấy rồi OCR lại.
+                swipe_ax = round(347 / 1920 * screen_width)
+                swipe_ay = round(349 / 1080 * screen_height)
+                swipe_bx = round(362 / 1920 * screen_width)
+                swipe_by = round(747 / 1080 * screen_height)
                 self.log_message.emit(
-                    "Không tìm thấy mục Lễ bao Quốc vận bằng OCR; bỏ qua tác vụ này."
+                    "Không tìm thấy le_bao_quoc; vuốt danh sách từ A -> B "
+                    f"({swipe_ax}, {swipe_ay}) -> ({swipe_bx}, {swipe_by}) rồi OCR lại."
+                )
+                device.shell(
+                    f"input swipe {swipe_ax} {swipe_ay} {swipe_bx} {swipe_by} 400"
+                )
+                time.sleep(0.6)
+                if not self._wait_if_paused():
+                    return False
+                gift_match = self._tap_ocr_phrase_in_rect(
+                    device, ("le bao quoc", "le bao quec"), ocr_rect,
+                    steps=("gray", "white_text"), psm=(11,), tap=False,
+                )
+            if gift_match is None:
+                self.log_message.emit(
+                    "Không tìm thấy mục Lễ bao Quốc vận bằng OCR sau khi vuốt; bỏ qua tác vụ này."
                 )
                 return False
+            gift_x, gift_y, _ = gift_match
+            device.shell(f"input tap {gift_x} {gift_y}")
 
             time.sleep(1.2)
             if not self._wait_if_paused():
@@ -367,11 +391,36 @@ class ActivityWorkerMixin:
                 round(474 / 1920 * screen_width),
                 round(871 / 1080 * screen_height),
             )
-            if not self._tap_ocr_phrase_in_rect(device, ("diem danh",), diem_danh_rect):
-                raise RuntimeError(
-                    "OCR không tìm thấy nút Điểm danh trong RECT đã cấu hình; "
-                    "không retry và không click fallback."
+            diem_danh_match = self._tap_ocr_phrase_in_rect(
+                device, ("diem danh",), diem_danh_rect, tap=False
+            )
+            if diem_danh_match is None:
+                # Điểm danh nằm phía dưới danh sách; vuốt từ B lên A rồi OCR lại.
+                swipe_ax = round(347 / 1920 * screen_width)
+                swipe_ay = round(349 / 1080 * screen_height)
+                swipe_bx = round(362 / 1920 * screen_width)
+                swipe_by = round(747 / 1080 * screen_height)
+                self.log_message.emit(
+                    "Không tìm thấy diem_danh; vuốt danh sách từ B -> A "
+                    f"({swipe_bx}, {swipe_by}) -> ({swipe_ax}, {swipe_ay}) rồi OCR lại."
                 )
+                device.shell(
+                    f"input swipe {swipe_bx} {swipe_by} {swipe_ax} {swipe_ay} 400"
+                )
+                time.sleep(0.6)
+                if not self._wait_if_paused():
+                    self.log_message.emit("Điểm danh đã dừng theo yêu cầu.")
+                    return False
+                diem_danh_match = self._tap_ocr_phrase_in_rect(
+                    device, ("diem danh",), diem_danh_rect, tap=False
+                )
+            if diem_danh_match is None:
+                raise RuntimeError(
+                    "OCR không tìm thấy nút Điểm danh trong RECT đã cấu hình "
+                    "kể cả sau khi vuốt B -> A; dừng, không click fallback."
+                )
+            diem_danh_x, diem_danh_y, _ = diem_danh_match
+            device.shell(f"input tap {diem_danh_x} {diem_danh_y}")
             time.sleep(1.0)
 
             if not self._wait_if_paused():
