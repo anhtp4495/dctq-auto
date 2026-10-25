@@ -1610,6 +1610,30 @@
             "x": 0.596354,
             "y": 0.92037
           }
+        },
+        {
+          "name": "button_tranh_ba_tran_sau",
+          "text": "Nút Trận Sau khi kết thúc trận Tranh Bá",
+          "center": {
+            "x_px": 1759,
+            "y_px": 890
+          },
+          "center_ratio": {
+            "x": 0.916146,
+            "y": 0.824074
+          }
+        },
+        {
+          "name": "button_tranh_ba_hoi_thanh",
+          "text": "Nút Hồi Thành khi kết thúc trận Tranh Bá",
+          "center": {
+            "x_px": 947,
+            "y_px": 876
+          },
+          "center_ratio": {
+            "x": 0.493229,
+            "y": 0.811111
+          }
         }
       ],
       "ocr_rect": {
@@ -1622,7 +1646,7 @@
         "x": 0,
         "y": 0
       },
-      "note": "Tọa độ button_tranh_ba do người dùng xác nhận (385, 1003). OCR nhận diện nhãn tranh_ba trong RECT (328, 1037, 435, 1078); chỉ dùng OCR để xác nhận mục menu, không dùng tâm OCR làm tọa độ click. Tọa độ nút Tìm đối thủ Tranh Bá do người dùng xác nhận: button_chien_dau_tranh_ba (1145, 994).",
+      "note": "Tọa độ button_tranh_ba do người dùng xác nhận (385, 1003). OCR nhận diện nhãn tranh_ba trong RECT (328, 1037, 435, 1078); chỉ dùng OCR để xác nhận mục menu, không dùng tâm OCR làm tọa độ click. Tọa độ nút Tìm đối thủ Tranh Bá do người dùng xác nhận: button_chien_dau_tranh_ba (1145, 994). Tọa độ nút kết thúc trận Tranh Bá do người dùng xác nhận: button_tranh_ba_tran_sau (1759, 890), button_tranh_ba_hoi_thanh (947, 876); OCR RECT (845, 843, 1065, 933), steps gray/white_text, PSM 11.",
       "main_screen_ocr_rect": {
         "left": 783,
         "top": 43,
@@ -1640,6 +1664,12 @@
         "text_color": "#FFFFFF",
         "background_color": "#000000",
         "color_tolerance": 100
+      },
+      "end_battle_ocr_rect": {
+        "left": 845,
+        "top": 843,
+        "right": 1065,
+        "bottom": 933
       }
     },
     "hoat_dong": {
