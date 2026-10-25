@@ -74,7 +74,7 @@ class UtilityTaskRunnerMixin:
             "task_receive_strategy_reward",
             "task_close_guild", "task_switch_account", "task_click_coordinates",
             "task_open_battle", "thuc_hien_tranh_ba", "task_find_battle_opponent", "task_find_championship_opponent", "task_start_battle", "task_championship_start_battle", "task_championship_xuat_chien", "task_end_battle", "xuat_chien", "task_use_bazhen",
-            "thoi_gian_tranh_ba",
+            "thoi_gian_tranh_ba", "task_championship_end_battle",
         }
         for key, label in selected:
             if key in implemented:
@@ -1439,6 +1439,141 @@ class UtilityTaskRunnerMixin:
                         "Bắt đầu trận Giao Tranh", "failed",
                         max(0, current_battle - 1), target_battles
                     )
+                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), f"Lỗi: {label}"
+                )
+        if self._config.get("task_championship_end_battle"):
+            label = "Kết thúc trận Tranh Bá"
+            self.task_progress_changed.emit(label, "running", 0, 1)
+            current_battle = 1
+            target_battles = max(1, int(self._config.get("tranh_ba", 1)))
+            try:
+                import json
+
+                regions_path = Path(__file__).resolve().parent / "common" / "regions.json"
+                try:
+                    regions_data = json.loads(regions_path.read_text(encoding="utf-8"))
+                    battle_config = regions_data["regions"]["tranh_ba"]
+                    elements = {
+                        item["name"]: item
+                        for item in battle_config.get("elements", [])
+                    }
+                    end_rect_data = battle_config["end_battle_ocr_rect"]
+                    end_rect = (
+                        int(end_rect_data["left"]), int(end_rect_data["top"]),
+                        int(end_rect_data["right"]), int(end_rect_data["bottom"]),
+                    )
+                    button_points = {
+                        name: (
+                            int(elements[name]["center"]["x_px"]),
+                            int(elements[name]["center"]["y_px"]),
+                        )
+                        for name in ("button_tranh_ba_tran_sau", "button_tranh_ba_hoi_thanh")
+                    }
+                except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+                    raise RuntimeError(
+                        f"Không đọc được cấu hình kết thúc trận Tranh Bá từ {regions_path}: {exc}"
+                    ) from exc
+
+                def read_championship_end_text():
+                    words = self._ocr_words_in_rect(
+                        device, end_rect, steps=("gray", "white_text"), psm=(11,)
+                    )
+                    return " ".join(
+                        str(word.get("text", "")).strip()
+                        for word in words if str(word.get("text", "")).strip()
+                    )
+
+                def championship_has_text(text, expected):
+                    normalized = self._normalize_screen_text(text)
+                    compact = normalized.replace(" ", "")
+                    return expected in normalized or expected.replace(" ", "") in compact
+
+                finished = False
+                self.log_message.emit(
+                    f"Kết thúc trận Tranh Bá: mục tiêu {target_battles} trận; "
+                    f"OCR RECT {end_rect}."
+                )
+                while current_battle <= target_battles:
+                    if not self._wait_if_paused():
+                        self.log_message.emit("Đã dừng theo yêu cầu khi kết thúc trận Tranh Bá.")
+                        return
+
+                    deadline = time.monotonic() + 180
+                    last_ocr_report = None
+                    last_ocr_report_at = 0.0
+                    detected_text = ""
+                    while time.monotonic() < deadline:
+                        if not self._wait_if_paused():
+                            self.log_message.emit("Đã dừng theo yêu cầu khi OCR trạng thái Tranh Bá.")
+                            return
+
+                        detected_text = read_championship_end_text()
+                        now = time.monotonic()
+                        ocr_report = detected_text.strip() or "(trống)"
+                        if ocr_report != last_ocr_report or now - last_ocr_report_at >= 5:
+                            self.log_message.emit(
+                                f"Kết thúc trận Tranh Bá — OCR RECT {end_rect}: "
+                                f"{ocr_report[:180]}."
+                            )
+                            last_ocr_report = ocr_report
+                            last_ocr_report_at = now
+
+                        if championship_has_text(detected_text, "tran sau"):
+                            if current_battle < target_battles:
+                                x, y = button_points["button_tranh_ba_tran_sau"]
+                                device.shell(f"input tap {x} {y}")
+                                self.log_message.emit(
+                                    f"Trận Tranh Bá {current_battle}/{target_battles}: "
+                                    f"click button_tranh_ba_tran_sau tại ({x}, {y})."
+                                )
+                                current_battle += 1
+                                time.sleep(3.0)
+                                break
+
+                            x, y = button_points["button_tranh_ba_hoi_thanh"]
+                            device.shell(f"input tap {x} {y}")
+                            self.log_message.emit(
+                                f"Đã đủ {target_battles}/{target_battles} trận Tranh Bá; "
+                                f"click button_tranh_ba_hoi_thanh tại ({x}, {y})."
+                            )
+                            finished = True
+                            time.sleep(3.0)
+                            break
+
+                        if championship_has_text(detected_text, "hoi thanh"):
+                            x, y = button_points["button_tranh_ba_hoi_thanh"]
+                            device.shell(f"input tap {x} {y}")
+                            self.log_message.emit(
+                                "OCR phát hiện 'hoi_thanh'; click "
+                                f"button_tranh_ba_hoi_thanh tại ({x}, {y})."
+                            )
+                            finished = True
+                            time.sleep(3.0)
+                            break
+
+                        time.sleep(3.0)
+                    else:
+                        raise RuntimeError(
+                            "Hết 180 giây nhưng OCR không phát hiện được 'tran_sau' "
+                            f"hoặc 'hoi_thanh' trong RECT {end_rect}. "
+                            f"OCR cuối: {detected_text[:180] or '(trống)'}"
+                        )
+
+                    if finished:
+                        break
+
+                if not finished:
+                    raise RuntimeError("Chưa xác nhận được thao tác Hồi thành sau số trận Tranh Bá mục tiêu.")
+                completed += 1
+                self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(
+                    completed, max(1, total), "Đã kết thúc đủ số trận Tranh Bá"
+                )
+            except Exception as exc:
+                completed += 1
+                self.log_message.emit(f"{label} thất bại: {exc}")
                 self.task_progress_changed.emit(label, "failed", 0, 1)
                 self.progress_changed.emit(
                     completed, max(1, total), f"Lỗi: {label}"
