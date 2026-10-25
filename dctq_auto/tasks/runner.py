@@ -831,7 +831,88 @@ class UtilityTaskRunnerMixin:
             self.task_progress_changed.emit(label, "running", 0, 1)
             rect = (1433, 970, 1614, 1016)
             try:
-                # Dùng cùng luồng OCR và xác nhận như Xuất chiến Giao Tranh.
+                # Sau khi bấm Tìm đối thủ, hết lượt có thể xuất hiện hộp thoại mua thể lực.
+                # Nếu không có tiêu đề mua_thể_lực thì mới tiếp tục tìm nút Xuất chiến.
+                mua_the_luc_rect = (816, 247, 1096, 319)
+                self.log_message.emit(
+                    f"{label} — kiểm tra hộp thoại mua thể lực bằng OCR RECT {mua_the_luc_rect}."
+                )
+                mua_the_luc = self._tap_ocr_phrase_in_rect(
+                    device,
+                    ("mua_the_luc",),
+                    mua_the_luc_rect,
+                    steps=("color_text",),
+                    psm=(11,),
+                    tap=False,
+                    text_color="#FFFFFF",
+                    background_color="#000000",
+                    color_tolerance=38.0,
+                )
+                if mua_the_luc is not None:
+                    self.log_message.emit(
+                        "Đã phát hiện hộp thoại 'mua_the_luc'; kiểm tra hai lựa chọn trong hộp thoại."
+                    )
+                    # OCR vùng nội dung hộp thoại để xác định lựa chọn đang có.
+                    # Hai lựa chọn có thể thay đổi theo trạng thái lượt trong game.
+                    option_rect = (700, 330, 1220, 740)
+                    mua_knb = self._tap_ocr_phrase_in_rect(
+                        device,
+                        ("mua_luot_bang_knb",),
+                        option_rect,
+                        steps=("color_text",),
+                        psm=(11,),
+                        tap=False,
+                        text_color="#FFFFFF",
+                        background_color="#000000",
+                        color_tolerance=38.0,
+                    )
+                    dung_mien_phi = self._tap_ocr_phrase_in_rect(
+                        device,
+                        ("su_dung_luot_mien_phi",),
+                        option_rect,
+                        steps=("color_text",),
+                        psm=(11,),
+                        tap=False,
+                        text_color="#FFFFFF",
+                        background_color="#000000",
+                        color_tolerance=38.0,
+                    )
+                    if mua_knb is not None:
+                        if not self._wait_if_paused():
+                            self.log_message.emit("Đã dừng trước khi xác nhận mua thể lực bằng KNB.")
+                            return
+                        device.shell("input tap 1092 702")
+                        self.log_message.emit(
+                            "Đã phát hiện lựa chọn 'mua lượt bằng KNB'; click xác nhận tại (1092, 702)."
+                        )
+                    elif dung_mien_phi is not None:
+                        if not self._wait_if_paused():
+                            self.log_message.emit("Đã dừng trước khi hủy hộp thoại mua thể lực.")
+                            return
+                        device.shell("input tap 730 694")
+                        self.log_message.emit(
+                            "Đã phát hiện lựa chọn 'sử dụng lượt miễn phí'; click hủy tại (730, 694)."
+                        )
+                        time.sleep(3)
+                        device.shell("input tap 1757 110")
+                        self.log_message.emit(
+                            "Đã chờ 3 giây rồi click đóng màn hành Tranh Bá tại (1757, 110)."
+                        )
+                    else:
+                        raise RuntimeError(
+                            f"Đã thấy hộp thoại mua thể lực nhưng không OCR được lựa chọn nào trong RECT {option_rect}; "
+                            "không click để tránh chọn nhầm."
+                        )
+                    completed += 1
+                    self.task_progress_changed.emit(label, "done", 1, 1)
+                    self.progress_changed.emit(
+                        completed, max(1, total), "Đã xử lý hộp thoại mua thể lực Tranh Bá"
+                    )
+                else:
+                    self.log_message.emit(
+                        "Không phát hiện 'mua_the_luc'; tiếp tục OCR tìm 'xuat_chien'."
+                    )
+                    # Dùng cùng luồng OCR và xác nhận như Xuất chiến Giao Tranh.
                 match = None
                 for attempt in range(1, 4):
                     if not self._wait_if_paused():
