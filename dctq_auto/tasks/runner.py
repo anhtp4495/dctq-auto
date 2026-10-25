@@ -511,6 +511,8 @@ class UtilityTaskRunnerMixin:
                         ("tranh_ba",),
                         main_screen_rect,
                         steps=("color_text",),
+                        background_color="#FFCC00",
+                        color_tolerance=38.0,
                         psm=(11,),
                         tap=False,
                     )
