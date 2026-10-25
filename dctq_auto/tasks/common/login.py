@@ -94,6 +94,21 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
                 )
                 break
 
+        if "dich quan tap kich" in normalized_result:
+            worker.log_message.emit(
+                f"[{account.username}] OCR phát hiện thông báo 'dich_quan_tap_kich'; đang đóng thông báo."
+            )
+            try:
+                ocr_client.tap_ocr_target("close_thong_bao_tap_kich")
+                time.sleep(1)
+                previous_screen_text = None
+                continue
+            except Exception as exc:
+                worker.log_message.emit(
+                    f"[{account.username}] Không đóng được thông báo 'dich_quan_tap_kich': {exc}"
+                )
+                break
+
         observed_error = worker._login_error(result_text) or observed_error
         if worker._is_login_screen(result_text):
             previous_screen_text = None
