@@ -181,7 +181,7 @@ class BotWorker(
                 selected.append("Tìm đối thủ Giao Tranh")
             if self._config.get("xuat_chien"):
                 selected.append("Xuất chiến")
-            if self._config.get("thuc_hien_giao_tranh"):
+            if self._config.get("task_start_battle") or self._config.get("thuc_hien_giao_tranh"):
                 selected.append("Bắt đầu trận Giao Tranh")
                 if self._config.get("task_battle_time_mode"):
                     selected.append("Thời gian tối đa Giao Tranh")
