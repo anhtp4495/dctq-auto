@@ -191,8 +191,24 @@ class BotWorker(
                     selected.append("Chờ Giao Tranh bình thường 3 cờ")
             if self._config.get("task_end_battle"):
                 selected.append("Kết thúc trận Giao Tranh")
+            # Tranh Bá phải phát trạng thái cho từng dòng của tab Tác vụ;
+            # không dùng nhãn chung "Tranh bá" vì nhãn đó không có dòng tương ứng.
             if self._config.get("thuc_hien_tranh_ba"):
-                selected.append("Tranh bá")
+                selected.append("Mở màn hình Tranh Bá")
+            if self._config.get("mua_luot_knb"):
+                selected.append("Mua lượt Tranh Bá bằng KNB")
+            if self._config.get("tranh_ba_luot_mien_phi"):
+                selected.append("Sử dụng lượt Tranh Bá miễn phí")
+            if self._config.get("task_find_championship_opponent"):
+                selected.append("Tìm đối thủ Tranh Bá")
+            if self._config.get("task_championship_xuat_chien"):
+                selected.append("Xuất chiến Tranh Bá")
+            if self._config.get("task_championship_start_battle"):
+                selected.append("Bắt đầu trận Tranh Bá")
+            if self._config.get("task_championship_time_mode") or self._config.get("thoi_gian_tranh_ba"):
+                selected.append("Thời gian tối đa Tranh Bá")
+            if self._config.get("task_championship_end_battle"):
+                selected.append("Kết thúc trận Tranh Bá")
             if self._config.get("task_enter_strategy"):
                 selected.append("Vào màn hình Mưu Binh")
             if self._config.get("task_strategy_defense"):
@@ -243,9 +259,13 @@ class BotWorker(
                         if not self._simulate_battles("Giao tranh", count, flags, time_limit):
                             self.task_progress_changed.emit(task, "stopped", 0, count)
                             return
-                elif task == "Tranh bá":
+                elif task in ("Bắt đầu trận Tranh Bá", "Thời gian tối đa Tranh Bá"):
                     count = max(1, int(self._config.get("tranh_ba", 6)))
-                    if self._config.get("task_championship_time_mode"):
+                    time_mode = bool(
+                        self._config.get("task_championship_time_mode")
+                        or self._config.get("thoi_gian_tranh_ba")
+                    )
+                    if time_mode:
                         time_limit = int(self._config.get("task_championship_time_limit", 15))
                         flags = 4
                     elif self._config.get("task_championship_fast_one_flag"):
@@ -254,22 +274,48 @@ class BotWorker(
                     else:
                         time_limit = None
                         flags = 4
-                    self.log_message.emit(
-                        f"[Chạy thử] Tranh bá: mô phỏng {count} trận; "
-                        f"chế độ={'thời gian tối đa ' + str(time_limit) + ' giây' if time_limit is not None else str(flags) + ' cờ'}."
-                    )
-                    if not self._simulate_battles(task, count, flags, time_limit):
-                        self.task_progress_changed.emit(task, "stopped", 0, count)
-                        return
+                    if task == "Bắt đầu trận Tranh Bá":
+                        self.task_progress_changed.emit(task, "running", 1, count)
+                        self.log_message.emit(
+                            f"[Chạy thử] Mô phỏng thao tác bắt đầu trận Tranh Bá 1/{count}."
+                        )
+                    # Mô phỏng trận đúng một lần: ở dòng thời gian tối đa nếu được chọn,
+                    # nếu không thì ngay tại bước bắt đầu trận.
+                    if task == "Thời gian tối đa Tranh Bá" or not time_mode:
+                        self.log_message.emit(
+                            f"[Chạy thử] Tranh Bá: mô phỏng {count} trận; "
+                            f"chế độ={'thời gian tối đa ' + str(time_limit) + ' giây' if time_limit is not None else str(flags) + ' cờ'}."
+                        )
+                        if not self._simulate_battles("Tranh bá", count, flags, time_limit):
+                            self.task_progress_changed.emit(task, "stopped", 0, count)
+                            return
                 if task == "Bắt đầu trận Giao Tranh" and self._config.get("task_end_battle"):
-                    # Dòng bắt đầu trận giữ mũi tên cho đến khi tác vụ kết thúc
-                    # xác nhận mô phỏng đủ tất cả các trận.
+                    # Dòng bắt đầu trận giữ mũi tên đến khi mô phỏng kết thúc trận.
+                    pass
+                elif task == "Bắt đầu trận Tranh Bá" and (
+                    self._config.get("task_championship_end_battle")
+                    or self._config.get("task_championship_time_mode")
+                    or self._config.get("thoi_gian_tranh_ba")
+                ):
+                    # Dòng bắt đầu trận giữ trạng thái đang chạy và hiển thị [1/N]
+                    # đến khi bước kết thúc trận hoàn tất (nếu được chọn).
+                    if not self._config.get("task_championship_end_battle") and (
+                        self._config.get("task_championship_time_mode")
+                        or self._config.get("thoi_gian_tranh_ba")
+                    ):
+                        pass
+                elif task == "Thời gian tối đa Tranh Bá" and self._config.get("task_championship_end_battle"):
                     pass
                 else:
                     if task == "Kết thúc trận Giao Tranh" and self._config.get("task_start_battle"):
                         count = max(1, int(self._config.get("task_open_battle_count", 1)))
                         self.task_progress_changed.emit(
                             "Bắt đầu trận Giao Tranh", "done", count, count
+                        )
+                    if task == "Kết thúc trận Tranh Bá" and self._config.get("task_championship_start_battle"):
+                        count = max(1, int(self._config.get("tranh_ba", 6)))
+                        self.task_progress_changed.emit(
+                            "Bắt đầu trận Tranh Bá", "done", count, count
                         )
                     self.task_progress_changed.emit(task, "done", 1, 1)
                 self.progress_changed.emit(index, max(1, len(selected)), task)
