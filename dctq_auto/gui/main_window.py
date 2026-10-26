@@ -1265,13 +1265,13 @@ class MainWindow(QMainWindow):
         self.task_championship.toggled.connect(self.task_championship_knb.setEnabled)
         self.task_championship_knb.toggled.connect(
             lambda checked: self.task_championship_purchase_hint.setText(
-                "Hết lượt: tự động xác nhận mua bằng KNB."
+                "Khi hết lượt: Tự động xác nhận mua bằng KNB."
                 if checked
-                else "Hết lượt: tự động hủy mua, chờ 3 giây rồi đóng màn hình Tranh Bá."
+                else "Khi hết lượt: thoát Tranh Bá."
             )
         )
         self.task_championship_purchase_hint = QLabel(
-            "Hết lượt: tự động hủy mua, chờ 3 giây rồi đóng màn hình Tranh Bá."
+            "Khi hết lượt: thoát Tranh Bá."
         )
         self.task_championship_purchase_hint.setWordWrap(True)
         self.task_championship_purchase_hint.setStyleSheet("color: #777;")
