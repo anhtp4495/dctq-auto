@@ -1147,10 +1147,22 @@ class MainWindow(QMainWindow):
             self.device_list.setEnabled(True)
             self.device_combo.setEnabled(True)
 
+    def _clear_task_tab_checkboxes(self, page: QWidget) -> None:
+        """Deselect every checkbox in the Tác vụ tab and persist the change."""
+        for checkbox in page.findChildren(QCheckBox):
+            checkbox.setChecked(False)
+        self._save_settings()
+
     def _build_tasks_tab(self) -> QWidget:
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        clear_tasks_button = QPushButton("Bỏ chọn tất cả tác vụ")
+        clear_tasks_button.clicked.connect(
+            lambda: self._clear_task_tab_checkboxes(page)
+        )
+        layout.addWidget(clear_tasks_button)
 
         self.task_login = QCheckBox("Đăng nhập (nhập tài khoản khi bắt đầu)")
         self.task_daily_checkin = QCheckBox("Điểm danh")
