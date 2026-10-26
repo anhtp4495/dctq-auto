@@ -437,16 +437,26 @@ class UtilityTaskRunnerMixin:
                         for word in words if str(word.get("text", "")).strip()
                     ]
                     observed_text = " ".join(word_texts)
-                    normalized_text = self._normalize_screen_text(observed_text).replace(" ", "")
-                    similarity = SequenceMatcher(None, doan_target, normalized_text).ratio()
+                    # So sánh cả các cửa sổ từ liên tiếp: OCR thường tách
+                    # "doan chien" thành hai từ hoặc ghép thêm vài ký tự nhiễu.
+                    normalized_words = [
+                        self._normalize_screen_text(text).replace(" ", "")
+                        for text in word_texts
+                    ]
+                    best_score = 0.0
                     best_candidate = ""
-                    best_score = similarity
-                    for word_text in word_texts:
-                        candidate = self._normalize_screen_text(word_text).replace(" ", "")
-                        score = SequenceMatcher(None, doan_target, candidate).ratio()
-                        if score > best_score:
-                            best_score = score
-                            best_candidate = word_text
+                    matched_word_indices = None
+                    for window_size in range(1, min(5, len(words)) + 1):
+                        for begin in range(0, len(words) - window_size + 1):
+                            end_index = begin + window_size
+                            candidate = "".join(normalized_words[begin:end_index])
+                            score = SequenceMatcher(None, doan_target, candidate).ratio()
+                            if score > best_score:
+                                best_score = score
+                                best_candidate = " ".join(word_texts[begin:end_index])
+                                matched_word_indices = (begin, end_index)
+                    # Cho phép nhận diện cụm OCR có khoảng trắng hoặc nhiễu nhỏ,
+                    # nhưng vẫn yêu cầu điểm tương đồng vượt ngưỡng cấu hình.
                     self.log_message.emit(
                         f"Bước 3 OCR Đoàn Chiến: lần OCR {attempt + 1}/{max_swipes + 1}; "
                         f"RECT={doan_rect}; text nhận diện: {observed_text or '(trống)'}; "
@@ -454,28 +464,28 @@ class UtilityTaskRunnerMixin:
                     )
                     if best_score > similarity_threshold:
                         doan_found = True
-                        matched_word = None
-                        matched_score = -1.0
-                        for word in words:
-                            word_text = str(word.get("text", "")).strip()
-                            if not word_text:
-                                continue
-                            candidate = self._normalize_screen_text(word_text).replace(" ", "")
-                            score = SequenceMatcher(None, doan_target, candidate).ratio()
-                            if score > matched_score:
-                                matched_score = score
-                                matched_word = word
-
-                        if matched_word is not None:
-                            left = int(matched_word.get("left", matched_word.get("x", 0)))
-                            top = int(matched_word.get("top", matched_word.get("y", 0)))
-                            width = int(matched_word.get("width", matched_word.get("w", 0)))
-                            height = int(matched_word.get("height", matched_word.get("h", 0)))
+                        if matched_word_indices is not None:
+                            begin, end_index = matched_word_indices
+                            matched_words = words[begin:end_index]
+                            left = min(int(word.get("left", word.get("x", 0))) for word in matched_words)
+                            top = min(int(word.get("top", word.get("y", 0))) for word in matched_words)
+                            right = max(
+                                int(word.get("left", word.get("x", 0))) +
+                                int(word.get("width", word.get("w", 0))
+                                ) for word in matched_words
+                            )
+                            bottom = max(
+                                int(word.get("top", word.get("y", 0))) +
+                                int(word.get("height", word.get("h", 0))
+                                ) for word in matched_words
+                            )
+                            width = right - left
+                            height = bottom - top
                             center_x = left + width // 2
                             center_y = top + height // 2
                             self.log_message.emit(
                                 f"Bước 3: tìm thấy '{doan_target}' — OCR text="
-                                f"'{matched_word.get('text', '')}', độ tương đồng={matched_score:.1%}; "
+                                f"'{best_candidate}', độ tương đồng={best_score:.1%}; "
                                 f"tọa độ vùng chữ ({left}; {top}; {width}; {height}), "
                                 f"tâm ({center_x}; {center_y})."
                             )
