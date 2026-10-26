@@ -219,6 +219,23 @@ class BotWorker(
                 selected.append("Vượt Ải")
             if self._config.get("task_receive_strategy_reward"):
                 selected.append("Nhận thưởng Mưu Binh")
+            reward_tasks = (
+                ("reward_weekly_doan_chien", "Nhận thưởng - Đoàn Chiến"),
+                ("reward_weekly_quoc_chien", "Nhận thưởng - Quốc Chiến"),
+                ("reward_weekly_lanh_dia_chien", "Nhận thưởng - Lãnh Địa Chiến"),
+                ("reward_shop_than_binh_nguyen_linh_ngoc", "Shop - Thần Binh - Đổi Nguyên Linh Ngọc"),
+                ("reward_shop_danh_vong_que_lanh", "Shop - Danh Vọng - Đổi Quẻ Lành"),
+                ("reward_daily_tam_quoc_lenh", "Nhận thưởng - Tam Quốc Lệnh"),
+                ("reward_shop_uu_dai_free", "Shop - Ưu đãi - Nhận miễn phí"),
+                ("reward_shop_tuong_hon_kinh_thu", "Shop - Tướng hồn - Mua Kinh Thư"),
+                ("reward_gift_friend_hearts", "Tặng tim bạn bè"),
+                ("reward_gift_affinity_hearts", "Tặng tim hảo cảm"),
+                ("reward_share_profile", "Chia sẻ trang cá nhân"),
+                ("reward_daily_missions", "Nhận thưởng nhiệm vụ hằng ngày"),
+            )
+            for key, label in reward_tasks:
+                if self._config.get(key):
+                    selected.append(label)
             if self._config.get("task_close_strategy"):
                 selected.append("Thoát màn hình Mưu Binh")
             if self._config.get("task_close_guild"):
