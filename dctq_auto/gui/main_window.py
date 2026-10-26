@@ -1239,7 +1239,6 @@ class MainWindow(QMainWindow):
         reward_note = QLabel("Giao diện và Mock-ADB đã có; logic nhận thưởng chưa triển khai.")
         reward_note.setWordWrap(True)
         reward_layout.addWidget(reward_note)
-        layout.addWidget(reward_group)
 
         self.task_login = QCheckBox("Đăng nhập (nhập tài khoản khi bắt đầu)")
         self.task_daily_checkin = QCheckBox("Điểm danh")
@@ -1508,7 +1507,7 @@ class MainWindow(QMainWindow):
         battle_screen_layout.addWidget(self.task_battle_mode_description)
         battle_screen_layout.addWidget(self.task_end_battle)
         # Tác vụ phụ, không thuộc chuỗi 7 bước chính.
-        daily_layout.addWidget(battle_screen_group)
+
 
         championship_group = QGroupBox()
         championship_layout = QVBoxLayout(championship_group)
@@ -1543,10 +1542,13 @@ class MainWindow(QMainWindow):
         championship_layout.addWidget(championship_mode_row)
         championship_layout.addWidget(self.task_championship_mode_description)
         championship_layout.addWidget(self.task_championship_end_battle)
-        daily_layout.addWidget(championship_group)
+
 
 
         layout.addWidget(daily_group)
+        layout.addWidget(battle_screen_group)
+        layout.addWidget(championship_group)
+        layout.addWidget(reward_group)
 
 
         note = QLabel(
