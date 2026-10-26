@@ -279,11 +279,9 @@ class UtilityTaskRunnerMixin:
 
                 regions_path = Path(__file__).resolve().parent / "common" / "regions.json"
                 regions_data = json.loads(regions_path.read_text(encoding="utf-8"))
-                elements = {
-                    item["name"]: item
-                    for item in regions_data["regions"]["giao_tranh"].get("elements", [])
-                }
-                menu = elements["menu_chien_tranh"]
+                # menu_chien_tranh thuộc cấu hình riêng của màn hình Chiến Tranh,
+                # không nằm trong elements của Mưu Binh hoặc Giao Tranh.
+                menu = regions_data["regions"]["chien_tranh"]["menu_chien_tranh"]
                 bounds = menu["bounds"]
                 rect = (
                     int(bounds["left"]), int(bounds["top"]),
