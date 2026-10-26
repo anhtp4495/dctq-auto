@@ -1,4 +1,4 @@
-"""Các thao tác và khai báo task đăng nhập dùng chung."""
+""""Các thao tác và khai báo task đăng nhập dùng chung."""
 
 import time
 
@@ -79,7 +79,10 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
                 )
             break
 
-        if "cap nhat thong tin ca nhan" in normalized_result:
+        if (
+            "cap nhat thong tin ca nhan" in normalized_result
+            or "update personal information" in normalized_result
+        ):
             worker.log_message.emit(
                 f"[{account.username}] Phát hiện hộp thoại cập nhật thông tin cá nhân; đang đóng hộp thoại."
             )
