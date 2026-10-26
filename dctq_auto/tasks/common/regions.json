@@ -1769,7 +1769,32 @@
         1920,
         1080
       ],
-      "elements": [],
+      "elements": [
+        {
+          "name": "chien_tranh_loi_vao_1",
+          "text": "Điểm kết thúc swipe để tìm mục Đoàn Chiến",
+          "center": {
+            "x_px": 500,
+            "y_px": 531
+          },
+          "center_ratio": {
+            "x": 0.260417,
+            "y": 0.491667
+          }
+        },
+        {
+          "name": "chien_tranh_loi_vao_2",
+          "text": "Điểm bắt đầu swipe để tìm mục Đoàn Chiến",
+          "center": {
+            "x_px": 1389,
+            "y_px": 552
+          },
+          "center_ratio": {
+            "x": 0.723437,
+            "y": 0.511111
+          }
+        }
+      ],
       "menu_chien_tranh": {
         "name": "menu_chien_tranh",
         "text": "RECT vùng nhận diện menu Chiến Tranh",
@@ -1803,6 +1828,32 @@
         "text_color": "#FFFFFF",
         "background_color": "#000000",
         "color_tolerance": 38
+      },
+      "doan_chien": {
+        "name": "doan_chien",
+        "description": "OCR nhận diện mục Đoàn Chiến sau khi vào màn hình Chiến Tranh",
+        "ocr_rect": {
+          "left": 228,
+          "top": 716,
+          "right": 1674,
+          "bottom": 831
+        },
+        "target_text": "doan_chien",
+        "similarity_threshold": 0.75,
+        "steps": [
+          "gray",
+          "color_text"
+        ],
+        "psm": [
+          11
+        ],
+        "text_color": "#D8AF67",
+        "background_color": "#74472B",
+        "color_tolerance": 100,
+        "swipe_start": "chien_tranh_loi_vao_2",
+        "swipe_end": "chien_tranh_loi_vao_1",
+        "max_swipes": 3,
+        "swipe_duration_ms": 500
       }
     }
   }
