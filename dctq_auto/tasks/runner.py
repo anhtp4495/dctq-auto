@@ -83,7 +83,7 @@ class UtilityTaskRunnerMixin:
             "nhan_le_bao_quoc_van", "diem_danh", "task_enter_guild",
             "bao_danh_quan_doan", "task_receive_lucky_bag", "task_guild_fortune",
             "task_detect_strategy_status", "task_strategy_vuot_ai",
-            "task_receive_strategy_reward",
+            "task_receive_strategy_reward", "reward_weekly_doan_chien",
             "task_close_guild", "task_switch_account", "task_click_coordinates",
             "task_open_battle", "thuc_hien_tranh_ba", "task_find_battle_opponent", "task_find_championship_opponent", "task_start_battle", "task_championship_start_battle", "task_championship_xuat_chien", "task_end_battle", "xuat_chien", "task_use_bazhen",
             "thoi_gian_tranh_ba", "task_championship_end_battle",
@@ -267,6 +267,63 @@ class UtilityTaskRunnerMixin:
                 self.progress_changed.emit(
                     completed, max(1, total), f"Lỗi: {status_label}"
                 )
+
+        if self._config.get("reward_weekly_doan_chien"):
+            label = "Nhận thưởng - Đoàn Chiến"
+            self.task_progress_changed.emit(label, "running", 0, 1)
+            try:
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng trước khi nhận thưởng Đoàn Chiến.")
+                    return
+                import json
+
+                regions_path = Path(__file__).resolve().parent / "common" / "regions.json"
+                regions_data = json.loads(regions_path.read_text(encoding="utf-8"))
+                elements = {
+                    item["name"]: item
+                    for item in regions_data["regions"]["giao_tranh"].get("elements", [])
+                }
+                menu = elements["menu_chien_tranh"]
+                bounds = menu["bounds"]
+                rect = (
+                    int(bounds["left"]), int(bounds["top"]),
+                    int(bounds["right"]), int(bounds["bottom"]),
+                )
+                # Bước 1: chỉ click menu khi OCR xác nhận có chữ "chien_tranh".
+                match = self._tap_ocr_phrase_in_rect(
+                    device,
+                    ("chien_tranh",),
+                    rect,
+                    steps=("color_text",),
+                    psm=(11,),
+                    tap=False,
+                    background_color="#000000",
+                    text_color="#FFFFFF",
+                    color_tolerance=30.0,
+                )
+                if match is None:
+                    raise RuntimeError(
+                        f"OCR không tìm thấy 'chien_tranh' trong RECT {rect}; chưa click."
+                    )
+                center = menu["center"]
+                x, y = int(center["x_px"]), int(center["y_px"])
+                if x <= 1 or y <= 1:
+                    raise RuntimeError(
+                        "Tọa độ menu_chien_tranh chưa được cấu hình trong regions.json."
+                    )
+                device.shell(f"input tap {x} {y}")
+                time.sleep(0.5)
+                self.log_message.emit(
+                    f"Đã OCR xác nhận 'chien_tranh' trong RECT {rect}; click menu_chien_tranh tại ({x}, {y})."
+                )
+                completed += 1
+                self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(completed, max(1, total), "Đã mở menu Chiến Tranh")
+            except Exception as exc:
+                self.log_message.emit(f"{label}: LỖI — {exc}")
+                completed += 1
+                self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.progress_changed.emit(completed, max(1, total), f"Lỗi: {label}")
 
         if self._config.get("task_open_battle"):
             label = "Mở màn hình Giao Tranh"
