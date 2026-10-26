@@ -437,16 +437,24 @@ class UtilityTaskRunnerMixin:
                         for word in words if str(word.get("text", "")).strip()
                     ]
                     observed_text = " ".join(word_texts)
-                    # So sánh cả các cửa sổ từ liên tiếp: OCR thường tách
-                    # "doan chien" thành hai từ hoặc ghép thêm vài ký tự nhiễu.
+                    # Ưu tiên cụm OCR khớp trực tiếp trước khi thử so sánh
+                    # các cửa sổ từ liền kề.
+                    best_score = 0.0
+                    best_candidate = ""
+                    matched_word_indices = None
+                    for index, word_text in enumerate(word_texts):
+                        candidate = self._normalize_screen_text(word_text).replace(" ", "")
+                        score = SequenceMatcher(None, doan_target, candidate).ratio()
+                        if score > best_score:
+                            best_score = score
+                            best_candidate = word_text
+                            matched_word_indices = (index, index + 1)
+
                     normalized_words = [
                         self._normalize_screen_text(text).replace(" ", "")
                         for text in word_texts
                     ]
-                    best_score = 0.0
-                    best_candidate = ""
-                    matched_word_indices = None
-                    for window_size in range(1, min(5, len(words)) + 1):
+                    for window_size in range(2, min(5, len(words)) + 1):
                         for begin in range(0, len(words) - window_size + 1):
                             end_index = begin + window_size
                             candidate = "".join(normalized_words[begin:end_index])
@@ -455,8 +463,6 @@ class UtilityTaskRunnerMixin:
                                 best_score = score
                                 best_candidate = " ".join(word_texts[begin:end_index])
                                 matched_word_indices = (begin, end_index)
-                    # Cho phép nhận diện cụm OCR có khoảng trắng hoặc nhiễu nhỏ,
-                    # nhưng vẫn yêu cầu điểm tương đồng vượt ngưỡng cấu hình.
                     self.log_message.emit(
                         f"Bước 3 OCR Đoàn Chiến: lần OCR {attempt + 1}/{max_swipes + 1}; "
                         f"RECT={doan_rect}; text nhận diện: {observed_text or '(trống)'}; "
