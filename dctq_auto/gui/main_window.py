@@ -1261,21 +1261,20 @@ class MainWindow(QMainWindow):
             self.task_championship_count.setEnabled
         )
         self.task_championship_knb = QCheckBox("Mua lượt bằng KNB")
-        self.task_championship_free = QCheckBox("Sử dụng lượt miễn phí")
-        for purchase_option in (
-            self.task_championship_knb,
-            self.task_championship_free,
-        ):
-            purchase_option.setEnabled(False)
-            self.task_championship.toggled.connect(purchase_option.setEnabled)
+        self.task_championship_knb.setEnabled(False)
+        self.task_championship.toggled.connect(self.task_championship_knb.setEnabled)
         self.task_championship_knb.toggled.connect(
-            lambda checked: self.task_championship_free.setChecked(False)
-            if checked else None
+            lambda checked: self.task_championship_purchase_hint.setText(
+                "Hết lượt: tự động xác nhận mua bằng KNB."
+                if checked
+                else "Hết lượt: tự động hủy mua, chờ 3 giây rồi đóng màn hình Tranh Bá."
+            )
         )
-        self.task_championship_free.toggled.connect(
-            lambda checked: self.task_championship_knb.setChecked(False)
-            if checked else None
+        self.task_championship_purchase_hint = QLabel(
+            "Hết lượt: tự động hủy mua, chờ 3 giây rồi đóng màn hình Tranh Bá."
         )
+        self.task_championship_purchase_hint.setWordWrap(True)
+        self.task_championship_purchase_hint.setStyleSheet("color: #777;")
         self.task_find_championship_opponent = QCheckBox("Tìm đối thủ Tranh Bá")
         self.task_championship_xuat_chien = QCheckBox("Xuất chiến")
         self.task_championship_start_battle = QCheckBox("Bắt đầu trận Tranh Bá")
@@ -1441,9 +1440,9 @@ class MainWindow(QMainWindow):
 
         championship_purchase_row = QHBoxLayout()
         championship_purchase_row.addWidget(self.task_championship_knb)
-        championship_purchase_row.addWidget(self.task_championship_free)
         championship_purchase_row.addStretch(1)
         championship_layout.addLayout(championship_purchase_row)
+        championship_layout.addWidget(self.task_championship_purchase_hint)
         championship_layout.addWidget(self.task_find_championship_opponent)
         championship_layout.addWidget(self.task_championship_xuat_chien)
         championship_layout.addWidget(self.task_championship_start_battle)
@@ -1571,10 +1570,6 @@ class MainWindow(QMainWindow):
                 "tranh_ba": self.task_championship_count.value(),
                 "mua_luot_knb": (
                     self.task_championship_knb.isChecked()
-                    and self.task_championship.isChecked()
-                ),
-                "tranh_ba_luot_mien_phi": (
-                    self.task_championship_free.isChecked()
                     and self.task_championship.isChecked()
                 ),
                 "task_find_championship_opponent": (
