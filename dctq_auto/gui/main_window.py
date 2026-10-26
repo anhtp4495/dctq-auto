@@ -1193,6 +1193,20 @@ class MainWindow(QMainWindow):
         coordinate_layout.addStretch(1)
         layout.addWidget(coordinate_group)
 
+        # Nhận thưởng: GUI/config và Mock-ADB trước; logic gameplay sẽ triển khai sau.
+        self.reward_weekly_doan_chien = QCheckBox("Nhận thưởng - Đoàn Chiến")
+        self.reward_weekly_quoc_chien = QCheckBox("Nhận thưởng - Quốc Chiến")
+        self.reward_weekly_lanh_dia_chien = QCheckBox("Nhận thưởng - Lãnh Địa Chiến")
+        self.reward_shop_than_binh_nguyen_linh_ngoc = QCheckBox("Shop - Thần Binh - Đổi Nguyên Linh Ngọc")
+        self.reward_shop_danh_vong_que_lanh = QCheckBox("Shop - Danh Vọng - Đổi Quẻ Lành")
+        self.reward_daily_tam_quoc_lenh = QCheckBox("Nhận thưởng - Tam Quốc Lệnh")
+        self.reward_shop_uu_dai_free = QCheckBox("Shop - Ưu đãi - Nhận miễn phí")
+        self.reward_shop_tuong_hon_kinh_thu = QCheckBox("Shop - Tướng hồn - Mua Kinh Thư")
+        self.reward_gift_friend_hearts = QCheckBox("Tặng tim bạn bè")
+        self.reward_gift_affinity_hearts = QCheckBox("Tặng tim hảo cảm")
+        self.reward_share_profile = QCheckBox("Chia sẻ trang cá nhân")
+        self.reward_daily_missions = QCheckBox("Nhận thưởng nhiệm vụ hằng ngày")
+
 
         reward_group = QGroupBox("Nhận thưởng")
         reward_layout = QVBoxLayout(reward_group)
@@ -1243,19 +1257,7 @@ class MainWindow(QMainWindow):
         self.task_strategy_vuot_ai = QCheckBox("Vượt Ải")
         self.task_receive_strategy_reward = QCheckBox("Nhận thưởng Mưu Binh")
         self.task_close_strategy = QCheckBox("Thoát màn hình Mưu Binh")
-        # Nhận thưởng: GUI/config và Mock-ADB trước; logic gameplay sẽ triển khai sau.
-        self.reward_weekly_doan_chien = QCheckBox("Nhận thưởng - Đoàn Chiến")
-        self.reward_weekly_quoc_chien = QCheckBox("Nhận thưởng - Quốc Chiến")
-        self.reward_weekly_lanh_dia_chien = QCheckBox("Nhận thưởng - Lãnh Địa Chiến")
-        self.reward_shop_than_binh_nguyen_linh_ngoc = QCheckBox("Shop - Thần Binh - Đổi Nguyên Linh Ngọc")
-        self.reward_shop_danh_vong_que_lanh = QCheckBox("Shop - Danh Vọng - Đổi Quẻ Lành")
-        self.reward_daily_tam_quoc_lenh = QCheckBox("Nhận thưởng - Tam Quốc Lệnh")
-        self.reward_shop_uu_dai_free = QCheckBox("Shop - Ưu đãi - Nhận miễn phí")
-        self.reward_shop_tuong_hon_kinh_thu = QCheckBox("Shop - Tướng hồn - Mua Kinh Thư")
-        self.reward_gift_friend_hearts = QCheckBox("Tặng tim bạn bè")
-        self.reward_gift_affinity_hearts = QCheckBox("Tặng tim hảo cảm")
-        self.reward_share_profile = QCheckBox("Chia sẻ trang cá nhân")
-        self.reward_daily_missions = QCheckBox("Nhận thưởng nhiệm vụ hằng ngày")
+
         self.task_knb_contribution = QCheckBox("Đóng góp KNB")
         self.task_knb_contribution_count = QSpinBox()
         self.task_knb_contribution_count.setRange(1, 10)
