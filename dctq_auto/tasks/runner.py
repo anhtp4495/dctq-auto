@@ -287,21 +287,43 @@ class UtilityTaskRunnerMixin:
                     int(bounds["left"]), int(bounds["top"]),
                     int(bounds["right"]), int(bounds["bottom"]),
                 )
-                # Bước 1: chỉ click menu khi OCR xác nhận có chữ "chien_tranh".
+                # Bước 1: OCR dùng toàn bộ tham số cấu hình trong regions.json.
+                ocr_steps = tuple(menu.get("steps", ["gray", "white_text"]))
+                ocr_psm = tuple(int(value) for value in menu.get("psm", [11]))
+                text_color = menu.get("text_color", "#FFFFFF")
+                background_color = menu.get("background_color", "#202020")
+                color_tolerance = float(menu.get("color_tolerance", 38))
+                detected_words = self._ocr_words_in_rect(
+                    device,
+                    rect,
+                    steps=ocr_steps,
+                    psm=ocr_psm,
+                    text_color=text_color,
+                    background_color=background_color,
+                    color_tolerance=color_tolerance,
+                )
+                detected_text = " | ".join(
+                    f"{word.get('text', '')} ({word.get('confidence', 0):.1f}%)"
+                    for word in detected_words
+                ) or "<không nhận diện được từ nào>"
+                self.log_message.emit(
+                    f"Bước 1 OCR menu_chien_tranh: RECT={rect}; text nhận diện: {detected_text}"
+                )
                 match = self._tap_ocr_phrase_in_rect(
                     device,
                     ("chien_tranh",),
                     rect,
-                    steps=("color_text",),
-                    psm=(11,),
+                    steps=ocr_steps,
+                    psm=ocr_psm,
                     tap=False,
-                    background_color="#000000",
-                    text_color="#FFFFFF",
-                    color_tolerance=30.0,
+                    background_color=background_color,
+                    text_color=text_color,
+                    color_tolerance=color_tolerance,
                 )
                 if match is None:
                     raise RuntimeError(
-                        f"OCR không tìm thấy 'chien_tranh' trong RECT {rect}; chưa click."
+                        f"OCR không tìm thấy 'chien_tranh' trong RECT {rect}; "
+                        f"text nhận diện: {detected_text}; chưa click."
                     )
                 center = menu["center"]
                 x, y = int(center["x_px"]), int(center["y_px"])
