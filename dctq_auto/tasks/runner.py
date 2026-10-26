@@ -316,6 +316,56 @@ class UtilityTaskRunnerMixin:
                 self.log_message.emit(
                     f"Đã OCR xác nhận 'chien_tranh' trong RECT {rect}; click menu_chien_tranh tại ({x}, {y})."
                 )
+
+                # Bước 2: đợi màn hình Chiến Tranh tải; thử OCR tối đa 3 lần,
+                # mỗi lần cách nhau 5 giây.
+                screen_rect_data = regions_data["regions"]["giao_tranh"]["ocr_man_hinh_chien_tranh"]
+                screen_rect = (
+                    int(screen_rect_data["left"]), int(screen_rect_data["top"]),
+                    int(screen_rect_data["right"]), int(screen_rect_data["bottom"]),
+                )
+                screen_found = False
+                for attempt in range(1, 4):
+                    if not self._wait_if_paused():
+                        self.log_message.emit("Đã dừng khi chờ màn hình Chiến Tranh.")
+                        return
+                    if attempt > 1:
+                        self.log_message.emit(
+                            f"Chưa thấy 'chien_tranh' trên màn hình Chiến Tranh; "
+                            f"chờ 5 giây trước lần thử {attempt}/3."
+                        )
+                        for _ in range(50):
+                            if not self._wait_if_paused():
+                                self.log_message.emit("Đã dừng khi chờ màn hình Chiến Tranh.")
+                                return
+                            time.sleep(0.1)
+                    match = self._tap_ocr_phrase_in_rect(
+                        device,
+                        ("chien_tranh",),
+                        screen_rect,
+                        steps=("color_text",),
+                        psm=(11,),
+                        tap=False,
+                        background_color="#000000",
+                        text_color="#FFFFFF",
+                        color_tolerance=30.0,
+                    )
+                    if match is not None:
+                        screen_found = True
+                        self.log_message.emit(
+                            f"Bước 2: OCR thấy 'chien_tranh' trong RECT {screen_rect} "
+                            f"(lần {attempt}/3)."
+                        )
+                        break
+                    self.log_message.emit(
+                        f"Bước 2: chưa nhận diện được 'chien_tranh' "
+                        f"(lần {attempt}/3)."
+                    )
+                if not screen_found:
+                    raise RuntimeError(
+                        f"Không tìm thấy 'chien_tranh' trong RECT {screen_rect} sau 3 lần thử."
+                    )
+
                 completed += 1
                 self.task_progress_changed.emit(label, "done", 1, 1)
                 self.progress_changed.emit(completed, max(1, total), "Đã mở menu Chiến Tranh")
