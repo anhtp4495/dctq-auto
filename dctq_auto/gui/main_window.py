@@ -1268,7 +1268,6 @@ class MainWindow(QMainWindow):
             "Khi hết lượt: Thoát Tranh Bá."
         )
         self.task_championship_purchase_hint.setWordWrap(True)
-        # self.task_championship_purchase_hint.setStyleSheet("color: #777;")
         self.task_find_championship_opponent = QCheckBox("Tìm đối thủ Tranh Bá")
         self.task_championship_xuat_chien = QCheckBox("Xuất chiến")
         self.task_championship_start_battle = QCheckBox("Bắt đầu trận Tranh Bá")
