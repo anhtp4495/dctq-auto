@@ -1168,6 +1168,65 @@ class MainWindow(QMainWindow):
         button_row.addStretch(1)
         layout.addLayout(button_row)
 
+        coordinate_group = QGroupBox("Click theo tọa độ")
+        coordinate_layout = QHBoxLayout(coordinate_group)
+        self.task_click_coordinates = QCheckBox("Click")
+        self.task_click_x = QLineEdit()
+        self.task_click_x.setPlaceholderText("X")
+        self.task_click_x.setValidator(QIntValidator(0, 10000, self.task_click_x))
+        self.task_click_x.setMaximumWidth(100)
+        self.task_click_x.setText("0")
+        self.task_click_y = QLineEdit()
+        self.task_click_y.setPlaceholderText("Y")
+        self.task_click_y.setValidator(QIntValidator(0, 10000, self.task_click_y))
+        self.task_click_y.setMaximumWidth(100)
+        self.task_click_y.setText("0")
+        self.task_click_x.setEnabled(False)
+        self.task_click_y.setEnabled(False)
+        self.task_click_coordinates.toggled.connect(self.task_click_x.setEnabled)
+        self.task_click_coordinates.toggled.connect(self.task_click_y.setEnabled)
+        coordinate_layout.addWidget(self.task_click_coordinates)
+        coordinate_layout.addWidget(QLabel("X:"))
+        coordinate_layout.addWidget(self.task_click_x)
+        coordinate_layout.addWidget(QLabel("Y:"))
+        coordinate_layout.addWidget(self.task_click_y)
+        coordinate_layout.addStretch(1)
+        layout.addWidget(coordinate_group)
+
+
+        reward_group = QGroupBox("Nhận thưởng")
+        reward_layout = QVBoxLayout(reward_group)
+        reward_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        reward_layout.setSpacing(6)
+        weekly_reward_group = QGroupBox("Nhận thưởng hằng tuần")
+        weekly_reward_layout = QVBoxLayout(weekly_reward_group)
+        for reward_task in (
+            self.reward_weekly_doan_chien,
+            self.reward_weekly_quoc_chien,
+            self.reward_weekly_lanh_dia_chien,
+            self.reward_shop_than_binh_nguyen_linh_ngoc,
+            self.reward_shop_danh_vong_que_lanh,
+        ):
+            weekly_reward_layout.addWidget(reward_task)
+        reward_layout.addWidget(weekly_reward_group)
+        daily_reward_group = QGroupBox("Nhận thưởng hằng ngày")
+        daily_reward_layout = QVBoxLayout(daily_reward_group)
+        for reward_task in (
+            self.reward_daily_tam_quoc_lenh,
+            self.reward_shop_uu_dai_free,
+            self.reward_shop_tuong_hon_kinh_thu,
+            self.reward_gift_friend_hearts,
+            self.reward_gift_affinity_hearts,
+            self.reward_share_profile,
+            self.reward_daily_missions,
+        ):
+            daily_reward_layout.addWidget(reward_task)
+        reward_layout.addWidget(daily_reward_group)
+        reward_note = QLabel("Giao diện và Mock-ADB đã có; logic nhận thưởng chưa triển khai.")
+        reward_note.setWordWrap(True)
+        reward_layout.addWidget(reward_note)
+        daily_layout.addWidget(reward_group)
+
         self.task_login = QCheckBox("Đăng nhập (nhập tài khoản khi bắt đầu)")
         self.task_daily_checkin = QCheckBox("Điểm danh")
         self.task_open_activity = QCheckBox("Mở màn hình Hoạt động")
@@ -1486,66 +1545,6 @@ class MainWindow(QMainWindow):
 
 
         layout.addWidget(daily_group)
-
-        coordinate_group = QGroupBox("Click theo tọa độ")
-        coordinate_layout = QHBoxLayout(coordinate_group)
-        self.task_click_coordinates = QCheckBox("Click")
-        self.task_click_x = QLineEdit()
-        self.task_click_x.setPlaceholderText("X")
-        self.task_click_x.setValidator(QIntValidator(0, 10000, self.task_click_x))
-        self.task_click_x.setMaximumWidth(100)
-        self.task_click_x.setText("0")
-        self.task_click_y = QLineEdit()
-        self.task_click_y.setPlaceholderText("Y")
-        self.task_click_y.setValidator(QIntValidator(0, 10000, self.task_click_y))
-        self.task_click_y.setMaximumWidth(100)
-        self.task_click_y.setText("0")
-        self.task_click_x.setEnabled(False)
-        self.task_click_y.setEnabled(False)
-        self.task_click_coordinates.toggled.connect(self.task_click_x.setEnabled)
-        self.task_click_coordinates.toggled.connect(self.task_click_y.setEnabled)
-        coordinate_layout.addWidget(self.task_click_coordinates)
-        coordinate_layout.addWidget(QLabel("X:"))
-        coordinate_layout.addWidget(self.task_click_x)
-        coordinate_layout.addWidget(QLabel("Y:"))
-        coordinate_layout.addWidget(self.task_click_y)
-        coordinate_layout.addStretch(1)
-        layout.addWidget(coordinate_group)
-
-
-        reward_group = QGroupBox("Nhận thưởng")
-        reward_layout = QVBoxLayout(reward_group)
-        reward_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        reward_layout.setSpacing(6)
-        weekly_reward_group = QGroupBox("Nhận thưởng hằng tuần")
-        weekly_reward_layout = QVBoxLayout(weekly_reward_group)
-        for reward_task in (
-            self.reward_weekly_doan_chien,
-            self.reward_weekly_quoc_chien,
-            self.reward_weekly_lanh_dia_chien,
-            self.reward_shop_than_binh_nguyen_linh_ngoc,
-            self.reward_shop_danh_vong_que_lanh,
-        ):
-            weekly_reward_layout.addWidget(reward_task)
-        reward_layout.addWidget(weekly_reward_group)
-        daily_reward_group = QGroupBox("Nhận thưởng hằng ngày")
-        daily_reward_layout = QVBoxLayout(daily_reward_group)
-        for reward_task in (
-            self.reward_daily_tam_quoc_lenh,
-            self.reward_shop_uu_dai_free,
-            self.reward_shop_tuong_hon_kinh_thu,
-            self.reward_gift_friend_hearts,
-            self.reward_gift_affinity_hearts,
-            self.reward_share_profile,
-            self.reward_daily_missions,
-        ):
-            daily_reward_layout.addWidget(reward_task)
-        reward_layout.addWidget(daily_reward_group)
-        reward_note = QLabel("Giao diện và Mock-ADB đã có; logic nhận thưởng chưa triển khai.")
-        reward_note.setWordWrap(True)
-        reward_layout.addWidget(reward_note)
-        daily_layout.addWidget(reward_group)
-
 
 
         note = QLabel(
