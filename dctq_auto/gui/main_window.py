@@ -1225,7 +1225,7 @@ class MainWindow(QMainWindow):
         reward_note = QLabel("Giao diện và Mock-ADB đã có; logic nhận thưởng chưa triển khai.")
         reward_note.setWordWrap(True)
         reward_layout.addWidget(reward_note)
-        daily_layout.addWidget(reward_group)
+        layout.addWidget(reward_group)
 
         self.task_login = QCheckBox("Đăng nhập (nhập tài khoản khi bắt đầu)")
         self.task_daily_checkin = QCheckBox("Điểm danh")
