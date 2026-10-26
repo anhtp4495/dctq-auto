@@ -1168,6 +1168,19 @@ class MainWindow(QMainWindow):
         self.task_strategy_vuot_ai = QCheckBox("Vượt Ải")
         self.task_receive_strategy_reward = QCheckBox("Nhận thưởng Mưu Binh")
         self.task_close_strategy = QCheckBox("Thoát màn hình Mưu Binh")
+        # Nhận thưởng: GUI/config và Mock-ADB trước; logic gameplay sẽ triển khai sau.
+        self.reward_weekly_doan_chien = QCheckBox("Nhận thưởng - Đoàn Chiến")
+        self.reward_weekly_quoc_chien = QCheckBox("Nhận thưởng - Quốc Chiến")
+        self.reward_weekly_lanh_dia_chien = QCheckBox("Nhận thưởng - Lãnh Địa Chiến")
+        self.reward_shop_than_binh_nguyen_linh_ngoc = QCheckBox("Shop - Thần Binh - Đổi Nguyên Linh Ngọc")
+        self.reward_shop_danh_vong_que_lanh = QCheckBox("Shop - Danh Vọng - Đổi Quẻ Lành")
+        self.reward_daily_tam_quoc_lenh = QCheckBox("Nhận thưởng - Tam Quốc Lệnh")
+        self.reward_shop_uu_dai_free = QCheckBox("Shop - Ưu đãi - Nhận miễn phí")
+        self.reward_shop_tuong_hon_kinh_thu = QCheckBox("Shop - Tướng hồn - Mua Kinh Thư")
+        self.reward_gift_friend_hearts = QCheckBox("Tặng tim bạn bè")
+        self.reward_gift_affinity_hearts = QCheckBox("Tặng tim hảo cảm")
+        self.reward_share_profile = QCheckBox("Chia sẻ trang cá nhân")
+        self.reward_daily_missions = QCheckBox("Nhận thưởng nhiệm vụ hằng ngày")
         self.task_knb_contribution = QCheckBox("Đóng góp KNB")
         self.task_knb_contribution_count = QSpinBox()
         self.task_knb_contribution_count.setRange(1, 10)
@@ -1368,6 +1381,39 @@ class MainWindow(QMainWindow):
             strategy_tasks_layout.addWidget(task_checkbox)
         daily_layout.addWidget(strategy_tasks_group)
 
+        reward_group = QGroupBox("Nhận thưởng")
+        reward_layout = QVBoxLayout(reward_group)
+        reward_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        reward_layout.setSpacing(6)
+        weekly_reward_group = QGroupBox("Nhận thưởng hằng tuần")
+        weekly_reward_layout = QVBoxLayout(weekly_reward_group)
+        for reward_task in (
+            self.reward_weekly_doan_chien,
+            self.reward_weekly_quoc_chien,
+            self.reward_weekly_lanh_dia_chien,
+            self.reward_shop_than_binh_nguyen_linh_ngoc,
+            self.reward_shop_danh_vong_que_lanh,
+        ):
+            weekly_reward_layout.addWidget(reward_task)
+        reward_layout.addWidget(weekly_reward_group)
+        daily_reward_group = QGroupBox("Nhận thưởng hằng ngày")
+        daily_reward_layout = QVBoxLayout(daily_reward_group)
+        for reward_task in (
+            self.reward_daily_tam_quoc_lenh,
+            self.reward_shop_uu_dai_free,
+            self.reward_shop_tuong_hon_kinh_thu,
+            self.reward_gift_friend_hearts,
+            self.reward_gift_affinity_hearts,
+            self.reward_share_profile,
+            self.reward_daily_missions,
+        ):
+            daily_reward_layout.addWidget(reward_task)
+        reward_layout.addWidget(daily_reward_group)
+        reward_note = QLabel("Giao diện và Mock-ADB đã có; logic nhận thưởng chưa triển khai.")
+        reward_note.setWordWrap(True)
+        reward_layout.addWidget(reward_note)
+        daily_layout.addWidget(reward_group)
+
         knb_contribution_row = QHBoxLayout()
         knb_contribution_row.addWidget(self.task_knb_contribution)
         knb_contribution_row.addWidget(QLabel("Số lần:"))
@@ -1524,6 +1570,18 @@ class MainWindow(QMainWindow):
                 "task_detect_strategy_status": self.task_detect_strategy_status.isChecked(),
                 "task_strategy_vuot_ai": self.task_strategy_vuot_ai.isChecked(),
                 "task_receive_strategy_reward": self.task_receive_strategy_reward.isChecked(),
+                "reward_weekly_doan_chien": self.reward_weekly_doan_chien.isChecked(),
+                "reward_weekly_quoc_chien": self.reward_weekly_quoc_chien.isChecked(),
+                "reward_weekly_lanh_dia_chien": self.reward_weekly_lanh_dia_chien.isChecked(),
+                "reward_shop_than_binh_nguyen_linh_ngoc": self.reward_shop_than_binh_nguyen_linh_ngoc.isChecked(),
+                "reward_shop_danh_vong_que_lanh": self.reward_shop_danh_vong_que_lanh.isChecked(),
+                "reward_daily_tam_quoc_lenh": self.reward_daily_tam_quoc_lenh.isChecked(),
+                "reward_shop_uu_dai_free": self.reward_shop_uu_dai_free.isChecked(),
+                "reward_shop_tuong_hon_kinh_thu": self.reward_shop_tuong_hon_kinh_thu.isChecked(),
+                "reward_gift_friend_hearts": self.reward_gift_friend_hearts.isChecked(),
+                "reward_gift_affinity_hearts": self.reward_gift_affinity_hearts.isChecked(),
+                "reward_share_profile": self.reward_share_profile.isChecked(),
+                "reward_daily_missions": self.reward_daily_missions.isChecked(),
                 "task_close_strategy": self.task_close_strategy.isChecked(),
                 "task_switch_account": self.doi_tai_khoan_task.isChecked(),
                 "task_click_coordinates": self.task_click_coordinates.isChecked(),
@@ -1746,6 +1804,12 @@ class MainWindow(QMainWindow):
                 "task_enter_strategy", "task_strategy_defense",
                 "task_detect_strategy_status", "task_strategy_vuot_ai",
                 "task_receive_strategy_reward", "task_close_strategy",
+                "reward_weekly_doan_chien", "reward_weekly_quoc_chien",
+                "reward_weekly_lanh_dia_chien", "reward_shop_than_binh_nguyen_linh_ngoc",
+                "reward_shop_danh_vong_que_lanh", "reward_daily_tam_quoc_lenh",
+                "reward_shop_uu_dai_free", "reward_shop_tuong_hon_kinh_thu",
+                "reward_gift_friend_hearts", "reward_gift_affinity_hearts",
+                "reward_share_profile", "reward_daily_missions",
                 "task_click_coordinates",
             )
         ):
