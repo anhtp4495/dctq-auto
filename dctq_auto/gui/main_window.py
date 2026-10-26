@@ -1159,10 +1159,14 @@ class MainWindow(QMainWindow):
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         clear_tasks_button = QPushButton("Bỏ chọn tất cả tác vụ")
+        clear_tasks_button.setFixedWidth(clear_tasks_button.sizeHint().width())
         clear_tasks_button.clicked.connect(
             lambda: self._clear_task_tab_checkboxes(page)
         )
-        layout.addWidget(clear_tasks_button)
+        button_row = QHBoxLayout()
+        button_row.addWidget(clear_tasks_button, 0, Qt.AlignmentFlag.AlignLeft)
+        button_row.addStretch(1)
+        layout.addLayout(button_row)
 
         self.task_login = QCheckBox("Đăng nhập (nhập tài khoản khi bắt đầu)")
         self.task_daily_checkin = QCheckBox("Điểm danh")
@@ -1393,39 +1397,6 @@ class MainWindow(QMainWindow):
             strategy_tasks_layout.addWidget(task_checkbox)
         daily_layout.addWidget(strategy_tasks_group)
 
-        reward_group = QGroupBox("Nhận thưởng")
-        reward_layout = QVBoxLayout(reward_group)
-        reward_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        reward_layout.setSpacing(6)
-        weekly_reward_group = QGroupBox("Nhận thưởng hằng tuần")
-        weekly_reward_layout = QVBoxLayout(weekly_reward_group)
-        for reward_task in (
-            self.reward_weekly_doan_chien,
-            self.reward_weekly_quoc_chien,
-            self.reward_weekly_lanh_dia_chien,
-            self.reward_shop_than_binh_nguyen_linh_ngoc,
-            self.reward_shop_danh_vong_que_lanh,
-        ):
-            weekly_reward_layout.addWidget(reward_task)
-        reward_layout.addWidget(weekly_reward_group)
-        daily_reward_group = QGroupBox("Nhận thưởng hằng ngày")
-        daily_reward_layout = QVBoxLayout(daily_reward_group)
-        for reward_task in (
-            self.reward_daily_tam_quoc_lenh,
-            self.reward_shop_uu_dai_free,
-            self.reward_shop_tuong_hon_kinh_thu,
-            self.reward_gift_friend_hearts,
-            self.reward_gift_affinity_hearts,
-            self.reward_share_profile,
-            self.reward_daily_missions,
-        ):
-            daily_reward_layout.addWidget(reward_task)
-        reward_layout.addWidget(daily_reward_group)
-        reward_note = QLabel("Giao diện và Mock-ADB đã có; logic nhận thưởng chưa triển khai.")
-        reward_note.setWordWrap(True)
-        reward_layout.addWidget(reward_note)
-        daily_layout.addWidget(reward_group)
-
         knb_contribution_row = QHBoxLayout()
         knb_contribution_row.addWidget(self.task_knb_contribution)
         knb_contribution_row.addWidget(QLabel("Số lần:"))
@@ -1540,6 +1511,42 @@ class MainWindow(QMainWindow):
         coordinate_layout.addWidget(self.task_click_y)
         coordinate_layout.addStretch(1)
         layout.addWidget(coordinate_group)
+
+
+        reward_group = QGroupBox("Nhận thưởng")
+        reward_layout = QVBoxLayout(reward_group)
+        reward_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        reward_layout.setSpacing(6)
+        weekly_reward_group = QGroupBox("Nhận thưởng hằng tuần")
+        weekly_reward_layout = QVBoxLayout(weekly_reward_group)
+        for reward_task in (
+            self.reward_weekly_doan_chien,
+            self.reward_weekly_quoc_chien,
+            self.reward_weekly_lanh_dia_chien,
+            self.reward_shop_than_binh_nguyen_linh_ngoc,
+            self.reward_shop_danh_vong_que_lanh,
+        ):
+            weekly_reward_layout.addWidget(reward_task)
+        reward_layout.addWidget(weekly_reward_group)
+        daily_reward_group = QGroupBox("Nhận thưởng hằng ngày")
+        daily_reward_layout = QVBoxLayout(daily_reward_group)
+        for reward_task in (
+            self.reward_daily_tam_quoc_lenh,
+            self.reward_shop_uu_dai_free,
+            self.reward_shop_tuong_hon_kinh_thu,
+            self.reward_gift_friend_hearts,
+            self.reward_gift_affinity_hearts,
+            self.reward_share_profile,
+            self.reward_daily_missions,
+        ):
+            daily_reward_layout.addWidget(reward_task)
+        reward_layout.addWidget(daily_reward_group)
+        reward_note = QLabel("Giao diện và Mock-ADB đã có; logic nhận thưởng chưa triển khai.")
+        reward_note.setWordWrap(True)
+        reward_layout.addWidget(reward_note)
+        daily_layout.addWidget(reward_group)
+
+
 
         note = QLabel(
             "Chọn một hoặc nhiều tác vụ rồi nhấn ▶ Bắt đầu. "
