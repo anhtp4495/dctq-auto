@@ -1255,26 +1255,20 @@ class MainWindow(QMainWindow):
         self.task_championship_count = QSpinBox()
         self.task_championship_count.setRange(1, 15)
         self.task_championship_count.setValue(6)
-        self.task_championship_count.setEnabled(False)
         self.task_championship_count.setKeyboardTracking(False)
-        self.task_championship.toggled.connect(
-            self.task_championship_count.setEnabled
-        )
         self.task_championship_knb = QCheckBox("Mua lượt bằng KNB")
-        self.task_championship_knb.setEnabled(False)
-        self.task_championship.toggled.connect(self.task_championship_knb.setEnabled)
         self.task_championship_knb.toggled.connect(
             lambda checked: self.task_championship_purchase_hint.setText(
-                "Khi hết lượt: Tự động xác nhận mua bằng KNB."
+                "Khi hết lượt: Mua lượt bằng KNB."
                 if checked
-                else "Khi hết lượt: thoát Tranh Bá."
+                else "Khi hết lượt: Thoát Tranh Bá."
             )
         )
         self.task_championship_purchase_hint = QLabel(
-            "Khi hết lượt: thoát Tranh Bá."
+            "Khi hết lượt: Thoát Tranh Bá."
         )
         self.task_championship_purchase_hint.setWordWrap(True)
-        self.task_championship_purchase_hint.setStyleSheet("color: #777;")
+        # self.task_championship_purchase_hint.setStyleSheet("color: #777;")
         self.task_find_championship_opponent = QCheckBox("Tìm đối thủ Tranh Bá")
         self.task_championship_xuat_chien = QCheckBox("Xuất chiến")
         self.task_championship_start_battle = QCheckBox("Bắt đầu trận Tranh Bá")
