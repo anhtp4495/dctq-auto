@@ -852,45 +852,47 @@ class UtilityTaskRunnerMixin:
                     self.log_message.emit(
                         "Đã phát hiện hộp thoại 'mua_the_luc'; kiểm tra hai lựa chọn trong hộp thoại."
                     )
-                    # Lựa chọn mua KNB / dùng lượt miễn phí lấy từ checkbox cấu hình,
-                    # không OCR chữ của hai lựa chọn trên giao diện game.
+                    # Tọa độ ba nút lấy từ regions.json để có thể hiệu chỉnh độc lập.
                     mua_knb = bool(self._config.get("mua_luot_knb"))
-                    dung_mien_phi = bool(self._config.get("tranh_ba_luot_mien_phi"))
+                    regions_path = Path(__file__).resolve().parent / "common" / "regions.json"
+                    regions_data = json.loads(regions_path.read_text(encoding="utf-8"))
+                    tranh_ba_elements = regions_data["regions"]["tranh_ba"].get("elements", [])
+                    saved_points = {
+                        item.get("name"): item.get("center", {})
+                        for item in tranh_ba_elements
+                    }
+
+                    def tap_tranh_ba_element(name: str) -> tuple[int, int]:
+                        point = saved_points.get(name, {})
+                        x = point.get("x_px")
+                        y = point.get("y_px")
+                        if x is None or y is None:
+                            raise ValueError(
+                                f"Thiếu tọa độ center.x_px/center.y_px của '{name}' trong {regions_path}"
+                            )
+                        device.shell(f"input tap {int(x)} {int(y)}")
+                        return int(x), int(y)
+
                     if mua_knb:
                         if not self._wait_if_paused():
                             self.log_message.emit("Đã dừng trước khi xác nhận mua thể lực bằng KNB.")
                             return
-                        device.shell("input tap 1092 702")
+                        x, y = tap_tranh_ba_element("xac_nhan_mua_the_luc")
                         self.log_message.emit(
-                            "Cấu hình đã chọn 'Mua lượt bằng KNB'; click xác nhận tại (1092, 702)."
-                        )
-                    elif dung_mien_phi:
-                        if not self._wait_if_paused():
-                            self.log_message.emit("Đã dừng trước khi hủy hộp thoại mua thể lực.")
-                            return
-                        device.shell("input tap 730 694")
-                        self.log_message.emit(
-                            "Cấu hình đã chọn 'Sử dụng lượt miễn phí'; click hủy tại (730, 694)."
-                        )
-                        time.sleep(3)
-                        device.shell("input tap 1757 110")
-                        self.log_message.emit(
-                            "Đã chờ 3 giây rồi click đóng màn hành Tranh Bá tại (1757, 110)."
+                            f"Cấu hình bật 'Mua lượt bằng KNB'; click xac_nhan_mua_the_luc tại ({x}, {y})."
                         )
                     else:
-                        # Không xác định lựa chọn hoặc cả hai tùy chọn đều tắt:
-                        # đóng hộp thoại an toàn thay vì xác nhận mua bằng KNB.
                         if not self._wait_if_paused():
                             self.log_message.emit("Đã dừng trước khi hủy hộp thoại mua thể lực.")
                             return
-                        device.shell("input tap 730 694")
+                        x, y = tap_tranh_ba_element("huy_mua_the_luc")
                         self.log_message.emit(
-                            "Không có lựa chọn mua thể lực được xác định; click hủy tại (730, 694)."
+                            f"Cấu hình tắt 'Mua lượt bằng KNB'; click huy_mua_the_luc tại ({x}, {y})."
                         )
                         time.sleep(3)
-                        device.shell("input tap 1757 110")
+                        x, y = tap_tranh_ba_element("dong_man_hanh_tranh_ba")
                         self.log_message.emit(
-                            "Đã chờ 3 giây rồi click đóng màn hành Tranh Bá tại (1757, 110)."
+                            f"Đã chờ 3 giây rồi click dong_man_hanh_tranh_ba tại ({x}, {y})."
                         )
                 else:
                     self.log_message.emit(
