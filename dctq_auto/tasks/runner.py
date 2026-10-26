@@ -454,10 +454,48 @@ class UtilityTaskRunnerMixin:
                     )
                     if best_score > similarity_threshold:
                         doan_found = True
-                        self.log_message.emit(
-                            f"Bước 3: xác nhận '{doan_target}' với độ tương đồng "
-                            f"{best_score:.1%}; text khớp: {best_candidate or observed_text}."
-                        )
+                        matched_word = None
+                        matched_score = -1.0
+                        for word in words:
+                            word_text = str(word.get("text", "")).strip()
+                            if not word_text:
+                                continue
+                            candidate = self._normalize_screen_text(word_text).replace(" ", "")
+                            score = SequenceMatcher(None, doan_target, candidate).ratio()
+                            if score > matched_score:
+                                matched_score = score
+                                matched_word = word
+
+                        if matched_word is not None:
+                            left = int(matched_word.get("left", matched_word.get("x", 0)))
+                            top = int(matched_word.get("top", matched_word.get("y", 0)))
+                            width = int(matched_word.get("width", matched_word.get("w", 0)))
+                            height = int(matched_word.get("height", matched_word.get("h", 0)))
+                            center_x = left + width // 2
+                            center_y = top + height // 2
+                            self.log_message.emit(
+                                f"Bước 3: tìm thấy '{doan_target}' — OCR text="
+                                f"'{matched_word.get('text', '')}', độ tương đồng={matched_score:.1%}; "
+                                f"tọa độ vùng chữ ({left}; {top}; {width}; {height}), "
+                                f"tâm ({center_x}; {center_y})."
+                            )
+                            if width > 0 and height > 0:
+                                device.shell(f"input tap {center_x} {center_y}")
+                                self.log_message.emit(
+                                    f"Bước 3: đã click mục Đoàn Chiến tại "
+                                    f"({center_x}; {center_y})."
+                                )
+                                time.sleep(0.8)
+                            else:
+                                raise RuntimeError(
+                                    "OCR khớp doan_chien nhưng kết quả không có kích thước "
+                                    f"tọa độ hợp lệ: {matched_word}."
+                                )
+                        else:
+                            raise RuntimeError(
+                                "OCR đạt ngưỡng doan_chien nhưng không xác định được "
+                                "tọa độ từ kết quả OCR."
+                            )
                         break
                     if attempt < max_swipes:
                         self.log_message.emit(
