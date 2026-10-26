@@ -386,6 +386,97 @@ class UtilityTaskRunnerMixin:
                         f"Không tìm thấy 'chien_tranh' trong RECT {screen_rect} sau 3 lần thử."
                     )
 
+                # Bước 3: tìm Đoàn Chiến theo độ tương đồng OCR; nếu chưa thấy,
+                # swipe danh sách tối đa 3 lần và OCR lại sau mỗi lần swipe.
+                from difflib import SequenceMatcher
+
+                doan_config = regions_data["regions"]["chien_tranh"]["doan_chien"]
+                doan_rect_data = doan_config["ocr_rect"]
+                doan_rect = (
+                    int(doan_rect_data["left"]), int(doan_rect_data["top"]),
+                    int(doan_rect_data["right"]), int(doan_rect_data["bottom"]),
+                )
+                doan_target = self._normalize_screen_text(
+                    str(doan_config.get("target_text", "doan_chien"))
+                ).replace(" ", "")
+                similarity_threshold = float(doan_config.get("similarity_threshold", 0.75))
+                doan_steps = tuple(doan_config.get("steps", ["gray", "color_text"]))
+                doan_psm = tuple(int(value) for value in doan_config.get("psm", [11]))
+                doan_text_color = doan_config.get("text_color", "#D8AF67")
+                doan_background_color = doan_config.get("background_color", "#74472B")
+                doan_tolerance = float(doan_config.get("color_tolerance", 100))
+                doan_elements = {
+                    item["name"]: item
+                    for item in regions_data["regions"]["chien_tranh"].get("elements", [])
+                }
+                swipe_start_name = str(doan_config.get("swipe_start", "chien_tranh_loi_vao_2"))
+                swipe_end_name = str(doan_config.get("swipe_end", "chien_tranh_loi_vao_1"))
+                swipe_start = doan_elements[swipe_start_name]["center"]
+                swipe_end = doan_elements[swipe_end_name]["center"]
+                sx, sy = int(swipe_start["x_px"]), int(swipe_start["y_px"])
+                ex, ey = int(swipe_end["x_px"]), int(swipe_end["y_px"])
+                max_swipes = max(0, int(doan_config.get("max_swipes", 3)))
+                swipe_duration_ms = max(1, int(doan_config.get("swipe_duration_ms", 500)))
+
+                doan_found = False
+                for attempt in range(max_swipes + 1):
+                    if not self._wait_if_paused():
+                        self.log_message.emit("Đã dừng trong khi tìm mục Đoàn Chiến.")
+                        return
+                    words = self._ocr_words_in_rect(
+                        device,
+                        doan_rect,
+                        steps=doan_steps,
+                        psm=doan_psm,
+                        text_color=doan_text_color,
+                        background_color=doan_background_color,
+                        color_tolerance=doan_tolerance,
+                    )
+                    word_texts = [
+                        str(word.get("text", "")).strip()
+                        for word in words if str(word.get("text", "")).strip()
+                    ]
+                    observed_text = " ".join(word_texts)
+                    normalized_text = self._normalize_screen_text(observed_text).replace(" ", "")
+                    similarity = SequenceMatcher(None, doan_target, normalized_text).ratio()
+                    best_candidate = ""
+                    best_score = similarity
+                    for word_text in word_texts:
+                        candidate = self._normalize_screen_text(word_text).replace(" ", "")
+                        score = SequenceMatcher(None, doan_target, candidate).ratio()
+                        if score > best_score:
+                            best_score = score
+                            best_candidate = word_text
+                    self.log_message.emit(
+                        f"Bước 3 OCR Đoàn Chiến: lần OCR {attempt + 1}/{max_swipes + 1}; "
+                        f"RECT={doan_rect}; text nhận diện: {observed_text or '(trống)'}; "
+                        f"độ tương đồng cao nhất={best_score:.1%}; ngưỡng >{similarity_threshold:.0%}."
+                    )
+                    if best_score > similarity_threshold:
+                        doan_found = True
+                        self.log_message.emit(
+                            f"Bước 3: xác nhận '{doan_target}' với độ tương đồng "
+                            f"{best_score:.1%}; text khớp: {best_candidate or observed_text}."
+                        )
+                        break
+                    if attempt < max_swipes:
+                        self.log_message.emit(
+                            f"Bước 3: chưa thấy 'doan_chien' đạt ngưỡng; "
+                            f"swipe lần {attempt + 1}/{max_swipes} từ "
+                            f"{swipe_start_name}=({sx}, {sy}) đến "
+                            f"{swipe_end_name}=({ex}, {ey}), {swipe_duration_ms} ms."
+                        )
+                        device.shell(
+                            f"input swipe {sx} {sy} {ex} {ey} {swipe_duration_ms}"
+                        )
+                        time.sleep(0.5)
+                if not doan_found:
+                    raise RuntimeError(
+                        f"Không tìm thấy 'doan_chien' với độ tương đồng >"
+                        f"{similarity_threshold:.0%} sau {max_swipes} lần swipe; "
+                        f"RECT={doan_rect}."
+                    )
+
                 completed += 1
                 self.task_progress_changed.emit(label, "done", 1, 1)
                 self.progress_changed.emit(completed, max(1, total), "Đã mở menu Chiến Tranh")
