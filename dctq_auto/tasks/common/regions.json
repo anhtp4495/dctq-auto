@@ -881,24 +881,24 @@
           "text": "RECT vùng nhận diện menu Chiến Tranh",
           "confidence": null,
           "bounds": {
-            "left": 1,
-            "top": 1,
-            "right": 1,
-            "bottom": 1
+            "left": 1260,
+            "top": 100,
+            "right": 1410,
+            "bottom": 210
           },
           "rect": {
-            "x": 1,
-            "y": 1,
-            "width": 1,
-            "height": 1
+            "x": 1260,
+            "y": 100,
+            "width": 150,
+            "height": 110
           },
           "center": {
-            "x_px": 1,
-            "y_px": 1
+            "x_px": 1335,
+            "y_px": 155
           },
           "center_ratio": {
-            "x": 0.000521,
-            "y": 0.000926
+            "x": 0.695313,
+            "y": 0.143519
           }
         },
         {
