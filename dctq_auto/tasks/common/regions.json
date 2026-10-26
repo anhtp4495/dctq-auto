@@ -1624,6 +1624,30 @@
           }
         },
         {
+          "name": "xac_nhan_mua_the_luc",
+          "text": "Nút xác nhận mua thể lực bằng KNB",
+          "center": {
+            "x_px": 1092,
+            "y_px": 702
+          }
+        },
+        {
+          "name": "huy_mua_the_luc",
+          "text": "Nút hủy hộp thoại mua thể lực",
+          "center": {
+            "x_px": 730,
+            "y_px": 694
+          }
+        },
+        {
+          "name": "dong_man_hanh_tranh_ba",
+          "text": "Nút đóng màn hình hành Tranh Bá",
+          "center": {
+            "x_px": 1757,
+            "y_px": 110
+          }
+        },
+        {
           "name": "button_tranh_ba_hoi_thanh",
           "text": "Nút Hồi Thành khi kết thúc trận Tranh Bá",
           "center": {
