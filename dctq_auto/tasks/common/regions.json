@@ -877,31 +877,6 @@
           }
         },
         {
-          "name": "menu_chien_tranh",
-          "text": "RECT vùng nhận diện menu Chiến Tranh",
-          "confidence": null,
-          "bounds": {
-            "left": 1260,
-            "top": 100,
-            "right": 1410,
-            "bottom": 210
-          },
-          "rect": {
-            "x": 1260,
-            "y": 100,
-            "width": 150,
-            "height": 110
-          },
-          "center": {
-            "x_px": 1335,
-            "y_px": 155
-          },
-          "center_ratio": {
-            "x": 0.695313,
-            "y": 0.143519
-          }
-        },
-        {
           "name": "man_hinh_muu_binh",
           "text": "RECT vùng nhận diện màn hình Mưu Binh",
           "confidence": null,
@@ -1786,6 +1761,40 @@
           }
         }
       ]
+    },
+    "chien_tranh": {
+      "name": "chien_tranh",
+      "description": "Cấu hình màn hình Chiến Tranh",
+      "image_resolution": [
+        1920,
+        1080
+      ],
+      "elements": [],
+      "menu_chien_tranh": {
+        "name": "menu_chien_tranh",
+        "text": "RECT vùng nhận diện menu Chiến Tranh",
+        "confidence": null,
+        "bounds": {
+          "left": 1260,
+          "top": 100,
+          "right": 1410,
+          "bottom": 210
+        },
+        "rect": {
+          "x": 1260,
+          "y": 100,
+          "width": 150,
+          "height": 110
+        },
+        "center": {
+          "x_px": 1335,
+          "y_px": 155
+        },
+        "center_ratio": {
+          "x": 0.695313,
+          "y": 0.143519
+        }
+      }
     }
   }
 }
