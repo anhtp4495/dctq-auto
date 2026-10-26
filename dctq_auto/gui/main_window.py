@@ -1158,7 +1158,7 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(page)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        clear_tasks_button = QPushButton("Bỏ chọn tất cả tác vụ")
+        clear_tasks_button = QPushButton("Bỏ chọn tất cả")
         clear_tasks_button.setFixedWidth(clear_tasks_button.sizeHint().width())
         clear_tasks_button.clicked.connect(
             lambda: self._clear_task_tab_checkboxes(page)
