@@ -1839,7 +1839,7 @@
           "bottom": 831
         },
         "target_text": "doan_chien",
-        "similarity_threshold": 0.75,
+        "similarity_threshold": 0.9,
         "steps": [
           "gray",
           "color_text"
