@@ -110,14 +110,14 @@ def handle_post_login(
             threshold=template.threshold,
         )
 
-        if template_name == "accounts1/waiting":
+        if template.id == "waiting":
             worker.log_message.emit(
                 f"[{account.username}] Đang chờ đăng nhập hoàn tất; kiểm tra lại sau 3 giây."
             )
             time.sleep(3)
             return handle_post_login(worker, account, device, ocr_client)
 
-        if template_name == "accounts9/cap_nhat_thong_tin":
+        if template.id == "cap_nhat_thong_tin":
             worker.log_message.emit(
                 f"[{account.username}] Phát hiện hộp thoại cập nhật thông tin; đang đóng hộp thoại."
             )
@@ -131,7 +131,7 @@ def handle_post_login(
             time.sleep(1)
             return handle_post_login(worker, account, device, ocr_client)
 
-        if template_name == "accounts5/trang_ca_nhan":
+        if template.id == "trang_ca_nhan":
             worker.log_message.emit(f"[{account.username}] Đăng nhập thành công.")
             return True, None
 
@@ -204,7 +204,7 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
             match=match,
             threshold=threshold,
         )
-        if template_name == "accounts4/thong_tin_dang_nhap_khong_dung":
+        if template.id == "thong_tin_dang_nhap_khong_dung":
             reason = "Thông tin đăng nhập không đúng"
             worker.log_message.emit(
                 f"[{account.username}] Đăng nhập thất bại: phát hiện template wrong_username_or_pass."
@@ -268,13 +268,13 @@ def prepare_login(
             match=match,
             threshold=template.threshold,
         )
-        detected_state = template_name
+        detected_state = template.id
         break
 
-    if detected_state == "login_form":
+    if detected_state == "dang_nhap":
         return True, None
 
-    if detected_state == "profile":
+    if detected_state == "trang_ca_nhan":
         worker.log_message.emit(
             f"[{account.username}] Đang ở màn hình profile; gọi quy trình đăng xuất."
         )
@@ -292,7 +292,7 @@ def prepare_login(
         time.sleep(3)
         return prepare_login(worker, account, device, ocr_client)
 
-    if detected_state == "update_information":
+    if detected_state == "cap_nhat_thong_tin":
         worker.log_message.emit(
             f"[{account.username}] Phát hiện hộp thoại cập nhật thông tin; đang đóng hộp thoại."
         )
