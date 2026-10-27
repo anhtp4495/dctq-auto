@@ -105,10 +105,8 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
         report_template_match(
             worker.log_message.emit,
             context=f"[{account.username}] Đăng xuất:",
-            template_name=template_name.rsplit("/", 1)[-1],
-            display_name=template.name,
+            template=template,
             match=match,
-            threshold=template.threshold,
         )
         detected_state = template.id
         detected_match = match
@@ -212,10 +210,8 @@ def handle_post_logout(
         report_template_match(
             worker.log_message.emit,
             context=f"[{account.username}] Xác minh đăng xuất:",
-            template_name=template_name.rsplit("/", 1)[-1],
-            display_name=template.name,
+            template=template,
             match=match,
-            threshold=template.threshold,
         )
 
         state = template.id
