@@ -2,7 +2,13 @@
 
 import time
 
+import cv2
+import numpy as np
+
 from dctq_auto.tasks.base import TaskSpec
+from dctq_auto.vision.template_matching import match_template
+from dctq_auto.vision.template_store import get_templates
+from dctq_auto.vision.template_report import report_template_match
 
 SPEC = TaskSpec(
     key="clone_logout",
@@ -45,136 +51,121 @@ def prepare_logout(worker, account, device, ocr_client) -> tuple[bool | None, st
 
 
 def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
-    """Thực hiện các thao tác giao diện để chuyển tài khoản."""
+    """Nhận diện trạng thái hiện tại và đệ quy xử lý đến màn hình đăng nhập."""
     if not worker._config.get("clone_logout", True):
         return True
 
+    if not worker._wait_if_paused():
+        worker.log_message.emit("Đã dừng theo yêu cầu.")
+        return None
+
+    template_names = (
+        "login_form",
+        "waiting",
+        "profile",
+        "account_settings_action",
+        "account_settings_change",
+        "account_settings_confirm",
+    )
+
     try:
-        if not worker._wait_if_paused():
-            worker.log_message.emit("Đã dừng theo yêu cầu.")
-            return None
-
-        worker.log_message.emit(
-            f"[{account.username}] Mở profile để vào Cài đặt người dùng; thử tối đa 3 lần."
-        )
-
-        profile_panel_found = False
-        profile_panel_text = ""
-        for profile_attempt in range(3):
-            if not worker._wait_if_paused():
-                worker.log_message.emit("Đã dừng theo yêu cầu.")
-                return None
-
-            screen_image = device.screenshot()
-            tap_x = int(screen_image.width * 0.029167)
-            tap_y = int(screen_image.height * 0.071296)
-            worker.log_message.emit(
-                f"[{account.username}] Bấm profile tại ({tap_x}, {tap_y}), "
-                f"lần {profile_attempt + 1}/3 (ảnh {screen_image.width}x{screen_image.height})."
-            )
-            device.shell(f"input tap {tap_x} {tap_y}")
-            time.sleep(2.5)
-            profile_panel_text = worker._normalize_screen_text(worker._screen_text(device))
-            if "thong tin cua toi" in profile_panel_text:
-                profile_panel_found = True
-                worker.log_message.emit(
-                    f"[{account.username}] Đã xác minh profile qua tiêu đề "
-                    f"'Thông tin của tôi' ở lần thử {profile_attempt + 1}/3."
-                )
-                break
-
-            worker.log_message.emit(
-                f"[{account.username}] Chưa thấy tiêu đề 'Thông tin của tôi', "
-                f"thử lại {profile_attempt + 1}/3. OCR: "
-                f"{profile_panel_text[:160] or '(trống)'}"
-            )
-            time.sleep(1.5)
-
-        if not profile_panel_found:
-            worker.log_message.emit(
-                f"[{account.username}] Không xác minh được profile sau 3 lần; "
-                "không chuyển sang Tùy chọn để tránh thao tác nhầm."
-            )
-            return False
-
-        ocr_client.tap_ocr_target("button_tuy_chon")
-        time.sleep(1.5)
-        options_text = ""
-        options_found = False
-        for _ in range(10):
-            if not worker._wait_if_paused():
-                worker.log_message.emit("Đã dừng theo yêu cầu.")
-                return None
-            options_text = worker._normalize_screen_text(worker._screen_text(device))
-            if "tuy chon" in options_text or "cai dat nguoi dung" in options_text:
-                options_found = True
-                break
-            time.sleep(1)
-
-        if options_found:
-            worker.log_message.emit(
-                f"[{account.username}] Đã xác nhận màn hình Tùy chọn: {options_text[:180]}"
-            )
-        else:
-            worker.log_message.emit(
-                f"[{account.username}] Đã xác minh profile nhưng không nhận diện được "
-                f"màn hình Tùy chọn. OCR: {options_text[:180] or '(trống)'}"
-            )
-            return False
-
-        ocr_client.tap_ocr_target("cai_dat_nguoi_dung")
-        time.sleep(1)
-
-        settings_text = ""
-        settings_found = False
-        for _ in range(10):
-            if not worker._wait_if_paused():
-                worker.log_message.emit("Đã dừng theo yêu cầu.")
-                return None
-            settings_text = worker._normalize_screen_text(worker._screen_text(device))
-            if "cai dat nguoi dung" in settings_text:
-                settings_found = True
-                break
-            time.sleep(1)
-
-        if not settings_found:
-            worker.log_message.emit(
-                f"[{account.username}] Không nhận diện được giao diện Cài đặt người dùng; "
-                f"không bấm Đổi tài khoản. OCR: {settings_text[:220] or '(trống)'}"
-            )
-            return False
-
-        worker.log_message.emit(
-            f"[{account.username}] Đã xác nhận giao diện Cài đặt người dùng."
-        )
-        ocr_client.tap_ocr_target("doi_tai_khoan")
-        time.sleep(1.0)
-
-        switch_confirm_text = worker._normalize_screen_text(worker._screen_text(device))
-        if (
-            "ban can nhap lai tai khoan mat khau" in switch_confirm_text
-            or "thay doi tai khoan chu" in switch_confirm_text
-        ):
-            ocr_client.tap_ocr_target("button_xac_nhan")
-            time.sleep(1.5)
-            worker.log_message.emit(
-                f"[{account.username}] Đã bấm nút xác nhận đổi tài khoản theo tọa độ lưu."
-            )
-        else:
-            worker.log_message.emit(
-                f"[{account.username}] Không nhận diện được hộp thoại xác nhận đổi tài khoản; "
-                f"không bấm tọa độ xác nhận để tránh thao tác nhầm. "
-                f"OCR: {switch_confirm_text[:220] or '(trống)'}"
-            )
-            return False
-
-        return True
+        screenshot = device.screenshot()
+        screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
     except Exception as exc:
         worker.log_message.emit(
-            f"[{account.username}] Lỗi trong quy trình đổi tài khoản: {exc}"
+            f"[{account.username}] Không chụp được màn hình khi đăng xuất: {exc}"
         )
         return False
 
+    templates = get_templates(template_names, screen_name="accounts")
+    detected_state = None
+
+    for template_name in template_names:
+        template = templates.get(template_name)
+        if template is None:
+            continue
+
+        try:
+            match = match_template(
+                screen_bgr,
+                template.image,
+                threshold=template.threshold,
+                method=template.method,
+                grayscale=True,
+            )
+        except (ValueError, cv2.error) as exc:
+            worker.log_message.emit(
+                f"[{account.username}] Lỗi template matching {template_name}: {exc}"
+            )
+            continue
+
+        if match is None:
+            continue
+
+        report_template_match(
+            worker.log_message.emit,
+            context=f"[{account.username}] Đăng xuất:",
+            template_name=template_name,
+            display_name=template.display_name,
+            match=match,
+            threshold=template.threshold,
+        )
+        detected_state = template_name
+        break
+
+    if detected_state == "login_form":
+        worker.log_message.emit(
+            f"[{account.username}] Đã về màn hình đăng nhập sau khi đổi tài khoản."
+        )
+        return True
+
+    if detected_state == "waiting":
+        worker.log_message.emit(
+            f"[{account.username}] Đang ở màn hình chờ; kiểm tra lại sau 3 giây."
+        )
+        time.sleep(3)
+        return run_logout_flow(worker, account, device, ocr_client)
+
+    if detected_state == "profile":
+        tap_x = int(screenshot.width * 0.029167)
+        tap_y = int(screenshot.height * 0.071296)
+        worker.log_message.emit(
+            f"[{account.username}] Mở profile tại ({tap_x}, {tap_y}); "
+            "sẽ nhận diện lại màn hình sau thao tác."
+        )
+        device.shell(f"input tap {tap_x} {tap_y}")
+        time.sleep(1.5)
+        return run_logout_flow(worker, account, device, ocr_client)
+
+    if detected_state == "account_settings_action":
+        worker.log_message.emit(
+            f"[{account.username}] Đã nhận diện màn hình tùy chọn; mở Cài đặt người dùng."
+        )
+        ocr_client.tap_ocr_target("cai_dat_nguoi_dung")
+        time.sleep(1)
+        return run_logout_flow(worker, account, device, ocr_client)
+
+    if detected_state == "account_settings_change":
+        worker.log_message.emit(
+            f"[{account.username}] Đã nhận diện Cài đặt người dùng; chọn Đổi tài khoản."
+        )
+        ocr_client.tap_ocr_target("doi_tai_khoan")
+        time.sleep(1)
+        return run_logout_flow(worker, account, device, ocr_client)
+
+    if detected_state == "account_settings_confirm":
+        worker.log_message.emit(
+            f"[{account.username}] Đã nhận diện hộp thoại xác nhận đổi tài khoản."
+        )
+        ocr_client.tap_ocr_target("button_xac_nhan")
+        time.sleep(1.5)
+        return run_logout_flow(worker, account, device, ocr_client)
+
+    worker.log_message.emit(
+        f"[{account.username}] Không nhận diện được trạng thái đăng xuất "
+        f"từ các template: {', '.join(template_names)}."
+    )
+    return False
 
 def handle_post_logout(
     worker, account, device, ocr_client
