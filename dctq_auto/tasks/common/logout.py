@@ -176,36 +176,10 @@ def _run_logout_actions(worker, account, device, ocr_client) -> bool | None:
         return False
 
 
-def verify_logout(worker, account, device, ocr_client) -> tuple[bool | None, str | None]:
-    """Chờ và xác minh đã quay về màn hình đăng nhập."""
-    if not worker._config.get("clone_logout", True):
-        return True, None
-
-    login_text = ""
-    for _ in range(30):
-        if not worker._wait_if_paused():
-            worker.log_message.emit("Đã dừng theo yêu cầu.")
-            return None, None
-        login_text = worker._screen_text(device)
-        if worker._is_login_screen(login_text):
-            worker.log_message.emit(
-                f"[{account.username}] Đã quay về màn hình đăng nhập sau Đổi tài khoản; "
-                "sẵn sàng xử lý account tiếp theo."
-            )
-            return True, None
-        time.sleep(1)
-
-    worker.log_message.emit(
-        f"[{account.username}] Không xác nhận được màn hình đăng nhập sau Đổi tài khoản. "
-        f"OCR: {worker._normalize_screen_text(login_text)[:180] or '(trống)'}"
-    )
-    return False, "Không xác nhận được màn hình đăng nhập sau khi đăng xuất"
-
-
 def handle_post_logout(
     worker, account, device, ocr_client
 ) -> tuple[bool | None, str | None]:
-    """Xử lý kết quả sau khi xác minh đăng xuất."""
+    """Xử lý kết quả sau khi thực hiện đăng xuất."""
     if not worker._config.get("clone_logout", True):
         worker.log_message.emit(
             f"[{account.username}] Bỏ qua đăng xuất theo cấu hình."
@@ -229,10 +203,6 @@ def logout_account(
         if logout_result is None:
             return None, None
         return False, "Không thể thực hiện thao tác đăng xuất"
-
-    verified, error = verify_logout(worker, account, device, ocr_client)
-    if verified is not True:
-        return verified, error
 
     return handle_post_logout(worker, account, device, ocr_client)
 
