@@ -7,7 +7,7 @@ from pathlib import Path
 def run_reward_weekly_doan_chien(self, device, completed: int, total: int) -> int:
     """Chạy luồng nhận thưởng Đoàn Chiến và trả về số tác vụ đã xử lý."""
     if self._config.get("reward_weekly_doan_chien"):
-        label = "Nhận thưởng - Đoàn Chiến"
+        label = self._config.get("_clone_reward_guild_label", "Nhận thưởng - Đoàn Chiến")
         self.task_progress_changed.emit(label, "running", 0, 1)
         try:
             if not self._wait_if_paused():
