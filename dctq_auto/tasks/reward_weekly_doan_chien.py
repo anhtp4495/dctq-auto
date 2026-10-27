@@ -269,6 +269,73 @@ def run_reward_weekly_doan_chien(self, device, completed: int, total: int) -> in
                     f"RECT={doan_rect}."
                 )
     
+            # Bước 5: chờ nút nhận thưởng xuất hiện; OCR tối đa 10 lần, cách nhau 3 giây.
+            reward_cfg = regions_data["regions"]["reward_weekly_doan_chien"]
+            reward_ocr = reward_cfg["ocr_nhan_thuong_dai_chien_quan_doan"]
+            reward_bounds = reward_ocr["bounds"]
+            reward_rect = (
+                int(reward_bounds["left"]), int(reward_bounds["top"]),
+                int(reward_bounds["right"]), int(reward_bounds["bottom"]),
+            )
+            reward_target = str(reward_ocr.get("target_text", "nhan_thuong"))
+            reward_steps = tuple(reward_ocr.get("steps", ["color_text"]))
+            reward_psm = tuple(int(value) for value in reward_ocr.get("psm", [11]))
+            reward_text_color = reward_ocr.get("text_color", "#FFFFFF")
+            reward_background_color = reward_ocr.get("background_color", "#000000")
+            reward_tolerance = float(reward_ocr.get("color_tolerance", 38))
+            reward_threshold = float(reward_ocr.get("similarity_threshold", 0.9))
+            reward_found = False
+            for attempt in range(1, 11):
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng khi chờ nút nhận thưởng Đoàn Chiến.")
+                    return
+                if attempt > 1:
+                    self.log_message.emit(
+                        f"Bước 5: chờ 3 giây trước lần OCR nhận thưởng {attempt}/10."
+                    )
+                    for _ in range(30):
+                        if not self._wait_if_paused():
+                            self.log_message.emit("Đã dừng khi chờ nút nhận thưởng Đoàn Chiến.")
+                            return
+                        time.sleep(0.1)
+                match = self._tap_ocr_phrase_in_rect(
+                    device,
+                    (reward_target,),
+                    reward_rect,
+                    steps=reward_steps,
+                    psm=reward_psm,
+                    tap=False,
+                    background_color=reward_background_color,
+                    text_color=reward_text_color,
+                    color_tolerance=reward_tolerance,
+                )
+                if match is not None:
+                    reward_found = True
+                    button = next(
+                        (item for item in reward_cfg.get("elements", [])
+                         if item.get("name") == "nhan_thuong_dai_chien_quan_doan"),
+                        None,
+                    )
+                    if button is None or "center" not in button:
+                        raise RuntimeError(
+                            "Thiếu tọa độ nhan_thuong_dai_chien_quan_doan trong regions.json."
+                        )
+                    button_center = button["center"]
+                    bx, by = int(button_center["x_px"]), int(button_center["y_px"])
+                    device.shell(f"input tap {bx} {by}")
+                    self.log_message.emit(
+                        f"Bước 5: OCR tìm thấy '{reward_target}' trong RECT {reward_rect} "
+                        f"(lần {attempt}/10); đã click nhan_thuong_dai_chien_quan_doan tại ({bx}, {by})."
+                    )
+                    break
+                self.log_message.emit(
+                    f"Bước 5: chưa thấy '{reward_target}' trong RECT {reward_rect} "
+                    f"(lần {attempt}/10)."
+                )
+            if not reward_found:
+                raise RuntimeError(
+                    f"Không tìm thấy '{reward_target}' trong RECT {reward_rect} sau 10 lần OCR; không click nhận thưởng."
+                )
             completed += 1
             self.task_progress_changed.emit(label, "done", 1, 1)
             self.progress_changed.emit(completed, max(1, total), "Đã mở menu Chiến Tranh")
