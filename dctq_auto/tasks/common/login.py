@@ -89,15 +89,21 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
         "TM_SQDIFF_NORMED": cv2.TM_SQDIFF_NORMED,
     }
 
-    # Kiểm tra template sai thông tin trước để không bị trạng thái khác che khuất.
-    ordered_names = ["wrong_username_or_pass"]
-    ordered_names.extend(
-        name for name in template_definitions if name != "wrong_username_or_pass"
+    # Chỉ lấy đúng 4 template trạng thái đăng nhập đã thống nhất từ cấu hình.
+    # Kiểm tra wrong_username_or_pass trước để trạng thái khác không che khuất lỗi.
+    template_names = (
+        "wrong_username_or_pass",
+        "waiting",
+        "profile",
+        "update_information",
     )
+    selected_templates = {
+        name: template_definitions.get(name) for name in template_names
+    }
 
     source_height, source_width = source_image.shape[:2]
-    for template_name in ordered_names:
-        definition = template_definitions.get(template_name)
+    for template_name in template_names:
+        definition = selected_templates[template_name]
         if not isinstance(definition, dict):
             continue
 
