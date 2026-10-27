@@ -96,6 +96,18 @@
           "match_method": "TM_CCOEFF_NORMED"
         }
       }
+    },
+    "accounts9":{
+      "source_image": "resources/screens/accounts/cap_nhat_thong_tin.png",
+      "templates": {
+        "cap_nhat_thong_tin": {
+          "name": "Màn hình - Cập nhật thông tin tài khoản",
+          "description": "Đang mở màn hình - Cập nhật thông tin tài khoản.",
+          "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
     }
   }
 }
