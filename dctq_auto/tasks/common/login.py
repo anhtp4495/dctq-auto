@@ -165,10 +165,10 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
 
     # get_templates tự đọc cấu hình, cắt ảnh và cache template đã tải.
     template_names = (
-        "wrong_username_or_pass",
-        "waiting",
-        "profile",
-        "update_information",
+        "accounts/wrong_username_or_pass",
+        "accounts/waiting",
+        "accounts/profile",
+        "accounts/update_information",
     )
     templates = get_templates(template_names)
 
@@ -225,10 +225,10 @@ def prepare_login(
         return False, "Đã dừng theo yêu cầu"
 
     template_names = (
-        "login_form",
-        "waiting",
-        "profile",
-        "update_information",
+        "accounts/login_form",
+        "accounts/waiting",
+        "accounts/profile",
+        "accounts/update_information",
     )
     templates = get_templates(template_names)
 
