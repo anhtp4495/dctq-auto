@@ -1,4 +1,4 @@
-"""Tác vụ nhận thưởng Đoàn Chiến."""
+# Tác vụ nhận thưởng Đoàn Chiến.
 
 import time
 from pathlib import Path
