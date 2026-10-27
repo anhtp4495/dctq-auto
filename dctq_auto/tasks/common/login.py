@@ -115,7 +115,6 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
             return False, reason
 
     worker.log_message.emit(
-        f"[{account.username}] Không phát hiện template wrong_username_or_pass; "
-        "đăng nhập thành công."
+        f"[{account.username}] Đăng nhập thành công."
     )
     return True, None
