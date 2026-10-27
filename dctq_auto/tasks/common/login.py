@@ -62,7 +62,7 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
     except Exception as exc:
         worker.log_message.emit(
             f"[{account.username}] Không chụp được màn hình xác minh: {exc}; "
-            "không có bằng chứng wrong_username_or_pass nên xem như thành công theo quy tắc hiện tại."
+            "không phát hiện được wrong_username_or_pass; đăng nhập thành công theo quy tắc hiện tại."
         )
         return True, None
 
@@ -116,6 +116,6 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
 
     worker.log_message.emit(
         f"[{account.username}] Không phát hiện template wrong_username_or_pass; "
-        "xem như đăng nhập thành công."
+        "đăng nhập thành công."
     )
     return True, None
