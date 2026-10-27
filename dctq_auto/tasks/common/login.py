@@ -141,11 +141,7 @@ def handle_post_login(
 
 
 def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str | None]:
-    """Kiểm tra sai thông tin đăng nhập, sau đó xử lý trạng thái hậu đăng nhập.
-
-    Chỉ template wrong_username_or_pass xác nhận đăng nhập thất bại.
-    Đăng nhập thành công chỉ được xác nhận khi phát hiện template profile.
-    """
+    """Xác minh thông tin đăng nhập bằng template wrong_username_or_pass."""
     if not worker._wait_if_paused():
         worker.log_message.emit("Đã dừng theo yêu cầu.")
         return None, None
@@ -188,4 +184,7 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
             )
             return False, "Thông tin đăng nhập không đúng"
 
-    return handle_post_login(worker, account, device, ocr_client)
+    worker.log_message.emit(
+        f"[{account.username}] Đăng nhập thành công."
+    )
+    return True, None
