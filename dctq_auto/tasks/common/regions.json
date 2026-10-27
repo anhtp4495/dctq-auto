@@ -1899,6 +1899,18 @@
             "x": 0.955208,
             "y": 0.055556
           }
+        },
+        {
+          "name": "tat_man_hinh_chia_se_nhan_thuong",
+          "text": "Nút tắt màn hình chia sẻ nhận thưởng",
+          "center": {
+            "x_px": 1849,
+            "y_px": 97
+          },
+          "center_ratio": {
+            "x": 0.963021,
+            "y": 0.089815
+          }
         }
       ],
       "ocr_nhan_thuong_dai_chien_quan_doan": {
@@ -2010,6 +2022,33 @@
           "so_thanh_vien_can_dat_30",
           "cap_binh_quan_quan_doan_yeu_cau_100"
         ],
+        "similarity_threshold": 0.75,
+        "steps": [
+          "color_text"
+        ],
+        "psm": [
+          11
+        ],
+        "text_color": "#FFFFFF",
+        "background_color": "#000000",
+        "color_tolerance": 38
+      },
+      "ocr_chia_se_nhan_thuong": {
+        "name": "ocr_chia_se_nhan_thuong",
+        "text": "RECT OCR nhận diện nút chia sẻ nhận thưởng",
+        "bounds": {
+          "left": 870,
+          "top": 963,
+          "right": 1052,
+          "bottom": 1039
+        },
+        "rect": {
+          "x": 870,
+          "y": 963,
+          "width": 182,
+          "height": 76
+        },
+        "target_text": "chia_se",
         "similarity_threshold": 0.75,
         "steps": [
           "color_text"
