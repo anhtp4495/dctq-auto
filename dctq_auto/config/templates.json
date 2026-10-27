@@ -7,7 +7,7 @@
         "waiting": {
           "name": "Đang đăng nhập",
           "description": "Đang đăng nhập",
-          "region": {
+          "rect": {
             "top": 300,
             "left": 700,
             "right": 440,
