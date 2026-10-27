@@ -746,7 +746,7 @@ class ScreenshotAnnotator(QDialog):
                 top,
                 left / width,
                 top / height,
-                f"Đã chọn RECT {name}: ({left}, {top}, {right}, {bottom})",
+                f'"rect": {{ "top": {top}, "left": {left}, "right": {right}, "bottom": {bottom}}},',
             )
 
     @staticmethod
