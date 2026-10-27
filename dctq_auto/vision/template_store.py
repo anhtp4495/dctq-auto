@@ -26,6 +26,7 @@ _METHODS = {
 class LoadedTemplate:
     """Template đã được cắt sẵn cùng các tham số so khớp."""
 
+    id: str
     name: str
     display_name: str
     image: np.ndarray
@@ -95,6 +96,7 @@ def _load_screen_templates(screen_name: str) -> dict[str, LoadedTemplate]:
 
         template_image.setflags(write=False)
         loaded[name] = LoadedTemplate(
+            id=name,
             name=name,
             display_name=str(definition.get("name", name)),
             image=template_image,
