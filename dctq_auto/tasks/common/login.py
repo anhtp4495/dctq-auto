@@ -44,6 +44,64 @@ def submit_login_form(worker, account, device, ocr_client) -> bool:
     return True
 
 
+def _load_account_template(
+    worker,
+    account,
+    template_name: str,
+    definition,
+    config_path: Path,
+    source_image: np.ndarray,
+    method_names: dict[str, int],
+) -> tuple[np.ndarray, float, int] | None:
+    """Đọc cấu hình, kiểm tra rect và cắt template; None nếu không hợp lệ."""
+    if not isinstance(definition, dict):
+        return None
+
+    rect = definition.get("rect")
+    if not isinstance(rect, dict):
+        worker.log_message.emit(
+            f"[{account.username}] Template {template_name} thiếu rect trong {config_path}; bỏ qua."
+        )
+        return None
+
+    try:
+        top = int(rect["top"])
+        left = int(rect["left"])
+        right = int(rect["right"])
+        bottom = int(rect["bottom"])
+        threshold = float(definition.get("threshold", 0.85))
+        method_name = definition.get("match_method", "TM_CCOEFF_NORMED")
+        method = method_names[method_name]
+    except (KeyError, TypeError, ValueError):
+        worker.log_message.emit(
+            f"[{account.username}] Khai báo rect/threshold/match_method của "
+            f"template {template_name} không hợp lệ; bỏ qua."
+        )
+        return None
+
+    source_height, source_width = source_image.shape[:2]
+    # Rect dùng thứ tự top/left/right/bottom; right và bottom không bao gồm.
+    if (
+        top < 0 or left < 0 or right > source_width or bottom > source_height
+        or right <= left or bottom <= top
+    ):
+        worker.log_message.emit(
+            f"[{account.username}] Rect của template {template_name} không hợp lệ: "
+            f"top={top}, left={left}, right={right}, bottom={bottom}; "
+            f"ảnh gốc {source_width}x{source_height}. Bỏ qua template."
+        )
+        return None
+
+    template_image = source_image[top:bottom, left:right]
+    if template_image.size == 0:
+        worker.log_message.emit(
+            f"[{account.username}] Template {template_name} cắt ra ảnh rỗng; bỏ qua."
+        )
+        return None
+
+    return template_image, threshold, method
+
+
 def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str | None]:
     """Xác minh đăng nhập bằng các template được khai báo trong templates.json.
 
@@ -101,52 +159,20 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
         name: template_definitions.get(name) for name in template_names
     }
 
-    source_height, source_width = source_image.shape[:2]
     for template_name in template_names:
         definition = selected_templates[template_name]
-        if not isinstance(definition, dict):
+        loaded = _load_account_template(
+            worker,
+            account,
+            template_name,
+            definition,
+            config_path,
+            source_image,
+            method_names,
+        )
+        if loaded is None:
             continue
-
-        rect = definition.get("rect")
-        if not isinstance(rect, dict):
-            worker.log_message.emit(
-                f"[{account.username}] Template {template_name} thiếu rect trong {config_path}; bỏ qua."
-            )
-            continue
-
-        try:
-            top = int(rect["top"])
-            left = int(rect["left"])
-            right = int(rect["right"])
-            bottom = int(rect["bottom"])
-            threshold = float(definition.get("threshold", 0.85))
-            method_name = definition.get("match_method", "TM_CCOEFF_NORMED")
-            method = method_names[method_name]
-        except (KeyError, TypeError, ValueError):
-            worker.log_message.emit(
-                f"[{account.username}] Khai báo rect/threshold/match_method của "
-                f"template {template_name} không hợp lệ; bỏ qua."
-            )
-            continue
-
-        # Rect trong config dùng thứ tự top/left/right/bottom, right/bottom exclusive.
-        if (
-            top < 0 or left < 0 or right > source_width or bottom > source_height
-            or right <= left or bottom <= top
-        ):
-            worker.log_message.emit(
-                f"[{account.username}] Rect của template {template_name} không hợp lệ: "
-                f"top={top}, left={left}, right={right}, bottom={bottom}; "
-                f"ảnh gốc {source_width}x{source_height}. Bỏ qua template."
-            )
-            continue
-
-        template_image = source_image[top:bottom, left:right]
-        if template_image.size == 0:
-            worker.log_message.emit(
-                f"[{account.username}] Template {template_name} cắt ra ảnh rỗng; bỏ qua."
-            )
-            continue
+        template_image, threshold, method = loaded
 
         try:
             match = match_template(
