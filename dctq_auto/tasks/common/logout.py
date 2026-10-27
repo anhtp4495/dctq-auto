@@ -44,7 +44,7 @@ def prepare_logout(worker, account, device, ocr_client) -> tuple[bool | None, st
     return True, None
 
 
-def _run_logout_actions(worker, account, device, ocr_client) -> bool | None:
+def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
     """Thực hiện các thao tác giao diện để chuyển tài khoản."""
     if not worker._config.get("clone_logout", True):
         return True
@@ -198,7 +198,7 @@ def logout_account(
     if prepared is not True:
         return prepared, error or ("Đã dừng theo yêu cầu" if prepared is None else "Không thể chuẩn bị đăng xuất")
 
-    logout_result = _run_logout_actions(worker, account, device, ocr_client)
+    logout_result = run_logout_flow(worker, account, device, ocr_client)
     if logout_result is not True:
         if logout_result is None:
             return None, None
@@ -206,9 +206,3 @@ def logout_account(
 
     return handle_post_logout(worker, account, device, ocr_client)
 
-
-
-def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
-    """Tương thích với các nơi đang gọi quy trình đăng xuất dạng bool | None."""
-    result, _error = logout_account(worker, account, device, ocr_client)
-    return result
