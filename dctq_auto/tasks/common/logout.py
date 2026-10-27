@@ -233,9 +233,9 @@ def handle_post_logout(
             return handle_post_logout(worker, account, device, ocr_client)
 
     worker.log_message.emit(
-        f"[{account.username}] Xác minh đăng xuất thất bại."
+        f"[{account.username}] Đăng xuất thất bại."
     )
-    return False, "Không xác minh được trạng thái đăng xuất."
+    return False, "Đăng xuất thất bại."
 
 
 def logout_account(
