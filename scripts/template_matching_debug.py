@@ -22,7 +22,7 @@ METHODS = {
 
 
 def crop_by_rect(image_path: str, rect: tuple[int, int, int, int]):
-    """Crop (top, left, right, bottom) from an image, with right/bottom exclusive."""
+    """Crop RECT in (top, left, right, bottom) order; right/bottom are exclusive."""
     image = cv2.imread(image_path, cv2.IMREAD_COLOR)
     if image is None:
         raise FileNotFoundError(f"Cannot read image: {image_path}")
@@ -30,40 +30,50 @@ def crop_by_rect(image_path: str, rect: tuple[int, int, int, int]):
     height, width = image.shape[:2]
     if top < 0 or left < 0 or right > width or bottom > height:
         raise ValueError(
-            f"RECT {rect} is outside image bounds (width={width}, height={height})"
+            f"RECT (top, left, right, bottom)={rect} is outside image bounds "
+            f"(width={width}, height={height})"
         )
     if right <= left or bottom <= top:
-        raise ValueError("RECT must have positive width and height")
+        raise ValueError(
+            f"RECT (top, left, right, bottom)={rect} must have positive width "
+            "and height. Note: expected order is TOP LEFT RIGHT BOTTOM."
+        )
     return image[top:bottom, left:right]
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Find a template in a source image and print RECT(top,left,right,bottom)."
+        description=(
+            "Find a template in a source image. RECT arguments use "
+            "(TOP, LEFT, RIGHT, BOTTOM) order."
+        )
     )
     parser.add_argument("image", help="Path to the original/source image")
     parser.add_argument(
         "template",
-        help="Path to template image; it may be the full-size original image when --template-rect is used",
+        help="Path to template image; may be the full-size original image when --template-rect is used",
     )
     parser.add_argument(
         "--rect", nargs=4, type=int, metavar=("TOP", "LEFT", "RIGHT", "BOTTOM"),
-        help="Optional search area in source-image coordinates"
+        help="Optional search area in source-image coordinates: TOP LEFT RIGHT BOTTOM",
     )
     parser.add_argument(
         "--template-rect", nargs=4, type=int,
         metavar=("TOP", "LEFT", "RIGHT", "BOTTOM"),
-        help="Crop this RECT from the template image before matching; useful when template is a full 1920x1080 screenshot"
+        help="Crop this rectangle from the template image before matching: TOP LEFT RIGHT BOTTOM",
     )
     parser.add_argument("--threshold", type=float, default=0.8, help="Similarity threshold (0..1, default: 0.8)")
     parser.add_argument("--method", choices=METHODS, default="TM_CCOEFF_NORMED")
     parser.add_argument("--color", action="store_true", help="Match color channels instead of grayscale")
-    parser.add_argument("--output", help="Optional path to save a copy of the source image with the match rectangle")
+    parser.add_argument("--output", help="Optional path to save source image with the match rectangle")
     parser.add_argument(
         "--save-template-crop",
         help="Optional path to save the cropped template specified by --template-rect",
     )
     args = parser.parse_args()
+
+    if not 0 <= args.threshold <= 1:
+        parser.error("--threshold must be between 0 and 1")
 
     try:
         template_input = args.template
@@ -74,7 +84,10 @@ def main() -> int:
                 output_template.parent.mkdir(parents=True, exist_ok=True)
                 if not cv2.imwrite(str(output_template), template_input):
                     parser.error(f"Could not write cropped template: {output_template}")
-                print(f"Cropped template saved: {output_template} (size={template_input.shape[1]}x{template_input.shape[0]})")
+                print(
+                    f"Cropped template saved: {output_template} "
+                    f"(size={template_input.shape[1]}x{template_input.shape[0]})"
+                )
 
         match = match_template(
             args.image,
