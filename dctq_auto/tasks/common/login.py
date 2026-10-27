@@ -219,6 +219,10 @@ def prepare_login(
     worker, account, device, ocr_client
 ) -> tuple[str | None, str | None]:
     """Nhận diện màn hình hiện tại và xử lý đến khi sẵn sàng đăng nhập."""
+    if not worker._wait_if_paused():
+        worker.log_message.emit("Đã dừng theo yêu cầu.")
+        return None, None
+
     template_names = (
         "login_form",
         "waiting",
@@ -227,85 +231,79 @@ def prepare_login(
     )
     templates = get_templates(template_names, screen_name="accounts")
 
-    while True:
-        if not worker._wait_if_paused():
-            worker.log_message.emit("Đã dừng theo yêu cầu.")
-            return None, None
+    try:
+        screenshot = device.screenshot()
+        screen_bgr = cv2.cvtColor(
+            np.asarray(screenshot), cv2.COLOR_RGB2BGR
+        )
+    except Exception as exc:
+        worker.log_message.emit(
+            f"[{account.username}] Không chụp được màn hình tiền đăng nhập: {exc}"
+        )
+        return None, "Không xác minh được trạng thái trước đăng nhập"
+
+    detected_state = None
+    for template_name in template_names:
+        template = templates.get(template_name)
+        if template is None:
+            continue
 
         try:
-            screenshot = device.screenshot()
-            screen_bgr = cv2.cvtColor(
-                np.asarray(screenshot), cv2.COLOR_RGB2BGR
+            match = _match_account_template(screen_bgr, template)
+        except (ValueError, cv2.error) as exc:
+            worker.log_message.emit(
+                f"[{account.username}] Lỗi template matching {template_name}: {exc}"
             )
+            continue
+
+        if match is None:
+            continue
+
+        report_template_match(
+            worker.log_message.emit,
+            context=f"[{account.username}] Tiền đăng nhập:",
+            template_name=template_name,
+            display_name=template.display_name,
+            match=match,
+            threshold=template.threshold,
+        )
+        detected_state = template_name
+        break
+
+    if detected_state == "login_form":
+        return "login_form", None
+
+    if detected_state == "profile":
+        worker.log_message.emit(
+            f"[{account.username}] Đã ở màn hình profile; đăng nhập không cần thực hiện lại."
+        )
+        return "profile", None
+
+    if detected_state == "waiting":
+        worker.log_message.emit(
+            f"[{account.username}] Màn hình đang chờ; kiểm tra lại sau 3 giây."
+        )
+        time.sleep(3)
+        return prepare_login(worker, account, device, ocr_client)
+
+    if detected_state == "update_information":
+        worker.log_message.emit(
+            f"[{account.username}] Phát hiện hộp thoại cập nhật thông tin; đang đóng hộp thoại."
+        )
+        try:
+            ocr_client.tap_ocr_target("close_cap_nhat_thong_tin_ca_nhan")
         except Exception as exc:
             worker.log_message.emit(
-                f"[{account.username}] Không chụp được màn hình tiền đăng nhập: {exc}"
+                f"[{account.username}] Không đóng được hộp thoại cập nhật thông tin: {exc}"
             )
-            return None, "Không xác minh được trạng thái trước đăng nhập"
+            return None, "Không đóng được hộp thoại cập nhật thông tin"
+        time.sleep(1)
+        return prepare_login(worker, account, device, ocr_client)
 
-        detected_state = None
-        for template_name in template_names:
-            template = templates.get(template_name)
-            if template is None:
-                continue
-
-            try:
-                match = _match_account_template(screen_bgr, template)
-            except (ValueError, cv2.error) as exc:
-                worker.log_message.emit(
-                    f"[{account.username}] Lỗi template matching {template_name}: {exc}"
-                )
-                continue
-
-            if match is None:
-                continue
-
-            report_template_match(
-                worker.log_message.emit,
-                context=f"[{account.username}] Tiền đăng nhập:",
-                template_name=template_name,
-                display_name=template.display_name,
-                match=match,
-                threshold=template.threshold,
-            )
-            detected_state = template_name
-            break
-
-        if detected_state == "login_form":
-            return "login_form", None
-
-        if detected_state == "profile":
-            worker.log_message.emit(
-                f"[{account.username}] Đã ở màn hình profile; đăng nhập không cần thực hiện lại."
-            )
-            return "profile", None
-
-        if detected_state == "waiting":
-            worker.log_message.emit(
-                f"[{account.username}] Màn hình đang chờ; kiểm tra lại sau 3 giây."
-            )
-            time.sleep(3)
-            continue
-
-        if detected_state == "update_information":
-            worker.log_message.emit(
-                f"[{account.username}] Phát hiện hộp thoại cập nhật thông tin; đang đóng hộp thoại."
-            )
-            try:
-                ocr_client.tap_ocr_target("close_cap_nhat_thong_tin_ca_nhan")
-            except Exception as exc:
-                worker.log_message.emit(
-                    f"[{account.username}] Không đóng được hộp thoại cập nhật thông tin: {exc}"
-                )
-                return None, "Không đóng được hộp thoại cập nhật thông tin"
-            time.sleep(1)
-            continue
-
-        worker.log_message.emit(
-            f"[{account.username}] Không nhận diện được trạng thái tiền đăng nhập."
-        )
-        return None, "Không xác định được trạng thái trước đăng nhập"
-
+    worker.log_message.emit(
+        f"[{account.username}] Không nhận diện được trạng thái tiền đăng nhập."
+    )
+    return None, "Không xác định được trạng thái trước đăng nhập"
 
 def login_account(
     worker, account, device, ocr_client
