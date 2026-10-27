@@ -106,7 +106,7 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
             worker.log_message.emit,
             context=f"[{account.username}] Đăng xuất:",
             template_name=template_name.rsplit("/", 1)[-1],
-            display_name=template.display_name,
+            display_name=template.name,
             match=match,
             threshold=template.threshold,
         )
@@ -213,7 +213,7 @@ def handle_post_logout(
             worker.log_message.emit,
             context=f"[{account.username}] Xác minh đăng xuất:",
             template_name=template_name.rsplit("/", 1)[-1],
-            display_name=template.display_name,
+            display_name=template.name,
             match=match,
             threshold=template.threshold,
         )
