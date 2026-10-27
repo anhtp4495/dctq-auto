@@ -104,10 +104,8 @@ def handle_post_login(
         report_template_match(
             worker.log_message.emit,
             context=f"[{account.username}]",
-            template_name=template_name.rsplit("/", 1)[-1],
-            display_name=template.name,
+            template=template,
             match=match,
-            threshold=template.threshold,
         )
 
         if template.id == "waiting":
@@ -199,10 +197,8 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
         report_template_match(
             worker.log_message.emit,
             context=f"[{account.username}]",
-            template_name=template_name.rsplit("/", 1)[-1],
-            display_name=template.name,
+            template=template,
             match=match,
-            threshold=threshold,
         )
         if template.id == "thong_tin_dang_nhap_khong_dung":
             reason = "Thông tin đăng nhập không đúng"
@@ -263,10 +259,8 @@ def prepare_login(
         report_template_match(
             worker.log_message.emit,
             context=f"[{account.username}] Tiền đăng nhập:",
-            template_name=template_name.rsplit("/", 1)[-1],
-            display_name=template.name,
+            template=template,
             match=match,
-            threshold=template.threshold,
         )
         detected_state = template.id
         break
