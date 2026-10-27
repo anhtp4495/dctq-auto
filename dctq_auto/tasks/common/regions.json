@@ -1887,6 +1887,18 @@
             "x": 0.914583,
             "y": 0.114815
           }
+        },
+        {
+          "name": "dong_man_hinh_bao_danh_doan_chien",
+          "text": "Nút đóng màn hình báo danh Đoàn Chiến",
+          "center": {
+            "x_px": 1834,
+            "y_px": 60
+          },
+          "center_ratio": {
+            "x": 0.955208,
+            "y": 0.055556
+          }
         }
       ],
       "ocr_nhan_thuong_dai_chien_quan_doan": {
@@ -1941,6 +1953,63 @@
           "height": 81
         },
         "target_text": "an_vao_cho_trong_de_thoat",
+        "similarity_threshold": 0.75,
+        "steps": [
+          "color_text"
+        ],
+        "psm": [
+          11
+        ],
+        "text_color": "#FFFFFF",
+        "background_color": "#000000",
+        "color_tolerance": 38
+      },
+      "ocr_quy_trinh_dai_chien_quan_doan": {
+        "name": "ocr_quy_trinh_dai_chien_quan_doan",
+        "text": "RECT OCR nhận diện tiêu đề quy trình Đại chiến quân đoàn",
+        "bounds": {
+          "left": 644,
+          "top": 39,
+          "right": 1273,
+          "bottom": 124
+        },
+        "rect": {
+          "x": 644,
+          "y": 39,
+          "width": 629,
+          "height": 85
+        },
+        "target_text": "quy_trinh_dai_chien_quan_doan",
+        "similarity_threshold": 0.9,
+        "steps": [
+          "color_text"
+        ],
+        "psm": [
+          11
+        ],
+        "text_color": "#FFFFFF",
+        "background_color": "#000000",
+        "color_tolerance": 38
+      },
+      "ocr_bao_danh_doan_chien": {
+        "name": "ocr_bao_danh_doan_chien",
+        "text": "RECT OCR kiểm tra dấu hiệu chưa báo danh Đoàn Chiến",
+        "bounds": {
+          "left": 1293,
+          "top": 849,
+          "right": 1915,
+          "bottom": 937
+        },
+        "rect": {
+          "x": 1293,
+          "y": 849,
+          "width": 622,
+          "height": 88
+        },
+        "target_texts": [
+          "so_thanh_vien_can_dat_30",
+          "cap_binh_quan_quan_doan_yeu_cau_100"
+        ],
         "similarity_threshold": 0.75,
         "steps": [
           "color_text"
