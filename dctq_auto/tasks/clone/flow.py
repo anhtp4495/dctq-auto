@@ -451,6 +451,40 @@ def run_clone_flow(self, device) -> None:
                 )
                 break
 
+        # Nhận thưởng - Quân Đoàn chạy cuối cùng, sau Quốc chiến, dùng lại flow đã có ở Tab Tác vụ.
+        if self._config.get("clone_reward_guild"):
+            task_label = f"{account.username} - Nhận Thưởng - Quân Đoàn"
+            self.task_progress_changed.emit(task_label, "running", 0, 1)
+            if not self._wait_if_paused():
+                self.log_message.emit("Đã dừng trước khi nhận Thưởng - Quân Đoàn.")
+                return
+            self.log_message.emit(
+                f"[{account.username}] Bắt đầu Nhận Thưởng - Quân Đoàn "
+                "bằng luồng đã triển khai ở Tab Tác vụ."
+            )
+            previous_reward_flag = self._config.get("reward_weekly_doan_chien", False)
+            try:
+                from dctq_auto.tasks.reward_weekly_doan_chien import run_reward_weekly_doan_chien
+                self._config["reward_weekly_doan_chien"] = True
+                reward_result = run_reward_weekly_doan_chien(self, device, 0, 1)
+                if reward_result is None:
+                    self.task_progress_changed.emit(task_label, "failed", 0, 1)
+                    self.log_message.emit(
+                        f"[{account.username}] Luồng Nhận Thưởng - Quân Đoàn đã dừng hoặc chưa hoàn tất."
+                    )
+                else:
+                    self.task_progress_changed.emit(task_label, "done", 1, 1)
+                    self.log_message.emit(
+                        f"[{account.username}] Đã chạy xong luồng Nhận Thưởng - Quân Đoàn."
+                    )
+            except Exception as exc:
+                self.task_progress_changed.emit(task_label, "failed", 0, 1)
+                self.log_message.emit(
+                    f"[{account.username}] Nhận Thưởng - Quân Đoàn thất bại: {exc}"
+                )
+            finally:
+                self._config["reward_weekly_doan_chien"] = previous_reward_flag
+
         # Close the guild panel after all selected guild-related actions,
         # then log out so the next account starts from the login screen.
         from dctq_auto.tasks.common.logout import run_logout_flow
