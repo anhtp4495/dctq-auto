@@ -105,13 +105,38 @@ def _load_screen_templates(screen_name: str) -> dict[str, LoadedTemplate]:
     return loaded
 
 
-def get_templates(template_names: tuple[str, ...] | list[str], screen_name: str = "accounts") -> dict[str, LoadedTemplate]:
-    """Trả về các template được yêu cầu từ cache cấu hình/ảnh đã cắt.
+def get_templates(template_names: tuple[str, ...] | list[str]) -> dict[str, LoadedTemplate]:
+    """Tải template theo định dạng ``screen_name/template_name``.
 
-    Template chưa khai báo hoặc không hợp lệ sẽ không có trong kết quả.
+    Ví dụ: ``get_templates(("accounts/waiting", "accounts/profile"))``.
+    Khóa kết quả giữ nguyên đường dẫn được truyền vào để tránh trùng tên giữa
+    các màn hình. Template chưa khai báo hoặc không hợp lệ sẽ bị bỏ qua.
     """
-    available = _load_screen_templates(screen_name)
-    return {name: available[name] for name in template_names if name in available}
+    loaded: dict[str, LoadedTemplate] = {}
+    screens: dict[str, dict[str, LoadedTemplate]] = {}
+
+    for template_path in template_names:
+        try:
+            screen_name, template_name = template_path.split("/", 1)
+        except (AttributeError, ValueError):
+            logger.warning(
+                "Đường dẫn template %r không hợp lệ; dùng định dạng screen_name/template_name.",
+                template_path,
+            )
+            continue
+
+        if not screen_name or not template_name or "/" in template_name:
+            logger.warning("Đường dẫn template %r không hợp lệ; bỏ qua.", template_path)
+            continue
+
+        if screen_name not in screens:
+            screens[screen_name] = _load_screen_templates(screen_name)
+
+        template = screens[screen_name].get(template_name)
+        if template is not None:
+            loaded[template_path] = template
+
+    return loaded
 
 
 def clear_template_cache() -> None:
