@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 
 from dctq_auto.tasks.base import TaskSpec
-from dctq_auto.tasks.common.logout import run_logout_flow
+from dctq_auto.tasks.common.logout import logout_account
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_store import get_templates
 from dctq_auto.vision.template_report import report_template_match
@@ -278,8 +278,11 @@ def prepare_login(
         worker.log_message.emit(
             f"[{account.username}] Đang ở màn hình profile; gọi quy trình đăng xuất."
         )
-        if not run_logout_flow(worker, account, device, ocr_client):
-            return False, "Không thể đăng xuất khỏi tài khoản hiện tại"
+        logout_result, logout_error = logout_account(
+            worker, account, device, ocr_client
+        )
+        if logout_result is not True:
+            return logout_result, logout_error
         return prepare_login(worker, account, device, ocr_client)
 
     if detected_state == "waiting":
