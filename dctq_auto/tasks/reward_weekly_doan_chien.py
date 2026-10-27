@@ -269,6 +269,133 @@ def run_reward_weekly_doan_chien(self, device, completed: int, total: int) -> in
                     f"RECT={doan_rect}."
                 )
     
+            # Bước 4: xác nhận đã vào quy trình Đại chiến quân đoàn.
+            # Nếu không thấy tiêu đề sau 3 lần OCR (cách nhau 3 giây),
+            # kiểm tra dấu hiệu chưa báo danh và đóng màn hình báo danh nếu cần.
+            from difflib import SequenceMatcher
+
+            reward_cfg = regions_data["regions"]["reward_weekly_doan_chien"]
+            flow_ocr = reward_cfg["ocr_quy_trinh_dai_chien_quan_doan"]
+            flow_bounds = flow_ocr["bounds"]
+            flow_rect = (
+                int(flow_bounds["left"]), int(flow_bounds["top"]),
+                int(flow_bounds["right"]), int(flow_bounds["bottom"]),
+            )
+            flow_target = self._normalize_screen_text(
+                str(flow_ocr.get("target_text", "quy_trinh_dai_chien_quan_doan"))
+            ).replace(" ", "")
+            flow_steps = tuple(flow_ocr.get("steps", ["color_text"]))
+            flow_psm = tuple(int(value) for value in flow_ocr.get("psm", [11]))
+            flow_text_color = flow_ocr.get("text_color", "#FFFFFF")
+            flow_background_color = flow_ocr.get("background_color", "#000000")
+            flow_tolerance = float(flow_ocr.get("color_tolerance", 38))
+            flow_threshold = float(flow_ocr.get("similarity_threshold", 0.90))
+            flow_found = False
+            for attempt in range(1, 4):
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng khi xác nhận quy trình Đại chiến quân đoàn.")
+                    return
+                if attempt > 1:
+                    self.log_message.emit(
+                        f"Bước 4: chờ 3 giây trước lần OCR tiêu đề {attempt}/3."
+                    )
+                    for _ in range(30):
+                        if not self._wait_if_paused():
+                            self.log_message.emit("Đã dừng khi chờ OCR quy trình Đại chiến quân đoàn.")
+                            return
+                        time.sleep(0.1)
+                flow_words = self._ocr_words_in_rect(
+                    device, flow_rect, steps=flow_steps, psm=flow_psm,
+                    text_color=flow_text_color, background_color=flow_background_color,
+                    color_tolerance=flow_tolerance,
+                )
+                flow_observed = "".join(
+                    self._normalize_screen_text(str(word.get("text", ""))).replace(" ", "")
+                    for word in flow_words
+                )
+                flow_score = SequenceMatcher(None, flow_target, flow_observed).ratio() if flow_observed else 0.0
+                self.log_message.emit(
+                    f"Bước 4 OCR tiêu đề: lần {attempt}/3; RECT={flow_rect}; "
+                    f"text='{flow_observed or '(trống)'}'; tương đồng={flow_score:.1%}, "
+                    f"ngưỡng ≥{flow_threshold:.0%}."
+                )
+                if flow_score >= flow_threshold:
+                    flow_found = True
+                    break
+
+            if not flow_found:
+                fallback_ocr = reward_cfg["ocr_bao_danh_doan_chien"]
+                fallback_bounds = fallback_ocr["bounds"]
+                fallback_rect = (
+                    int(fallback_bounds["left"]), int(fallback_bounds["top"]),
+                    int(fallback_bounds["right"]), int(fallback_bounds["bottom"]),
+                )
+                fallback_steps = tuple(fallback_ocr.get("steps", ["color_text"]))
+                fallback_psm = tuple(int(value) for value in fallback_ocr.get("psm", [11]))
+                fallback_text_color = fallback_ocr.get("text_color", "#FFFFFF")
+                fallback_background_color = fallback_ocr.get("background_color", "#000000")
+                fallback_tolerance = float(fallback_ocr.get("color_tolerance", 38))
+                fallback_threshold = float(fallback_ocr.get("similarity_threshold", 0.75))
+                fallback_targets = tuple(
+                    self._normalize_screen_text(str(value)).replace(" ", "")
+                    for value in fallback_ocr.get("target_texts", [
+                        "so_thanh_vien_can_dat_30", "cap_binh_quan_quan_doan_yeu_cau_100"
+                    ])
+                )
+                fallback_words = self._ocr_words_in_rect(
+                    device, fallback_rect, steps=fallback_steps, psm=fallback_psm,
+                    text_color=fallback_text_color, background_color=fallback_background_color,
+                    color_tolerance=fallback_tolerance,
+                )
+                fallback_texts = [
+                    self._normalize_screen_text(str(word.get("text", ""))).replace(" ", "")
+                    for word in fallback_words if str(word.get("text", "")).strip()
+                ]
+                fallback_observed = "".join(fallback_texts)
+                fallback_best_score = 0.0
+                fallback_best_target = ""
+                for target in fallback_targets:
+                    candidates = [fallback_observed, *fallback_texts]
+                    for size in range(2, min(6, len(fallback_texts)) + 1):
+                        candidates.extend(
+                            "".join(fallback_texts[start:start + size])
+                            for start in range(len(fallback_texts) - size + 1)
+                        )
+                    for candidate in candidates:
+                        score = SequenceMatcher(None, target, candidate).ratio() if candidate else 0.0
+                        if score > fallback_best_score:
+                            fallback_best_score = score
+                            fallback_best_target = target
+                self.log_message.emit(
+                    f"Bước 4 OCR dự phòng báo danh: RECT={fallback_rect}; "
+                    f"text='{fallback_observed or '(trống)'}'; mục khớp='{fallback_best_target or '(không có)'}'; "
+                    f"tương đồng={fallback_best_score:.1%}, ngưỡng >{fallback_threshold:.0%}."
+                )
+                if fallback_best_score > fallback_threshold:
+                    close_button = next(
+                        (item for item in reward_cfg.get("elements", [])
+                         if item.get("name") == "dong_man_hinh_bao_danh_doan_chien"),
+                        None,
+                    )
+                    if close_button is None or "center" not in close_button:
+                        raise RuntimeError(
+                            "Thiếu tọa độ dong_man_hinh_bao_danh_doan_chien trong regions.json."
+                        )
+                    close_center = close_button["center"]
+                    cx, cy = int(close_center["x_px"]), int(close_center["y_px"])
+                    device.shell(f"input tap {cx} {cy}")
+                    self.log_message.emit(
+                        f"Bước 4: chưa báo danh nên chưa nhận thưởng được; OCR khớp "
+                        f"'{fallback_best_target}' ({fallback_best_score:.1%}); đã click "
+                        f"dong_man_hinh_bao_danh_doan_chien tại ({cx}, {cy})."
+                    )
+                    time.sleep(0.5)
+                else:
+                    self.log_message.emit(
+                        "Bước 4: tiêu đề quy trình không xuất hiện sau 3 lần và OCR dự phòng "
+                        "không khớp dấu hiệu chưa báo danh; tiếp tục kiểm tra bước nhận thưởng."
+                    )
+
             # Bước 5: chờ nút nhận thưởng xuất hiện; OCR tối đa 10 lần, cách nhau 3 giây.
             reward_cfg = regions_data["regions"]["reward_weekly_doan_chien"]
             reward_ocr = reward_cfg["ocr_nhan_thuong_dai_chien_quan_doan"]
