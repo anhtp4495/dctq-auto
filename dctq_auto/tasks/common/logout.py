@@ -110,11 +110,11 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
             match=match,
             threshold=template.threshold,
         )
-        detected_state = template_name.rsplit("/", 1)[-1]
+        detected_state = template.id
         detected_match = match
         break
 
-    if detected_state == "login_form":
+    if detected_state == "dang_nhap":
         worker.log_message.emit(
             f"[{account.username}] Đã về màn hình đăng nhập sau khi đổi tài khoản."
         )
@@ -127,7 +127,7 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
         time.sleep(3)
         return run_logout_flow(worker, account, device, ocr_client)
 
-    if detected_state == "profile":
+    if detected_state == "trang_ca_nhan":
         tap_x = int(screenshot.width * 0.029167)
         tap_y = int(screenshot.height * 0.071296)
         worker.log_message.emit(
@@ -139,9 +139,9 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
         return run_logout_flow(worker, account, device, ocr_client)
 
     if detected_state in (
-        "account_settings_action",
-        "account_settings_change",
-        "account_settings_confirm",
+        "tuy_chon",
+        "cai_dat_nguoi_dung",
+        "doi_tai_khoan",
     ):
         tap_x = (detected_match.left + detected_match.right) // 2
         tap_y = (detected_match.top + detected_match.bottom) // 2
@@ -218,8 +218,8 @@ def handle_post_logout(
             threshold=template.threshold,
         )
 
-        state = template_name.rsplit("/", 1)[-1]
-        if state == "login_form":
+        state = template.id
+        if state == "dang_nhap":
             worker.log_message.emit(
                 f"[{account.username}] Đăng xuất thành công."
             )
