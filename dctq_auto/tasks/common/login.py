@@ -188,3 +188,22 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
         f"[{account.username}] Đăng nhập thành công."
     )
     return True, None
+
+
+def login_account(
+    worker, account, device, ocr_client
+) -> tuple[bool | None, str | None]:
+    """Điều phối toàn bộ quy trình đăng nhập tài khoản.
+
+    Trả về (True, None) khi đã xác nhận vào game,
+    (False, error) khi đăng nhập hoặc xác minh thất bại,
+    và (None, None) khi worker yêu cầu dừng/tạm dừng.
+    """
+    if not submit_login_form(worker, account, device, ocr_client):
+        return None, None
+
+    verified, error = verify_login(worker, account, device, ocr_client)
+    if verified is not True:
+        return verified, error
+
+    return handle_post_login(worker, account, device, ocr_client)
