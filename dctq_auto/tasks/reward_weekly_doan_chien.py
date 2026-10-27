@@ -284,7 +284,22 @@ def run_reward_weekly_doan_chien(self, device, completed: int, total: int) -> in
             reward_background_color = reward_ocr.get("background_color", "#000000")
             reward_tolerance = float(reward_ocr.get("color_tolerance", 38))
             reward_threshold = float(reward_ocr.get("similarity_threshold", 0.9))
+            # Bước 5: mỗi lần OCR kiểm tra cả hai trạng thái trong cùng một RECT:
+            # nếu đã nhận thưởng ("da_nhan") thì thoát; nếu còn nút "nhan_thuong" thì nhận.
+            exit_button = next(
+                (item for item in reward_cfg.get("elements", [])
+                 if item.get("name") == "thoat_man_hinh_nhan_thuong_quan_doan"),
+                None,
+            )
+            if exit_button is None or "center" not in exit_button:
+                raise RuntimeError(
+                    "Thiếu tọa độ thoat_man_hinh_nhan_thuong_quan_doan trong regions.json."
+                )
+            exit_center = exit_button["center"]
+            tx, ty = int(exit_center["x_px"]), int(exit_center["y_px"])
+            already_received_target = str(reward_ocr.get("already_received_text", "da_nhan"))
             reward_found = False
+            already_received = False
             for attempt in range(1, 11):
                 if not self._wait_if_paused():
                     self.log_message.emit("Đã dừng khi chờ nút nhận thưởng Đoàn Chiến.")
@@ -298,6 +313,25 @@ def run_reward_weekly_doan_chien(self, device, completed: int, total: int) -> in
                             self.log_message.emit("Đã dừng khi chờ nút nhận thưởng Đoàn Chiến.")
                             return
                         time.sleep(0.1)
+                already_received_match = self._tap_ocr_phrase_in_rect(
+                    device,
+                    (already_received_target,),
+                    reward_rect,
+                    steps=reward_steps,
+                    psm=reward_psm,
+                    tap=False,
+                    background_color=reward_background_color,
+                    text_color=reward_text_color,
+                    color_tolerance=reward_tolerance,
+                )
+                if already_received_match is not None:
+                    device.shell(f"input tap {tx} {ty}")
+                    already_received = True
+                    self.log_message.emit(
+                        f"Bước 5: OCR tìm thấy '{already_received_target}' trong RECT {reward_rect} "
+                        f"(lần {attempt}/10); đã click thoat_man_hinh_nhan_thuong_quan_doan tại ({tx}, {ty})."
+                    )
+                    break
                 match = self._tap_ocr_phrase_in_rect(
                     device,
                     (reward_target,),
@@ -332,9 +366,15 @@ def run_reward_weekly_doan_chien(self, device, completed: int, total: int) -> in
                     f"Bước 5: chưa thấy '{reward_target}' trong RECT {reward_rect} "
                     f"(lần {attempt}/10)."
                 )
+            if already_received:
+                completed += 1
+                self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(completed, max(1, total), "Đã nhận thưởng Đoàn Chiến; đã thoát màn hình nhận thưởng")
+                return completed
             if not reward_found:
                 raise RuntimeError(
-                    f"Không tìm thấy '{reward_target}' trong RECT {reward_rect} sau 10 lần OCR; không click nhận thưởng."
+                    f"Không tìm thấy '{reward_target}' hoặc '{already_received_target}' "
+                    f"trong RECT {reward_rect} sau 10 lần OCR; không click."
                 )
             # Bước 6: xác nhận đã nhận thưởng bằng thông báo 'ấn vào chỗ trống để thoát'.
             from difflib import SequenceMatcher
