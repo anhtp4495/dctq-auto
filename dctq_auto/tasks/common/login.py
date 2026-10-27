@@ -278,10 +278,7 @@ def prepare_login(
         worker.log_message.emit(
             f"[{account.username}] Đang ở màn hình profile; gọi quy trình đăng xuất."
         )
-        logout_result = run_logout_flow(worker, account, device, ocr_client)
-        if logout_result is not True:
-            if logout_result is None:
-                return False, "Đã dừng theo yêu cầu"
+        if not run_logout_flow(worker, account, device, ocr_client):
             return False, "Không thể đăng xuất khỏi tài khoản hiện tại"
         return prepare_login(worker, account, device, ocr_client)
 
