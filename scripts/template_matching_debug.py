@@ -22,21 +22,20 @@ METHODS = {
 
 
 def crop_by_rect(image_path: str, rect: tuple[int, int, int, int]):
-    """Crop RECT in (top, left, right, bottom) order; right/bottom are exclusive."""
+    """Crop RECT in (left, top, right, bottom) order; right/bottom are exclusive."""
     image = cv2.imread(image_path, cv2.IMREAD_COLOR)
     if image is None:
         raise FileNotFoundError(f"Cannot read image: {image_path}")
-    top, left, right, bottom = rect
+    left, top, right, bottom = rect
     height, width = image.shape[:2]
-    if top < 0 or left < 0 or right > width or bottom > height:
+    if left < 0 or top < 0 or right > width or bottom > height:
         raise ValueError(
-            f"RECT (top, left, right, bottom)={rect} is outside image bounds "
+            f"RECT (left, top, right, bottom)={rect} is outside image bounds "
             f"(width={width}, height={height})"
         )
     if right <= left or bottom <= top:
         raise ValueError(
-            f"RECT (top, left, right, bottom)={rect} must have positive width "
-            "and height. Note: expected order is TOP LEFT RIGHT BOTTOM."
+            f"RECT (left, top, right, bottom)={rect} must have positive width and height."
         )
     return image[top:bottom, left:right]
 
@@ -45,7 +44,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Find a template in a source image. RECT arguments use "
-            "(TOP, LEFT, RIGHT, BOTTOM) order."
+            "(LEFT, TOP, RIGHT, BOTTOM) order."
         )
     )
     parser.add_argument("image", help="Path to the original/source image")
@@ -54,13 +53,13 @@ def main() -> int:
         help="Path to template image; may be the full-size original image when --template-rect is used",
     )
     parser.add_argument(
-        "--rect", nargs=4, type=int, metavar=("TOP", "LEFT", "RIGHT", "BOTTOM"),
-        help="Optional search area in source-image coordinates: TOP LEFT RIGHT BOTTOM",
+        "--rect", nargs=4, type=int, metavar=("LEFT", "TOP", "RIGHT", "BOTTOM"),
+        help="Optional search area in source-image coordinates: LEFT TOP RIGHT BOTTOM",
     )
     parser.add_argument(
         "--template-rect", nargs=4, type=int,
-        metavar=("TOP", "LEFT", "RIGHT", "BOTTOM"),
-        help="Crop this rectangle from the template image before matching: TOP LEFT RIGHT BOTTOM",
+        metavar=("LEFT", "TOP", "RIGHT", "BOTTOM"),
+        help="Crop this rectangle from the template image before matching: LEFT TOP RIGHT BOTTOM",
     )
     parser.add_argument("--threshold", type=float, default=0.8, help="Similarity threshold (0..1, default: 0.8)")
     parser.add_argument("--method", choices=METHODS, default="TM_CCOEFF_NORMED")
@@ -89,10 +88,17 @@ def main() -> int:
                     f"(size={template_input.shape[1]}x{template_input.shape[0]})"
                 )
 
+        # CLI rectangles are (left, top, right, bottom); the matching API expects
+        # (top, left, right, bottom), so convert only at the API boundary.
+        search_rect = None
+        if args.rect:
+            left, top, right, bottom = args.rect
+            search_rect = (top, left, right, bottom)
+
         match = match_template(
             args.image,
             template_input,
-            search_rect=tuple(args.rect) if args.rect else None,
+            search_rect=search_rect,
             threshold=args.threshold,
             method=METHODS[args.method],
             grayscale=not args.color,
