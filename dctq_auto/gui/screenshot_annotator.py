@@ -335,7 +335,7 @@ class ScreenshotAnnotator(QDialog):
 
         self.coordinate_input_button = QPushButton("⌨")
         self.coordinate_input_button.setFixedSize(34, 30)
-        self.coordinate_input_button.setToolTip("Nhập X, Y, Width, Height theo pixel ảnh gốc")
+        self.coordinate_input_button.setToolTip("Nhập Top, Left, Right, Bottom theo pixel ảnh gốc")
         self.coordinate_input_button.clicked.connect(self.input_coordinates)
         toolbar.addWidget(self.coordinate_input_button)
 
@@ -563,7 +563,7 @@ class ScreenshotAnnotator(QDialog):
         self.image_view.update()
 
     def input_coordinates(self) -> None:
-        """Open a validated X/Y/Width/Height editor in original-image pixels."""
+        """Open a validated Top/Left/Right/Bottom editor in original-image pixels."""
         if self._pixmap.isNull():
             QMessageBox.information(self, "Chưa có ảnh", "Hãy mở ảnh chụp màn hình trước.")
             return
@@ -571,24 +571,24 @@ class ScreenshotAnnotator(QDialog):
         dialog = QDialog(self)
         dialog.setWindowTitle("Nhập vị trí")
         form = QFormLayout(dialog)
-        x_input = QLineEdit()
-        y_input = QLineEdit()
-        width_input = QLineEdit()
-        height_input = QLineEdit()
+        top_input = QLineEdit()
+        left_input = QLineEdit()
+        right_input = QLineEdit()
+        bottom_input = QLineEdit()
         for widget, placeholder in (
-            (x_input, "Bắt buộc, từ 0 đến chiều rộng ảnh - 1"),
-            (y_input, "Bắt buộc, từ 0 đến chiều cao ảnh - 1"),
-            (width_input, "Để trống nếu nhập một điểm"),
-            (height_input, "Để trống nếu nhập một điểm"),
+            (top_input, "Bắt buộc, từ 0 đến chiều cao ảnh - 1"),
+            (left_input, "Bắt buộc, từ 0 đến chiều rộng ảnh - 1"),
+            (right_input, "Để trống nếu nhập một điểm"),
+            (bottom_input, "Để trống nếu nhập một điểm"),
         ):
             widget.setPlaceholderText(placeholder)
-        form.addRow("X:", x_input)
-        form.addRow("Y:", y_input)
-        form.addRow("Width:", width_input)
-        form.addRow("Height:", height_input)
+        form.addRow("Top:", top_input)
+        form.addRow("Left:", left_input)
+        form.addRow("Right:", right_input)
+        form.addRow("Bottom:", bottom_input)
         hint = QLabel(
             f"Ảnh gốc: {self._pixmap.width()} × {self._pixmap.height()} px. "
-            "Width và Height phải cùng để trống hoặc cùng là số lớn hơn 0."
+            "Để nhập một điểm, để trống Right và Bottom; RECT cần đủ cả bốn cạnh."
         )
         hint.setWordWrap(True)
         form.addRow(hint)
@@ -597,10 +597,7 @@ class ScreenshotAnnotator(QDialog):
         )
         form.addRow(buttons)
 
-        fields = {
-            "x": x_input, "y": y_input,
-            "width": width_input, "height": height_input,
-        }
+        fields = {"top": top_input, "left": left_input, "right": right_input, "bottom": bottom_input}
 
         def mark_invalid(names: set[str]) -> None:
             for name, widget in fields.items():
@@ -612,7 +609,7 @@ class ScreenshotAnnotator(QDialog):
         def accept_coordinates() -> None:
             invalid: set[str] = set()
             values: dict[str, int | None] = {}
-            for name in ("x", "y", "width", "height"):
+            for name in ("top", "left", "right", "bottom"):
                 raw = fields[name].text().strip()
                 if not raw:
                     values[name] = None
@@ -623,79 +620,58 @@ class ScreenshotAnnotator(QDialog):
                     values[name] = None
                     invalid.add(name)
 
-            if values["x"] is None:
-                invalid.add("x")
-            if values["y"] is None:
-                invalid.add("y")
+            if values["top"] is None: invalid.add("top")
+            if values["left"] is None: invalid.add("left")
             image_width, image_height = self._pixmap.width(), self._pixmap.height()
-            if values["x"] is not None and not (0 <= values["x"] < image_width):
-                invalid.add("x")
-            if values["y"] is not None and not (0 <= values["y"] < image_height):
-                invalid.add("y")
-
-            width_empty = not width_input.text().strip()
-            height_empty = not height_input.text().strip()
-            is_point = width_empty and height_empty
-            if width_empty != height_empty:
-                invalid.update(("width", "height"))
+            if values["top"] is not None and not (0 <= values["top"] < image_height): invalid.add("top")
+            if values["left"] is not None and not (0 <= values["left"] < image_width): invalid.add("left")
+            right_empty = not right_input.text().strip()
+            bottom_empty = not bottom_input.text().strip()
+            is_point = right_empty and bottom_empty
+            if right_empty != bottom_empty:
+                invalid.update(("right", "bottom"))
             elif not is_point:
-                for name in ("width", "height"):
-                    if values[name] is None or values[name] <= 0:
-                        invalid.add(name)
-                if not invalid and values["x"] is not None and values["y"] is not None:
-                    if values["x"] + values["width"] > image_width:
-                        invalid.add("width")
-                    if values["y"] + values["height"] > image_height:
-                        invalid.add("height")
+                if values["right"] is None or not (0 < values["right"] <= image_width): invalid.add("right")
+                if values["bottom"] is None or not (0 < values["bottom"] <= image_height): invalid.add("bottom")
+                if values["right"] is not None and values["left"] is not None and values["right"] <= values["left"]: invalid.add("right")
+                if values["bottom"] is not None and values["top"] is not None and values["bottom"] <= values["top"]: invalid.add("bottom")
 
             mark_invalid(invalid)
             if invalid:
                 hint.setText(
-                    "Giá trị chưa hợp lệ: X/Y phải nằm trong ảnh; Width/Height phải cùng để trống "
-                    "hoặc là số nguyên > 0 và vùng RECT phải nằm trọn trong ảnh."
+                    "Giá trị chưa hợp lệ: Top/Left phải nằm trong ảnh; Right phải lớn hơn Left; "
+                    "Bottom phải lớn hơn Top và RECT phải nằm trong ảnh. Để nhập điểm, để trống Right và Bottom."
                 )
                 return
 
-            x, y = values["x"], values["y"]
+            top, left = values["top"], values["left"]
             self._ocr_elements = []
             self.image_view.set_ocr_boxes([])
             if is_point:
                 self.point_mode_button.setChecked(True)
                 self._on_mode_changed("Từng điểm")
                 self._ocr_region = None
-                self._points = [(x, y, "manual_point")]
+                self._points = [(left, top, "manual_point")]
                 self.image_view.set_points(self._points)
-                self.instruction.setText(f"Đã nhập point: ({x}, {y}) trên ảnh gốc.")
+                self.instruction.setText(f"Đã nhập point: ({left}, {top}) trên ảnh gốc.")
                 if self._on_location_result is not None:
-                    self._on_location_result(
-                        "Point nhập tay", "manual_point", x, y,
-                        x / image_width, y / image_height,
-                    )
+                    self._on_location_result("Point nhập tay", "manual_point", left, top, left / image_width, top / image_height)
             else:
-                width, height = values["width"], values["height"]
-                right, bottom = x + width, y + height
+                right, bottom = values["right"], values["bottom"]
                 self.region_mode_button.setChecked(True)
                 self._on_mode_changed("Từng vùng")
-                self._ocr_region = (x, y, right, bottom)
-                # RECT được lưu riêng; không tạo các điểm góc manual_*.
+                self._ocr_region = (left, top, right, bottom)
                 self._points = []
                 self.image_view.set_points(self._points)
                 self.image_view.set_selected_region(self._ocr_region)
-                self.instruction.setText(
-                    f"Đã nhập RECT: x={x}, y={y}, w={width}, h={height}. "
-                    "Nhấn Phân tích (OCR) để nhận diện chữ trong vùng này."
-                )
+                self.instruction.setText(f"Đã nhập RECT: top={top}, left={left}, right={right}, bottom={bottom}. Nhấn Phân tích OCR để nhận diện chữ trong vùng này.")
                 if self._on_location_result is not None:
-                    self._on_location_result(
-                        "RECT nhập tay", "manual_rect", x, y,
-                        x / image_width, y / image_height,
-                    )
+                    self._on_location_result("RECT nhập tay", "manual_rect", left, top, left / image_width, top / image_height)
             dialog.accept()
 
         buttons.accepted.connect(accept_coordinates)
         buttons.rejected.connect(dialog.reject)
         dialog.exec()
-
     def capture_screenshot(self) -> None:
         """Capture a screenshot when invoked programmatically."""
         try:
