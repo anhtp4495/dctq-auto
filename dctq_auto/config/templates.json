@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "screens": {
+    "man_hinh_chinh": {
+      "source_image": "assets/templates/man_hinh_chinh.png",
+      "templates": {
+        "dong_cua_so": {
+          "display_name": "Nút đóng cửa sổ",
+          "description": "Nhận diện nút đóng ở góc phải",
+          "region": [300, 700, 440, 40],
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "xac_nhan": {
+          "display_name": "Nút xác nhận",
+          "description": "Nhận diện nút xác nhận hành động",
+          "region": [500, 800, 400, 50],
+          "threshold": 0.90,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    }
+  }
+}
