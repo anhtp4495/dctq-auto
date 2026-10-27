@@ -8,6 +8,7 @@ import numpy as np
 from dctq_auto.tasks.base import TaskSpec
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_store import get_templates
+from dctq_auto.vision.template_report import report_template_match
 
 SPEC = TaskSpec(
     key="clone_login",
@@ -98,10 +99,13 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
         if match is None:
             continue
 
-        display_name = template.display_name
-        worker.log_message.emit(
-            f"[{account.username}] Template {template_name} ({display_name}) khớp "
-            f"(score={match.score:.3f}, threshold={threshold:.3f}, rect={match.rect})."
+        report_template_match(
+            worker.log_message.emit,
+            context=f"[{account.username}]",
+            template_name=template_name,
+            display_name=template.display_name,
+            match=match,
+            threshold=threshold,
         )
         if template_name == "wrong_username_or_pass":
             reason = "Thông tin đăng nhập không đúng"
