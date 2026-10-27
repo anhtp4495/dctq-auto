@@ -110,7 +110,8 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
             match=match,
             threshold=template.threshold,
         )
-        detected_state = template_name
+        detected_state = template_name.rsplit("/", 1)[-1]
+        detected_match = match
         break
 
     if detected_state == "login_form":
@@ -137,33 +138,22 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
         time.sleep(1.5)
         return run_logout_flow(worker, account, device, ocr_client)
 
-    if detected_state == "account_settings_action":
+    if detected_state in (
+        "account_settings_action",
+        "account_settings_change",
+        "account_settings_confirm",
+    ):
+        tap_x = (detected_match.left + detected_match.right) // 2
+        tap_y = (detected_match.top + detected_match.bottom) // 2
         worker.log_message.emit(
-            f"[{account.username}] Đã nhận diện màn hình tùy chọn; mở Cài đặt người dùng."
+            f"[{account.username}] Bấm giữa template {detected_state} tại ({tap_x}, {tap_y})."
         )
-        ocr_client.tap_ocr_target("cai_dat_nguoi_dung")
+        device.shell(f"input tap {tap_x} {tap_y}")
         time.sleep(1)
-        return run_logout_flow(worker, account, device, ocr_client)
-
-    if detected_state == "account_settings_change":
-        worker.log_message.emit(
-            f"[{account.username}] Đã nhận diện Cài đặt người dùng; chọn Đổi tài khoản."
-        )
-        ocr_client.tap_ocr_target("doi_tai_khoan")
-        time.sleep(1)
-        return run_logout_flow(worker, account, device, ocr_client)
-
-    if detected_state == "account_settings_confirm":
-        worker.log_message.emit(
-            f"[{account.username}] Đã nhận diện hộp thoại xác nhận đổi tài khoản."
-        )
-        ocr_client.tap_ocr_target("button_xac_nhan")
-        time.sleep(1.5)
         return run_logout_flow(worker, account, device, ocr_client)
 
     worker.log_message.emit(
-        f"[{account.username}] Không nhận diện được trạng thái đăng xuất "
-        f"từ các template: {', '.join(template_names)}."
+        f"[{account.username}] Không nhận diện được trạng thái đăng xuất."
     )
     return False
 
