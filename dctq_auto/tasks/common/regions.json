@@ -1911,6 +1911,33 @@
         "text_color": "#FFFFFF",
         "background_color": "#000000",
         "color_tolerance": 38
+      },
+      "ocr_an_vao_cho_trong_de_thoat": {
+        "name": "ocr_an_vao_cho_trong_de_thoat",
+        "text": "RECT OCR nhận diện thông báo ấn vào chỗ trống để thoát sau khi nhận thưởng",
+        "bounds": {
+          "left": 732,
+          "top": 958,
+          "right": 1179,
+          "bottom": 1039
+        },
+        "rect": {
+          "x": 732,
+          "y": 958,
+          "width": 447,
+          "height": 81
+        },
+        "target_text": "an_vao_cho_trong_de_thoat",
+        "similarity_threshold": 0.75,
+        "steps": [
+          "color_text"
+        ],
+        "psm": [
+          11
+        ],
+        "text_color": "#FFFFFF",
+        "background_color": "#000000",
+        "color_tolerance": 38
       }
     }
   }
