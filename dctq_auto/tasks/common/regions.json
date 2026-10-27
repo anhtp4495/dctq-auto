@@ -1875,6 +1875,18 @@
             "x": 0.626563,
             "y": 0.837037
           }
+        },
+        {
+          "name": "thoat_man_hinh_nhan_thuong_quan_doan",
+          "text": "Nút thoát màn hình nhận thưởng quân đoàn",
+          "center": {
+            "x_px": 1756,
+            "y_px": 124
+          },
+          "center_ratio": {
+            "x": 0.914583,
+            "y": 0.114815
+          }
         }
       ],
       "ocr_nhan_thuong_dai_chien_quan_doan": {
@@ -1910,7 +1922,8 @@
         ],
         "text_color": "#FFFFFF",
         "background_color": "#000000",
-        "color_tolerance": 38
+        "color_tolerance": 38,
+        "already_received_text": "da_nhan"
       },
       "ocr_an_vao_cho_trong_de_thoat": {
         "name": "ocr_an_vao_cho_trong_de_thoat",
