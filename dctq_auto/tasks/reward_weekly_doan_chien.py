@@ -336,6 +336,97 @@ def run_reward_weekly_doan_chien(self, device, completed: int, total: int) -> in
                 raise RuntimeError(
                     f"Không tìm thấy '{reward_target}' trong RECT {reward_rect} sau 10 lần OCR; không click nhận thưởng."
                 )
+            # Bước 6: xác nhận đã nhận thưởng bằng thông báo 'ấn vào chỗ trống để thoát'.
+            from difflib import SequenceMatcher
+            exit_cfg = reward_cfg["ocr_an_vao_cho_trong_de_thoat"]
+            exit_bounds = exit_cfg["bounds"]
+            exit_rect = (
+                int(exit_bounds["left"]), int(exit_bounds["top"]),
+                int(exit_bounds["right"]), int(exit_bounds["bottom"]),
+            )
+            exit_target = self._normalize_screen_text(str(exit_cfg.get("target_text", "an_vao_cho_trong_de_thoat"))).replace(" ", "")
+            exit_threshold = float(exit_cfg.get("similarity_threshold", 0.75))
+            exit_steps = tuple(exit_cfg.get("steps", ["color_text"]))
+            exit_psm = tuple(int(value) for value in exit_cfg.get("psm", [11]))
+            exit_text_color = exit_cfg.get("text_color", "#FFFFFF")
+            exit_background_color = exit_cfg.get("background_color", "#000000")
+            exit_tolerance = float(exit_cfg.get("color_tolerance", 38))
+            exit_found = False
+            for attempt in range(1, 4):
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng khi xác nhận nhận thưởng Đoàn Chiến.")
+                    return
+                if attempt > 1:
+                    for _ in range(30):
+                        if not self._wait_if_paused():
+                            self.log_message.emit("Đã dừng khi chờ xác nhận nhận thưởng Đoàn Chiến.")
+                            return
+                        time.sleep(0.1)
+                exit_words = self._ocr_words_in_rect(
+                    device, exit_rect, steps=exit_steps, psm=exit_psm,
+                    text_color=exit_text_color, background_color=exit_background_color,
+                    color_tolerance=exit_tolerance,
+                )
+                observed = "".join(
+                    self._normalize_screen_text(str(word.get("text", ""))).replace(" ", "")
+                    for word in exit_words
+                )
+                score = SequenceMatcher(None, exit_target, observed).ratio() if observed else 0.0
+                self.log_message.emit(
+                    f"Bước 6 OCR xác nhận: lần {attempt}/3; RECT={exit_rect}; "
+                    f"text='{observed or '(trống)'}'; tương đồng={score:.1%}, ngưỡng >{exit_threshold:.0%}."
+                )
+                if score > exit_threshold:
+                    exit_found = True
+                    break
+            if not exit_found:
+                raise RuntimeError(
+                    f"Không tìm thấy thông báo '{exit_target}' với độ tương đồng >{exit_threshold:.0%} "
+                    f"trong RECT {exit_rect} sau 3 lần OCR; không thực hiện click lặp."
+                )
+            # Đã nhận thưởng: click lại nút 3 lần, mỗi lần cách nhau 3 giây.
+            for click_attempt in range(1, 4):
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng trong chuỗi click sau khi nhận thưởng Đoàn Chiến.")
+                    return
+                device.shell(f"input tap {bx} {by}")
+                self.log_message.emit(
+                    f"Bước 6: click nhan_thuong_dai_chien_quan_doan lần {click_attempt}/3 tại ({bx}, {by})."
+                )
+                if click_attempt < 3:
+                    for _ in range(30):
+                        if not self._wait_if_paused():
+                            self.log_message.emit("Đã dừng trong thời gian chờ click sau khi nhận thưởng.")
+                            return
+                        time.sleep(0.1)
+            # Kiểm tra lại nút nhận thưởng sau chuỗi click; màn hình đã quay về nút nhận thưởng.
+            returned_match = None
+            for attempt in range(1, 4):
+                if not self._wait_if_paused():
+                    self.log_message.emit("Đã dừng khi kiểm tra lại nút nhận thưởng Đoàn Chiến.")
+                    return
+                if attempt > 1:
+                    for _ in range(30):
+                        if not self._wait_if_paused():
+                            self.log_message.emit("Đã dừng khi chờ kiểm tra lại nút nhận thưởng.")
+                            return
+                        time.sleep(0.1)
+                returned_match = self._tap_ocr_phrase_in_rect(
+                    device, (reward_target,), reward_rect, steps=reward_steps, psm=reward_psm,
+                    tap=False, background_color=reward_background_color,
+                    text_color=reward_text_color, color_tolerance=reward_tolerance,
+                )
+                if returned_match is not None:
+                    self.log_message.emit(
+                        f"Bước 6: xác nhận đã quay về màn hình có '{reward_target}' "
+                        f"(lần kiểm tra {attempt}/3)."
+                    )
+                    break
+            if returned_match is None:
+                raise RuntimeError(
+                    f"Đã click nút nhận thưởng 3 lần nhưng không xác nhận lại được '{reward_target}' "
+                    f"trong RECT {reward_rect}."
+                )
             completed += 1
             self.task_progress_changed.emit(label, "done", 1, 1)
             self.progress_changed.emit(completed, max(1, total), "Đã mở menu Chiến Tranh")
