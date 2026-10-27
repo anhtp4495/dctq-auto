@@ -611,6 +611,24 @@ def run_reward_weekly_doan_chien(self, device, completed: int, total: int) -> in
                 if already_score > already_threshold:
                     received_success = True
                     self.log_message.emit("Bước 6: xác nhận đã nhận thưởng thành công qua text 'da_nhan'.")
+
+                    # Đóng màn hình nhận thưởng để hoàn tất tính năng.
+                    exit_reward_button = next(
+                        (item for item in reward_cfg.get("elements", [])
+                         if item.get("name") == "thoat_man_hinh_nhan_thuong_quan_doan"),
+                        None,
+                    )
+                    if exit_reward_button is None or "center" not in exit_reward_button:
+                        raise RuntimeError(
+                            "Thiếu tọa độ thoat_man_hinh_nhan_thuong_quan_doan trong regions.json."
+                        )
+                    exit_reward_center = exit_reward_button["center"]
+                    ex, ey = int(exit_reward_center["x_px"]), int(exit_reward_center["y_px"])
+                    device.shell(f"input tap {ex} {ey}")
+                    self.log_message.emit(
+                        f"Đã click thoat_man_hinh_nhan_thuong_quan_doan tại ({ex}, {ey}); "
+                        "hoàn tất Nhận Thưởng - Quân Đoàn."
+                    )
                     break
                 if attempt < 5:
                     for _ in range(20):
