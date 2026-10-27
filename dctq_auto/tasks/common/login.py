@@ -217,11 +217,11 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
 
 def prepare_login(
     worker, account, device, ocr_client
-) -> tuple[str | None, str | None]:
-    """Nhận diện màn hình hiện tại và xử lý đến khi sẵn sàng đăng nhập."""
+) -> tuple[bool, str | None]:
+    """Nhận diện và xử lý trạng thái màn hình trước khi đăng nhập."""
     if not worker._wait_if_paused():
         worker.log_message.emit("Đã dừng theo yêu cầu.")
-        return None, None
+        return False, "Đã dừng theo yêu cầu"
 
     template_names = (
         "login_form",
@@ -240,7 +240,7 @@ def prepare_login(
         worker.log_message.emit(
             f"[{account.username}] Không chụp được màn hình tiền đăng nhập: {exc}"
         )
-        return None, "Không xác minh được trạng thái trước đăng nhập"
+        return False, "Không xác minh được trạng thái trước đăng nhập"
 
     detected_state = None
     for template_name in template_names:
@@ -270,14 +270,8 @@ def prepare_login(
         detected_state = template_name
         break
 
-    if detected_state == "login_form":
-        return "login_form", None
-
-    if detected_state == "profile":
-        worker.log_message.emit(
-            f"[{account.username}] Đã ở màn hình profile; đăng nhập không cần thực hiện lại."
-        )
-        return "profile", None
+    if detected_state in ("login_form", "profile"):
+        return True, None
 
     if detected_state == "waiting":
         worker.log_message.emit(
@@ -296,14 +290,14 @@ def prepare_login(
             worker.log_message.emit(
                 f"[{account.username}] Không đóng được hộp thoại cập nhật thông tin: {exc}"
             )
-            return None, "Không đóng được hộp thoại cập nhật thông tin"
+            return False, "Không đóng được hộp thoại cập nhật thông tin"
         time.sleep(1)
         return prepare_login(worker, account, device, ocr_client)
 
     worker.log_message.emit(
         f"[{account.username}] Không nhận diện được trạng thái tiền đăng nhập."
     )
-    return None, "Không xác định được trạng thái trước đăng nhập"
+    return False, "Không xác định được trạng thái trước đăng nhập"
 
 def login_account(
     worker, account, device, ocr_client
@@ -314,11 +308,9 @@ def login_account(
     (False, error) khi đăng nhập hoặc xác minh thất bại,
     và (None, None) khi worker yêu cầu dừng/tạm dừng.
     """
-    state, error = prepare_login(worker, account, device, ocr_client)
-    if state == "profile":
-        return True, None
-    if state != "login_form":
-        return (None, None) if error is None else (False, error)
+    prepared, error = prepare_login(worker, account, device, ocr_client)
+    if not prepared:
+        return False, error
 
     if not submit_login_form(worker, account, device, ocr_client):
         return None, None
