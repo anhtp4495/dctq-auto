@@ -8,10 +8,10 @@
           "name": "Đang đăng nhập",
           "description": "Đang đăng nhập",
           "rect": {
-            "top": 300,
-            "left": 700,
-            "right": 440,
-            "bottom": 40
+            "top": 849,
+            "left": 483,
+            "right": 1074,
+            "bottom": 590
           },
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
