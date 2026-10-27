@@ -463,9 +463,12 @@ def run_clone_flow(self, device) -> None:
                 "bằng luồng đã triển khai ở Tab Tác vụ."
             )
             previous_reward_flag = self._config.get("reward_weekly_doan_chien", False)
+            previous_reward_label = self._config.get("_clone_reward_guild_label")
             try:
                 from dctq_auto.tasks.reward_weekly_doan_chien import run_reward_weekly_doan_chien
                 self._config["reward_weekly_doan_chien"] = True
+                # Reuse the existing task's own progress reporting, with the Clone label.
+                self._config["_clone_reward_guild_label"] = task_label
                 reward_result = run_reward_weekly_doan_chien(self, device, 0, 1)
                 if reward_result is None:
                     self.task_progress_changed.emit(task_label, "failed", 0, 1)
@@ -473,9 +476,9 @@ def run_clone_flow(self, device) -> None:
                         f"[{account.username}] Luồng Nhận Thưởng - Quân Đoàn đã dừng hoặc chưa hoàn tất."
                     )
                 else:
-                    self.task_progress_changed.emit(task_label, "done", 1, 1)
                     self.log_message.emit(
-                        f"[{account.username}] Đã chạy xong luồng Nhận Thưởng - Quân Đoàn."
+                        f"[{account.username}] Đã kết thúc luồng Nhận Thưởng - Quân Đoàn; "
+                        "xem trạng thái OCR của tác vụ để biết thành công hay thất bại."
                     )
             except Exception as exc:
                 self.task_progress_changed.emit(task_label, "failed", 0, 1)
@@ -484,6 +487,10 @@ def run_clone_flow(self, device) -> None:
                 )
             finally:
                 self._config["reward_weekly_doan_chien"] = previous_reward_flag
+                if previous_reward_label is None:
+                    self._config.pop("_clone_reward_guild_label", None)
+                else:
+                    self._config["_clone_reward_guild_label"] = previous_reward_label
 
         # Close the guild panel after all selected guild-related actions,
         # then log out so the next account starts from the login screen.
