@@ -135,10 +135,9 @@ def handle_post_login(
             return True, None
 
     worker.log_message.emit(
-        f"[{account.username}] Chưa xác định được trạng thái hậu đăng nhập; kiểm tra lại sau 3 giây."
+        f"[{account.username}] Không nhận diện được trạng thái hậu đăng nhập từ 3 template."
     )
-    time.sleep(3)
-    return handle_post_login(worker, account, device, ocr_client)
+    return False, "Không xác định được trạng thái sau đăng nhập"
 
 
 def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str | None]:
