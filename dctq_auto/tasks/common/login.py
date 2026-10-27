@@ -44,34 +44,43 @@ def submit_login_form(worker, account, device, ocr_client) -> bool:
     return True
 
 
-def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str | None]:
-    """Xác minh đăng nhập bằng các template được khai báo trong templates.json.
+def _match_account_template(screen_bgr, template):
+    """So khớp một template tài khoản; trả về None nếu không khớp."""
+    return match_template(
+        screen_bgr,
+        template.image,
+        threshold=template.threshold,
+        method=template.method,
+        grayscale=True,
+    )
 
-    Chỉ phát hiện template accounts.wrong_username_or_pass mới trả về False.
-    Các trạng thái còn lại, hoặc không khớp template nào, trả về True.
-    Hàm này không sử dụng OCR.
+
+def handle_post_login(
+    worker, account, device, ocr_client
+) -> tuple[bool | None, str | None]:
+    """Xử lý trạng thái sau khi gửi đăng nhập bằng template matching.
+
+    waiting: chờ 3 giây rồi kiểm tra lại bằng đệ quy.
+    update_information: đóng hộp thoại rồi kiểm tra lại.
+    profile: xác nhận đăng nhập thành công.
     """
     if not worker._wait_if_paused():
         worker.log_message.emit("Đã dừng theo yêu cầu.")
         return None, None
 
-    time.sleep(1)
     try:
         screenshot = device.screenshot()
         screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
     except Exception as exc:
         worker.log_message.emit(
-            f"[{account.username}] Không chụp được màn hình xác minh: {exc}; "
-            "không phát hiện được wrong_username_or_pass; đăng nhập thành công theo quy tắc hiện tại."
+            f"[{account.username}] Không chụp được màn hình hậu đăng nhập: {exc}"
         )
-        return True, None
+        return False, "Không xác minh được trạng thái sau đăng nhập"
 
-    # get_templates tự đọc cấu hình, cắt ảnh và cache template đã tải.
     template_names = (
-        "wrong_username_or_pass",
         "waiting",
-        "profile",
         "update_information",
+        "profile",
     )
     templates = get_templates(template_names, screen_name="accounts")
 
@@ -79,17 +88,9 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
         template = templates.get(template_name)
         if template is None:
             continue
-        threshold = template.threshold
-        method = template.method
 
         try:
-            match = match_template(
-                screen_bgr,
-                template.image,
-                threshold=threshold,
-                method=method,
-                grayscale=True,
-            )
+            match = _match_account_template(screen_bgr, template)
         except (ValueError, cv2.error) as exc:
             worker.log_message.emit(
                 f"[{account.username}] Lỗi template matching {template_name}: {exc}"
@@ -105,16 +106,87 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
             template_name=template_name,
             display_name=template.display_name,
             match=match,
-            threshold=threshold,
+            threshold=template.threshold,
         )
-        if template_name == "wrong_username_or_pass":
-            reason = "Thông tin đăng nhập không đúng"
+
+        if template_name == "waiting":
+            worker.log_message.emit(
+                f"[{account.username}] Đang chờ đăng nhập hoàn tất; kiểm tra lại sau 3 giây."
+            )
+            time.sleep(3)
+            return handle_post_login(worker, account, device, ocr_client)
+
+        if template_name == "update_information":
+            worker.log_message.emit(
+                f"[{account.username}] Phát hiện hộp thoại cập nhật thông tin; đang đóng hộp thoại."
+            )
+            try:
+                ocr_client.tap_ocr_target("close_cap_nhat_thong_tin_ca_nhan")
+            except Exception as exc:
+                worker.log_message.emit(
+                    f"[{account.username}] Không đóng được hộp thoại cập nhật thông tin: {exc}"
+                )
+                return False, "Không đóng được hộp thoại cập nhật thông tin"
+            time.sleep(1)
+            return handle_post_login(worker, account, device, ocr_client)
+
+        if template_name == "profile":
+            worker.log_message.emit(f"[{account.username}] Đăng nhập thành công.")
+            return True, None
+
+    worker.log_message.emit(
+        f"[{account.username}] Chưa xác định được trạng thái hậu đăng nhập; kiểm tra lại sau 3 giây."
+    )
+    time.sleep(3)
+    return handle_post_login(worker, account, device, ocr_client)
+
+
+def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str | None]:
+    """Kiểm tra sai thông tin đăng nhập, sau đó xử lý trạng thái hậu đăng nhập.
+
+    Chỉ template wrong_username_or_pass xác nhận đăng nhập thất bại.
+    Đăng nhập thành công chỉ được xác nhận khi phát hiện template profile.
+    """
+    if not worker._wait_if_paused():
+        worker.log_message.emit("Đã dừng theo yêu cầu.")
+        return None, None
+
+    time.sleep(1)
+    try:
+        screenshot = device.screenshot()
+        screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
+    except Exception as exc:
+        worker.log_message.emit(
+            f"[{account.username}] Không chụp được màn hình xác minh: {exc}"
+        )
+        return False, "Không xác minh được kết quả đăng nhập"
+
+    templates = get_templates(
+        ("wrong_username_or_pass",),
+        screen_name="accounts",
+    )
+    template = templates.get("wrong_username_or_pass")
+    if template is not None:
+        try:
+            match = _match_account_template(screen_bgr, template)
+        except (ValueError, cv2.error) as exc:
+            worker.log_message.emit(
+                f"[{account.username}] Lỗi template matching wrong_username_or_pass: {exc}"
+            )
+            match = None
+
+        if match is not None:
+            report_template_match(
+                worker.log_message.emit,
+                context=f"[{account.username}]",
+                template_name="wrong_username_or_pass",
+                display_name=template.display_name,
+                match=match,
+                threshold=template.threshold,
+            )
             worker.log_message.emit(
                 f"[{account.username}] Đăng nhập thất bại: phát hiện template wrong_username_or_pass."
             )
-            return False, reason
+            return False, "Thông tin đăng nhập không đúng"
 
-    worker.log_message.emit(
-        f"[{account.username}] Đăng nhập thành công."
-    )
-    return True, None
+    return handle_post_login(worker, account, device, ocr_client)
