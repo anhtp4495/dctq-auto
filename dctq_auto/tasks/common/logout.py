@@ -160,15 +160,82 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
 def handle_post_logout(
     worker, account, device, ocr_client
 ) -> tuple[bool | None, str | None]:
-    """Xử lý kết quả sau khi thực hiện đăng xuất."""
+    """Xác minh trạng thái sau khi đăng xuất bằng template matching."""
     if not worker._config.get("clone_logout", True):
         worker.log_message.emit(
             f"[{account.username}] Bỏ qua đăng xuất theo cấu hình."
         )
         return True, None
 
-    worker.log_message.emit(f"[{account.username}] Đăng xuất thành công.")
-    return True, None
+    if not worker._wait_if_paused():
+        worker.log_message.emit("Đã dừng theo yêu cầu.")
+        return None, None
+
+    template_names = (
+        "accounts/login_form",
+        "accounts/waiting",
+    )
+
+    try:
+        screenshot = device.screenshot()
+        screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
+    except Exception as exc:
+        worker.log_message.emit(
+            f"[{account.username}] Không chụp được màn hình để xác minh đăng xuất: {exc}"
+        )
+        return False, None
+
+    templates = get_templates(template_names)
+
+    for template_name in template_names:
+        template = templates.get(template_name)
+        if template is None:
+            continue
+
+        try:
+            match = match_template(
+                screen_bgr,
+                template.image,
+                threshold=template.threshold,
+                method=template.method,
+                grayscale=True,
+            )
+        except (ValueError, cv2.error) as exc:
+            worker.log_message.emit(
+                f"[{account.username}] Lỗi template matching {template_name}: {exc}"
+            )
+            continue
+
+        if match is None:
+            continue
+
+        report_template_match(
+            worker.log_message.emit,
+            context=f"[{account.username}] Xác minh đăng xuất:",
+            template_name=template_name.rsplit("/", 1)[-1],
+            display_name=template.display_name,
+            match=match,
+            threshold=template.threshold,
+        )
+
+        state = template_name.rsplit("/", 1)[-1]
+        if state == "login_form":
+            worker.log_message.emit(
+                f"[{account.username}] Đăng xuất thành công."
+            )
+            return True, None
+
+        if state == "waiting":
+            worker.log_message.emit(
+                f"[{account.username}] Đang chờ đăng xuất; kiểm tra lại sau 3 giây."
+            )
+            time.sleep(3)
+            return handle_post_logout(worker, account, device, ocr_client)
+
+    worker.log_message.emit(
+        f"[{account.username}] Xác minh đăng xuất thất bại."
+    )
+    return False, "Không xác minh được trạng thái đăng xuất."
 
 
 def logout_account(
