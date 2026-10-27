@@ -551,69 +551,79 @@ def run_reward_weekly_doan_chien(self, device, completed: int, total: int) -> in
                     f"Không tìm thấy thông báo '{exit_target}' với độ tương đồng >{exit_threshold:.0%} "
                     f"trong RECT {exit_rect} sau 3 lần OCR; không thực hiện click lặp."
                 )
-            # Khi thông báo "ấn vào chỗ trống để thoát" xuất hiện, click trung điểm RECT đó 3 lần.
-            exit_x = (exit_rect[0] + exit_rect[2]) // 2
-            exit_y = (exit_rect[1] + exit_rect[3]) // 2
-            for click_attempt in range(1, 4):
+            # Thử tối đa 5 lần: đóng màn hình chia sẻ rồi kiểm tra đã nhận thưởng.
+            close_share = next(
+                (item for item in reward_cfg.get("elements", [])
+                 if item.get("name") == "tat_man_hinh_chia_se_nhan_thuong"),
+                None,
+            )
+            if close_share is None or "center" not in close_share:
+                raise RuntimeError("Thiếu tọa độ tat_man_hinh_chia_se_nhan_thuong trong regions.json.")
+            share_center = close_share["center"]
+            sx, sy = int(share_center["x_px"]), int(share_center["y_px"])
+
+            already_target = self._normalize_screen_text(
+                str(reward_cfg["ocr_nhan_thuong_dai_chien_quan_doan"].get("already_received_text", "da_nhan"))
+            ).replace(" ", "")
+            already_cfg = reward_cfg["ocr_nhan_thuong_dai_chien_quan_doan"]
+            already_bounds = already_cfg["bounds"]
+            already_rect = (
+                int(already_bounds["left"]), int(already_bounds["top"]),
+                int(already_bounds["right"]), int(already_bounds["bottom"]),
+            )
+            already_steps = tuple(already_cfg.get("steps", ["color_text"]))
+            already_psm = tuple(int(value) for value in already_cfg.get("psm", [11]))
+            already_text_color = already_cfg.get("text_color", "#FFFFFF")
+            already_background_color = already_cfg.get("background_color", "#000000")
+            already_tolerance = float(already_cfg.get("color_tolerance", 38))
+            already_threshold = float(already_cfg.get("similarity_threshold", 0.75))
+            received_success = False
+
+            for attempt in range(1, 6):
                 if not self._wait_if_paused():
-                    self.log_message.emit("Đã dừng trong chuỗi click thoát màn hình nhận thưởng.")
+                    self.log_message.emit("Đã dừng trong chuỗi xác nhận nhận thưởng Đoàn Chiến.")
                     return
-                device.shell(f"input tap {exit_x} {exit_y}")
+                device.shell(f"input tap {sx} {sy}")
                 self.log_message.emit(
-                    f"Bước 6: click trung điểm RECT {exit_rect} lần {click_attempt}/3 tại ({exit_x}, {exit_y})."
+                    f"Bước 6: lần {attempt}/5 click tat_man_hinh_chia_se_nhan_thuong tại ({sx}, {sy})."
                 )
-                if click_attempt < 3:
-                    for _ in range(30):
+                # Chờ giao diện cập nhật sau khi click rồi OCR trạng thái đã nhận.
+                for _ in range(10):
+                    if not self._wait_if_paused():
+                        self.log_message.emit("Đã dừng khi chờ OCR xác nhận đã nhận thưởng.")
+                        return
+                    time.sleep(0.1)
+                already_words = self._ocr_words_in_rect(
+                    device, already_rect, steps=already_steps, psm=already_psm,
+                    text_color=already_text_color, background_color=already_background_color,
+                    color_tolerance=already_tolerance,
+                )
+                already_observed = "".join(
+                    self._normalize_screen_text(str(word.get("text", ""))).replace(" ", "")
+                    for word in already_words
+                )
+                already_score = SequenceMatcher(None, already_target, already_observed).ratio() if already_observed else 0.0
+                self.log_message.emit(
+                    f"Bước 6 OCR xác nhận đã nhận: lần {attempt}/5; RECT={already_rect}; "
+                    f"text='{already_observed or '(trống)'}'; tương đồng={already_score:.1%}, "
+                    f"ngưỡng >{already_threshold:.0%}."
+                )
+                if already_score > already_threshold:
+                    received_success = True
+                    self.log_message.emit("Bước 6: xác nhận đã nhận thưởng thành công qua text 'da_nhan'.")
+                    break
+                if attempt < 5:
+                    for _ in range(20):
                         if not self._wait_if_paused():
-                            self.log_message.emit("Đã dừng trong thời gian chờ click thoát màn hình nhận thưởng.")
+                            self.log_message.emit("Đã dừng khi chờ lần xác nhận nhận thưởng tiếp theo.")
                             return
                         time.sleep(0.1)
 
-            # Sau đó kiểm tra nút chia sẻ; nếu xuất hiện thì đóng màn hình chia sẻ.
-            share_cfg = reward_cfg["ocr_chia_se_nhan_thuong"]
-            share_bounds = share_cfg["bounds"]
-            share_rect = (
-                int(share_bounds["left"]), int(share_bounds["top"]),
-                int(share_bounds["right"]), int(share_bounds["bottom"]),
-            )
-            share_target = self._normalize_screen_text(
-                str(share_cfg.get("target_text", "chia_se"))
-            ).replace(" ", "")
-            share_threshold = float(share_cfg.get("similarity_threshold", 0.75))
-            share_words = self._ocr_words_in_rect(
-                device, share_rect,
-                steps=tuple(share_cfg.get("steps", ["color_text"])),
-                psm=tuple(int(value) for value in share_cfg.get("psm", [11])),
-                text_color=share_cfg.get("text_color", "#FFFFFF"),
-                background_color=share_cfg.get("background_color", "#000000"),
-                color_tolerance=float(share_cfg.get("color_tolerance", 38)),
-            )
-            share_observed = "".join(
-                self._normalize_screen_text(str(word.get("text", ""))).replace(" ", "")
-                for word in share_words
-            )
-            share_score = SequenceMatcher(None, share_target, share_observed).ratio() if share_observed else 0.0
-            self.log_message.emit(
-                f"Bước 6 OCR chia sẻ: RECT={share_rect}; text='{share_observed or '(trống)'}'; "
-                f"tương đồng={share_score:.1%}, ngưỡng >{share_threshold:.0%}."
-            )
-            if share_score > share_threshold:
-                close_share = next(
-                    (item for item in reward_cfg.get("elements", [])
-                     if item.get("name") == "tat_man_hinh_chia_se_nhan_thuong"),
-                    None,
+            if not received_success:
+                raise RuntimeError(
+                    f"Đã thử 5 lần click tat_man_hinh_chia_se_nhan_thuong nhưng không OCR xác nhận được "
+                    f"'{already_target}' trong RECT {already_rect}."
                 )
-                if close_share is None or "center" not in close_share:
-                    raise RuntimeError("Thiếu tọa độ tat_man_hinh_chia_se_nhan_thuong trong regions.json.")
-                share_center = close_share["center"]
-                sx, sy = int(share_center["x_px"]), int(share_center["y_px"])
-                device.shell(f"input tap {sx} {sy}")
-                self.log_message.emit(
-                    f"Bước 6: phát hiện '{share_target}' trong RECT {share_rect}; "
-                    f"đã click tat_man_hinh_chia_se_nhan_thuong tại ({sx}, {sy})."
-                )
-            else:
-                self.log_message.emit("Bước 6: không phát hiện nút chia sẻ; bỏ qua thao tác đóng màn hình chia sẻ.")
             completed += 1
             self.task_progress_changed.emit(label, "done", 1, 1)
             self.progress_changed.emit(completed, max(1, total), "Đã mở menu Chiến Tranh")
