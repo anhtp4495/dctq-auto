@@ -60,12 +60,12 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
         return None
 
     template_names = (
-        "accounts/login_form",
-        "accounts/waiting",
-        "accounts/profile",
-        "accounts/account_settings_action",
-        "accounts/account_settings_change",
-        "accounts/account_settings_confirm",
+        "accounts3/dang_nhap",
+        "accounts1/waiting",
+        "accounts5/trang_ca_nhan",
+        "accounts6/tuy_chon",
+        "accounts7/cai_dat_nguoi_dung",
+        "accounts8/doi_tai_khoan",
     )
 
     try:
@@ -172,8 +172,8 @@ def handle_post_logout(
         return None, None
 
     template_names = (
-        "accounts/login_form",
-        "accounts/waiting",
+        "accounts3/dang_nhap",
+        "accounts1/waiting",
     )
 
     try:
