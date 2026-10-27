@@ -79,9 +79,9 @@ def handle_post_login(
         return False, "Không xác minh được trạng thái sau đăng nhập"
 
     template_names = (
-        "accounts/waiting",
-        "accounts/update_information",
-        "accounts/profile",
+        "accounts1/waiting",
+        "accounts9/cap_nhat_thong_tin",
+        "accounts5/trang_ca_nhan",
     )
     templates = get_templates(template_names)
 
@@ -110,14 +110,14 @@ def handle_post_login(
             threshold=template.threshold,
         )
 
-        if template_name == "accounts/waiting":
+        if template_name == "accounts1/waiting":
             worker.log_message.emit(
                 f"[{account.username}] Đang chờ đăng nhập hoàn tất; kiểm tra lại sau 3 giây."
             )
             time.sleep(3)
             return handle_post_login(worker, account, device, ocr_client)
 
-        if template_name == "accounts/update_information":
+        if template_name == "accounts9/cap_nhat_thong_tin":
             worker.log_message.emit(
                 f"[{account.username}] Phát hiện hộp thoại cập nhật thông tin; đang đóng hộp thoại."
             )
@@ -131,7 +131,7 @@ def handle_post_login(
             time.sleep(1)
             return handle_post_login(worker, account, device, ocr_client)
 
-        if template_name == "accounts/profile":
+        if template_name == "accounts5/trang_ca_nhan":
             worker.log_message.emit(f"[{account.username}] Đăng nhập thành công.")
             return True, None
 
@@ -165,10 +165,10 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
 
     # get_templates tự đọc cấu hình, cắt ảnh và cache template đã tải.
     template_names = (
-        "accounts/wrong_username_or_pass",
-        "accounts/waiting",
-        "accounts/profile",
-        "accounts/update_information",
+        "accounts4/thong_tin_dang_nhap_khong_dung",
+        "accounts1/waiting",
+        "accounts5/trang_ca_nhan",
+        "accounts9/cap_nhat_thong_tin",
     )
     templates = get_templates(template_names)
 
@@ -204,7 +204,7 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
             match=match,
             threshold=threshold,
         )
-        if template_name == "accounts/wrong_username_or_pass":
+        if template_name == "accounts4/thong_tin_dang_nhap_khong_dung":
             reason = "Thông tin đăng nhập không đúng"
             worker.log_message.emit(
                 f"[{account.username}] Đăng nhập thất bại: phát hiện template wrong_username_or_pass."
@@ -225,10 +225,10 @@ def prepare_login(
         return False, "Đã dừng theo yêu cầu"
 
     template_names = (
-        "accounts/login_form",
-        "accounts/waiting",
-        "accounts/profile",
-        "accounts/update_information",
+        "accounts3/dang_nhap",
+        "accounts1/waiting",
+        "accounts5/trang_ca_nhan",
+        "accounts9/cap_nhat_thong_tin",
     )
     templates = get_templates(template_names)
 
