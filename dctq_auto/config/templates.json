@@ -4,14 +4,98 @@
     "accounts": {
       "source_image": "resources/screens/accounts/waiting.png",
       "templates": {
+        "login_form": {
+          "name": "Màn hình đăng nhập",
+          "description": "Nhận diện biểu mẫu đăng nhập tài khoản.",
+          "rect": {
+            "top": 0,
+            "left": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
         "waiting": {
           "name": "Đang đăng nhập",
-          "description": "Đang đăng nhập",
+          "description": "Nhận diện màn hình đang chờ đăng nhập.",
           "rect": {
-            "top": 849,
-            "left": 483,
-            "right": 1074,
-            "bottom": 590
+            "top": 0,
+            "left": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "profile": {
+          "name": "Profile",
+          "description": "Nhận diện màn hình profile sau khi vào game.",
+          "rect": {
+            "top": 0,
+            "left": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "update_information": {
+          "name": "Cập nhật thông tin",
+          "description": "Nhận diện hộp thoại cập nhật thông tin cá nhân.",
+          "rect": {
+            "top": 0,
+            "left": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "wrong_username_or_pass": {
+          "name": "Sai tên đăng nhập hoặc mật khẩu",
+          "description": "Nhận diện thông báo thông tin đăng nhập không đúng.",
+          "rect": {
+            "top": 0,
+            "left": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "account_settings_action": {
+          "name": "Tùy chọn tài khoản",
+          "description": "Nhận diện màn hình tùy chọn trước khi mở Cài đặt người dùng.",
+          "rect": {
+            "top": 0,
+            "left": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "account_settings_change": {
+          "name": "Cài đặt người dùng",
+          "description": "Nhận diện màn hình Cài đặt người dùng có mục Đổi tài khoản.",
+          "rect": {
+            "top": 0,
+            "left": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "account_settings_confirm": {
+          "name": "Xác nhận đổi tài khoản",
+          "description": "Nhận diện hộp thoại xác nhận đổi tài khoản.",
+          "rect": {
+            "top": 0,
+            "left": 0,
+            "right": 0,
+            "bottom": 0
           },
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
