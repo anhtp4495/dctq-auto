@@ -95,6 +95,8 @@ class CloneTab(QWidget):
 
         self.clone_quoc_chien = QCheckBox("Quốc chiến")
         layout.addWidget(self.clone_quoc_chien)
+        self.clone_reward_guild = QCheckBox("Nhận Thưởng - Quân Đoàn")
+        layout.addWidget(self.clone_reward_guild)
 
         layout.addStretch(1)
         scroll_area.setWidget(page)
@@ -186,5 +188,6 @@ class CloneTab(QWidget):
             "clone_receive_lucky_bag": self.clone_receive_lucky_bag.isChecked(),
             "clone_guild_fortune": self.clone_guild_fortune.isChecked(),
             "clone_quoc_chien": self.clone_quoc_chien.isChecked(),
+            "clone_reward_guild": self.clone_reward_guild.isChecked(),
             "clone_logout": True,
         }
