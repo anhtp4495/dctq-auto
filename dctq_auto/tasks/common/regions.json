@@ -1855,6 +1855,63 @@
         "max_swipes": 3,
         "swipe_duration_ms": 500
       }
+    },
+    "reward_weekly_doan_chien": {
+      "name": "reward_weekly_doan_chien",
+      "description": "Cấu hình nhận thưởng Đoàn Chiến hằng tuần",
+      "image_resolution": [
+        1920,
+        1080
+      ],
+      "elements": [
+        {
+          "name": "nhan_thuong_dai_chien_quan_doan",
+          "text": "Nút Nhận thưởng Đại chiến quân đoàn",
+          "center": {
+            "x_px": 1203,
+            "y_px": 904
+          },
+          "center_ratio": {
+            "x": 0.626563,
+            "y": 0.837037
+          }
+        }
+      ],
+      "ocr_nhan_thuong_dai_chien_quan_doan": {
+        "name": "ocr_nhan_thuong_dai_chien_quan_doan",
+        "text": "RECT OCR nhận diện nút nhận thưởng Đại chiến quân đoàn",
+        "bounds": {
+          "left": 1091,
+          "top": 947,
+          "right": 1331,
+          "bottom": 1010
+        },
+        "rect": {
+          "x": 1091,
+          "y": 947,
+          "width": 240,
+          "height": 63
+        },
+        "center": {
+          "x_px": 1211,
+          "y_px": 978.5
+        },
+        "center_ratio": {
+          "x": 0.630729,
+          "y": 0.906019
+        },
+        "target_text": "nhan_thuong",
+        "similarity_threshold": 0.9,
+        "steps": [
+          "color_text"
+        ],
+        "psm": [
+          11
+        ],
+        "text_color": "#FFFFFF",
+        "background_color": "#000000",
+        "color_tolerance": 38
+      }
     }
   }
 }
