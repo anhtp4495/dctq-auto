@@ -60,12 +60,12 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
         return None
 
     template_names = (
-        "login_form",
-        "waiting",
-        "profile",
-        "account_settings_action",
-        "account_settings_change",
-        "account_settings_confirm",
+        "accounts/login_form",
+        "accounts/waiting",
+        "accounts/profile",
+        "accounts/account_settings_action",
+        "accounts/account_settings_change",
+        "accounts/account_settings_confirm",
     )
 
     try:
@@ -77,7 +77,7 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
         )
         return False
 
-    templates = get_templates(template_names, screen_name="accounts")
+    templates = get_templates(template_names)
     detected_state = None
 
     for template_name in template_names:
@@ -105,7 +105,7 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
         report_template_match(
             worker.log_message.emit,
             context=f"[{account.username}] Đăng xuất:",
-            template_name=template_name,
+            template_name=template_name.rsplit("/", 1)[-1],
             display_name=template.display_name,
             match=match,
             threshold=template.threshold,
