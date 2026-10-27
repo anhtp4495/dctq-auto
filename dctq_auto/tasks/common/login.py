@@ -105,7 +105,7 @@ def handle_post_login(
             worker.log_message.emit,
             context=f"[{account.username}]",
             template_name=template_name.rsplit("/", 1)[-1],
-            display_name=template.display_name,
+            display_name=template.name,
             match=match,
             threshold=template.threshold,
         )
@@ -200,7 +200,7 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
             worker.log_message.emit,
             context=f"[{account.username}]",
             template_name=template_name.rsplit("/", 1)[-1],
-            display_name=template.display_name,
+            display_name=template.name,
             match=match,
             threshold=threshold,
         )
@@ -264,7 +264,7 @@ def prepare_login(
             worker.log_message.emit,
             context=f"[{account.username}] Tiền đăng nhập:",
             template_name=template_name.rsplit("/", 1)[-1],
-            display_name=template.display_name,
+            display_name=template.name,
             match=match,
             threshold=template.threshold,
         )
