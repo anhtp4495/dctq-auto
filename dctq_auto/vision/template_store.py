@@ -28,7 +28,6 @@ class LoadedTemplate:
 
     id: str
     name: str
-    display_name: str
     image: np.ndarray
     threshold: float
     method: int
@@ -97,8 +96,7 @@ def _load_screen_templates(screen_name: str) -> dict[str, LoadedTemplate]:
         template_image.setflags(write=False)
         loaded[name] = LoadedTemplate(
             id=name,
-            name=name,
-            display_name=str(definition.get("name", name)),
+            name=str(definition.get("description", name)),
             image=template_image,
             threshold=threshold,
             method=method,
