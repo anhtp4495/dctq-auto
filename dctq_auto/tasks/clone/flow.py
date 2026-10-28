@@ -907,14 +907,19 @@ def handle_step_hoat_dong(
     if not task_open_activity(self, account, device, ocr_client, log):
         return steps
 
+    from dctq_auto.tasks.common import (
+        step_diem_danh,
+        step_hoat_dong_phuc_loi,
+    )
+
     remaining_steps = list(steps)
     handlers = {
         "hoat_dong_phuc_loi_le_bao_quoc_van": (
-            "dctq_auto.tasks.common.step_hoat_dong_phuc_loi",
+            step_hoat_dong_phuc_loi,
             "Nhận lễ bao Quốc Vận",
         ),
         "hoat_dong_phuc_loi_diem_danh": (
-            "dctq_auto.tasks.common.step_diem_danh",
+            step_diem_danh,
             "Điểm danh",
         ),
     }
@@ -922,9 +927,8 @@ def handle_step_hoat_dong(
         handler_info = handlers.get(step_id)
         if handler_info is None:
             continue
-        module_name, label = handler_info
+        module, label = handler_info
         try:
-            module = __import__(module_name, fromlist=["chay"])
             log(f"[{account.username}] Bắt đầu bước Hoạt động: {label}.")
             success = bool(module.chay(self, device, ocr_client))
         except Exception as exc:
