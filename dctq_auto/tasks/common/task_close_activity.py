@@ -1,7 +1,7 @@
 """Thao tác dùng chung để đóng màn hình Hoạt động / Phúc Lợi."""
 
 
-def Run(self, account, device, ocr_client, log) -> bool:
+def run(self, account, device, ocr_client, log) -> bool:
     """Đóng màn hình Hoạt động bằng logic đóng màn hình hiện có."""
     log(f"[{account.username}] Bắt đầu đóng màn hình Hoạt động / Phúc Lợi.")
 
