@@ -91,10 +91,7 @@ def open_activity(
                 log(f"[{account.username}] Mở màn hình Hoạt động thất bại: {exc}")
                 return False
 
-    log(
-        f"[{account.username}] Không phát hiện template hoat_dong, "
-        "dang_chon_phuc_loi hoặc dang_chon_hoat_dong."
-    )
+    log(f"[{account.username}] Vào/Mở Hoạt Động thất bại.")
     return False
 
 
