@@ -32,6 +32,7 @@ class LoadedTemplate:
     image: np.ndarray
     threshold: float
     method: int
+    search_rect: tuple[int, int, int, int]
 
 
 @lru_cache(maxsize=16)
@@ -70,8 +71,23 @@ def _load_screen_templates(screen_name: str) -> dict[str, LoadedTemplate]:
             threshold = float(definition.get("threshold", 0.85))
             method_name = definition.get("match_method", "TM_CCOEFF_NORMED")
             method = _METHODS[method_name]
+            search_rect_config = definition["search_rect"]
+            search_rect = (
+                int(search_rect_config["top"]),
+                int(search_rect_config["left"]),
+                int(search_rect_config["right"]),
+                int(search_rect_config["bottom"]),
+            )
         except (KeyError, TypeError, ValueError):
-            logger.warning("rect/threshold/match_method của template %s.%s không hợp lệ; bỏ qua.", screen_name, name)
+            logger.warning("rect/threshold/match_method/search_rect của template %s.%s không hợp lệ; bỏ qua.", screen_name, name)
+            continue
+
+        search_top, search_left, search_right, search_bottom = search_rect
+        if (
+            search_top < 0 or search_left < 0
+            or search_right <= search_left or search_bottom <= search_top
+        ):
+            logger.warning("search_rect của template %s.%s không hợp lệ; bỏ qua.", screen_name, name)
             continue
 
         if not 0.0 <= threshold <= 1.0:
@@ -102,6 +118,7 @@ def _load_screen_templates(screen_name: str) -> dict[str, LoadedTemplate]:
             image=template_image,
             threshold=threshold,
             method=method,
+            search_rect=search_rect,
         )
 
     return loaded
