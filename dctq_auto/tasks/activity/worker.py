@@ -30,7 +30,7 @@ class ActivityWorkerMixin:
         normalized = self._normalize_screen_text(detected_text)
         return any(self._normalize_screen_text(marker) in normalized for marker in markers), detected_text
 
-    def run_open_activity(self, device, screenshot=None) -> bool:
+    def run_open_activity(self, device, screenshot=None, _after_click=False) -> bool:
         """Mở Hoạt động bằng Template Matching, theo cùng pattern handle_post_login."""
         template_names = (
             "hoat_dong/dang_chon_man_hinh_hoat_dong",
@@ -82,6 +82,11 @@ class ActivityWorkerMixin:
                 return True
 
             if template.id == "chua_chon_man_hinh_hoat_dong":
+                if _after_click:
+                    self.log_message.emit(
+                        "Đã click mở Hoạt động nhưng template vẫn báo chưa chọn; dừng để tránh click lặp."
+                    )
+                    return False
                 screen_width, screen_height = screenshot.size
                 x = round(0.035937 * screen_width)
                 y = round(0.732407 * screen_height)
@@ -95,7 +100,7 @@ class ActivityWorkerMixin:
                     time.sleep(3.0)
                     if not self._wait_if_paused():
                         return False
-                    return self.run_open_activity(device, screenshot=device.screenshot())
+                    return self.run_open_activity(device, screenshot=device.screenshot(), _after_click=True)
                 except Exception as exc:
                     self.log_message.emit(f"Mở màn hình Hoạt động thất bại: {exc}")
                     return False
@@ -205,7 +210,7 @@ class ActivityWorkerMixin:
                 self.log_message.emit(
                     "Chưa ở màn hình Phúc lợi; mở Hoạt động trước khi tiếp tục."
                 )
-                if not self._run_open_activity(device):
+                if not self.run_open_activity(device):
                     return False
                 time.sleep(2.0)
                 visible, detected_text = self._activity_phuc_loi_visible(device)
