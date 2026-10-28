@@ -584,6 +584,15 @@ def _get_clone_optimize_config(self) -> dict:
     return config
 
 
+def get_templates(steps: list[str]) -> list[str]:
+    """Trả về danh sách template cần dùng theo thứ tự các bước được truyền vào."""
+    template_names = []
+    for step in steps:
+        if step == "diem_danh":
+            template_names.append("hoat_dong/phuc_loi")
+    return template_names
+
+
 def run_clone_flow_optimize(self, device) -> None:
     """Điều phối toàn bộ Clone Optimize: đọc config một lần rồi xử lý từng account."""
     config = _get_clone_optimize_config(self)
