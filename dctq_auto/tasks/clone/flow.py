@@ -735,75 +735,23 @@ def run_clone_flow_optimize_account(
 
             try:
                 if step_id == "hoat_dong_phuc_loi":
-                    thanh_cong = bool(self._run_receive_quoc_van(device, ocr_client))
-
+                    from dctq_auto.tasks.clone.common.step_hoat_dong_phuc_loi import chay as chay_buoc
                 elif step_id == "diem_danh":
-                    thanh_cong = bool(self._run_daily_checkin(device, ocr_client))
-
-                elif step_id in {
-                    "quan_doan_bao_danh",
-                    "quan_doan_tui_phuc",
-                    "quan_doan_cau_van",
-                }:
-                    ma_tac_vu = {
-                        "quan_doan_bao_danh": "bao_danh_quan_doan",
-                        "quan_doan_tui_phuc": "task_receive_lucky_bag",
-                        "quan_doan_cau_van": "task_guild_fortune",
-                    }[step_id]
-                    if not self._run_enter_guild(device, ocr_client):
-                        thanh_cong = False
-                        self.log_message.emit(
-                            f"[{account.username}] Không xác nhận được màn hình Quân đoàn; "
-                            f"bỏ qua thao tác {ten_buoc} để tránh bấm nhầm."
-                        )
-                    else:
-                        thanh_cong = bool(
-                            self._run_guild_screen_task(ma_tac_vu, device, ocr_client)
-                        )
-                        try:
-                            ocr_client.tap_ocr_target("close_quan_doan")
-                            time.sleep(0.8)
-                            self._config["_clone_guild_screen_closed"] = True
-                        except Exception as exc:
-                            thanh_cong = False
-                            self.log_message.emit(
-                                f"[{account.username}] Không đóng được màn hình Quân đoàn "
-                                f"sau bước {ten_buoc}: {exc}"
-                            )
-
+                    from dctq_auto.tasks.clone.common.step_diem_danh import chay as chay_buoc
+                elif step_id == "quan_doan_bao_danh":
+                    from dctq_auto.tasks.clone.common.step_quan_doan_bao_danh import chay as chay_buoc
+                elif step_id == "quan_doan_tui_phuc":
+                    from dctq_auto.tasks.clone.common.step_quan_doan_tui_phuc import chay as chay_buoc
+                elif step_id == "quan_doan_cau_van":
+                    from dctq_auto.tasks.clone.common.step_quan_doan_cau_van import chay as chay_buoc
                 elif step_id == "chien_tranh_quan_doan_nhan_thuong":
-                    cau_hinh_cu = self._config.get("reward_weekly_doan_chien", False)
-                    nhan_cu = self._config.get("_clone_reward_guild_label")
-                    try:
-                        self._config["reward_weekly_doan_chien"] = True
-                        self._config["_clone_reward_guild_label"] = nhan_tac_vu
-                        ket_qua = _run_clone_reward_guild_step(self, device)
-                        thanh_cong = bool(ket_qua)
-                    finally:
-                        self._config["reward_weekly_doan_chien"] = cau_hinh_cu
-                        if nhan_cu is None:
-                            self._config.pop("_clone_reward_guild_label", None)
-                        else:
-                            self._config["_clone_reward_guild_label"] = nhan_cu
-
+                    from dctq_auto.tasks.clone.common.step_chien_tranh_quan_doan_nhan_thuong import chay as chay_buoc
                 elif step_id == "chien_tranh_quoc_chien":
-                    # Hiện tại flow cũ mới tìm được mục Quốc chiến; chưa có luồng
-                    # thao tác trận Quốc chiến hoàn chỉnh nên chỉ báo đúng trạng thái.
-                    ocr_client.tap_ocr_target("chien_tranh")
-                    time.sleep(1.5)
-                    man_hinh = self._normalize_screen_text(self._screen_text(device))
-                    thanh_cong = "quoc chien" in man_hinh or "quoc_chien" in man_hinh
-                    if not thanh_cong:
-                        self.log_message.emit(
-                            f"[{account.username}] Chưa nhận diện được mục Quốc chiến trên màn hình."
-                        )
-
+                    from dctq_auto.tasks.clone.common.step_chien_tranh_quoc_chien import chay as chay_buoc
                 else:
-                    thanh_cong = False
-                    self.log_message.emit(
-                        f"[{account.username}] Chưa có bộ xử lý cho mã bước '{step_id}'."
-                    )
+                    raise ValueError(f"Chưa khai báo bộ xử lý cho mã bước: {step_id}")
 
+                thanh_cong = bool(chay_buoc(self, device, ocr_client))
             except Exception as exc:
                 thanh_cong = False
                 self.log_message.emit(
