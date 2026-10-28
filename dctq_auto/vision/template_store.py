@@ -32,6 +32,7 @@ class LoadedTemplate:
     image: np.ndarray
     threshold: float
     method: int
+    search_rect: tuple[int, int, int, int]
 
 
 @lru_cache(maxsize=16)
@@ -45,6 +46,10 @@ def _load_screen_templates(screen_name: str) -> dict[str, LoadedTemplate]:
         if source_image is None:
             raise FileNotFoundError(f"Không đọc được source_image: {source_path}")
         definitions = screen_config["templates"]
+        default_search_rect = config.get(
+            "default_search_rect",
+            {"top": 0, "left": 0, "right": 1920, "bottom": 1080},
+        )
     except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
         logger.warning("Không tải được cấu hình template màn hình %s từ %s: %s", screen_name, _CONFIG_PATH, exc)
         return {}
@@ -70,12 +75,26 @@ def _load_screen_templates(screen_name: str) -> dict[str, LoadedTemplate]:
             threshold = float(definition.get("threshold", 0.85))
             method_name = definition.get("match_method", "TM_CCOEFF_NORMED")
             method = _METHODS[method_name]
+            search_rect_config = definition.get("search_rect", default_search_rect)
+            search_rect = (
+                int(search_rect_config["top"]),
+                int(search_rect_config["left"]),
+                int(search_rect_config["right"]),
+                int(search_rect_config["bottom"]),
+            )
         except (KeyError, TypeError, ValueError):
             logger.warning("rect/threshold/match_method của template %s.%s không hợp lệ; bỏ qua.", screen_name, name)
             continue
 
         if not 0.0 <= threshold <= 1.0:
             logger.warning("threshold của template %s.%s nằm ngoài [0, 1]; bỏ qua.", screen_name, name)
+            continue
+
+        search_top, search_left, search_right, search_bottom = search_rect
+        if (
+            search_top < 0 or search_left < 0 or search_right <= search_left or search_bottom <= search_top
+        ):
+            logger.warning("search_rect của template %s.%s không hợp lệ; bỏ qua.", screen_name, name)
             continue
 
         if (
@@ -102,6 +121,7 @@ def _load_screen_templates(screen_name: str) -> dict[str, LoadedTemplate]:
             image=template_image,
             threshold=threshold,
             method=method,
+            search_rect=search_rect,
         )
 
     return loaded
