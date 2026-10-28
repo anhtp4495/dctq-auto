@@ -735,8 +735,14 @@ def run_clone_flow_optimize_account(
     step_registry = get_clone_step_registry()
     if _tong_steps is None:
         _tong_steps = len(steps)
+        templates = get_templates_by_steps(steps)
         self.log_message.emit(
             f"[{account.username}] Clone Optimize — bắt đầu tác vụ tài khoản {index}/{total}."
+        )
+        self.log_message.emit(
+            f"[{account.username}] Clone Optimize — template cần dùng "
+            f"({len(templates)} duy nhất): "
+            + (", ".join(templates) if templates else "(không có)")
         )
         self._config["_clone_guild_screen_closed"] = False
         _ocr_client = AdbClient(serial=self._serial)
@@ -756,7 +762,6 @@ def run_clone_flow_optimize_account(
     step_id = steps[0]
     ten_buoc = step_registry.get_label(step_id)
     nhan_tac_vu = f"{account.username} - {ten_buoc}"
-    templates = get_templates_by_steps(steps)
     self.log_message.emit(
         f"[{account.username}] Bước {_so_thu_tu}/{_tong_steps}: {ten_buoc} "
         f"(priority={step_registry.get_priority(step_id)})."
