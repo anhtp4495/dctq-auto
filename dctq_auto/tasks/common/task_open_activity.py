@@ -17,8 +17,9 @@ def open_activity(
     log(f"[{account.username}] Bắt đầu mở màn hình Hoạt động.")
 
     template_names = (
-        "hoat_dong/dang_chon_man_hinh_hoat_dong",
-        "hoat_dong/chua_chon_man_hinh_hoat_dong",
+        "main/hoat_dong",
+        "hoat_dong/dang_chon_phuc_loi",
+        "hoat_dong/dang_chon_hoat_dong",
     )
     templates = get_templates(template_names)
 

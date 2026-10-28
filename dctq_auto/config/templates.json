@@ -181,6 +181,23 @@
           },
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
+        },
+        "dang_chon_phuc_loi": {
+          "description": "Màn hình Hoạt động - Đang chọn Phúc lợi.",
+          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "dang_chon_hoat_dong": {
+          "description": "Màn hình Hoạt động - Đang chọn Hoạt động.",
+          "rect": {
+            "top": 167,
+            "left": 28,
+            "right": 95,
+            "bottom": 221
+          },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
