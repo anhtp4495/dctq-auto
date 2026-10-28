@@ -862,27 +862,35 @@ def run_clone_flow_optimize_account(
             _tong_steps=_tong_steps,
         )
 
-    step_id = steps[0]
     self.log_message.emit(
-        f"[{account.username}] Không template nào khớp màn hình hiện tại; "
-        f"bỏ qua bước {step_registry.get_label(step_id)}."
+        f"[{account.username}] Không template nào khớp màn hình hiện tại."
     )
-    ten_buoc = step_registry.get_label(step_id)
-    nhan_tac_vu = f"{account.username} - {ten_buoc}"
-    self.task_progress_changed.emit(nhan_tac_vu, "failed", 0, 1)
-    steps.pop(0)
-    return run_clone_flow_optimize_account(
-        self,
-        account,
-        steps,
-        device,
-        index,
-        total,
-        _ocr_client=_ocr_client,
-        _tat_ca_thanh_cong=False,
-        _so_thu_tu=_so_thu_tu + 1,
-        _tong_steps=_tong_steps,
+
+    from dctq_auto.tasks.common.close_knowned_dialog import close_knowned_dialog
+
+    if close_knowned_dialog(
+        self, account, device, _ocr_client, self.log_message.emit
+    ):
+        self.log_message.emit(
+            f"[{account.username}] Đã đóng dialog đã biết; thử nhận diện màn hình lại."
+        )
+        return run_clone_flow_optimize_account(
+            self,
+            account,
+            steps,
+            device,
+            index,
+            total,
+            _ocr_client=_ocr_client,
+            _tat_ca_thanh_cong=_tat_ca_thanh_cong,
+            _so_thu_tu=_so_thu_tu,
+            _tong_steps=_tong_steps,
+        )
+
+    self.log_message.emit(
+        f"[{account.username}] Không đóng được dialog đã biết; dừng Clone Optimize."
     )
+    return False
 
 def handle_step_hoat_dong(self, account, steps, device, ocr_client, log):
     """Khung xử lý nhóm template Hoạt động; logic sẽ được bổ sung sau."""
