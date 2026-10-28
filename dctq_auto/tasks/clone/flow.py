@@ -670,40 +670,192 @@ def run_clone_flow_optimize(self, device) -> None:
 def run_clone_flow_optimize_account(
     self, account, steps: list[str], device, index: int, total: int
 ) -> bool | None:
-    """Xử lý một account với danh sách bước đã được bật từ hàm điều phối.
-
-    Hàm này không phụ thuộc vào cấu trúc config hoặc trạng thái checkbox của GUI.
-    Hiện tại mới triển khai khung xử lý, chưa thực hiện OCR/thao tác game trong
-    nhánh Optimize. Trả về True/False khi có kết quả, None nếu dừng/chưa xử lý.
-    """
+    """Đăng nhập một tài khoản, chạy lần lượt các bước đã bật rồi đăng xuất."""
     if not account.enabled:
         self.clone_account_status.emit(account.username, "disabled")
         self.log_message.emit(
-            f"[{account.username}] Clone Optimize — account bị vô hiệu hóa, bỏ qua."
+            f"[{account.username}] Clone Optimize — tài khoản đã bị vô hiệu hóa, bỏ qua."
         )
         return None
 
+    step_registry = get_clone_step_registry()
+    # Sắp xếp lại tại đây để hàm vẫn đúng thứ tự dù được gọi độc lập.
+    steps = sorted(steps, key=lambda step_id: (
+        step_registry.get_priority(step_id) is None,
+        step_registry.get_priority(step_id) if step_registry.get_priority(step_id) is not None else 0,
+    ))
     self.clone_account_status.emit(account.username, "running")
     self.log_message.emit(
-        f"[{account.username}] Clone Optimize — bắt đầu xử lý account "
-        f"{index}/{total}."
+        f"[{account.username}] Clone Optimize — bắt đầu tài khoản {index}/{total}."
     )
 
-    step_registry = CloneStepRegistry()
-    enabled_tasks = [step_registry.get_label(step_id) for step_id in steps]
-    if enabled_tasks:
+    if not steps:
         self.log_message.emit(
-            f"[{account.username}] Clone Optimize — tác vụ được chọn: "
-            + ", ".join(enabled_tasks)
+            f"[{account.username}] Không có tác vụ nào được chọn; bỏ qua đăng nhập và đăng xuất."
         )
-    else:
-        self.log_message.emit(
-            f"[{account.username}] Clone Optimize — không có bước nào được bật."
-        )
+        self.clone_account_status.emit(account.username, "done")
+        return True
 
-    self.log_message.emit(
-        f"[{account.username}] Clone Optimize — đã nhận danh sách bước được bật; "
-        "chưa thực hiện thao tác game nên chưa đánh dấu thành công."
-    )
-    self.clone_account_status.emit(account.username, "pending")
-    return None
+    ocr_client = AdbClient(serial=self._serial)
+    from dctq_auto.tasks.common.login import login_account
+    from dctq_auto.tasks.common.logout import run_logout_flow
+
+    try:
+        if not self._wait_if_paused():
+            self.log_message.emit(f"[{account.username}] Đã dừng trước khi đăng nhập.")
+            return None
+        self.log_message.emit(f"[{account.username}] Bắt đầu đăng nhập.")
+        login_result, login_error = login_account(self, account, device, ocr_client)
+        if login_result is None:
+            return None
+        if login_result is not True:
+            self.log_message.emit(
+                f"[{account.username}] Đăng nhập thất bại: {login_error or 'không rõ nguyên nhân'}."
+            )
+            self.clone_account_status.emit(account.username, "failed")
+            self.clone_account_result.emit(account.username, False)
+            return False
+
+        self._config["_clone_guild_screen_closed"] = False
+        tat_ca_thanh_cong = True
+        co_buoc_that_bai = False
+
+        for so_thu_tu, step_id in enumerate(steps, start=1):
+            if not self._wait_if_paused():
+                self.log_message.emit(f"[{account.username}] Đã dừng khi đang chạy tác vụ.")
+                return None
+
+            ten_buoc = step_registry.get_label(step_id)
+            nhan_tac_vu = f"{account.username} - {ten_buoc}"
+            self.log_message.emit(
+                f"[{account.username}] Bước {so_thu_tu}/{len(steps)}: {ten_buoc} "
+                f"(priority={step_registry.get_priority(step_id)})."
+            )
+            self.task_progress_changed.emit(nhan_tac_vu, "running", 0, 1)
+
+            try:
+                if step_id == "hoat_dong_phuc_loi":
+                    thanh_cong = bool(self._run_receive_quoc_van(device, ocr_client))
+
+                elif step_id == "diem_danh":
+                    thanh_cong = bool(self._run_daily_checkin(device, ocr_client))
+
+                elif step_id in {
+                    "quan_doan_bao_danh",
+                    "quan_doan_tui_phuc",
+                    "quan_doan_cau_van",
+                }:
+                    ma_tac_vu = {
+                        "quan_doan_bao_danh": "bao_danh_quan_doan",
+                        "quan_doan_tui_phuc": "task_receive_lucky_bag",
+                        "quan_doan_cau_van": "task_guild_fortune",
+                    }[step_id]
+                    if not self._run_enter_guild(device, ocr_client):
+                        thanh_cong = False
+                        self.log_message.emit(
+                            f"[{account.username}] Không xác nhận được màn hình Quân đoàn; "
+                            f"bỏ qua thao tác {ten_buoc} để tránh bấm nhầm."
+                        )
+                    else:
+                        thanh_cong = bool(
+                            self._run_guild_screen_task(ma_tac_vu, device, ocr_client)
+                        )
+                        try:
+                            ocr_client.tap_ocr_target("close_quan_doan")
+                            time.sleep(0.8)
+                            self._config["_clone_guild_screen_closed"] = True
+                        except Exception as exc:
+                            thanh_cong = False
+                            self.log_message.emit(
+                                f"[{account.username}] Không đóng được màn hình Quân đoàn "
+                                f"sau bước {ten_buoc}: {exc}"
+                            )
+
+                elif step_id == "chien_tranh_quan_doan_nhan_thuong":
+                    cau_hinh_cu = self._config.get("reward_weekly_doan_chien", False)
+                    nhan_cu = self._config.get("_clone_reward_guild_label")
+                    try:
+                        self._config["reward_weekly_doan_chien"] = True
+                        self._config["_clone_reward_guild_label"] = nhan_tac_vu
+                        ket_qua = self._run_clone_reward_guild_step(device)
+                        thanh_cong = bool(ket_qua)
+                    finally:
+                        self._config["reward_weekly_doan_chien"] = cau_hinh_cu
+                        if nhan_cu is None:
+                            self._config.pop("_clone_reward_guild_label", None)
+                        else:
+                            self._config["_clone_reward_guild_label"] = nhan_cu
+
+                elif step_id == "chien_tranh_quoc_chien":
+                    # Hiện tại flow cũ mới tìm được mục Quốc chiến; chưa có luồng
+                    # thao tác trận Quốc chiến hoàn chỉnh nên chỉ báo đúng trạng thái.
+                    ocr_client.tap_ocr_target("chien_tranh")
+                    time.sleep(1.5)
+                    man_hinh = self._normalize_screen_text(self._screen_text(device))
+                    thanh_cong = "quoc chien" in man_hinh or "quoc_chien" in man_hinh
+                    if not thanh_cong:
+                        self.log_message.emit(
+                            f"[{account.username}] Chưa nhận diện được mục Quốc chiến trên màn hình."
+                        )
+
+                else:
+                    thanh_cong = False
+                    self.log_message.emit(
+                        f"[{account.username}] Chưa có bộ xử lý cho mã bước '{step_id}'."
+                    )
+
+            except Exception as exc:
+                thanh_cong = False
+                self.log_message.emit(
+                    f"[{account.username}] Tác vụ {ten_buoc} gặp lỗi: {exc}"
+                )
+
+            self.task_progress_changed.emit(
+                nhan_tac_vu, "done" if thanh_cong else "failed",
+                1 if thanh_cong else 0, 1,
+            )
+            if thanh_cong:
+                self.log_message.emit(f"[{account.username}] Hoàn tất bước: {ten_buoc}.")
+            else:
+                co_buoc_that_bai = True
+                tat_ca_thanh_cong = False
+                self.log_message.emit(
+                    f"[{account.username}] Bước {ten_buoc} thất bại; tiếp tục bước kế tiếp."
+                )
+
+        if not self._wait_if_paused():
+            self.log_message.emit(f"[{account.username}] Đã dừng trước khi đăng xuất.")
+            return None
+
+        dang_xuat_ok = run_logout_flow(self, account, device, ocr_client)
+        if dang_xuat_ok is None:
+            return None
+        if not dang_xuat_ok:
+            self.log_message.emit(
+                f"[{account.username}] Không xác nhận được đăng xuất; đánh dấu tài khoản thất bại."
+            )
+            self.clone_account_status.emit(account.username, "failed")
+            self.clone_account_result.emit(account.username, False)
+            return False
+
+        ket_qua_tai_khoan = tat_ca_thanh_cong and not co_buoc_that_bai
+        self.clone_account_status.emit(account.username, "done" if ket_qua_tai_khoan else "failed")
+        self.clone_account_result.emit(account.username, ket_qua_tai_khoan)
+        self.log_message.emit(
+            f"[{account.username}] Kết thúc Clone Optimize: "
+            f"{'thành công' if ket_qua_tai_khoan else 'có ít nhất một bước thất bại'}."
+        )
+        return ket_qua_tai_khoan
+    except Exception as exc:
+        self.log_message.emit(f"[{account.username}] Lỗi xử lý tài khoản: {exc}")
+        self.clone_account_status.emit(account.username, "failed")
+        self.clone_account_result.emit(account.username, False)
+        return False
+
+
+def _run_clone_reward_guild_step(self, device) -> bool:
+    """Chạy lại tác vụ nhận thưởng Quân đoàn hiện có."""
+    from dctq_auto.tasks.reward_weekly_doan_chien import run_reward_weekly_doan_chien
+
+    result = run_reward_weekly_doan_chien(self, device, 0, 1)
+    return result is not None
