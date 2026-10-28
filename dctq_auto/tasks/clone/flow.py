@@ -633,6 +633,11 @@ def run_clone_flow_optimize(self, device) -> None:
         )
     )
 
+    if not selected_steps:
+        self.log_message.emit("Clone Optimize — Kết thúc. Không có tác vụ nào được chọn.")
+        self.progress_changed.emit(0, total, "Không có tác vụ nào được chọn")
+        return
+
     success_count = 0
     failed_count = 0
     from dctq_auto.tasks.common.login import login_account
@@ -647,13 +652,6 @@ def run_clone_flow_optimize(self, device) -> None:
             index - 1, total, f"Tài khoản {index}/{total}: {account.username}"
         )
         ocr_client = AdbClient(serial=self._serial)
-        if not selected_steps:
-            self.log_message.emit(
-                f"[{account.username}] Không có tác vụ nào được chọn; bỏ qua tài khoản."
-            )
-            self.clone_account_status.emit(account.username, "done")
-            continue
-
         self.log_message.emit(f"[{account.username}] Bắt đầu đăng nhập.")
         try:
             login_result, login_error = login_account(self, account, device, ocr_client)
