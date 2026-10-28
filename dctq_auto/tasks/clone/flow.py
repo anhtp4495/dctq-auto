@@ -914,11 +914,11 @@ def handle_step_hoat_dong(
 
     remaining_steps = list(steps)
     handlers = {
-        "hoat_dong_phuc_loi_le_bao_quoc_van": (
+        "hoat_dong_phuc_loi_diem_danh": (
             step_hoat_dong_phuc_loi,
             "Nhận lễ bao Quốc Vận",
         ),
-        "hoat_dong_phuc_loi_diem_danh": (
+        "hoat_dong_phuc_loi_le_bao_quoc_van": (
             step_diem_danh,
             "Điểm danh",
         ),
