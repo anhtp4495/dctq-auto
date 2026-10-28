@@ -552,12 +552,8 @@ def run_clone_flow(self, device) -> None:
 
 
 
-def run_clone_flow_optimize(self, device) -> None:
-    """Bước 1 của luồng Clone tối ưu: chụp cấu hình và nạp danh sách tài khoản.
-
-    Hàm này hiện chỉ kiểm tra/ghi nhận đầu vào; chưa thực hiện thao tác game.
-    Luồng run_clone_flow cũ được giữ nguyên.
-    """
+def _get_clone_optimize_config(self) -> dict:
+    """Đọc và ghi log snapshot cấu hình dùng cho luồng Clone tối ưu."""
     # Snapshot để các bước sau dùng cùng một bộ cấu hình, tránh đọc trạng thái
     # đã bị thay đổi trong lúc xử lý.
     config = dict(self._config)
@@ -569,6 +565,16 @@ def run_clone_flow_optimize(self, device) -> None:
             value = "***"
         self.log_message.emit(f"Clone Optimize — config[{key!r}] = {value!r}")
 
+    return config
+
+
+def run_clone_flow_optimize(self, device) -> None:
+    """Bước 1 của luồng Clone tối ưu: đọc cấu hình và nạp danh sách tài khoản.
+
+    Hàm này hiện chỉ kiểm tra/ghi nhận đầu vào; chưa thực hiện thao tác game.
+    Luồng run_clone_flow cũ được giữ nguyên.
+    """
+    config = _get_clone_optimize_config(self)
     account_file = str(config.get("clone_account_file", "") or "").strip()
     if not account_file:
         self.log_message.emit(
