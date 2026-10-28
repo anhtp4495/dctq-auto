@@ -23,12 +23,12 @@ class ActivityWorkerMixin:
         normalized = self._normalize_screen_text(detected_text)
         return any(self._normalize_screen_text(marker) in normalized for marker in markers), detected_text
 
-    def _run_open_activity(self, device) -> bool:
+    def run_open_activity(self, device, screenshot=None) -> bool:
         """Open Hoạt động only when OCR does not already show its Phúc lợi screen."""
         try:
             if not self._wait_if_paused():
                 return False
-            visible, detected_text = self._activity_phuc_loi_visible(device)
+            visible, detected_text = self._activity_phuc_loi_visible(device, screenshot=screenshot)
             if visible:
                 self.log_message.emit("Hoạt động đã mở sẵn; không click mở lần nữa.")
                 return True
@@ -60,7 +60,7 @@ class ActivityWorkerMixin:
             if visible:
                 self.log_message.emit("Đã ở mục Phúc Lợi; không cần chọn lại.")
                 return True
-            if not self._run_open_activity(device):
+            if not self.run_open_activity(device):
                 return False
             time.sleep(1.0)
             if not self._wait_if_paused():
@@ -150,7 +150,7 @@ class ActivityWorkerMixin:
                 self.log_message.emit(
                     "Chưa ở màn hình Phúc lợi; mở Hoạt động trước khi tiếp tục."
                 )
-                if not self._run_open_activity(device):
+                if not self.run_open_activity(device):
                     return False
                 time.sleep(2.0)
                 visible, detected_text = self._activity_phuc_loi_visible(device)
