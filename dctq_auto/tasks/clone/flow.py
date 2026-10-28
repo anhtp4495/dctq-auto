@@ -15,7 +15,10 @@ from PIL import ImageOps
 from dctq_auto.adb.client import AdbClient
 from dctq_auto.automation.battle_testkit import BattleSnapshot, run_mock_battle
 from dctq_auto.tasks.common.accounts import load_accounts
-from dctq_auto.tasks.clone.step_registry import get_clone_step_registry
+from dctq_auto.tasks.clone.step_registry import (
+    get_clone_step_registry,
+    get_templates_by_steps,
+)
 
 
 def run_clone_flow(self, device) -> None:
@@ -749,9 +752,11 @@ def run_clone_flow_optimize_account(
         self.log_message.emit(f"[{account.username}] Đã dừng khi đang chạy tác vụ.")
         return None
 
+    # Bắt đầu xử lý bước; các đoạn phía trên chỉ là tiền xử lý.
     step_id = steps[0]
     ten_buoc = step_registry.get_label(step_id)
     nhan_tac_vu = f"{account.username} - {ten_buoc}"
+    templates = get_templates_by_steps(steps)
     self.log_message.emit(
         f"[{account.username}] Bước {_so_thu_tu}/{_tong_steps}: {ten_buoc} "
         f"(priority={step_registry.get_priority(step_id)})."
