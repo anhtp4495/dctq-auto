@@ -773,16 +773,7 @@ def run_clone_flow_optimize_account(
 
     try:
         screenshot = device.screenshot()
-        if hasattr(screenshot, "convert"):
-            screenshot_array = cv2.cvtColor(
-                np.asarray(screenshot.convert("RGB")), cv2.COLOR_RGB2BGR
-            )
-        else:
-            screenshot_array = np.asarray(screenshot)
-            if screenshot_array.ndim == 3 and screenshot_array.shape[2] == 3:
-                screenshot_array = cv2.cvtColor(
-                    screenshot_array, cv2.COLOR_RGB2BGR
-                )
+        screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
 
         for template_path in template_names:
             template = loaded_templates.get(template_path)
@@ -793,7 +784,7 @@ def run_clone_flow_optimize_account(
                 continue
             try:
                 match = match_template(
-                    screenshot_array,
+                    screen_bgr,
                     template.image,
                     threshold=template.threshold,
                     method=template.method,
