@@ -767,8 +767,6 @@ def run_clone_flow_optimize_account(
 
     template_names = get_templates_by_steps(steps)
     templates = get_templates(template_names)
-    matched_step_id = None
-    matched_template_path = None
 
     try:
         screenshot = device.screenshot()
@@ -809,23 +807,48 @@ def run_clone_flow_optimize_account(
             template=template,
             match=match,
         )
-        matching_steps = step_registry.get_steps_by_template(steps, template_name)
-        if matching_steps:
-            matched_step_id = matching_steps[0]
-            matched_template_path = template_name
-            break
 
-    if matched_step_id is None:
-        step_id = steps[0]
-        self.log_message.emit(
-            f"[{account.username}] Không template nào khớp màn hình hiện tại; "
-            f"bỏ qua bước {step_registry.get_label(step_id)}."
-        )
-        thanh_cong = False
-        ten_buoc = step_registry.get_label(step_id)
+        # Điều phối trực tiếp theo template.id, không cần tra ngược step_registry.
+        if template.id == "hoat_dong_man_hinh_chinh":
+            handler = handle_step_hoat_dong
+            ten_buoc = "Hoạt động"
+        elif template.id == "quan_doan_man_hinh_chinh":
+            handler = handle_step_quan_doan
+            ten_buoc = "Quân đoàn"
+        elif template.id == "chien_tranh_man_hinh_chinh":
+            handler = handle_step_chien_tranh
+            ten_buoc = "Chiến tranh"
+        else:
+            self.log_message.emit(
+                f"[{account.username}] Template {template.id} khớp nhưng chưa có handler."
+            )
+            continue
+
         nhan_tac_vu = f"{account.username} - {ten_buoc}"
-        self.task_progress_changed.emit(nhan_tac_vu, "failed", 0, 1)
-        steps.pop(0)
+        self.log_message.emit(
+            f"[{account.username}] Template ID {template.id} khớp; "
+            f"gọi {handler.__name__}."
+        )
+        self.log_message.emit(
+            f"[{account.username}] Bước {_so_thu_tu}/{_tong_steps}: {ten_buoc}."
+        )
+        self.task_progress_changed.emit(nhan_tac_vu, "running", 0, 1)
+
+        remaining_steps = handler(
+            self, account, steps, device, _ocr_client, self.log_message.emit
+        )
+        if remaining_steps is None:
+            remaining_steps = steps
+        if remaining_steps == steps:
+            self.log_message.emit(
+                f"[{account.username}] Handler {handler.__name__} hiện chưa xử lý step; "
+                "dừng tại đây để tránh đệ quy lặp vô hạn."
+            )
+            self.task_progress_changed.emit(nhan_tac_vu, "failed", 0, 1)
+            return False
+
+        steps[:] = remaining_steps
+        self.task_progress_changed.emit(nhan_tac_vu, "done", 1, 1)
         return run_clone_flow_optimize_account(
             self,
             account,
@@ -834,51 +857,20 @@ def run_clone_flow_optimize_account(
             index,
             total,
             _ocr_client=_ocr_client,
-            _tat_ca_thanh_cong=False,
+            _tat_ca_thanh_cong=_tat_ca_thanh_cong,
             _so_thu_tu=_so_thu_tu + 1,
             _tong_steps=_tong_steps,
         )
 
-    ten_buoc = step_registry.get_label(matched_step_id)
+    step_id = steps[0]
+    self.log_message.emit(
+        f"[{account.username}] Không template nào khớp màn hình hiện tại; "
+        f"bỏ qua bước {step_registry.get_label(step_id)}."
+    )
+    ten_buoc = step_registry.get_label(step_id)
     nhan_tac_vu = f"{account.username} - {ten_buoc}"
-    self.log_message.emit(
-        f"[{account.username}] Template {matched_template_path} khớp; "
-        f"chọn nhóm xử lý {matched_template_path}."
-    )
-    self.log_message.emit(
-        f"[{account.username}] Bước {_so_thu_tu}/{_tong_steps}: {ten_buoc} "
-        f"(priority={step_registry.get_priority(matched_step_id)})."
-    )
-    self.task_progress_changed.emit(nhan_tac_vu, "running", 0, 1)
-
-    handlers = {
-        "hoat_dong/hoat_dong_man_hinh_chinh": handle_step_hoat_dong,
-        "quan_doan/quan_doan_man_hinh_chinh": handle_step_quan_doan,
-        "chien_tranh/chien_tranh_man_hinh_chinh": handle_step_chien_tranh,
-    }
-    handler = handlers.get(matched_template_path)
-    if handler is None:
-        self.log_message.emit(
-            f"[{account.username}] Chưa có handler cho template {matched_template_path}."
-        )
-        self.task_progress_changed.emit(nhan_tac_vu, "failed", 0, 1)
-        return False
-
-    remaining_steps = handler(
-        self, account, steps, device, _ocr_client, self.log_message.emit
-    )
-    if remaining_steps is None:
-        remaining_steps = steps
-    if remaining_steps == steps:
-        self.log_message.emit(
-            f"[{account.username}] Handler {handler.__name__} hiện chưa xử lý step; "
-            "dừng tại đây để tránh đệ quy lặp vô hạn."
-        )
-        self.task_progress_changed.emit(nhan_tac_vu, "failed", 0, 1)
-        return False
-
-    steps[:] = remaining_steps
-    self.task_progress_changed.emit(nhan_tac_vu, "done", 1, 1)
+    self.task_progress_changed.emit(nhan_tac_vu, "failed", 0, 1)
+    steps.pop(0)
     return run_clone_flow_optimize_account(
         self,
         account,
@@ -887,11 +879,10 @@ def run_clone_flow_optimize_account(
         index,
         total,
         _ocr_client=_ocr_client,
-        _tat_ca_thanh_cong=_tat_ca_thanh_cong,
+        _tat_ca_thanh_cong=False,
         _so_thu_tu=_so_thu_tu + 1,
         _tong_steps=_tong_steps,
     )
-
 
 def handle_step_hoat_dong(self, account, steps, device, ocr_client, log):
     """Khung xử lý nhóm template Hoạt động; logic sẽ được bổ sung sau."""
