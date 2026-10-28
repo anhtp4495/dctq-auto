@@ -549,3 +549,60 @@ def run_clone_flow(self, device) -> None:
             "Lưu ý: đã thêm thao tác bấm Báo danh quân đoàn; chưa xác minh được trạng thái nhận thưởng thành công."
         )
 
+
+
+
+def run_clone_flow_optimize(self, device) -> None:
+    """Bước 1 của luồng Clone tối ưu: chụp cấu hình và nạp danh sách tài khoản.
+
+    Hàm này hiện chỉ kiểm tra/ghi nhận đầu vào; chưa thực hiện thao tác game.
+    Luồng run_clone_flow cũ được giữ nguyên.
+    """
+    # Snapshot để các bước sau dùng cùng một bộ cấu hình, tránh đọc trạng thái
+    # đã bị thay đổi trong lúc xử lý.
+    config = dict(self._config)
+
+    self.log_message.emit("Clone Optimize — Bước 1: đọc cấu hình đầu vào.")
+    for key in sorted(config):
+        value = config[key]
+        if any(secret in key.casefold() for secret in ("password", "passwd", "token", "secret")):
+            value = "***"
+        self.log_message.emit(f"Clone Optimize — config[{key!r}] = {value!r}")
+
+    account_file = str(config.get("clone_account_file", "") or "").strip()
+    if not account_file:
+        self.log_message.emit(
+            "Clone Optimize — chưa cấu hình clone_account_file; dừng ở bước đọc cấu hình."
+        )
+        self.progress_changed.emit(0, 0, "Chưa chọn file tài khoản Clone")
+        return
+
+    try:
+        accounts = load_accounts(account_file)
+    except (OSError, UnicodeError, ValueError) as exc:
+        self.log_message.emit(
+            f"Clone Optimize — không đọc được file tài khoản {account_file!r}: {exc}"
+        )
+        self.progress_changed.emit(0, 0, "Không đọc được file tài khoản Clone")
+        return
+
+    enabled_accounts = [account for account in accounts if account.enabled]
+    disabled_accounts = [account for account in accounts if not account.enabled]
+    self.log_message.emit(
+        f"Clone Optimize — đã nạp {len(accounts)} tài khoản: "
+        f"{len(enabled_accounts)} bật, {len(disabled_accounts)} vô hiệu hóa."
+    )
+    for account in accounts:
+        status = "bật" if account.enabled else "vô hiệu hóa"
+        self.log_message.emit(
+            f"Clone Optimize — tài khoản {account.username}: {status}."
+        )
+
+    self.progress_changed.emit(
+        0,
+        len(enabled_accounts),
+        f"Đã đọc cấu hình | {len(enabled_accounts)} tài khoản bật",
+    )
+    self.log_message.emit(
+        "Clone Optimize — hoàn tất bước 1; chưa thực hiện OCR, TemplateMatching hoặc thao tác game."
+    )
