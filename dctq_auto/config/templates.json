@@ -1,100 +1,193 @@
 {
   "version": 1,
   "screens": {
-    "accounts1":{
+    "accounts1": {
       "source_image": "resources/screens/accounts/waiting.png",
       "templates": {
         "waiting": {
           "description": "Nhận diện màn hình đang chờ đăng nhập.",
-          "rect": { "top": 518, "left": 960, "right": 1046, "bottom": 561},
+          "rect": {
+            "top": 518,
+            "left": 960,
+            "right": 1046,
+            "bottom": 561
+          },
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
-    "accounts2":{
+    "accounts2": {
       "source_image": "resources/screens/accounts/man_hinh_chinh.png",
       "templates": {
         "man_hinh_chinh": {
           "description": "Màn hình chính của game.",
-          "rect": { "top": 167, "left": 28, "right": 95, "bottom": 221},
+          "rect": {
+            "top": 167,
+            "left": 28,
+            "right": 95,
+            "bottom": 221
+          },
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
-    "accounts3":{
+    "accounts3": {
       "source_image": "resources/screens/accounts/dang_nhap.png",
       "templates": {
         "dang_nhap": {
           "description": "Nhận diện biểu mẫu đăng nhập tài khoản.",
-          "rect": { "top": 274, "left": 523, "right": 951, "bottom": 338},
+          "rect": {
+            "top": 274,
+            "left": 523,
+            "right": 951,
+            "bottom": 338
+          },
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
-    "accounts4":{
+    "accounts4": {
       "source_image": "resources/screens/accounts/thong_tin_dang_nhap_khong_dung.png",
       "templates": {
         "thong_tin_dang_nhap_khong_dung": {
           "description": "Nhận diện thông báo thông tin đăng nhập không đúng.",
-          "rect": { "top": 430, "left": 489, "right": 1374, "bottom": 564},
+          "rect": {
+            "top": 430,
+            "left": 489,
+            "right": 1374,
+            "bottom": 564
+          },
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
-    "accounts5":{
+    "accounts5": {
       "source_image": "resources/screens/accounts/trang_ca_nhan.png",
       "templates": {
         "trang_ca_nhan": {
           "description": "Nhận diện màn hình profile sau khi vào game.",
-          "rect": { "top": 33, "left": 793, "right": 1122, "bottom": 98},
+          "rect": {
+            "top": 33,
+            "left": 793,
+            "right": 1122,
+            "bottom": 98
+          },
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
-    "accounts6":{
+    "accounts6": {
       "source_image": "resources/screens/accounts/tuy_chon.png",
       "templates": {
         "tuy_chon": {
           "description": "Đang mở màn hình - Tùy chọn tài khoản.",
-          "rect": { "top": 71, "left": 799, "right": 1131, "bottom": 162},
+          "rect": {
+            "top": 71,
+            "left": 799,
+            "right": 1131,
+            "bottom": 162
+          },
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
-    "accounts7":{
+    "accounts7": {
       "source_image": "resources/screens/accounts/cai_dat_nguoi_dung.png",
       "templates": {
         "cai_dat_nguoi_dung": {
           "description": "Đang mở màn hình - Cài đặt người dùng.",
-          "rect": { "top": 86, "left": 732, "right": 1195, "bottom": 154},
+          "rect": {
+            "top": 86,
+            "left": 732,
+            "right": 1195,
+            "bottom": 154
+          },
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
-    "accounts8":{
+    "accounts8": {
       "source_image": "resources/screens/accounts/doi_tai_khoan.png",
       "templates": {
         "doi_tai_khoan": {
           "description": "Đang mở màn hình - Đổi tài khoản.",
-          "rect": { "top": 247, "left": 813, "right": 1105, "bottom": 316},
+          "rect": {
+            "top": 247,
+            "left": 813,
+            "right": 1105,
+            "bottom": 316
+          },
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
-    "accounts9":{
+    "accounts9": {
       "source_image": "resources/screens/accounts/cap_nhat_thong_tin.png",
       "templates": {
         "cap_nhat_thong_tin": {
           "description": "Đang mở màn hình - Cập nhật thông tin tài khoản.",
-          "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0},
+          "rect": {
+            "top": 0,
+            "left": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
+    "hoat_dong": {
+      "source_image": "resources/screens/hoat_dong/man_hinh_chinh.png",
+      "templates": {
+        "hoat_dong_man_hinh_chinh": {
+          "description": "Màn hình chính mục Hoạt động.",
+          "rect": {
+            "top": 167,
+            "left": 28,
+            "right": 95,
+            "bottom": 221
+          },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
+    "quan_doan": {
+      "source_image": "resources/screens/quan_doan/man_hinh_chinh.png",
+      "templates": {
+        "quan_doan_man_hinh_chinh": {
+          "description": "Màn hình chính mục Quân đoàn.",
+          "rect": {
+            "top": 167,
+            "left": 28,
+            "right": 95,
+            "bottom": 221
+          },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
+    "chien_tranh": {
+      "source_image": "resources/screens/chien_tranh/man_hinh_chinh.png",
+      "templates": {
+        "chien_tranh_man_hinh_chinh": {
+          "description": "Màn hình chính mục Chiến tranh.",
+          "rect": {
+            "top": 167,
+            "left": 28,
+            "right": 95,
+            "bottom": 221
+          },
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
