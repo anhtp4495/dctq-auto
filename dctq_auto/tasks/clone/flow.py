@@ -15,10 +15,7 @@ from PIL import ImageOps
 from dctq_auto.adb.client import AdbClient
 from dctq_auto.automation.battle_testkit import BattleSnapshot, run_mock_battle
 from dctq_auto.tasks.common.accounts import load_accounts
-from dctq_auto.tasks.clone.step_registry import (
-    get_clone_step_registry,
-    get_templates_by_steps,
-)
+from dctq_auto.tasks.clone.step_registry import get_clone_step_registry
 
 
 def run_clone_flow(self, device) -> None:
