@@ -835,7 +835,13 @@ def run_clone_flow_optimize_account(
         self.task_progress_changed.emit(nhan_tac_vu, "running", 0, 1)
 
         remaining_steps = handler(
-            self, account, steps, device, _ocr_client, self.log_message.emit
+            self,
+            account,
+            steps,
+            device,
+            _ocr_client,
+            self.log_message.emit,
+            screenshot=screenshot,
         )
         if remaining_steps is None:
             remaining_steps = steps
@@ -889,8 +895,12 @@ def run_clone_flow_optimize_account(
 
     return False
 
-def handle_step_hoat_dong(self, account, steps, device, ocr_client, log):
-    """Mở màn hình Hoạt động thông qua thao tác dùng chung."""
+def handle_step_hoat_dong(
+    self, account, steps, device, ocr_client, log, screenshot=None
+):
+    """Mở màn hình Hoạt động; nhận ảnh hiện tại để các thao tác dùng chung."""
+    if screenshot is None:
+        screenshot = device.screenshot()
     from dctq_auto.tasks.common.task_open_activity import task_open_activity
 
     if not task_open_activity(self, account, device, ocr_client, log):
@@ -906,13 +916,21 @@ def handle_step_hoat_dong(self, account, steps, device, ocr_client, log):
     return remaining_steps
 
 
-def handle_step_quan_doan(self, account, steps, device, ocr_client, log):
-    """Khung xử lý nhóm template Quân đoàn; logic sẽ được bổ sung sau."""
+def handle_step_quan_doan(
+    self, account, steps, device, ocr_client, log, screenshot=None
+):
+    """Khung xử lý nhóm template Quân đoàn."""
+    if screenshot is None:
+        screenshot = device.screenshot()
     return steps
 
 
-def handle_step_chien_tranh(self, account, steps, device, ocr_client, log):
-    """Khung xử lý nhóm template Chiến tranh; logic sẽ được bổ sung sau."""
+def handle_step_chien_tranh(
+    self, account, steps, device, ocr_client, log, screenshot=None
+):
+    """Khung xử lý nhóm template Chiến tranh."""
+    if screenshot is None:
+        screenshot = device.screenshot()
     return steps
 
 
