@@ -10,7 +10,7 @@ from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
 
 
-def run_open_activity(
+def open_activity(
     self, account, device, ocr_client, log, screenshot=None
 ) -> bool:
     """Mở Hoạt động bằng Template Matching; nhận screenshot có sẵn nếu được truyền vào."""
@@ -80,7 +80,7 @@ def run_open_activity(
                 if not self._wait_if_paused():
                     return False
                 next_screenshot = device.screenshot()
-                return run_open_activity(
+                return open_activity(
                     self, account, device, ocr_client, log,
                     screenshot=next_screenshot,
                 )
@@ -97,7 +97,7 @@ def run_open_activity(
 
 
 def run(self, account, device, ocr_client, log, screenshot=None) -> bool:
-    """Entry point chuẩn của task; chuyển tiếp tới run_open_activity."""
-    return run_open_activity(
+    """Entry point chuẩn của task; chuyển tiếp tới open_activity."""
+    return open_activity(
         self, account, device, ocr_client, log, screenshot=screenshot
     )
