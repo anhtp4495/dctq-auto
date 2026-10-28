@@ -758,8 +758,7 @@ def run_clone_flow_optimize_account(
         self.log_message.emit(f"[{account.username}] Đã dừng khi đang chạy tác vụ.")
         return None
 
-    # Bắt đầu xử lý bước: nhận diện màn hình hiện tại bằng các template
-    # được khai báo cho toàn bộ bước còn lại, rồi ưu tiên bước khớp đầu tiên.
+    # Nhận diện màn hình theo cùng format với handle_post_login() trong login.py.
     from dctq_auto.vision.template_matching import match_template
     from dctq_auto.vision.template_report import report_template_match
     from dctq_auto.vision.template_store import get_templates
@@ -767,52 +766,54 @@ def run_clone_flow_optimize_account(
     import numpy as np
 
     template_names = get_templates_by_steps(steps)
-    loaded_templates = get_templates(template_names)
+    templates = get_templates(template_names)
     matched_step_id = None
     matched_template_path = None
 
     try:
         screenshot = device.screenshot()
         screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
-
-        for template_path in template_names:
-            template = loaded_templates.get(template_path)
-            if template is None:
-                self.log_message.emit(
-                    f"[{account.username}] Không tải được template {template_path}; bỏ qua."
-                )
-                continue
-            try:
-                match = match_template(
-                    screen_bgr,
-                    template.image,
-                    threshold=template.threshold,
-                    method=template.method,
-                )
-            except (ValueError, FileNotFoundError) as exc:
-                self.log_message.emit(
-                    f"[{account.username}] Không thể so khớp template {template_path}: {exc}"
-                )
-                continue
-            if match is None:
-                continue
-
-            report_template_match(
-                self.log_message.emit,
-                context=f"[{account.username}]",
-                template=template,
-                match=match,
-            )
-            matching_steps = step_registry.get_steps_by_template(steps, template_path)
-            if matching_steps:
-                matched_step_id = matching_steps[0]
-                matched_template_path = template_path
-                break
-
     except Exception as exc:
         self.log_message.emit(
-            f"[{account.username}] Lỗi khi chụp màn hình/Template Matching: {exc}"
+            f"[{account.username}] Không chụp được màn hình để Template Matching: {exc}"
         )
+        return False
+
+    for template_name in template_names:
+        template = templates.get(template_name)
+        if template is None:
+            self.log_message.emit(
+                f"[{account.username}] Không tải được template {template_name}; bỏ qua."
+            )
+            continue
+
+        try:
+            match = match_template(
+                screen_bgr,
+                template.image,
+                threshold=template.threshold,
+                method=template.method,
+            )
+        except (ValueError, cv2.error) as exc:
+            self.log_message.emit(
+                f"[{account.username}] Lỗi template matching {template_name}: {exc}"
+            )
+            continue
+
+        if match is None:
+            continue
+
+        report_template_match(
+            self.log_message.emit,
+            context=f"[{account.username}]",
+            template=template,
+            match=match,
+        )
+        matching_steps = step_registry.get_steps_by_template(steps, template_name)
+        if matching_steps:
+            matched_step_id = matching_steps[0]
+            matched_template_path = template_name
+            break
 
     if matched_step_id is None:
         step_id = steps[0]
