@@ -699,9 +699,8 @@ def run_clone_flow_optimize_account(
         )
 
     self.log_message.emit(
-        f"[{account.username}] Clone Optimize — khung account hoàn tất; "
-        "chưa thực hiện thao tác game."
+        f"[{account.username}] Clone Optimize — đã kiểm tra config cho account; "
+        "chưa thực hiện thao tác game nên chưa đánh dấu thành công."
     )
-    self.clone_account_status.emit(account.username, "done")
-    self.clone_account_result.emit(account.username, True)
-    return True
+    self.clone_account_status.emit(account.username, "pending")
+    return None
