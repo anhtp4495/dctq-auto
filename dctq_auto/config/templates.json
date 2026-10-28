@@ -134,12 +134,18 @@
       "templates": {
         "cap_nhat_thong_tin": {
           "description": "Đang mở màn hình - Cập nhật thông tin tài khoản.",
-          "rect": {
-            "top": 0,
-            "left": 0,
-            "right": 0,
-            "bottom": 0
-          },
+          "rect": { "top": 371, "left": 673, "right": 1165, "bottom": 414},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
+    "accounts10": {
+      "source_image": "resources/screens/accounts/dich_quan_tap_kich.png",
+      "templates": {
+        "dich_quan_tap_kich": {
+          "description": "Đang mở màn hình - Cập nhật thông tin tài khoản.",
+          "rect": { "top": 119, "left": 748, "right": 1153, "bottom": 192},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
