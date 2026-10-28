@@ -5,7 +5,7 @@
     "display_name": "Nhận lễ bao Quốc Vận",
     "priority": 10000,
     "templates": [
-      "hoat_dong/man_hinh_chinh"
+      "hoat_dong/hoat_dong_man_hinh_chinh"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "display_name": "Điểm danh",
     "priority": 10001,
     "templates": [
-      "hoat_dong/man_hinh_chinh"
+      "hoat_dong/hoat_dong_man_hinh_chinh"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "display_name": "Báo danh quân đoàn",
     "priority": 10100,
     "templates": [
-      "quan_doan/man_hinh_chinh"
+      "quan_doan/quan_doan_man_hinh_chinh"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "display_name": "Nhận túi phúc",
     "priority": 10101,
     "templates": [
-      "quan_doan/man_hinh_chinh"
+      "quan_doan/quan_doan_man_hinh_chinh"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "display_name": "Cầu vận quân đoàn",
     "priority": 10102,
     "templates": [
-      "quan_doan/man_hinh_chinh"
+      "quan_doan/quan_doan_man_hinh_chinh"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "display_name": "Nhận Thưởng - Quân Đoàn",
     "priority": 10400,
     "templates": [
-      "chien_tranh/man_hinh_chinh"
+      "chien_tranh/chien_tranh_man_hinh_chinh"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "display_name": "Quốc chiến",
     "priority": 10500,
     "templates": [
-      "chien_tranh/man_hinh_chinh"
+      "chien_tranh/chien_tranh_man_hinh_chinh"
     ]
   }
 ]
