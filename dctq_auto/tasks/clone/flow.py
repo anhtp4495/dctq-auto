@@ -15,7 +15,10 @@ from PIL import ImageOps
 from dctq_auto.adb.client import AdbClient
 from dctq_auto.automation.battle_testkit import BattleSnapshot, run_mock_battle
 from dctq_auto.tasks.common.accounts import load_accounts
-from dctq_auto.tasks.clone.step_registry import get_clone_step_registry
+from dctq_auto.tasks.clone.step_registry import (
+    get_clone_step_registry,
+    get_templates_by_steps,
+)
 
 
 def run_clone_flow(self, device) -> None:
@@ -582,15 +585,6 @@ def _get_clone_optimize_config(self) -> dict:
         )
 
     return config
-
-
-def get_templates(steps: list[str]) -> list[str]:
-    """Trả về danh sách template cần dùng theo thứ tự các bước được truyền vào."""
-    template_names = []
-    for step in steps:
-        if step == "diem_danh":
-            template_names.append("hoat_dong/phuc_loi")
-    return template_names
 
 
 def run_clone_flow_optimize(self, device) -> None:
