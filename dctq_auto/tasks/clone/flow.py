@@ -923,7 +923,7 @@ def handle_step_hoat_dong(
             "Điểm danh",
         ),
     }
-    for step_id in list(remaining_steps):
+    for step_id in steps:
         handler_info = handlers.get(step_id)
         if handler_info is None:
             continue
