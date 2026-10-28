@@ -9,7 +9,10 @@
     "id": "diem_danh",
     "config_key": "clone_daily_check_in",
     "display_name": "Điểm danh",
-    "priority": 10001
+    "priority": 10001,
+    "templates": [
+      "hoat_dong/phuc_loi"
+    ]
   },
   {
     "id": "quan_doan_bao_danh",
