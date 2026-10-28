@@ -1,31 +1,99 @@
 """Thao tác dùng chung để mở màn hình Hoạt động."""
 
+import time
+
+import cv2
+import numpy as np
+
+from dctq_auto.vision.template_matching import match_template
+from dctq_auto.vision.template_report import report_template_match
+from dctq_auto.vision.template_store import get_templates
+
 
 def run_open_activity(
     self, account, device, ocr_client, log, screenshot=None
 ) -> bool:
-    """Mở màn hình Hoạt động; có thể tái sử dụng screenshot đã chụp."""
+    """Mở Hoạt động bằng Template Matching; nhận screenshot có sẵn nếu được truyền vào."""
     log(f"[{account.username}] Bắt đầu mở màn hình Hoạt động.")
 
-    open_activity = getattr(self, "run_open_activity", None)
-    if not callable(open_activity):
-        log(
-            f"[{account.username}] Không tìm thấy hàm run_open_activity "
-            "để mở màn hình Hoạt động."
-        )
-        return False
+    template_names = (
+        "hoat_dong/dang_chon_man_hinh_hoat_dong",
+        "hoat_dong/chua_chon_man_hinh_hoat_dong",
+    )
+    templates = get_templates(template_names)
 
     try:
-        result = bool(open_activity(device, screenshot=screenshot))
+        if not self._wait_if_paused():
+            log(f"[{account.username}] Đã dừng khi đang mở màn hình Hoạt động.")
+            return False
+        if screenshot is None:
+            screenshot = device.screenshot()
+        screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
     except Exception as exc:
-        log(f"[{account.username}] Mở màn hình Hoạt động thất bại: {exc}")
+        log(f"[{account.username}] Không chụp được màn hình để nhận diện Hoạt động: {exc}")
         return False
 
-    if result:
-        log(f"[{account.username}] Đã mở/xác nhận màn hình Hoạt động.")
-    else:
-        log(f"[{account.username}] Không mở/xác nhận được màn hình Hoạt động.")
-    return result
+    for template_name in template_names:
+        template = templates.get(template_name)
+        if template is None:
+            log(f"[{account.username}] Không tải được template {template_name}; bỏ qua.")
+            continue
+
+        try:
+            match = match_template(
+                screen_bgr,
+                template.image,
+                threshold=template.threshold,
+                method=template.method,
+            )
+        except (ValueError, cv2.error) as exc:
+            log(f"[{account.username}] Lỗi template matching {template_name}: {exc}")
+            continue
+
+        if match is None:
+            continue
+
+        report_template_match(
+            log,
+            context=f"[{account.username}]",
+            template=template,
+            match=match,
+        )
+
+        if template.id == "dang_chon_man_hinh_hoat_dong":
+            log(f"[{account.username}] Template xác nhận đã ở màn hình Hoạt động.")
+            return True
+
+        if template.id == "chua_chon_man_hinh_hoat_dong":
+            screen_width, screen_height = screenshot.size
+            x = round(0.035937 * screen_width)
+            y = round(0.732407 * screen_height)
+            log(
+                f"[{account.username}] Template xác nhận chưa chọn màn hình Hoạt động; "
+                f"click ({x}, {y})."
+            )
+            try:
+                if not self._wait_if_paused():
+                    return False
+                device.shell(f"input tap {x} {y}")
+                time.sleep(3.0)
+                if not self._wait_if_paused():
+                    return False
+                next_screenshot = device.screenshot()
+                return run_open_activity(
+                    self, account, device, ocr_client, log,
+                    screenshot=next_screenshot,
+                )
+            except Exception as exc:
+                log(f"[{account.username}] Mở màn hình Hoạt động thất bại: {exc}")
+                return False
+
+    log(
+        f"[{account.username}] Không khớp template "
+        "dang_chon_man_hinh_hoat_dong hoặc chua_chon_man_hinh_hoat_dong; "
+        "không thực hiện click."
+    )
+    return False
 
 
 def run(self, account, device, ocr_client, log, screenshot=None) -> bool:
