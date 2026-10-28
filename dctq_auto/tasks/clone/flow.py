@@ -625,6 +625,14 @@ def run_clone_flow_optimize(self, device) -> None:
 
     step_registry = get_clone_step_registry()
     selected_steps = step_registry.get_enabled_steps(config)
+    selected_steps = sorted(
+        selected_steps,
+        key=lambda step_id: (
+            step_registry.get_priority(step_id) is None,
+            step_registry.get_priority(step_id)
+            if step_registry.get_priority(step_id) is not None else 0,
+        ),
+    )
     self.log_message.emit(
         "Clone Optimize — các bước được bật: "
         + (
@@ -727,10 +735,6 @@ def run_clone_flow_optimize_account(
         return None
 
     step_registry = get_clone_step_registry()
-    steps = sorted(steps, key=lambda step_id: (
-        step_registry.get_priority(step_id) is None,
-        step_registry.get_priority(step_id) if step_registry.get_priority(step_id) is not None else 0,
-    ))
     self.log_message.emit(
         f"[{account.username}] Clone Optimize — bắt đầu tác vụ tài khoản {index}/{total}."
     )
