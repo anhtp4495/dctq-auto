@@ -3,42 +3,42 @@
     "id": "daily_check_in",
     "config_key": "clone_daily_check_in",
     "display_name": "Điểm danh",
-    "priority": 10
+    "priority": 10000
   },
   {
     "id": "receive_quoc_van",
     "config_key": "clone_receive_quoc_van",
     "display_name": "Nhận lễ bao Quốc Vận",
-    "priority": 20
+    "priority": 10000
   },
   {
     "id": "guild_check_in",
     "config_key": "clone_guild_check_in",
     "display_name": "Báo danh quân đoàn",
-    "priority": 30
+    "priority": 10000
   },
   {
     "id": "receive_lucky_bag",
     "config_key": "clone_receive_lucky_bag",
     "display_name": "Nhận túi phúc",
-    "priority": 40
+    "priority": 10000
   },
   {
     "id": "guild_fortune",
     "config_key": "clone_guild_fortune",
     "display_name": "Cầu vận quân đoàn",
-    "priority": 50
+    "priority": 10000
   },
   {
     "id": "quoc_chien",
     "config_key": "clone_quoc_chien",
     "display_name": "Quốc chiến",
-    "priority": 60
+    "priority": 10000
   },
   {
     "id": "reward_guild",
     "config_key": "clone_reward_guild",
     "display_name": "Nhận Thưởng - Quân Đoàn",
-    "priority": 70
+    "priority": 10000
   }
 ]
