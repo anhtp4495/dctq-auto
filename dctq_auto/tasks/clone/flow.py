@@ -907,8 +907,13 @@ def handle_step_hoat_dong(
         screenshot = device.screenshot()
 
     from dctq_auto.tasks.common.task_open_activity import task_open_activity
+    from dctq_auto.tasks.common.task_close_activity import task_close_activity
 
     if not task_open_activity(self, account, device, ocr_client, log):
+        return steps
+
+    def close_and_return():
+        task_close_activity(self, account, device, ocr_client, log)
         return steps
 
     if "hoat_dong_phuc_loi_diem_danh" in steps:
@@ -918,11 +923,11 @@ def handle_step_hoat_dong(
             success = bool(step_hoat_dong_phuc_loi_diem_danh.chay(self, device, ocr_client))
         except Exception as exc:
             log(f"[{account.username}] Bước Hoạt động Điểm danh thất bại: {exc}")
-            return steps
+            return close_and_return()
 
         if not success:
             log(f"[{account.username}] Giữ lại bước {step_id} để không đánh dấu hoàn thành.")
-            return steps
+            return close_and_return()
 
         steps.remove(step_id)
         return handle_step_hoat_dong(
@@ -936,18 +941,18 @@ def handle_step_hoat_dong(
             success = bool(step_hoat_dong_phuc_loi_le_bao_quoc_van.chay(self, device, ocr_client))
         except Exception as exc:
             log(f"[{account.username}] Bước Hoạt động Nhận lễ bao Quốc Vận thất bại: {exc}")
-            return steps
+            return close_and_return()
 
         if not success:
             log(f"[{account.username}] Giữ lại bước {step_id} để không đánh dấu hoàn thành.")
-            return steps
+            return close_and_return()
 
         steps.remove(step_id)
         return handle_step_hoat_dong(
             self, account, steps, device, ocr_client, log
         )
 
-    return steps
+    return close_and_return()
 
 def handle_step_quan_doan(
     self, account, steps, device, ocr_client, log, screenshot=None
