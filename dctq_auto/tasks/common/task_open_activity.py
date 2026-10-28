@@ -1,7 +1,7 @@
 """Thao tác dùng chung để mở màn hình Hoạt động."""
 
 
-def task_open_activity(self, account, device, ocr_client, log) -> bool:
+def Run(self, account, device, ocr_client, log) -> bool:
     """Mở màn hình Hoạt động và xác nhận kết quả bằng logic đã có."""
     log(f"[{account.username}] Bắt đầu mở màn hình Hoạt động.")
 
