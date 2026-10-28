@@ -908,15 +908,15 @@ def handle_step_hoat_dong(
         return steps
 
     from dctq_auto.tasks.common import (
-        step_diem_danh,
-        step_hoat_dong_phuc_loi,
+        step_hoat_dong_phuc_loi_diem_danh,
+        step_hoat_dong_phuc_loi_le_bao_quoc_van,
     )
 
     if "hoat_dong_phuc_loi_diem_danh" in steps:
         step_id = "hoat_dong_phuc_loi_diem_danh"
         try:
             log(f"[{account.username}] Bắt đầu bước Hoạt động: Điểm danh.")
-            success = bool(step_diem_danh.chay(self, device, ocr_client))
+            success = bool(step_hoat_dong_phuc_loi_diem_danh.chay(self, device, ocr_client))
         except Exception as exc:
             log(f"[{account.username}] Bước Hoạt động Điểm danh thất bại: {exc}")
             return steps
@@ -934,7 +934,7 @@ def handle_step_hoat_dong(
         step_id = "hoat_dong_phuc_loi_le_bao_quoc_van"
         try:
             log(f"[{account.username}] Bắt đầu bước Hoạt động: Nhận lễ bao Quốc Vận.")
-            success = bool(step_hoat_dong_phuc_loi.chay(self, device, ocr_client))
+            success = bool(step_hoat_dong_phuc_loi_le_bao_quoc_van.chay(self, device, ocr_client))
         except Exception as exc:
             log(f"[{account.username}] Bước Hoạt động Nhận lễ bao Quốc Vận thất bại: {exc}")
             return steps
