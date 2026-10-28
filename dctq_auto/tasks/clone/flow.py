@@ -860,44 +860,14 @@ def run_clone_flow_optimize_account(
     )
     self.task_progress_changed.emit(nhan_tac_vu, "running", 0, 1)
 
-    try:
-        if step_id == "hoat_dong_phuc_loi":
-            from dctq_auto.tasks.clone.common.step_hoat_dong_phuc_loi import chay as chay_buoc
-        elif step_id == "diem_danh":
-            from dctq_auto.tasks.clone.common.step_diem_danh import chay as chay_buoc
-        elif step_id == "quan_doan_bao_danh":
-            from dctq_auto.tasks.clone.common.step_quan_doan_bao_danh import chay as chay_buoc
-        elif step_id == "quan_doan_tui_phuc":
-            from dctq_auto.tasks.clone.common.step_quan_doan_tui_phuc import chay as chay_buoc
-        elif step_id == "quan_doan_cau_van":
-            from dctq_auto.tasks.clone.common.step_quan_doan_cau_van import chay as chay_buoc
-        elif step_id == "chien_tranh_quan_doan_nhan_thuong":
-            from dctq_auto.tasks.clone.common.step_chien_tranh_quan_doan_nhan_thuong import chay as chay_buoc
-        elif step_id == "chien_tranh_quoc_chien":
-            from dctq_auto.tasks.clone.common.step_chien_tranh_quoc_chien import chay as chay_buoc
-        else:
-            raise ValueError(f"Chưa khai báo bộ xử lý cho mã bước: {step_id}")
-
-        thanh_cong = bool(chay_buoc(self, device, _ocr_client))
-    except Exception as exc:
-        thanh_cong = False
-        self.log_message.emit(
-            f"[{account.username}] Tác vụ {ten_buoc} gặp lỗi: {exc}"
-        )
-
-    self.task_progress_changed.emit(
-        nhan_tac_vu, "done" if thanh_cong else "failed",
-        1 if thanh_cong else 0, 1,
+    # Chỉ triển khai nhận diện màn hình bằng Template Matching ở giai đoạn này.
+    # Phần điều phối/xử lý từng step sẽ được bổ sung sau; không tự gọi handler.
+    self.log_message.emit(
+        f"[{account.username}] Đã nhận diện template {matched_template_path} "
+        f"cho bước {ten_buoc}. Phần xử lý step sẽ triển khai sau."
     )
-    if thanh_cong:
-        self.log_message.emit(f"[{account.username}] Hoàn tất bước: {ten_buoc}.")
-    else:
-        self.log_message.emit(
-            f"[{account.username}] Bước {ten_buoc} thất bại; tiếp tục bước kế tiếp."
-        )
-
-    # Xóa đúng bước đã chọn theo template, không mặc định xóa bước đầu tiên.
-    steps.remove(step_id)
+    self.task_progress_changed.emit(nhan_tac_vu, "failed", 0, 1)
+    return False
 
     return run_clone_flow_optimize_account(
         self,
