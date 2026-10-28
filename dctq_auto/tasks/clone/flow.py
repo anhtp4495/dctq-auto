@@ -898,20 +898,42 @@ def run_clone_flow_optimize_account(
 def handle_step_hoat_dong(
     self, account, steps, device, ocr_client, log, screenshot=None
 ):
-    """Mở màn hình Hoạt động; nhận ảnh hiện tại để các thao tác dùng chung."""
+    """Chạy các bước Hoạt động được bật khi template màn hình khớp."""
     if screenshot is None:
         screenshot = device.screenshot()
+
     from dctq_auto.tasks.common.task_open_activity import task_open_activity
 
     if not task_open_activity(self, account, device, ocr_client, log):
         return steps
 
-    # Tiến sang bước kế tiếp trong danh sách; các bước Hoạt động còn lại
-    # sẽ được xử lý riêng khi phần gameplay tương ứng được triển khai.
     remaining_steps = list(steps)
-    for step_id in remaining_steps:
-        if step_id.startswith("hoat_dong_"):
+    handlers = {
+        "hoat_dong_phuc_loi_le_bao_quoc_van": (
+            "dctq_auto.tasks.common.step_hoat_dong_phuc_loi",
+            "Nhận lễ bao Quốc Vận",
+        ),
+        "hoat_dong_phuc_loi_diem_danh": (
+            "dctq_auto.tasks.common.step_diem_danh",
+            "Điểm danh",
+        ),
+    }
+    for step_id in list(remaining_steps):
+        handler_info = handlers.get(step_id)
+        if handler_info is None:
+            continue
+        module_name, label = handler_info
+        try:
+            module = __import__(module_name, fromlist=["chay"])
+            log(f"[{account.username}] Bắt đầu bước Hoạt động: {label}.")
+            success = bool(module.chay(self, device, ocr_client))
+        except Exception as exc:
+            log(f"[{account.username}] Bước Hoạt động {label} thất bại: {exc}")
+            success = False
+        if success:
             remaining_steps.remove(step_id)
+        else:
+            log(f"[{account.username}] Giữ lại bước {step_id} để không đánh dấu hoàn thành.")
             break
     return remaining_steps
 
