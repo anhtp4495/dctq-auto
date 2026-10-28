@@ -635,6 +635,9 @@ def run_clone_flow_optimize(self, device) -> None:
 
     success_count = 0
     failed_count = 0
+    from dctq_auto.tasks.common.login import login_account
+    from dctq_auto.tasks.common.logout import run_logout_flow
+
     for index, account in enumerate(enabled_accounts, start=1):
         if not self._wait_if_paused():
             self.log_message.emit("Clone Optimize — đã dừng theo yêu cầu.")
@@ -643,15 +646,62 @@ def run_clone_flow_optimize(self, device) -> None:
         self.progress_changed.emit(
             index - 1, total, f"Tài khoản {index}/{total}: {account.username}"
         )
+        ocr_client = AdbClient(serial=self._serial)
+        if not selected_steps:
+            self.log_message.emit(
+                f"[{account.username}] Không có tác vụ nào được chọn; bỏ qua tài khoản."
+            )
+            self.clone_account_status.emit(account.username, "done")
+            continue
+
+        self.log_message.emit(f"[{account.username}] Bắt đầu đăng nhập.")
+        try:
+            login_result, login_error = login_account(self, account, device, ocr_client)
+        except Exception as exc:
+            login_result, login_error = False, str(exc)
+
+        if login_result is None:
+            self.log_message.emit(f"[{account.username}] Đăng nhập bị dừng; bỏ qua tài khoản.")
+            continue
+        if login_result is not True:
+            self.log_message.emit(
+                f"[{account.username}] Đăng nhập thất bại: {login_error or 'không rõ nguyên nhân'}."
+            )
+            self.clone_account_status.emit(account.username, "failed")
+            self.clone_account_result.emit(account.username, False)
+            failed_count += 1
+            continue
+
         result = run_clone_flow_optimize_account(
             self, account, selected_steps, device, index, total
         )
-        if result is True:
-            success_count += 1
-        elif result is False:
-            failed_count += 1
+        if result is not None:
+            try:
+                if not self._wait_if_paused():
+                    self.log_message.emit(
+                        f"[{account.username}] Đã dừng trước khi đăng xuất."
+                    )
+                    return
+                logout_result = run_logout_flow(self, account, device, ocr_client)
+            except Exception as exc:
+                self.log_message.emit(f"[{account.username}] Lỗi đăng xuất: {exc}")
+                logout_result = False
+
+            if logout_result is not True:
+                self.log_message.emit(
+                    f"[{account.username}] Đăng xuất thất bại; đánh dấu tài khoản thất bại."
+                )
+                result = False
+
+            self.clone_account_status.emit(
+                account.username, "done" if result else "failed"
+            )
+            self.clone_account_result.emit(account.username, bool(result))
+            if result:
+                success_count += 1
+            else:
+                failed_count += 1
         else:
-            # None means the account flow was stopped or intentionally not run.
             self.log_message.emit(
                 f"Clone Optimize — {account.username}: chưa có kết quả xử lý."
             )
@@ -670,7 +720,7 @@ def run_clone_flow_optimize(self, device) -> None:
 def run_clone_flow_optimize_account(
     self, account, steps: list[str], device, index: int, total: int
 ) -> bool | None:
-    """Đăng nhập một tài khoản, chạy lần lượt các bước đã bật rồi đăng xuất."""
+    """Chạy các bước Clone Optimize cho tài khoản đã đăng nhập; không đăng nhập/đăng xuất."""
     if not account.enabled:
         self.clone_account_status.emit(account.username, "disabled")
         self.log_message.emit(
@@ -679,46 +729,22 @@ def run_clone_flow_optimize_account(
         return None
 
     step_registry = get_clone_step_registry()
-    # Sắp xếp lại tại đây để hàm vẫn đúng thứ tự dù được gọi độc lập.
     steps = sorted(steps, key=lambda step_id: (
         step_registry.get_priority(step_id) is None,
         step_registry.get_priority(step_id) if step_registry.get_priority(step_id) is not None else 0,
     ))
-    self.clone_account_status.emit(account.username, "running")
     self.log_message.emit(
-        f"[{account.username}] Clone Optimize — bắt đầu tài khoản {index}/{total}."
+        f"[{account.username}] Clone Optimize — bắt đầu tác vụ tài khoản {index}/{total}."
     )
 
     if not steps:
-        self.log_message.emit(
-            f"[{account.username}] Không có tác vụ nào được chọn; bỏ qua đăng nhập và đăng xuất."
-        )
-        self.clone_account_status.emit(account.username, "done")
+        self.log_message.emit(f"[{account.username}] Không có tác vụ nào được chọn.")
         return True
 
     ocr_client = AdbClient(serial=self._serial)
-    from dctq_auto.tasks.common.login import login_account
-    from dctq_auto.tasks.common.logout import run_logout_flow
-
     try:
-        if not self._wait_if_paused():
-            self.log_message.emit(f"[{account.username}] Đã dừng trước khi đăng nhập.")
-            return None
-        self.log_message.emit(f"[{account.username}] Bắt đầu đăng nhập.")
-        login_result, login_error = login_account(self, account, device, ocr_client)
-        if login_result is None:
-            return None
-        if login_result is not True:
-            self.log_message.emit(
-                f"[{account.username}] Đăng nhập thất bại: {login_error or 'không rõ nguyên nhân'}."
-            )
-            self.clone_account_status.emit(account.username, "failed")
-            self.clone_account_result.emit(account.username, False)
-            return False
-
         self._config["_clone_guild_screen_closed"] = False
         tat_ca_thanh_cong = True
-        co_buoc_that_bai = False
 
         for so_thu_tu, step_id in enumerate(steps, start=1):
             if not self._wait_if_paused():
@@ -765,39 +791,18 @@ def run_clone_flow_optimize_account(
             if thanh_cong:
                 self.log_message.emit(f"[{account.username}] Hoàn tất bước: {ten_buoc}.")
             else:
-                co_buoc_that_bai = True
                 tat_ca_thanh_cong = False
                 self.log_message.emit(
                     f"[{account.username}] Bước {ten_buoc} thất bại; tiếp tục bước kế tiếp."
                 )
 
-        if not self._wait_if_paused():
-            self.log_message.emit(f"[{account.username}] Đã dừng trước khi đăng xuất.")
-            return None
-
-        dang_xuat_ok = run_logout_flow(self, account, device, ocr_client)
-        if dang_xuat_ok is None:
-            return None
-        if not dang_xuat_ok:
-            self.log_message.emit(
-                f"[{account.username}] Không xác nhận được đăng xuất; đánh dấu tài khoản thất bại."
-            )
-            self.clone_account_status.emit(account.username, "failed")
-            self.clone_account_result.emit(account.username, False)
-            return False
-
-        ket_qua_tai_khoan = tat_ca_thanh_cong and not co_buoc_that_bai
-        self.clone_account_status.emit(account.username, "done" if ket_qua_tai_khoan else "failed")
-        self.clone_account_result.emit(account.username, ket_qua_tai_khoan)
         self.log_message.emit(
-            f"[{account.username}] Kết thúc Clone Optimize: "
-            f"{'thành công' if ket_qua_tai_khoan else 'có ít nhất một bước thất bại'}."
+            f"[{account.username}] Kết thúc các bước Clone Optimize: "
+            f"{'thành công' if tat_ca_thanh_cong else 'có ít nhất một bước thất bại'}."
         )
-        return ket_qua_tai_khoan
+        return tat_ca_thanh_cong
     except Exception as exc:
-        self.log_message.emit(f"[{account.username}] Lỗi xử lý tài khoản: {exc}")
-        self.clone_account_status.emit(account.username, "failed")
-        self.clone_account_result.emit(account.username, False)
+        self.log_message.emit(f"[{account.username}] Lỗi xử lý tác vụ tài khoản: {exc}")
         return False
 
 
