@@ -887,9 +887,6 @@ def run_clone_flow_optimize_account(
             _tong_steps=_tong_steps,
         )
 
-    self.log_message.emit(
-        f"[{account.username}] Không đóng được dialog đã biết; dừng Clone Optimize."
-    )
     return False
 
 def handle_step_hoat_dong(self, account, steps, device, ocr_client, log):
