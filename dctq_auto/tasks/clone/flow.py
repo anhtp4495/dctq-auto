@@ -15,6 +15,7 @@ from PIL import ImageOps
 from dctq_auto.adb.client import AdbClient
 from dctq_auto.automation.battle_testkit import BattleSnapshot, run_mock_battle
 from dctq_auto.tasks.common.accounts import load_accounts
+from dctq_auto.tasks.clone.step_registry import CloneStepRegistry
 
 
 def run_clone_flow(self, device) -> None:
@@ -622,22 +623,14 @@ def run_clone_flow_optimize(self, device) -> None:
         self.progress_changed.emit(0, 0, "Không có tài khoản được bật")
         return
 
-    selected_steps = [
-        key
-        for key in (
-            "clone_daily_check_in",
-            "clone_receive_quoc_van",
-            "clone_guild_check_in",
-            "clone_receive_lucky_bag",
-            "clone_guild_fortune",
-            "clone_quoc_chien",
-            "clone_reward_guild",
-        )
-        if config.get(key, False)
-    ]
+    step_registry = CloneStepRegistry()
+    selected_steps = step_registry.get_enabled_steps(config)
     self.log_message.emit(
         "Clone Optimize — các bước được bật: "
-        + (", ".join(selected_steps) if selected_steps else "(không có)")
+        + (
+            ", ".join(step_registry.get_label(step_id) for step_id in selected_steps)
+            if selected_steps else "(không có)"
+        )
     )
 
     success_count = 0
@@ -696,16 +689,8 @@ def run_clone_flow_optimize_account(
         f"{index}/{total}."
     )
 
-    step_labels = {
-        "clone_daily_check_in": "Điểm danh",
-        "clone_receive_quoc_van": "Nhận lễ bao Quốc Vận",
-        "clone_guild_check_in": "Báo danh quân đoàn",
-        "clone_receive_lucky_bag": "Nhận túi phúc",
-        "clone_guild_fortune": "Cầu vận quân đoàn",
-        "clone_quoc_chien": "Quốc chiến",
-        "clone_reward_guild": "Nhận Thưởng - Quân Đoàn",
-    }
-    enabled_tasks = [step_labels[step] for step in steps if step in step_labels]
+    step_registry = CloneStepRegistry()
+    enabled_tasks = [step_registry.get_label(step_id) for step_id in steps]
     if enabled_tasks:
         self.log_message.emit(
             f"[{account.username}] Clone Optimize — tác vụ được chọn: "
@@ -717,7 +702,7 @@ def run_clone_flow_optimize_account(
         )
 
     self.log_message.emit(
-        f"[{account.username}] Clone Optimize — đã kiểm tra config cho account; "
+        f"[{account.username}] Clone Optimize — đã nhận danh sách bước được bật; "
         "chưa thực hiện thao tác game nên chưa đánh dấu thành công."
     )
     self.clone_account_status.emit(account.username, "pending")
