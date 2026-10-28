@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -62,3 +63,9 @@ class CloneStepRegistry:
         """Return a step's priority, or None if the ID is unknown."""
         step = self._steps.get(step_id)
         return step["priority"] if step else None
+
+
+@lru_cache(maxsize=1)
+def get_clone_step_registry() -> CloneStepRegistry:
+    """Return a shared registry so step metadata is loaded only once."""
+    return CloneStepRegistry()
