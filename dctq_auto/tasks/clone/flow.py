@@ -15,6 +15,10 @@ from PIL import ImageOps
 from dctq_auto.adb.client import AdbClient
 from dctq_auto.automation.battle_testkit import BattleSnapshot, run_mock_battle
 from dctq_auto.tasks.common.accounts import load_accounts
+from dctq_auto.tasks.common import (
+    step_hoat_dong_phuc_loi_diem_danh,
+    step_hoat_dong_phuc_loi_le_bao_quoc_van,
+)
 from dctq_auto.tasks.clone.step_registry import (
     get_clone_step_registry,
     get_templates_by_steps,
@@ -906,11 +910,6 @@ def handle_step_hoat_dong(
 
     if not task_open_activity(self, account, device, ocr_client, log):
         return steps
-
-    from dctq_auto.tasks.common import (
-        step_hoat_dong_phuc_loi_diem_danh,
-        step_hoat_dong_phuc_loi_le_bao_quoc_van,
-    )
 
     if "hoat_dong_phuc_loi_diem_danh" in steps:
         step_id = "hoat_dong_phuc_loi_diem_danh"
