@@ -516,25 +516,29 @@ class ScreenshotAnnotator(QDialog):
         self.image_view.update()
 
     def choose_screenshot_file(self) -> None:
-        """Allow selecting only an image directly inside artifacts/screenshots."""
+        """Allow selecting images directly inside artifacts/screenshots or resources."""
         SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
+        resources_dir = Path("resources")
         filename, _ = QFileDialog.getOpenFileName(
             self,
             "Chọn ảnh màn hình",
-            str(SCREENSHOT_DIR.resolve()),
+            str(Path.cwd()),
             "Ảnh màn hình (*.png *.jpg *.jpeg *.bmp *.webp)",
         )
         if not filename:
             return
         selected = Path(filename).resolve()
-        allowed_dir = SCREENSHOT_DIR.resolve()
-        if selected.parent != allowed_dir or selected.suffix.lower() not in {
+        allowed_dirs = {
+            SCREENSHOT_DIR.resolve(),
+            resources_dir.resolve(),
+        }
+        if selected.parent not in allowed_dirs or selected.suffix.lower() not in {
             ".png", ".jpg", ".jpeg", ".bmp", ".webp"
         }:
             QMessageBox.warning(
                 self,
                 "File không hợp lệ",
-                "Chỉ được chọn file ảnh nằm trực tiếp trong artifacts/screenshots.",
+                "Chỉ được chọn file ảnh nằm trực tiếp trong artifacts/screenshots hoặc resources.",
             )
             return
         self._load_screenshot(selected)
