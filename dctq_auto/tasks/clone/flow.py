@@ -890,8 +890,20 @@ def run_clone_flow_optimize_account(
     return False
 
 def handle_step_hoat_dong(self, account, steps, device, ocr_client, log):
-    """Khung xử lý nhóm template Hoạt động; logic sẽ được bổ sung sau."""
-    return steps
+    """Mở màn hình Hoạt động thông qua thao tác dùng chung."""
+    from dctq_auto.tasks.common.task_open_activity import task_open_activity
+
+    if not task_open_activity(self, account, device, ocr_client, log):
+        return steps
+
+    # Tiến sang bước kế tiếp trong danh sách; các bước Hoạt động còn lại
+    # sẽ được xử lý riêng khi phần gameplay tương ứng được triển khai.
+    remaining_steps = list(steps)
+    for step_id in remaining_steps:
+        if step_id.startswith("hoat_dong_"):
+            remaining_steps.remove(step_id)
+            break
+    return remaining_steps
 
 
 def handle_step_quan_doan(self, account, steps, device, ocr_client, log):
