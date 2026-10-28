@@ -6,23 +6,13 @@
       "templates": {
         "hoat_dong": {
           "description": "Màn hình chính - Lối vào [Hoạt Động].",
-          "rect": {
-            "top": 751,
-            "left": 28,
-            "right": 82,
-            "bottom": 823
-          },
+          "rect": { "top": 751, "left": 28, "right": 82, "bottom": 823},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "chien_tranh": {
           "description": "Màn hình chính - Lối vào [Chiến Tranh].",
-          "rect": {
-            "top": 113,
-            "left": 1287,
-            "right": 1357,
-            "bottom": 195
-          },
+          "rect": { "top": 113, "left": 1287, "right": 1357, "bottom": 195},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
@@ -161,23 +151,13 @@
       "templates": {
         "cap_nhat_thong_tin": {
           "description": "Đang mở màn hình - Cập nhật thông tin tài khoản.",
-          "rect": {
-            "top": 371,
-            "left": 673,
-            "right": 1165,
-            "bottom": 414
-          },
+          "rect": { "top": 371, "left": 673, "right": 1165, "bottom": 414},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "close_cap_nhat_thong_tin": {
           "description": "Đang mở màn hình - Cập nhật thông tin tài khoản - Nút đóng.",
-          "rect": {
-            "top": 388,
-            "left": 1565,
-            "right": 1604,
-            "bottom": 424
-          },
+          "rect": { "top": 388, "left": 1565, "right": 1604, "bottom": 424},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
@@ -188,12 +168,7 @@
       "templates": {
         "dich_quan_tap_kich": {
           "description": "Đang mở màn hình - Cập nhật thông tin tài khoản.",
-          "rect": {
-            "top": 119,
-            "left": 748,
-            "right": 1153,
-            "bottom": 192
-          },
+          "rect": { "top": 119, "left": 748, "right": 1153, "bottom": 192},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
@@ -215,12 +190,7 @@
         },
         "dang_chon_phuc_loi": {
           "description": "Màn hình Hoạt động - Đang chọn Phúc lợi.",
-          "rect": {
-            "top": 342,
-            "left": 77,
-            "right": 191,
-            "bottom": 382
-          },
+          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
@@ -269,11 +239,5 @@
         }
       }
     }
-  },
-  "default_search_rect": {
-    "top": 0,
-    "left": 0,
-    "right": 1920,
-    "bottom": 1080
   }
 }
