@@ -758,10 +758,102 @@ def run_clone_flow_optimize_account(
         self.log_message.emit(f"[{account.username}] Đã dừng khi đang chạy tác vụ.")
         return None
 
-    # Bắt đầu xử lý bước; các đoạn phía trên chỉ là tiền xử lý.
-    step_id = steps[0]
+    # Bắt đầu xử lý bước: nhận diện màn hình hiện tại bằng các template
+    # được khai báo cho toàn bộ bước còn lại, rồi ưu tiên bước khớp đầu tiên.
+    from dctq_auto.vision.template_matching import match_template
+    from dctq_auto.vision.template_report import report_template_match
+    from dctq_auto.vision.template_store import get_templates
+    import cv2
+    import numpy as np
+
+    template_names = get_templates_by_steps(steps)
+    loaded_templates = get_templates(template_names)
+    matched_step_id = None
+    matched_template_path = None
+
+    try:
+        screenshot = device.screenshot()
+        if hasattr(screenshot, "convert"):
+            screenshot_array = cv2.cvtColor(
+                np.asarray(screenshot.convert("RGB")), cv2.COLOR_RGB2BGR
+            )
+        else:
+            screenshot_array = np.asarray(screenshot)
+            if screenshot_array.ndim == 3 and screenshot_array.shape[2] == 3:
+                screenshot_array = cv2.cvtColor(
+                    screenshot_array, cv2.COLOR_RGB2BGR
+                )
+
+        for template_path in template_names:
+            template = loaded_templates.get(template_path)
+            if template is None:
+                self.log_message.emit(
+                    f"[{account.username}] Không tải được template {template_path}; bỏ qua."
+                )
+                continue
+            try:
+                match = match_template(
+                    screenshot_array,
+                    template.image,
+                    threshold=template.threshold,
+                    method=template.method,
+                )
+            except (ValueError, FileNotFoundError) as exc:
+                self.log_message.emit(
+                    f"[{account.username}] Không thể so khớp template {template_path}: {exc}"
+                )
+                continue
+            if match is None:
+                continue
+
+            report_template_match(
+                self.log_message.emit,
+                context=f"[{account.username}]",
+                template=template,
+                match=match,
+            )
+            matching_steps = step_registry.get_steps_by_template(steps, template_path)
+            if matching_steps:
+                matched_step_id = matching_steps[0]
+                matched_template_path = template_path
+                break
+
+    except Exception as exc:
+        self.log_message.emit(
+            f"[{account.username}] Lỗi khi chụp màn hình/Template Matching: {exc}"
+        )
+
+    if matched_step_id is None:
+        step_id = steps[0]
+        self.log_message.emit(
+            f"[{account.username}] Không template nào khớp màn hình hiện tại; "
+            f"bỏ qua bước {step_registry.get_label(step_id)}."
+        )
+        thanh_cong = False
+        ten_buoc = step_registry.get_label(step_id)
+        nhan_tac_vu = f"{account.username} - {ten_buoc}"
+        self.task_progress_changed.emit(nhan_tac_vu, "failed", 0, 1)
+        steps.pop(0)
+        return run_clone_flow_optimize_account(
+            self,
+            account,
+            steps,
+            device,
+            index,
+            total,
+            _ocr_client=_ocr_client,
+            _tat_ca_thanh_cong=False,
+            _so_thu_tu=_so_thu_tu + 1,
+            _tong_steps=_tong_steps,
+        )
+
+    step_id = matched_step_id
     ten_buoc = step_registry.get_label(step_id)
     nhan_tac_vu = f"{account.username} - {ten_buoc}"
+    self.log_message.emit(
+        f"[{account.username}] Template {matched_template_path} khớp; "
+        f"chọn bước {ten_buoc} để xử lý."
+    )
     self.log_message.emit(
         f"[{account.username}] Bước {_so_thu_tu}/{_tong_steps}: {ten_buoc} "
         f"(priority={step_registry.get_priority(step_id)})."
@@ -804,8 +896,8 @@ def run_clone_flow_optimize_account(
             f"[{account.username}] Bước {ten_buoc} thất bại; tiếp tục bước kế tiếp."
         )
 
-    # Xóa bước vừa xử lý khỏi chính danh sách được truyền vào, kể cả khi bước thất bại.
-    steps.pop(0)
+    # Xóa đúng bước đã chọn theo template, không mặc định xóa bước đầu tiên.
+    steps.remove(step_id)
 
     return run_clone_flow_optimize_account(
         self,
