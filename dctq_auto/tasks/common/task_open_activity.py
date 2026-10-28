@@ -61,23 +61,25 @@ def open_activity(
             match=match,
         )
 
-        if template.id == "dang_chon_man_hinh_hoat_dong":
-            log(f"[{account.username}] Template xác nhận đã ở màn hình Hoạt động.")
+        if template.id in ("dang_chon_phuc_loi", "dang_chon_hoat_dong"):
+            log(
+                f"[{account.username}] Đã xác nhận màn hình Hoạt động "
+                f"({template.id})."
+            )
             return True
 
-        if template.id == "chua_chon_man_hinh_hoat_dong":
-            screen_width, screen_height = screenshot.size
-            x = round(0.035937 * screen_width)
-            y = round(0.732407 * screen_height)
+        if template.id == "hoat_dong":
+            x = round((match.left + match.right) / 2)
+            y = round((match.top + match.bottom) / 2)
             log(
-                f"[{account.username}] Template xác nhận chưa chọn màn hình Hoạt động; "
-                f"click ({x}, {y})."
+                f"[{account.username}] Phát hiện Hoạt động; "
+                f"click trung điểm ({x}, {y}) rồi kiểm tra lại."
             )
             try:
                 if not self._wait_if_paused():
                     return False
                 device.shell(f"input tap {x} {y}")
-                time.sleep(3.0)
+                time.sleep(1.0)
                 if not self._wait_if_paused():
                     return False
                 next_screenshot = device.screenshot()
@@ -90,9 +92,8 @@ def open_activity(
                 return False
 
     log(
-        f"[{account.username}] Không khớp template "
-        "dang_chon_man_hinh_hoat_dong hoặc chua_chon_man_hinh_hoat_dong; "
-        "không thực hiện click."
+        f"[{account.username}] Không phát hiện template hoat_dong, "
+        "dang_chon_phuc_loi hoặc dang_chon_hoat_dong."
     )
     return False
 
