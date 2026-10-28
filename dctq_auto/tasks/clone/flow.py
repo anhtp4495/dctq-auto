@@ -724,9 +724,11 @@ def run_clone_flow_optimize(self, device) -> None:
 
 
 def run_clone_flow_optimize_account(
-    self, account, steps: list[str], device, index: int, total: int
+    self, account, steps: list[str], device, index: int, total: int,
+    _ocr_client=None, _tat_ca_thanh_cong: bool = True,
+    _so_thu_tu: int = 1, _tong_steps: int | None = None,
 ) -> bool | None:
-    """Chạy các bước Clone Optimize cho tài khoản đã đăng nhập; không đăng nhập/đăng xuất."""
+    """Chạy đệ quy từng bước Clone Optimize; bước đã xử lý sẽ bị xóa khỏi steps."""
     if not account.enabled:
         self.clone_account_status.emit(account.username, "disabled")
         self.log_message.emit(
@@ -735,78 +737,85 @@ def run_clone_flow_optimize_account(
         return None
 
     step_registry = get_clone_step_registry()
-    self.log_message.emit(
-        f"[{account.username}] Clone Optimize — bắt đầu tác vụ tài khoản {index}/{total}."
-    )
+    if _tong_steps is None:
+        _tong_steps = len(steps)
+        self.log_message.emit(
+            f"[{account.username}] Clone Optimize — bắt đầu tác vụ tài khoản {index}/{total}."
+        )
+        self._config["_clone_guild_screen_closed"] = False
+        _ocr_client = AdbClient(serial=self._serial)
 
     if not steps:
-        self.log_message.emit(f"[{account.username}] Không có tác vụ nào được chọn.")
-        return True
-
-    ocr_client = AdbClient(serial=self._serial)
-    try:
-        self._config["_clone_guild_screen_closed"] = False
-        tat_ca_thanh_cong = True
-
-        for so_thu_tu, step_id in enumerate(steps, start=1):
-            if not self._wait_if_paused():
-                self.log_message.emit(f"[{account.username}] Đã dừng khi đang chạy tác vụ.")
-                return None
-
-            ten_buoc = step_registry.get_label(step_id)
-            nhan_tac_vu = f"{account.username} - {ten_buoc}"
-            self.log_message.emit(
-                f"[{account.username}] Bước {so_thu_tu}/{len(steps)}: {ten_buoc} "
-                f"(priority={step_registry.get_priority(step_id)})."
-            )
-            self.task_progress_changed.emit(nhan_tac_vu, "running", 0, 1)
-
-            try:
-                if step_id == "hoat_dong_phuc_loi":
-                    from dctq_auto.tasks.clone.common.step_hoat_dong_phuc_loi import chay as chay_buoc
-                elif step_id == "diem_danh":
-                    from dctq_auto.tasks.clone.common.step_diem_danh import chay as chay_buoc
-                elif step_id == "quan_doan_bao_danh":
-                    from dctq_auto.tasks.clone.common.step_quan_doan_bao_danh import chay as chay_buoc
-                elif step_id == "quan_doan_tui_phuc":
-                    from dctq_auto.tasks.clone.common.step_quan_doan_tui_phuc import chay as chay_buoc
-                elif step_id == "quan_doan_cau_van":
-                    from dctq_auto.tasks.clone.common.step_quan_doan_cau_van import chay as chay_buoc
-                elif step_id == "chien_tranh_quan_doan_nhan_thuong":
-                    from dctq_auto.tasks.clone.common.step_chien_tranh_quan_doan_nhan_thuong import chay as chay_buoc
-                elif step_id == "chien_tranh_quoc_chien":
-                    from dctq_auto.tasks.clone.common.step_chien_tranh_quoc_chien import chay as chay_buoc
-                else:
-                    raise ValueError(f"Chưa khai báo bộ xử lý cho mã bước: {step_id}")
-
-                thanh_cong = bool(chay_buoc(self, device, ocr_client))
-            except Exception as exc:
-                thanh_cong = False
-                self.log_message.emit(
-                    f"[{account.username}] Tác vụ {ten_buoc} gặp lỗi: {exc}"
-                )
-
-            self.task_progress_changed.emit(
-                nhan_tac_vu, "done" if thanh_cong else "failed",
-                1 if thanh_cong else 0, 1,
-            )
-            if thanh_cong:
-                self.log_message.emit(f"[{account.username}] Hoàn tất bước: {ten_buoc}.")
-            else:
-                tat_ca_thanh_cong = False
-                self.log_message.emit(
-                    f"[{account.username}] Bước {ten_buoc} thất bại; tiếp tục bước kế tiếp."
-                )
-
         self.log_message.emit(
             f"[{account.username}] Kết thúc các bước Clone Optimize: "
-            f"{'thành công' if tat_ca_thanh_cong else 'có ít nhất một bước thất bại'}."
+            f"{'thành công' if _tat_ca_thanh_cong else 'có ít nhất một bước thất bại'}."
         )
-        return tat_ca_thanh_cong
-    except Exception as exc:
-        self.log_message.emit(f"[{account.username}] Lỗi xử lý tác vụ tài khoản: {exc}")
-        return False
+        return _tat_ca_thanh_cong
 
+    if not self._wait_if_paused():
+        self.log_message.emit(f"[{account.username}] Đã dừng khi đang chạy tác vụ.")
+        return None
+
+    step_id = steps[0]
+    ten_buoc = step_registry.get_label(step_id)
+    nhan_tac_vu = f"{account.username} - {ten_buoc}"
+    self.log_message.emit(
+        f"[{account.username}] Bước {_so_thu_tu}/{_tong_steps}: {ten_buoc} "
+        f"(priority={step_registry.get_priority(step_id)})."
+    )
+    self.task_progress_changed.emit(nhan_tac_vu, "running", 0, 1)
+
+    try:
+        if step_id == "hoat_dong_phuc_loi":
+            from dctq_auto.tasks.clone.common.step_hoat_dong_phuc_loi import chay as chay_buoc
+        elif step_id == "diem_danh":
+            from dctq_auto.tasks.clone.common.step_diem_danh import chay as chay_buoc
+        elif step_id == "quan_doan_bao_danh":
+            from dctq_auto.tasks.clone.common.step_quan_doan_bao_danh import chay as chay_buoc
+        elif step_id == "quan_doan_tui_phuc":
+            from dctq_auto.tasks.clone.common.step_quan_doan_tui_phuc import chay as chay_buoc
+        elif step_id == "quan_doan_cau_van":
+            from dctq_auto.tasks.clone.common.step_quan_doan_cau_van import chay as chay_buoc
+        elif step_id == "chien_tranh_quan_doan_nhan_thuong":
+            from dctq_auto.tasks.clone.common.step_chien_tranh_quan_doan_nhan_thuong import chay as chay_buoc
+        elif step_id == "chien_tranh_quoc_chien":
+            from dctq_auto.tasks.clone.common.step_chien_tranh_quoc_chien import chay as chay_buoc
+        else:
+            raise ValueError(f"Chưa khai báo bộ xử lý cho mã bước: {step_id}")
+
+        thanh_cong = bool(chay_buoc(self, device, _ocr_client))
+    except Exception as exc:
+        thanh_cong = False
+        self.log_message.emit(
+            f"[{account.username}] Tác vụ {ten_buoc} gặp lỗi: {exc}"
+        )
+
+    self.task_progress_changed.emit(
+        nhan_tac_vu, "done" if thanh_cong else "failed",
+        1 if thanh_cong else 0, 1,
+    )
+    if thanh_cong:
+        self.log_message.emit(f"[{account.username}] Hoàn tất bước: {ten_buoc}.")
+    else:
+        self.log_message.emit(
+            f"[{account.username}] Bước {ten_buoc} thất bại; tiếp tục bước kế tiếp."
+        )
+
+    # Xóa bước vừa xử lý khỏi chính danh sách được truyền vào, kể cả khi bước thất bại.
+    steps.pop(0)
+
+    return run_clone_flow_optimize_account(
+        self,
+        account,
+        steps,
+        device,
+        index,
+        total,
+        _ocr_client=_ocr_client,
+        _tat_ca_thanh_cong=_tat_ca_thanh_cong and thanh_cong,
+        _so_thu_tu=_so_thu_tu + 1,
+        _tong_steps=_tong_steps,
+    )
 
 def _run_clone_reward_guild_step(self, device) -> bool:
     """Chạy lại tác vụ nhận thưởng Quân đoàn hiện có."""
