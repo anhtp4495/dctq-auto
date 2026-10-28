@@ -154,6 +154,12 @@
           "rect": { "top": 371, "left": 673, "right": 1165, "bottom": 414},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
+        },
+        "close_cap_nhat_thong_tin": {
+          "description": "Đang mở màn hình - Cập nhật thông tin tài khoản - Nút đóng.",
+          "rect": { "top": 388, "left": 1565, "right": 1604, "bottom": 424},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
