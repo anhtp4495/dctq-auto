@@ -553,17 +553,32 @@ def run_clone_flow(self, device) -> None:
 
 
 def _get_clone_optimize_config(self) -> dict:
-    """Đọc và ghi log snapshot cấu hình dùng cho luồng Clone tối ưu."""
-    # Snapshot để các bước sau dùng cùng một bộ cấu hình, tránh đọc trạng thái
-    # đã bị thay đổi trong lúc xử lý.
+    """Đọc snapshot cấu hình Clone, bao gồm trạng thái các checkbox trên GUI."""
+    # _config được tạo từ CloneTab.current_config(), nên các giá trị checkbox
+    # đã được chuyển thành bool trước khi worker bắt đầu chạy.
     config = dict(self._config)
 
+    checkbox_labels = {
+        "clone_daily_check_in": "Điểm danh",
+        "clone_receive_quoc_van": "Nhận lễ bao Quốc Vận",
+        "clone_guild_check_in": "Báo danh quân đoàn",
+        "clone_receive_lucky_bag": "Nhận túi phúc",
+        "clone_guild_fortune": "Cầu vận quân đoàn",
+        "clone_quoc_chien": "Quốc chiến",
+        "clone_reward_guild": "Nhận Thưởng - Quân Đoàn",
+    }
+
     self.log_message.emit("Clone Optimize — Bước 1: đọc cấu hình đầu vào.")
-    for key in sorted(config):
-        value = config[key]
-        if any(secret in key.casefold() for secret in ("password", "passwd", "token", "secret")):
-            value = "***"
-        self.log_message.emit(f"Clone Optimize — config[{key!r}] = {value!r}")
+    self.log_message.emit(
+        f"Clone Optimize — File tài khoản: "
+        f"{config.get('clone_account_file', '') or '(chưa chọn)'}"
+    )
+    for key, label in checkbox_labels.items():
+        enabled = bool(config.get(key, False))
+        config[key] = enabled
+        self.log_message.emit(
+            f"Clone Optimize — Checkbox [{label}]: {'BẬT' if enabled else 'TẮT'} ({key}={enabled})"
+        )
 
     return config
 
