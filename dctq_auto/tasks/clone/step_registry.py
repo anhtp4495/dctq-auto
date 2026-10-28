@@ -81,6 +81,14 @@ class CloneStepRegistry:
                     templates.append(template)
         return templates
 
+    def get_steps_by_template(self, steps: list[str], template_name: str) -> list[str]:
+        """Return remaining step IDs that declare a template, preserving step order."""
+        return [
+            step_id
+            for step_id in steps
+            if template_name in self._steps.get(step_id, {}).get("templates", [])
+        ]
+
     def get_priority(self, step_id: str) -> int | None:
         """Return a step's priority, or None if the ID is unknown."""
         step = self._steps.get(step_id)
