@@ -91,7 +91,7 @@ def open_activity(
                 log(f"[{account.username}] Mở màn hình Hoạt động thất bại: {exc}")
                 return False
 
-    log(f"[{account.username}] Vào/Mở Hoạt Động thất bại.")
+    log(f"[{account.username}] Mở màn hình Hoạt động thất bại.")
     return False
 
 
