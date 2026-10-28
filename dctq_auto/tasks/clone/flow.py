@@ -584,11 +584,7 @@ def _get_clone_optimize_config(self) -> dict:
 
 
 def run_clone_flow_optimize(self, device) -> None:
-    """Bước 1 của luồng Clone tối ưu: đọc cấu hình và nạp danh sách tài khoản.
-
-    Hàm này hiện chỉ kiểm tra/ghi nhận đầu vào; chưa thực hiện thao tác game.
-    Luồng run_clone_flow cũ được giữ nguyên.
-    """
+    """Điều phối toàn bộ Clone Optimize: đọc config một lần rồi xử lý từng account."""
     config = _get_clone_optimize_config(self)
     account_file = str(config.get("clone_account_file", "") or "").strip()
     if not account_file:
@@ -609,21 +605,103 @@ def run_clone_flow_optimize(self, device) -> None:
 
     enabled_accounts = [account for account in accounts if account.enabled]
     disabled_accounts = [account for account in accounts if not account.enabled]
+    total = len(enabled_accounts)
     self.log_message.emit(
         f"Clone Optimize — đã nạp {len(accounts)} tài khoản: "
-        f"{len(enabled_accounts)} bật, {len(disabled_accounts)} vô hiệu hóa."
+        f"{total} bật, {len(disabled_accounts)} vô hiệu hóa."
     )
-    for account in accounts:
-        status = "bật" if account.enabled else "vô hiệu hóa"
+
+    for account in disabled_accounts:
+        self.clone_account_status.emit(account.username, "disabled")
         self.log_message.emit(
-            f"Clone Optimize — tài khoản {account.username}: {status}."
+            f"Clone Optimize — tài khoản {account.username}: vô hiệu hóa, bỏ qua."
         )
 
+    if not enabled_accounts:
+        self.log_message.emit("Clone Optimize — không có tài khoản nào được bật.")
+        self.progress_changed.emit(0, 0, "Không có tài khoản được bật")
+        return
+
+    success_count = 0
+    failed_count = 0
+    for index, account in enumerate(enabled_accounts, start=1):
+        if not self._wait_if_paused():
+            self.log_message.emit("Clone Optimize — đã dừng theo yêu cầu.")
+            return
+
+        self.progress_changed.emit(
+            index - 1, total, f"Tài khoản {index}/{total}: {account.username}"
+        )
+        result = run_clone_flow_optimize_account(
+            self, account, config, device, index, total
+        )
+        if result is True:
+            success_count += 1
+        elif result is False:
+            failed_count += 1
+        else:
+            # None means the account flow was stopped or intentionally not run.
+            self.log_message.emit(
+                f"Clone Optimize — {account.username}: chưa có kết quả xử lý."
+            )
+
     self.progress_changed.emit(
-        0,
-        len(enabled_accounts),
-        f"Đã đọc cấu hình | {len(enabled_accounts)} tài khoản bật",
+        success_count + failed_count,
+        total,
+        f"{success_count} thành công | {failed_count} thất bại",
     )
     self.log_message.emit(
-        "Clone Optimize — hoàn tất bước 1; chưa thực hiện OCR, TemplateMatching hoặc thao tác game."
+        f"Clone Optimize — kết thúc điều phối: {success_count} thành công, "
+        f"{failed_count} thất bại, {total - success_count - failed_count} chưa xử lý."
     )
+
+
+def run_clone_flow_optimize_account(
+    self, account, config: dict, device, index: int, total: int
+) -> bool | None:
+    """Xử lý một account theo snapshot config do hàm tổng truyền vào.
+
+    Hiện tại mới triển khai khung xử lý account và ghi nhận các checkbox đã chọn;
+    chưa thực hiện OCR hoặc thao tác game trong nhánh Optimize.
+    Trả về True/False khi có kết quả, None nếu dừng/chưa xử lý.
+    """
+    if not account.enabled:
+        self.clone_account_status.emit(account.username, "disabled")
+        self.log_message.emit(
+            f"[{account.username}] Clone Optimize — account bị vô hiệu hóa, bỏ qua."
+        )
+        return None
+
+    self.clone_account_status.emit(account.username, "running")
+    self.log_message.emit(
+        f"[{account.username}] Clone Optimize — bắt đầu xử lý account "
+        f"{index}/{total}."
+    )
+
+    selected_tasks = [
+        ("clone_daily_check_in", "Điểm danh"),
+        ("clone_receive_quoc_van", "Nhận lễ bao Quốc Vận"),
+        ("clone_guild_check_in", "Báo danh quân đoàn"),
+        ("clone_receive_lucky_bag", "Nhận túi phúc"),
+        ("clone_guild_fortune", "Cầu vận quân đoàn"),
+        ("clone_quoc_chien", "Quốc chiến"),
+        ("clone_reward_guild", "Nhận Thưởng - Quân Đoàn"),
+    ]
+    enabled_tasks = [label for key, label in selected_tasks if config.get(key, False)]
+    if enabled_tasks:
+        self.log_message.emit(
+            f"[{account.username}] Clone Optimize — tác vụ được chọn: "
+            + ", ".join(enabled_tasks)
+        )
+    else:
+        self.log_message.emit(
+            f"[{account.username}] Clone Optimize — không có tác vụ checkbox nào được bật."
+        )
+
+    self.log_message.emit(
+        f"[{account.username}] Clone Optimize — khung account hoàn tất; "
+        "chưa thực hiện thao tác game."
+    )
+    self.clone_account_status.emit(account.username, "done")
+    self.clone_account_result.emit(account.username, True)
+    return True
