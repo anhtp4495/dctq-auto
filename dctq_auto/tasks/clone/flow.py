@@ -777,7 +777,7 @@ def run_clone_flow_optimize_account(
                     try:
                         self._config["reward_weekly_doan_chien"] = True
                         self._config["_clone_reward_guild_label"] = nhan_tac_vu
-                        ket_qua = self._run_clone_reward_guild_step(device)
+                        ket_qua = _run_clone_reward_guild_step(self, device)
                         thanh_cong = bool(ket_qua)
                     finally:
                         self._config["reward_weekly_doan_chien"] = cau_hinh_cu
