@@ -4,13 +4,6 @@ import json
 import time
 from pathlib import Path
 
-import cv2
-import numpy as np
-
-from dctq_auto.vision.template_matching import match_template
-from dctq_auto.vision.template_report import report_template_match
-from dctq_auto.vision.template_store import get_templates
-
 
 class ActivityWorkerMixin:
     def _activity_phuc_loi_visible(self, device, screenshot=None) -> tuple[bool, str]:
@@ -30,81 +23,33 @@ class ActivityWorkerMixin:
         normalized = self._normalize_screen_text(detected_text)
         return any(self._normalize_screen_text(marker) in normalized for marker in markers), detected_text
 
-    def run_open_activity(self, device, screenshot=None) -> bool:
-        """Mở Hoạt động bằng Template Matching, theo cùng pattern handle_post_login."""
-        template_names = (
-            "hoat_dong/dang_chon_man_hinh_hoat_dong",
-            "hoat_dong/chua_chon_man_hinh_hoat_dong",
-        )
-        templates = get_templates(template_names)
-
+    def _run_open_activity(self, device) -> bool:
+        """Open Hoạt động only when OCR does not already show its Phúc lợi screen."""
         try:
             if not self._wait_if_paused():
                 return False
-            if screenshot is None:
-                screenshot = device.screenshot()
-            screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
-        except Exception as exc:
-            self.log_message.emit(f"Không chụp được màn hình để nhận diện Hoạt động: {exc}")
-            return False
-
-        for template_name in template_names:
-            template = templates.get(template_name)
-            if template is None:
-                self.log_message.emit(f"Không tải được template {template_name}; bỏ qua.")
-                continue
-
-            try:
-                match = match_template(
-                    screen_bgr,
-                    template.image,
-                    threshold=template.threshold,
-                    method=template.method,
-                )
-            except (ValueError, cv2.error) as exc:
-                self.log_message.emit(
-                    f"Lỗi template matching {template_name}: {exc}"
-                )
-                continue
-
-            if match is None:
-                continue
-
-            report_template_match(
-                self.log_message.emit,
-                context="Hoạt động",
-                template=template,
-                match=match,
-            )
-
-            if template.id == "dang_chon_man_hinh_hoat_dong":
-                self.log_message.emit("Template xác nhận đã ở màn hình Hoạt động.")
+            visible, detected_text = self._activity_phuc_loi_visible(device)
+            if visible:
+                self.log_message.emit("Hoạt động đã mở sẵn; không click mở lần nữa.")
                 return True
-
-            if template.id == "chua_chon_man_hinh_hoat_dong":
-                screen_width, screen_height = screenshot.size
-                x = round(0.035937 * screen_width)
-                y = round(0.732407 * screen_height)
-                self.log_message.emit(
-                    f"Template xác nhận chưa chọn màn hình Hoạt động; click ({x}, {y})."
+            screenshot = device.screenshot()
+            screen_width, screen_height = screenshot.size
+            x = round(0.035937 * screen_width)
+            y = round(0.732407 * screen_height)
+            self.log_message.emit(f"Mở màn hình Hoạt động tại ({x}, {y}).")
+            device.shell(f"input tap {x} {y}")
+            time.sleep(3.0)
+            visible, detected_text = self._activity_phuc_loi_visible(device)
+            if not visible:
+                raise RuntimeError(
+                    "OCR chưa xác nhận được màn hình Phúc lợi: "
+                    f"{detected_text[:180] or '(trống)'}"
                 )
-                try:
-                    if not self._wait_if_paused():
-                        return False
-                    device.shell(f"input tap {x} {y}")
-                    time.sleep(3.0)
-                    if not self._wait_if_paused():
-                        return False
-                    return self.run_open_activity(device, screenshot=device.screenshot())
-                except Exception as exc:
-                    self.log_message.emit(f"Mở màn hình Hoạt động thất bại: {exc}")
-                    return False
-
-        self.log_message.emit(
-            "Không khớp template dang_chon_man_hinh_hoat_dong hoặc "
-            "chua_chon_man_hinh_hoat_dong; không thực hiện click."
-        )
-        return False
+            self.log_message.emit("Đã xác nhận mở màn hình Hoạt động > Phúc lợi.")
+            return True
+        except Exception as exc:
+            self.log_message.emit(f"Mở màn hình Hoạt động thất bại: {exc}")
+            return False
 
     def _run_select_phuc_loi(self, device) -> bool:
         """Select Phúc Lợi by OCR after ensuring Hoạt động is open."""
@@ -115,7 +60,7 @@ class ActivityWorkerMixin:
             if visible:
                 self.log_message.emit("Đã ở mục Phúc Lợi; không cần chọn lại.")
                 return True
-            if not self.run_open_activity(device):
+            if not self._run_open_activity(device):
                 return False
             time.sleep(1.0)
             if not self._wait_if_paused():
