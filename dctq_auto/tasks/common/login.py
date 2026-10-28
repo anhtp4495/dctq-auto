@@ -79,6 +79,7 @@ def handle_post_login(
         return False, "Không xác minh được trạng thái sau đăng nhập"
 
     template_names = (
+        "accounts10/dich_quan_tap_kich",
         "accounts1/waiting",
         "accounts9/cap_nhat_thong_tin",
         "accounts5/trang_ca_nhan",
@@ -107,6 +108,20 @@ def handle_post_login(
             template=template,
             match=match,
         )
+
+        if template.id == "dich_quan_tap_kich":
+            worker.log_message.emit(
+                f"[{account.username}] Phát hiện Địch Quân Tập Kích; đang đóng cửa sổ."
+            )
+            try:
+                ocr_client.tap_ocr_target("close_dich_quan_tap_kich")
+            except Exception as exc:
+                worker.log_message.emit(
+                    f"[{account.username}] Không đóng được cửa sổ Địch Quân Tập Kích: {exc}"
+                )
+                return False, "Không đóng được cửa sổ Địch Quân Tập Kích"
+            time.sleep(1)
+            return handle_post_login(worker, account, device, ocr_client)
 
         if template.id == "waiting":
             worker.log_message.emit(
@@ -221,6 +236,7 @@ def prepare_login(
         return False, "Đã dừng theo yêu cầu"
 
     template_names = (
+        "accounts10/dich_quan_tap_kich",
         "accounts3/dang_nhap",
         "accounts1/waiting",
         "accounts5/trang_ca_nhan",
@@ -264,6 +280,20 @@ def prepare_login(
         )
         detected_state = template.id
         break
+
+    if detected_state == "dich_quan_tap_kich":
+        worker.log_message.emit(
+            f"[{account.username}] Phát hiện Địch Quân Tập Kích; đang đóng cửa sổ."
+        )
+        try:
+            ocr_client.tap_ocr_target("close_dich_quan_tap_kich")
+        except Exception as exc:
+            worker.log_message.emit(
+                f"[{account.username}] Không đóng được cửa sổ Địch Quân Tập Kích: {exc}"
+            )
+            return False, "Không đóng được cửa sổ Địch Quân Tập Kích"
+        time.sleep(1)
+        return prepare_login(worker, account, device, ocr_client)
 
     if detected_state == "dang_nhap":
         return True, None
