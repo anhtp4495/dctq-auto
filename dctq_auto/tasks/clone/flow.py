@@ -729,13 +729,6 @@ def run_clone_flow_optimize_account(
     _so_thu_tu: int = 1, _tong_steps: int | None = None,
 ) -> bool | None:
     """Chạy đệ quy từng bước Clone Optimize; bước đã xử lý sẽ bị xóa khỏi steps."""
-    if not account.enabled:
-        self.clone_account_status.emit(account.username, "disabled")
-        self.log_message.emit(
-            f"[{account.username}] Clone Optimize — tài khoản đã bị vô hiệu hóa, bỏ qua."
-        )
-        return None
-
     step_registry = get_clone_step_registry()
     if _tong_steps is None:
         _tong_steps = len(steps)
