@@ -869,18 +869,6 @@ def run_clone_flow_optimize_account(
     self.task_progress_changed.emit(nhan_tac_vu, "failed", 0, 1)
     return False
 
-    return run_clone_flow_optimize_account(
-        self,
-        account,
-        steps,
-        device,
-        index,
-        total,
-        _ocr_client=_ocr_client,
-        _tat_ca_thanh_cong=_tat_ca_thanh_cong and thanh_cong,
-        _so_thu_tu=_so_thu_tu + 1,
-        _tong_steps=_tong_steps,
-    )
 
 def _run_clone_reward_guild_step(self, device) -> bool:
     """Chạy lại tác vụ nhận thưởng Quân đoàn hiện có."""
