@@ -1,6 +1,23 @@
 {
   "version": 1,
   "screens": {
+    "main": {
+      "source_image": "resources/screens/main/man_hinh_chinh.png",
+      "templates": {
+        "hoat_dong": {
+          "description": "Màn hình chính - Lối vào [Hoạt Động].",
+          "rect": { "top": 751, "left": 28, "right": 82, "bottom": 823},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "chien_tranh": {
+          "description": "Màn hình chính - Lối vào [Chiến Tranh].",
+          "rect": { "top": 113, "left": 1287, "right": 1357, "bottom": 195},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
     "accounts1": {
       "source_image": "resources/screens/accounts/waiting.png",
       "templates": {
