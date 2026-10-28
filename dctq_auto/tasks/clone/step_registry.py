@@ -36,11 +36,19 @@ class CloneStepRegistry:
             if step_id in self._steps:
                 raise ValueError(f"Duplicate clone step id: {step_id}")
 
+            templates = item.get("templates", [])
+            if not isinstance(templates, list) or not all(
+                isinstance(template, str) and template.strip()
+                for template in templates
+            ):
+                raise ValueError(f"Clone step {step_id!r} has invalid templates.")
+
             self._steps[step_id] = {
                 "id": step_id,
                 "display_name": display_name,
                 "config_key": config_key,
                 "priority": priority,
+                "templates": [template.strip() for template in templates],
             }
 
     def get_label(self, step_id: str) -> str:
@@ -59,6 +67,20 @@ class CloneStepRegistry:
             for step in sorted(enabled, key=lambda item: item["priority"])
         ]
 
+    def get_templates_by_steps(self, steps: list[str]) -> list[str]:
+        """Return unique template names for steps, preserving step/template order."""
+        templates: list[str] = []
+        seen: set[str] = set()
+        for step_id in steps:
+            step = self._steps.get(step_id)
+            if step is None:
+                continue
+            for template in step["templates"]:
+                if template not in seen:
+                    seen.add(template)
+                    templates.append(template)
+        return templates
+
     def get_priority(self, step_id: str) -> int | None:
         """Return a step's priority, or None if the ID is unknown."""
         step = self._steps.get(step_id)
@@ -69,3 +91,8 @@ class CloneStepRegistry:
 def get_clone_step_registry() -> CloneStepRegistry:
     """Return a shared registry so step metadata is loaded only once."""
     return CloneStepRegistry()
+
+
+def get_templates_by_steps(steps: list[str]) -> list[str]:
+    """Return template names used by the given Clone Optimize steps."""
+    return get_clone_step_registry().get_templates_by_steps(steps)
