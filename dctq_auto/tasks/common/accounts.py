@@ -32,9 +32,12 @@ def load_accounts(path: str | Path) -> list[GameAccount]:
     except configparser.Error as exc:
         raise ValueError(f"File tài khoản không phải INI hợp lệ: {exc}") from exc
 
-    required = {"Accounts", "DisabledAccounts"}
+    # [Accounts] là bắt buộc; [DisabledAccounts] là tùy chọn.
+    # Nếu không khai báo [DisabledAccounts], tất cả tài khoản trong [Accounts] được bật.
+    required = {"Accounts"}
+    supported = {"Accounts", "DisabledAccounts"}
     missing = required - set(parser.sections())
-    unknown = set(parser.sections()) - required
+    unknown = set(parser.sections()) - supported
     if missing:
         raise ValueError(
             "File INI thiếu section: " + ", ".join(f"[{name}]" for name in sorted(missing))
@@ -46,7 +49,11 @@ def load_accounts(path: str | Path) -> list[GameAccount]:
 
     active = {}
     disabled = {}
-    for section, target in (("Accounts", active), ("DisabledAccounts", disabled)):
+    sections = [("Accounts", active)]
+    if parser.has_section("DisabledAccounts"):
+        sections.append(("DisabledAccounts", disabled))
+
+    for section, target in sections:
         for username, password in parser.items(section, raw=True):
             username, password = username.strip(), password.strip()
             if not username or not password:
