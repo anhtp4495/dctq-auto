@@ -25,14 +25,14 @@ def get_template_names(steps) -> list[str]:
 
     if _STEP_QUOC_VAN in steps:
         template_names.extend((
-            "hoat_dong/dang_chon_phuc_loi_le_bao_quoc_van",
-            "hoat_dong/chua_chon_phuc_loi_le_bao_quoc_van",
+            "hoat_dong.phuc_loi/dang_chon_le_bao_quoc_van",
+            "hoat_dong.phuc_loi/chua_chon_le_bao_quoc_van",
         ))
 
     if _STEP_DIEM_DANH in steps:
         template_names.extend((
-            "hoat_dong/dang_chon_phuc_loi_diem_danh",
-            "hoat_dong/chua_chon_phuc_loi_diem_danh",
+            "hoat_dong.phuc_loi/dang_chon_diem_danh",
+            "hoat_dong.phuc_loi/chua_chon_diem_danh",
         ))
 
     template_names.extend((
@@ -178,8 +178,8 @@ def run(
             screenshot=None, swipe_positions=swipe_positions,
         )
     if template_name in (
-        "hoat_dong/chua_chon_phuc_loi_le_bao_quoc_van",
-        "hoat_dong/chua_chon_phuc_loi_diem_danh",
+        "hoat_dong.phuc_loi/chua_chon_le_bao_quoc_van",
+        "hoat_dong.phuc_loi/chua_chon_diem_danh",
     ):
         # Template "chua_chon" xác nhận mục tiêu đang hiển thị nhưng chưa được chọn.
         # Click giữa vùng template rồi nhận diện lại, không tiếp tục chuỗi swipe.
@@ -193,7 +193,7 @@ def run(
             screenshot=None, swipe_positions=[],
         )
 
-    if template_name == "hoat_dong/dang_chon_phuc_loi_le_bao_quoc_van":
+    if template_name == "hoat_dong.phuc_loi/dang_chon_le_bao_quoc_van":
         if _STEP_QUOC_VAN not in selected_steps:
             log(f"[{account.username}] Đang ở lễ bao Quốc Vận nhưng step này không được chọn.")
             return steps
@@ -210,7 +210,7 @@ def run(
             worker, account, steps, device, ocr_client, log,
             screenshot=None, swipe_positions=None,
         )
-    if template_name == "hoat_dong/dang_chon_phuc_loi_diem_danh":
+    if template_name == "hoat_dong.phuc_loi/dang_chon_diem_danh":
         if _STEP_DIEM_DANH not in selected_steps:
             log(f"[{account.username}] Đang ở Điểm danh nhưng step này không được chọn.")
             return steps
