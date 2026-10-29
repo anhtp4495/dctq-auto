@@ -432,7 +432,7 @@
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
-        "quan_doan_chua_dong_gop_knb": {
+        "quan_doan_dong_gop_knb": {
           "description": "Màn hình [Quân Đoàn] - [KNB].",
           "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
           "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },

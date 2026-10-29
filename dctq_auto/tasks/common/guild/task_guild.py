@@ -14,7 +14,7 @@ from dctq_auto.config.constants import (
     _TEMPLATE_QUAN_DOAN_CHUA_NHAN_TUI_PHUC,
     _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH,
     _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO,
-    _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_KNB,
+    _TEMPLATE_QUAN_DOAN_DONG_GOP_KNB,
     _TEMPLATE_QUAN_DOAN_DA_NHAN_TUI_PHUC,
     _TEMPLATE_QUAN_DOAN_DA_BAO_DANH,
     _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO,
@@ -185,7 +185,7 @@ def steps_run(worker, account, steps, device, ocr_client, log, screenshot=None) 
             return steps_run(worker, account, steps, device, ocr_client, log)
         return steps
 
-    if template_name == _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_KNB:
+    if template_name == _TEMPLATE_QUAN_DOAN_DONG_GOP_KNB:
         if _STEP_QUAN_DOAN_DONG_GOP_KNB not in selected_steps:
             return steps
         # TODO: Thêm xác nhận trạng thái đã đóng góp KNB; hiện chỉ có template "chưa đóng góp".
@@ -219,7 +219,7 @@ def get_template_names(steps) -> list[str]:
         ))
 
     if _STEP_QUAN_DOAN_DONG_GOP_KNB in steps:
-        template_names.append(_TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_KNB)
+        template_names.append(_TEMPLATE_QUAN_DOAN_DONG_GOP_KNB)
 
     if _STEP_QUAN_DOAN_TUI_PHUC in steps:
         template_names.extend((
