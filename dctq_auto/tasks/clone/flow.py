@@ -902,54 +902,12 @@ def run_clone_flow_optimize_account(
 def handle_step_hoat_dong(
     self, account, steps, device, ocr_client, log, screenshot=None
 ):
-    """Chạy đệ quy từng bước Hoạt động được bật."""
-    if screenshot is None:
-        screenshot = device.screenshot()
+    """Điều phối nhóm bước Hoạt động qua task_activity."""
+    from dctq_auto.tasks.common.activity.task_activity import run as run_activity
 
-    from dctq_auto.tasks.common.task_open_activity import run as run_open_activity
-    from dctq_auto.tasks.common.task_close_activity import run as run_close_activity
-
-    if not run_open_activity(self, account, device, ocr_client, log):
-        return steps
-
-    if "hoat_dong_phuc_loi_diem_danh" in steps:
-        step_id = "hoat_dong_phuc_loi_diem_danh"
-        try:
-            log(f"[{account.username}] Bắt đầu bước Hoạt động: Điểm danh.")
-            success = bool(task_hoat_dong_phuc_loi_diem_danh.run(self, device, ocr_client))
-        except Exception as exc:
-            log(f"[{account.username}] Bước Hoạt động Điểm danh thất bại: {exc}")
-            return steps
-
-        if not success:
-            log(f"[{account.username}] Giữ lại bước {step_id} để không đánh dấu hoàn thành.")
-            return steps
-
-        steps.remove(step_id)
-        return handle_step_hoat_dong(
-            self, account, steps, device, ocr_client, log
-        )
-
-    elif "hoat_dong_phuc_loi_le_bao_quoc_van" in steps:
-        step_id = "hoat_dong_phuc_loi_le_bao_quoc_van"
-        try:
-            log(f"[{account.username}] Bắt đầu bước Hoạt động: Nhận lễ bao Quốc Vận.")
-            success = bool(task_hoat_dong_phuc_loi_le_bao_quoc_van.run(self, device, ocr_client))
-        except Exception as exc:
-            log(f"[{account.username}] Bước Hoạt động Nhận lễ bao Quốc Vận thất bại: {exc}")
-            return steps
-
-        if not success:
-            log(f"[{account.username}] Giữ lại bước {step_id} để không đánh dấu hoàn thành.")
-            return steps
-
-        steps.remove(step_id)
-        return handle_step_hoat_dong(
-            self, account, steps, device, ocr_client, log
-        )
-
-    run_close_activity(self, account, device, ocr_client, log)
-    return steps
+    return run_activity(
+        self, account, steps, device, ocr_client, log, screenshot=screenshot
+    )
 
 def handle_step_quan_doan(
     self, account, steps, device, ocr_client, log, screenshot=None
