@@ -238,34 +238,37 @@ class UtilityTaskRunnerMixin:
                     completed, max(1, total), "Lỗi: Vào quân đoàn"
                 )
 
-        for guild_task_key in (
-            "bao_danh_quan_doan",
-            "task_receive_lucky_bag",
-            "task_guild_fortune",
-        ):
-            if not self._config.get(guild_task_key):
-                continue
-            if not self._wait_if_paused():
-                self.log_message.emit("Đã dừng trước khi chạy tác vụ Quân đoàn.")
-                return
-            task_ok = self._run_guild_screen_task(guild_task_key, device, ocr_client)
-            completed += 1
-            status_label = {
-                "bao_danh_quan_doan": "Báo danh quân đoàn",
-                "task_receive_lucky_bag": "Nhận túi phúc",
-                "task_guild_fortune": "Cầu vận quân đoàn (5 lần)",
-            }[guild_task_key]
-            if task_ok:
+        guild_steps = [
+            key for key in (
+                "bao_danh_quan_doan",
+                "task_receive_lucky_bag",
+                "task_guild_fortune",
+            )
+            if self._config.get(key)
+        ]
+        if guild_steps:
+            from dctq_auto.tasks.common.guild import task_guild
+
+            def report_guild_step(key, label):
+                nonlocal completed
+                completed += 1
                 self.progress_changed.emit(
-                    completed, max(1, total), f"Hoàn tất: {status_label}"
+                    completed, max(1, total), f"Hoàn tất: {label}"
                 )
-            else:
-                # A requested stop is cooperative; don't continue with later actions.
+
+            remaining_guild_steps = task_guild.run(
+                self, guild_steps, device, ocr_client, on_complete=report_guild_step
+            )
+            if remaining_guild_steps:
+                self.log_message.emit(
+                    "Các bước Quân đoàn chưa hoàn tất: "
+                    + ", ".join(remaining_guild_steps)
+                )
                 if not self._wait_if_paused():
                     self.log_message.emit("Đã dừng theo yêu cầu.")
                     return
                 self.progress_changed.emit(
-                    completed, max(1, total), f"Lỗi: {status_label}"
+                    completed, max(1, total), "Một số tác vụ Quân đoàn chưa hoàn tất"
                 )
 
         if self._config.get("reward_weekly_doan_chien"):
