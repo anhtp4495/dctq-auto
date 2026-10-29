@@ -9,14 +9,7 @@ from dctq_auto.tasks.common.guild import (
     task_lucky_bag,
     task_open_guild,
 )
-
-_GUILD_STEP_IDS = {
-    "quan_doan_bao_danh",
-    "quan_doan_tui_phuc",
-    "quan_doan_cau_van",
-    "quan_doan_dong_gop_luong_thao",
-    "quan_doan_dong_gop_knb",
-}
+from dctq_auto.tasks.common.guild.constants import GUILD_STEP_IDS
 
 _TASKS = (
     ("quan_doan_bao_danh", "Báo danh quân đoàn", task_daily_check_in.run),
@@ -29,7 +22,7 @@ _TASKS = (
 
 def run(worker, account, steps, device, ocr_client, log, screenshot=None):
     """Mở Quân đoàn, chạy các bước được chọn và luôn thử thoát trong finally."""
-    selected_steps = _GUILD_STEP_IDS.intersection(steps)
+    selected_steps = GUILD_STEP_IDS.intersection(steps)
     if not selected_steps:
         return steps
 
