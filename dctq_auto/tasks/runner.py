@@ -238,28 +238,50 @@ class UtilityTaskRunnerMixin:
                 )
 
         guild_config_keys = (
-            ("bao_danh_quan_doan", "bao_danh_quan_doan"),
-            ("task_receive_lucky_bag", "task_receive_lucky_bag"),
-            ("task_guild_fortune", "task_guild_fortune"),
-            ("task_donate_rations", "task_donate_rations"),
-            ("task_donate_knb", "dong_gop_knb"),
+            ("quan_doan_bao_danh", "bao_danh_quan_doan"),
+            ("quan_doan_tui_phuc", "task_receive_lucky_bag"),
+            ("quan_doan_cau_van", "task_guild_fortune"),
+            ("quan_doan_dong_gop_luong_thao", "task_donate_rations"),
+            ("quan_doan_dong_gop_knb", "dong_gop_knb"),
         )
         guild_steps = [
-            task_key for task_key, config_key in guild_config_keys
+            step_id for step_id, config_key in guild_config_keys
             if self._config.get(config_key)
         ]
         if guild_steps:
+            from types import SimpleNamespace
             from dctq_auto.tasks.common.guild import task_guild
 
-            def report_guild_step(key, label):
-                nonlocal completed
-                completed += 1
-                self.progress_changed.emit(
-                    completed, max(1, total), f"Hoàn tất: {label}"
-                )
-
+            guild_account = SimpleNamespace(
+                username=self._config.get("login_username") or self._serial or "Tác vụ"
+            )
+            before_guild_steps = list(guild_steps)
             remaining_guild_steps = task_guild.run(
-                self, guild_steps, device, ocr_client, on_complete=report_guild_step
+                self,
+                guild_account,
+                guild_steps,
+                device,
+                ocr_client,
+                lambda message: self.log_message.emit(message),
+            )
+            completed_guild_steps = len(before_guild_steps) - len(remaining_guild_steps)
+            completed += completed_guild_steps
+            for step_id, label in (
+                ("quan_doan_bao_danh", "Báo danh quân đoàn"),
+                ("quan_doan_tui_phuc", "Nhận túi phúc"),
+                ("quan_doan_cau_van", "Cầu vận quân đoàn (5 lần)"),
+                ("quan_doan_dong_gop_luong_thao", "Đóng góp lương thảo"),
+                ("quan_doan_dong_gop_knb", "Đóng góp KNB"),
+            ):
+                if step_id in before_guild_steps:
+                    status = "failed" if step_id in remaining_guild_steps else "done"
+                    self.task_progress_changed.emit(
+                        label, status, 0 if status == "failed" else 1, 1
+                    )
+            self.progress_changed.emit(
+                completed, max(1, total),
+                "Hoàn tất tác vụ Quân đoàn" if not remaining_guild_steps
+                else "Một số tác vụ Quân đoàn chưa hoàn tất",
             )
             if remaining_guild_steps:
                 self.log_message.emit(
