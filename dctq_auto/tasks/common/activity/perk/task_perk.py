@@ -42,7 +42,7 @@ def get_template_names(steps) -> list[str]:
     return template_names
 
 
-def _find_template(screen_bgr, templates, account, log):
+def _find_template(screen_bgr, templates, template_names, account, log):
     """Trả về template khớp đầu tiên theo thứ tự ưu tiên đã khai báo."""
     for template_name in template_names:
         template = templates.get(template_name)
@@ -74,6 +74,15 @@ def _find_template(screen_bgr, templates, account, log):
 def _tap_button(device, button_name, account, log):
     x, y = ButtonPositions().get("hoat_dong", button_name)
     log(f"[{account.username}] Click {button_name} tại ({x}, {y}).")
+    device.shell(f"input tap {x} {y}")
+    time.sleep(0.7)
+
+
+def _tap_match_center(device, match, account, log):
+    """Click trung điểm vùng template được nhận diện."""
+    x = (match.left + match.right) // 2
+    y = (match.top + match.bottom) // 2
+    log(f"[{account.username}] Click trung điểm template tại ({x}, {y}).")
     device.shell(f"input tap {x} {y}")
     time.sleep(0.7)
 
@@ -126,7 +135,7 @@ def run(
         return steps
 
     template_name, template, match = _find_template(
-        screen_bgr, templates, account, log
+        screen_bgr, templates, template_names, account, log
     )
     if template_name is None:
         log(f"[{account.username}] Không nhận diện được trạng thái Phúc lợi; giữ lại step chưa chạy.")
@@ -168,6 +177,22 @@ def run(
             worker, account, steps, device, ocr_client, log,
             screenshot=None, swipe_positions=swipe_positions,
         )
+    if template_name in (
+        "hoat_dong/chua_chon_phuc_loi_le_bao_quoc_van",
+        "hoat_dong/chua_chon_phuc_loi_diem_danh",
+    ):
+        # Template "chua_chon" xác nhận mục tiêu đang hiển thị nhưng chưa được chọn.
+        # Click giữa vùng template rồi nhận diện lại, không tiếp tục chuỗi swipe.
+        try:
+            _tap_match_center(device, match, account, log)
+        except Exception as exc:
+            log(f"[{account.username}] Không chọn được mục Phúc lợi đang hiển thị: {exc}")
+            return steps
+        return run(
+            worker, account, steps, device, ocr_client, log,
+            screenshot=None, swipe_positions=[],
+        )
+
     if template_name == "hoat_dong/dang_chon_phuc_loi_le_bao_quoc_van":
         if _STEP_QUOC_VAN not in selected_steps:
             log(f"[{account.username}] Đang ở lễ bao Quốc Vận nhưng step này không được chọn.")
