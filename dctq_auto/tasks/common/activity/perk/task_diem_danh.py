@@ -83,14 +83,17 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> boo
 
     if template_name == _TEMPLATE_DANG_CHON_DIEM_DANH:
         positions = ButtonPositions()
-        for button_name in (
+        for qua_diem_danh_count, button_name in enumerate((
             "qua_diem_danh_10_ngay",
             "qua_diem_danh_20_ngay",
             "qua_diem_danh_30_ngay",
-        ):
+        ), start=1):
             try:
                 x, y = positions.get("hoat_dong", button_name)
-                log(f"[{account.username}] Click {button_name} tại ({x}, {y}).")
+                log(
+                    f"[{account.username}] Nhận mốc quà Điểm danh "
+                    f"{qua_diem_danh_count * 10} ngày."
+                )
                 device.shell(f"input tap {x} {y}")
                 time.sleep(0.7)
             except Exception as exc:
