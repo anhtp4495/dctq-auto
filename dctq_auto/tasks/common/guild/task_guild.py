@@ -102,10 +102,34 @@ def steps_run(worker, account, steps, device, ocr_client, log, screenshot=None) 
 
 
 def get_template_names(steps) -> list[str]:
-    """Lấy danh sách template cần nhận diện theo các step được chọn."""
+    """Lấy danh sách template cần nhận diện theo các step Quân đoàn được chọn."""
     template_names = []
+
     if _STEP_QUAN_DOAN_BAO_DANH in steps:
-        template_names.extend((_TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH, _TEMPLATE_QUAN_DOAN_DA_BAO_DANH))
+        template_names.extend((
+            _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH,
+            _TEMPLATE_QUAN_DOAN_DA_BAO_DANH,
+        ))
+
+    if _STEP_QUAN_DOAN_TUI_PHUC in steps:
+        template_names.extend((
+            _TEMPLATE_QUAN_DOAN_CHUA_NHAN_TUI_PHUC,
+            _TEMPLATE_QUAN_DOAN_DA_NHAN_TUI_PHUC,
+        ))
+
+    if _STEP_QUAN_DOAN_CAU_VAN in steps:
+        template_names.append(_TEMPLATE_QUAN_DOAN_CAU_VAN)
+
+    if _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO in steps:
+        template_names.extend((
+            _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO,
+            _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO,
+        ))
+
+    if _STEP_QUAN_DOAN_DONG_GOP_KNB in steps:
+        template_names.append(_TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_KNB)
+        # Thêm template trạng thái đã đóng góp KNB khi được khai báo trong templates.json.
+
     return template_names
 
 
