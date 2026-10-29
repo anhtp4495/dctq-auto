@@ -75,13 +75,25 @@ def _swipe_buttons(device, source_name, target_name, account, log):
 
 
 def run(
-    worker, account, steps, device, ocr_client, log, screenshot=None
+    worker, account, steps, device, ocr_client, log,
+    screenshot=None, swipe_positions=None,
 ) -> list[str]:
     """Nhận diện trạng thái Phúc lợi và chạy các step đã chọn.
 
-    Nếu được truyền screenshot, dùng ảnh đó cho vòng nhận diện đầu tiên;
-    các vòng sau chụp màn hình mới sau mỗi thao tác.
+    Nếu được truyền screenshot, dùng ảnh đó cho vòng nhận diện đầu tiên.
+    swipe_positions là danh sách cặp tên nút (điểm đầu, điểm cuối); None
+    khởi tạo chuỗi mặc định vuốt lên hai lần rồi xuống hai lần.
     """
+    if swipe_positions is None:
+        swipe_positions = [
+            ("hoat_dong_phuc_loi_item1", "hoat_dong_phuc_loi_item2"),
+            ("hoat_dong_phuc_loi_item1", "hoat_dong_phuc_loi_item2"),
+            ("hoat_dong_phuc_loi_item2", "hoat_dong_phuc_loi_item1"),
+            ("hoat_dong_phuc_loi_item2", "hoat_dong_phuc_loi_item1"),
+        ]
+    else:
+        # Không sửa danh sách của bên gọi.
+        swipe_positions = list(swipe_positions)
     selected_steps = {
         step for step in (_STEP_QUOC_VAN, _STEP_DIEM_DANH) if step in steps
     }
@@ -123,19 +135,17 @@ def run(
             continue
 
         if template_name == "hoat_dong/dang_chon_phuc_loi":
+            if len(swipe_positions) == 0:
+                log(
+                    f"[{account.username}] Đã hết tọa độ swipe nhưng vẫn ở "
+                    "màn hình Phúc lợi; dừng và giữ lại step chưa chạy."
+                )
+                break
             try:
-                if _STEP_QUOC_VAN in selected_steps:
-                    _swipe_buttons(
-                        device, "hoat_dong_phuc_loi_item1",
-                        "hoat_dong_phuc_loi_item2", account, log,
-                    )
-                elif _STEP_DIEM_DANH in selected_steps:
-                    _swipe_buttons(
-                        device, "hoat_dong_phuc_loi_item2",
-                        "hoat_dong_phuc_loi_item1", account, log,
-                    )
-                else:
-                    break
+                source_name, target_name = swipe_positions.pop(0)
+                _swipe_buttons(
+                    device, source_name, target_name, account, log
+                )
             except Exception as exc:
                 log(f"[{account.username}] Không điều chỉnh được danh sách Phúc lợi: {exc}")
                 break
