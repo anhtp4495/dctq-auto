@@ -18,6 +18,13 @@ from dctq_auto.vision.template_store import get_templates
 _STEP_QUOC_VAN = "hoat_dong_phuc_loi_le_bao_quoc_van"
 _STEP_DIEM_DANH = "hoat_dong_phuc_loi_diem_danh"
 
+_TEMPLATE_DANG_CHON_LE_BAO_QUOC_VAN = "hoat_dong.phuc_loi/dang_chon_le_bao_quoc_van"
+_TEMPLATE_CHUA_CHON_LE_BAO_QUOC_VAN = "hoat_dong.phuc_loi/chua_chon_le_bao_quoc_van"
+_TEMPLATE_DANG_CHON_DIEM_DANH = "hoat_dong.phuc_loi/dang_chon_diem_danh"
+_TEMPLATE_CHUA_CHON_DIEM_DANH = "hoat_dong.phuc_loi/chua_chon_diem_danh"
+_TEMPLATE_DANG_CHON_PHUC_LOI = "hoat_dong/dang_chon_phuc_loi"
+_TEMPLATE_DANG_CHON_HOAT_DONG = "hoat_dong/dang_chon_hoat_dong"
+
 
 def get_template_names(steps) -> list[str]:
     """Lấy danh sách template cần nhận diện theo các step được chọn."""
@@ -25,19 +32,19 @@ def get_template_names(steps) -> list[str]:
 
     if _STEP_QUOC_VAN in steps:
         template_names.extend((
-            "hoat_dong.phuc_loi/dang_chon_le_bao_quoc_van",
-            "hoat_dong.phuc_loi/chua_chon_le_bao_quoc_van",
+            _TEMPLATE_DANG_CHON_LE_BAO_QUOC_VAN,
+            _TEMPLATE_CHUA_CHON_LE_BAO_QUOC_VAN,
         ))
 
     if _STEP_DIEM_DANH in steps:
         template_names.extend((
-            "hoat_dong.phuc_loi/dang_chon_diem_danh",
-            "hoat_dong.phuc_loi/chua_chon_diem_danh",
+            _TEMPLATE_DANG_CHON_DIEM_DANH,
+            _TEMPLATE_CHUA_CHON_DIEM_DANH,
         ))
 
     template_names.extend((
-        "hoat_dong/dang_chon_phuc_loi",
-        "hoat_dong/dang_chon_hoat_dong",
+        _TEMPLATE_DANG_CHON_PHUC_LOI,
+        _TEMPLATE_DANG_CHON_HOAT_DONG,
     ))
     return template_names
 
@@ -141,7 +148,7 @@ def run(
         log(f"[{account.username}] Không nhận diện được trạng thái Phúc lợi; giữ lại step chưa chạy.")
         return steps
 
-    if template_name == "hoat_dong/dang_chon_hoat_dong":
+    if template_name == _TEMPLATE_DANG_CHON_HOAT_DONG:
         try:
             _tap_button(device, "hoat_dong_phuc_loi", account, log)
         except Exception as exc:
@@ -151,7 +158,7 @@ def run(
             worker, account, steps, device, ocr_client, log,
             screenshot=None, swipe_positions=None,
         )
-    if template_name == "hoat_dong/dang_chon_phuc_loi":
+    if template_name == _TEMPLATE_DANG_CHON_PHUC_LOI:
         if swipe_positions is None:
             swipe_positions = [
                 ("hoat_dong_phuc_loi_item1", "hoat_dong_phuc_loi_item2"),
@@ -178,8 +185,8 @@ def run(
             screenshot=None, swipe_positions=swipe_positions,
         )
     if template_name in (
-        "hoat_dong.phuc_loi/chua_chon_le_bao_quoc_van",
-        "hoat_dong.phuc_loi/chua_chon_diem_danh",
+        _TEMPLATE_CHUA_CHON_LE_BAO_QUOC_VAN,
+        _TEMPLATE_CHUA_CHON_DIEM_DANH,
     ):
         # Template "chua_chon" xác nhận mục tiêu đang hiển thị nhưng chưa được chọn.
         # Click giữa vùng template rồi nhận diện lại, không tiếp tục chuỗi swipe.
@@ -193,7 +200,7 @@ def run(
             screenshot=None, swipe_positions=[],
         )
 
-    if template_name == "hoat_dong.phuc_loi/dang_chon_le_bao_quoc_van":
+    if template_name == _TEMPLATE_DANG_CHON_LE_BAO_QUOC_VAN:
         if _STEP_QUOC_VAN not in selected_steps:
             log(f"[{account.username}] Đang ở lễ bao Quốc Vận nhưng step này không được chọn.")
             return steps
@@ -210,7 +217,7 @@ def run(
             worker, account, steps, device, ocr_client, log,
             screenshot=None, swipe_positions=None,
         )
-    if template_name == "hoat_dong.phuc_loi/dang_chon_diem_danh":
+    if template_name == _TEMPLATE_DANG_CHON_DIEM_DANH:
         if _STEP_DIEM_DANH not in selected_steps:
             log(f"[{account.username}] Đang ở Điểm danh nhưng step này không được chọn.")
             return steps
