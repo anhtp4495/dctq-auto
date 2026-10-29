@@ -5,13 +5,15 @@ import time
 import cv2
 import numpy as np
 
+from dctq_auto.tasks.common.activity.perk.config import (
+    _TEMPLATE_DA_NHAN_LE_BAO_MIEN_PHI,
+    _TEMPLATE_NHAN_LE_BAO_MIEN_PHI,
+)
+
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
 
-
-_TEMPLATE_NHAN_LE_BAO_MIEN_PHI = "hoat_dong/nhan_le_bao_mien_phi"
-_TEMPLATE_DA_NHAN_LE_BAO_MIEN_PHI = "hoat_dong/da_nhan_le_bao_mien_phi"
 
 _TEMPLATE_NAMES = (
     _TEMPLATE_NHAN_LE_BAO_MIEN_PHI,
