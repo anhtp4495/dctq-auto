@@ -153,18 +153,6 @@ class UtilityTaskRunnerMixin:
                 # Do not retain the password in the worker configuration after use.
                 self._config.pop("login_password", None)
 
-        if self._config.get("task_open_activity") and False:
-            label = "Mở màn hình Hoạt động"
-            self.task_progress_changed.emit(label, "running", 0, 1)
-            if self._run_open_activity(device):
-                completed += 1
-                self.task_progress_changed.emit(label, "done", 1, 1)
-                self.progress_changed.emit(completed, max(1, total), "Đã mở màn hình Hoạt động")
-            else:
-                completed += 1
-                self.task_progress_changed.emit(label, "failed", 0, 1)
-                self.progress_changed.emit(completed, max(1, total), "Lỗi: Mở màn hình Hoạt động")
-
         if self._config.get("task_select_phuc_loi"):
             label = "Chọn Phúc Lợi"
             self.task_progress_changed.emit(label, "running", 0, 1)
@@ -230,55 +218,6 @@ class UtilityTaskRunnerMixin:
                 self.task_progress_changed.emit(
                     "Hoạt động > Phúc lợi", "failed", 0, len(before_steps)
                 )
-
-        if False and self._config.get("nhan_le_bao_quoc_van"):
-            label = "Nhận lễ bao quốc vận"
-            self.task_progress_changed.emit(label, "running", 0, 1)
-            if not self._wait_if_paused():
-                self.log_message.emit("Đã dừng theo yêu cầu.")
-                return
-            if self._run_receive_quoc_van(device, ocr_client):
-                completed += 1
-                self.task_progress_changed.emit(label, "done", 1, 1)
-                self.progress_changed.emit(
-                    completed, max(1, total), "Đã nhận lễ bao Quốc vận"
-                )
-            else:
-                completed += 1
-                self.task_progress_changed.emit(label, "failed", 0, 1)
-                self.progress_changed.emit(
-                    completed, max(1, total), "Lỗi: Nhận lễ bao Quốc vận"
-                )
-
-        if False and self._config.get("diem_danh"):
-            self.task_progress_changed.emit("Điểm danh", "running", 0, 1)
-            if not self._wait_if_paused():
-                self.log_message.emit("Đã dừng theo yêu cầu.")
-                return
-            if self._run_daily_checkin(device, ocr_client):
-                completed += 1
-                self.task_progress_changed.emit("Điểm danh", "done", 1, 1)
-                self.progress_changed.emit(
-                    completed, max(1, total), "Đã mở mục Điểm danh"
-                )
-            else:
-                self.task_progress_changed.emit("Điểm danh", "failed", 0, 1)
-                completed += 1
-                self.progress_changed.emit(
-                    completed, max(1, total), "Lỗi: Điểm danh"
-                )
-
-        if False and self._config.get("task_close_activity"):
-            label = "Tắt màn hình Hoạt động"
-            self.task_progress_changed.emit(label, "running", 0, 1)
-            if self._run_close_activity(device):
-                completed += 1
-                self.task_progress_changed.emit(label, "done", 1, 1)
-                self.progress_changed.emit(completed, max(1, total), "Đã tắt màn hình Hoạt động")
-            else:
-                completed += 1
-                self.task_progress_changed.emit(label, "failed", 0, 1)
-                self.progress_changed.emit(completed, max(1, total), "Lỗi: Tắt màn hình Hoạt động")
 
         if self._config.get("task_enter_guild"):
             label = "Vào quân đoàn"
