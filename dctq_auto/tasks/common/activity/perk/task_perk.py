@@ -6,6 +6,16 @@ import cv2
 import numpy as np
 
 from dctq_auto.config.button_positions import ButtonPositions
+from dctq_auto.tasks.common.activity.perk.config import (
+    _STEP_DIEM_DANH,
+    _STEP_QUOC_VAN,
+    _TEMPLATE_CHUA_CHON_DIEM_DANH,
+    _TEMPLATE_CHUA_CHON_LE_BAO_QUOC_VAN,
+    _TEMPLATE_DANG_CHON_DIEM_DANH,
+    _TEMPLATE_DANG_CHON_HOAT_DONG,
+    _TEMPLATE_DANG_CHON_LE_BAO_QUOC_VAN,
+    _TEMPLATE_DANG_CHON_PHUC_LOI,
+)
 from dctq_auto.tasks.common.activity.perk import (
     task_diem_danh,
     task_le_bao_quoc_van,
@@ -13,17 +23,6 @@ from dctq_auto.tasks.common.activity.perk import (
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
-
-
-_STEP_QUOC_VAN = "hoat_dong_phuc_loi_le_bao_quoc_van"
-_STEP_DIEM_DANH = "hoat_dong_phuc_loi_diem_danh"
-
-_TEMPLATE_DANG_CHON_LE_BAO_QUOC_VAN = "hoat_dong.phuc_loi/dang_chon_le_bao_quoc_van"
-_TEMPLATE_CHUA_CHON_LE_BAO_QUOC_VAN = "hoat_dong.phuc_loi/chua_chon_le_bao_quoc_van"
-_TEMPLATE_DANG_CHON_DIEM_DANH = "hoat_dong.phuc_loi/dang_chon_diem_danh"
-_TEMPLATE_CHUA_CHON_DIEM_DANH = "hoat_dong.phuc_loi/chua_chon_diem_danh"
-_TEMPLATE_DANG_CHON_PHUC_LOI = "hoat_dong/dang_chon_phuc_loi"
-_TEMPLATE_DANG_CHON_HOAT_DONG = "hoat_dong/dang_chon_hoat_dong"
 
 
 def get_template_names(steps) -> list[str]:
