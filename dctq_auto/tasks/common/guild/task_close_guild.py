@@ -1,6 +1,7 @@
 """Đóng màn hình Quân đoàn và thoát chat nếu điều kiện OCR phù hợp."""
 
 import time
+from pathlib import Path
 
 
 def run(worker, account, device, ocr_client, log) -> bool:
@@ -10,7 +11,7 @@ def run(worker, account, device, ocr_client, log) -> bool:
             log(f"[{account.username}] Đã dừng khi thoát màn hình Quân đoàn.")
             return False
 
-        regions_path = __import__("pathlib").Path(__file__).resolve().parents[2] / "regions.json"
+        regions_path = Path(__file__).resolve().parents[1] / "regions.json"
         log(f"[{account.username}] Thoát Quân đoàn: click close_quan_doan từ regions.json.")
         ocr_client.tap_ocr_target("close_quan_doan", regions_path=regions_path)
         time.sleep(5)
