@@ -9,8 +9,15 @@ from dctq_auto.config.constants import (
     _STEP_QUAN_DOAN_DONG_GOP_KNB,
     _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO,
     _STEP_QUAN_DOAN_TUI_PHUC,
-    _TEMPLATE_QUAN_DOAN_BAO_DANH,
+    _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
+    _TEMPLATE_QUAN_DOAN_CAU_VAN,
+    _TEMPLATE_QUAN_DOAN_CHUA_NHAN_TUI_PHUC,
     _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH,
+    _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO,
+    _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_KNB,
+    _TEMPLATE_QUAN_DOAN_DA_NHAN_TUI_PHUC,
+    _TEMPLATE_QUAN_DOAN_DA_BAO_DANH,
+    _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO,
 )
 from dctq_auto.tasks.common.guild import task_close_guild, task_open_guild
 from dctq_auto.vision.template_matching import match_template
@@ -98,10 +105,7 @@ def get_template_names(steps) -> list[str]:
     """Lấy danh sách template cần nhận diện theo các step được chọn."""
     template_names = []
     if _STEP_QUAN_DOAN_BAO_DANH in steps:
-        template_names.extend((
-            _TEMPLATE_QUAN_DOAN_BAO_DANH,
-            _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH,
-        ))
+        template_names.extend((_TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH, _TEMPLATE_QUAN_DOAN_DA_BAO_DANH))
     return template_names
 
 

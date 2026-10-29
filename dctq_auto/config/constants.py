@@ -11,17 +11,14 @@ _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO = "quan_doan_dong_gop_luong_thao"
 _STEP_QUAN_DOAN_DONG_GOP_KNB = "quan_doan_dong_gop_knb"
 
 # Template dùng để nhận diện trạng thái bên trong màn hình Quân đoàn.
-_TEMPLATE_QUAN_DOAN_BAO_DANH = "quan_doan/bao_danh"
-_TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH = "quan_doan/chua_bao_danh"
-# Template dùng để nhận diện trạng thái bên trong màn hình Quân đoàn.
 _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH = "quan_doan_1/quan_doan_man_hinh_chinh"
 _TEMPLATE_QUAN_DOAN_CAU_VAN = "quan_doan_1/quan_doan_cau_van"
 _TEMPLATE_QUAN_DOAN_CHUA_NHAN_TUI_PHUC = "quan_doan_1/quan_doan_chua_nhan_tui_phuc"
-_TEMPLATE_QUAN_DOAN_CHUA_DIEM_DANH = "quan_doan_1/quan_doan_chua_diem_danh"
+_TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH = "quan_doan_1/quan_doan_chua_bao_danh"
 _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO = "quan_doan_1/quan_doan_chua_dong_gop_luong_thao"
 _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_KNB = "quan_doan_1/quan_doan_chua_dong_gop_knb"
 _TEMPLATE_QUAN_DOAN_DA_NHAN_TUI_PHUC = "quan_doan_2/quan_doan_da_nhan_tui_phuc"
-_TEMPLATE_QUAN_DOAN_DA_DIEM_DANH = "quan_doan_2/quan_doan_da_diem_danh"
+_TEMPLATE_QUAN_DOAN_DA_BAO_DANH = "quan_doan_2/quan_doan_da_bao_danh"
 _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO = "quan_doan_2/quan_doan_da_dong_gop_luong_thao"
 
 # Template dùng để điều hướng trong màn hình Hoạt động - Phúc lợi.
