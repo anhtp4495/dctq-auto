@@ -242,6 +242,8 @@ class GuildWorkerMixin:
             "bao_danh_quan_doan": "Báo danh quân đoàn",
             "task_receive_lucky_bag": "Nhận túi phúc",
             "task_guild_fortune": "Cầu vận quân đoàn (5 lần)",
+            "task_donate_rations": "Đóng góp lương thảo",
+            "task_donate_knb": "Đóng góp KNB",
         }
         label = task_labels[task_key]
         self.task_progress_changed.emit(label, "running", 0, 1)
@@ -381,6 +383,23 @@ class GuildWorkerMixin:
                     raise RuntimeError(
                         "Không hoàn tất được Cầu vận; xem nhật ký OCR ở phía trên."
                     )
+
+            elif task_key == "task_donate_knb":
+                self.log_message.emit(
+                    "Đóng góp KNB — click target dong_gop_knb từ regions.json."
+                )
+                x, y = ocr_client.tap_ocr_target("dong_gop_knb")
+                time.sleep(0.8)
+                self.log_message.emit(
+                    f"Đã click dong_gop_knb tại ({x}, {y}); chưa tự xác nhận hoặc "
+                    "thực hiện thêm thao tác trong hộp thoại."
+                )
+
+            elif task_key == "task_donate_rations":
+                raise RuntimeError(
+                    "Chưa triển khai thao tác đóng góp lương thảo: cần xác nhận "
+                    "target trong regions.json và luồng xác nhận trước khi click."
+                )
 
             self.task_progress_changed.emit(label, "done", 1, 1)
             self.log_message.emit(
