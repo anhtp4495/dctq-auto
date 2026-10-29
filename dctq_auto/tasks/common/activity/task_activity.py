@@ -16,11 +16,13 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None):
     Các bước thành công được loại khỏi danh sách steps tại chỗ. Bước thất bại
     và các bước chưa chạy được giữ lại để luồng Clone có thể thử lại.
     """
+    activity_open_attempted = False
     try:
         selected_perk_steps = _PERK_STEP_IDS.intersection(steps)
         if not selected_perk_steps:
             return steps
 
+        activity_open_attempted = True
         if not task_open_activity.run(
             worker, account, device, ocr_client, log, screenshot=screenshot
         ):
@@ -29,13 +31,14 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None):
 
         task_perk.run(worker, account, steps, device, ocr_client, log)
     finally:
-        try:
-            closed = task_close_activity.run(
-                worker, account, device, ocr_client, log
-            )
-            if not closed:
-                log(f"[{account.username}] Cảnh báo: chưa xác nhận đóng được màn hình Hoạt động.")
-        except Exception as exc:
-            log(f"[{account.username}] Lỗi khi đóng màn hình Hoạt động: {exc}")
+        if activity_open_attempted:
+            try:
+                closed = task_close_activity.run(
+                    worker, account, device, ocr_client, log
+                )
+                if not closed:
+                    log(f"[{account.username}] Cảnh báo: chưa xác nhận đóng được màn hình Hoạt động.")
+            except Exception as exc:
+                log(f"[{account.username}] Lỗi khi đóng màn hình Hoạt động: {exc}")
 
     return steps
