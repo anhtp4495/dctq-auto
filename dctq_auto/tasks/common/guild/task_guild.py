@@ -19,7 +19,15 @@ from dctq_auto.config.constants import (
     _TEMPLATE_QUAN_DOAN_DA_BAO_DANH,
     _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO,
 )
-from dctq_auto.tasks.common.guild import task_close_guild, task_open_guild
+from dctq_auto.tasks.common.guild import (
+    task_blessing,
+    task_close_guild,
+    task_daily_check_in,
+    task_donate_rations,
+    task_knb,
+    task_lucky_bag,
+    task_open_guild,
+)
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
@@ -67,7 +75,7 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None):
 
 
 def steps_run(worker, account, steps, device, ocr_client, log, screenshot=None) -> list[str]:
-    """Nhận diện trạng thái Quân đoàn cho các step đang được chọn."""
+    """Nhận diện trạng thái Quân đoàn và chạy các step có thể xác định."""
     selected_steps = {step for step in _GUILD_STEP_IDS if step in steps}
     if not selected_steps:
         return steps
@@ -97,9 +105,102 @@ def steps_run(worker, account, steps, device, ocr_client, log, screenshot=None) 
         log(f"[{account.username}] Không nhận diện được trạng thái Quân đoàn; giữ lại step chưa chạy.")
         return steps
 
-    # Chưa thực thi thao tác theo trạng thái; phần điều phối từng step sẽ bổ sung sau.
-    return steps
+    # Màn hình chính Quân đoàn đã được nhận diện; chưa có điều hướng tiếp theo.
+    if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH:
+        # TODO: Bổ sung thao tác chuyển vào khu vực nhiệm vụ Quân đoàn nếu cần.
+        return steps
 
+    if template_name == _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH:
+        if _STEP_QUAN_DOAN_BAO_DANH not in selected_steps:
+            return steps
+        try:
+            success = task_daily_check_in.run(worker, device, ocr_client)
+        except Exception as exc:
+            log(f"[{account.username}] Báo danh Quân đoàn thất bại: {exc}")
+            success = False
+        if not success:
+            log(f"[{account.username}] Giữ lại step báo danh Quân đoàn để thử lại.")
+            return steps
+        steps.remove(_STEP_QUAN_DOAN_BAO_DANH)
+        return steps_run(worker, account, steps, device, ocr_client, log)
+
+    if template_name == _TEMPLATE_QUAN_DOAN_DA_BAO_DANH:
+        # Template xác nhận đã báo danh; hoàn tất step mà không thao tác lần nữa.
+        if _STEP_QUAN_DOAN_BAO_DANH in steps:
+            steps.remove(_STEP_QUAN_DOAN_BAO_DANH)
+            return steps_run(worker, account, steps, device, ocr_client, log)
+        return steps
+
+    if template_name == _TEMPLATE_QUAN_DOAN_CHUA_NHAN_TUI_PHUC:
+        if _STEP_QUAN_DOAN_TUI_PHUC not in selected_steps:
+            return steps
+        try:
+            success = task_lucky_bag.run(worker, device, ocr_client)
+        except Exception as exc:
+            log(f"[{account.username}] Nhận Túi phúc thất bại: {exc}")
+            success = False
+        if not success:
+            log(f"[{account.username}] Giữ lại step Túi phúc để thử lại.")
+            return steps
+        steps.remove(_STEP_QUAN_DOAN_TUI_PHUC)
+        return steps_run(worker, account, steps, device, ocr_client, log)
+
+    if template_name == _TEMPLATE_QUAN_DOAN_DA_NHAN_TUI_PHUC:
+        if _STEP_QUAN_DOAN_TUI_PHUC in steps:
+            steps.remove(_STEP_QUAN_DOAN_TUI_PHUC)
+            return steps_run(worker, account, steps, device, ocr_client, log)
+        return steps
+
+    if template_name == _TEMPLATE_QUAN_DOAN_CAU_VAN:
+        if _STEP_QUAN_DOAN_CAU_VAN not in selected_steps:
+            return steps
+        try:
+            success = task_blessing.run(worker, device, ocr_client)
+        except Exception as exc:
+            log(f"[{account.username}] Cầu vận Quân đoàn thất bại: {exc}")
+            success = False
+        if not success:
+            log(f"[{account.username}] Giữ lại step Cầu vận để thử lại.")
+            return steps
+        steps.remove(_STEP_QUAN_DOAN_CAU_VAN)
+        return steps_run(worker, account, steps, device, ocr_client, log)
+
+    if template_name == _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO:
+        if _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO not in selected_steps:
+            return steps
+        try:
+            success = task_donate_rations.run(worker, device, ocr_client)
+        except Exception as exc:
+            log(f"[{account.username}] Đóng góp lương thảo thất bại: {exc}")
+            success = False
+        if not success:
+            log(f"[{account.username}] Giữ lại step đóng góp lương thảo để thử lại.")
+            return steps
+        steps.remove(_STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO)
+        return steps_run(worker, account, steps, device, ocr_client, log)
+
+    if template_name == _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO:
+        if _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO in steps:
+            steps.remove(_STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO)
+            return steps_run(worker, account, steps, device, ocr_client, log)
+        return steps
+
+    if template_name == _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_KNB:
+        if _STEP_QUAN_DOAN_DONG_GOP_KNB not in selected_steps:
+            return steps
+        # TODO: Thêm xác nhận trạng thái đã đóng góp KNB; hiện chỉ có template "chưa đóng góp".
+        try:
+            success = task_knb.run(worker, device, ocr_client)
+        except Exception as exc:
+            log(f"[{account.username}] Đóng góp KNB thất bại: {exc}")
+            success = False
+        if not success:
+            log(f"[{account.username}] Giữ lại step đóng góp KNB để thử lại.")
+            return steps
+        steps.remove(_STEP_QUAN_DOAN_DONG_GOP_KNB)
+        return steps_run(worker, account, steps, device, ocr_client, log)
+
+    return steps
 
 def get_template_names(steps) -> list[str]:
     """Lấy danh sách template cần nhận diện theo các step Quân đoàn được chọn."""
