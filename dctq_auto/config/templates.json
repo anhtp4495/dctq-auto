@@ -333,10 +333,17 @@
         }
       }
     },
-    "hoat_dong.phuc_loi_1": {
-      "source_image": "resources/screens/hoat_dong/phuc_loi/man_hinh_dang_chon.png",
+    "hoat_dong.phuc_loi": {
+      "source_image": "resources/screens/hoat_dong/phuc_loi/man_hinh_chinh.png",
       "templates": {
         "dang_chon_le_bao_quoc_van": {
+          "description": "Màn hình [Hoạt động] - [Phúc lợi] - Đang chọn [Lễ bao Quốc vận].",
+          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
+          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "chua_chon_le_bao_quoc_van": {
           "description": "Màn hình [Hoạt động] - [Phúc lợi] - Đang chọn [Lễ bao Quốc vận].",
           "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
           "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
@@ -350,7 +357,21 @@
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
+        "chua_chon_diem_danh": {
+          "description": "Màn hình [Hoạt động] - [Phúc lợi] - Đang chọn [Điểm danh].",
+          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
+          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
         "dang_chon_trung_thu_thue": {
+          "description": "Màn hình [Hoạt động] - [Phúc lợi] - Đang chọn [Trưng thu thuế].",
+          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
+          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "chua_chon_trung_thu_thue": {
           "description": "Màn hình [Hoạt động] - [Phúc lợi] - Đang chọn [Trưng thu thuế].",
           "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
           "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
@@ -359,32 +380,6 @@
         },
         "dang_chon_gift_code": {
           "description": "Màn hình [Hoạt động] - [Phúc lợi] - Đang chọn [Gift Code].",
-          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
-          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
-          "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED"
-        }
-      }
-    },
-    "hoat_dong.phuc_loi_2": {
-      "source_image": "resources/screens/hoat_dong/phuc_loi/man_hinh_chua_chon.png",
-      "templates": {
-        "chua_chon_le_bao_quoc_van": {
-          "description": "Màn hình [Hoạt động] - [Phúc lợi] - Đang chọn [Lễ bao Quốc vận].",
-          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
-          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
-          "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED"
-        },
-        "chua_chon_diem_danh": {
-          "description": "Màn hình [Hoạt động] - [Phúc lợi] - Đang chọn [Điểm danh].",
-          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
-          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
-          "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED"
-        },
-        "chua_chon_trung_thu_thue": {
-          "description": "Màn hình [Hoạt động] - [Phúc lợi] - Đang chọn [Trưng thu thuế].",
           "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
           "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
           "threshold": 0.85,
