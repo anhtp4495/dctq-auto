@@ -81,18 +81,12 @@ def run(
     """Nhận diện trạng thái Phúc lợi và chạy các step đã chọn.
 
     Nếu được truyền screenshot, dùng ảnh đó cho vòng nhận diện đầu tiên.
-    swipe_positions là danh sách cặp tên nút (điểm đầu, điểm cuối); None
-    khởi tạo chuỗi mặc định vuốt lên hai lần rồi xuống hai lần.
+    swipe_positions là danh sách cặp tên nút (điểm đầu, điểm cuối).
+    Nếu không truyền danh sách, chuỗi vuốt mặc định chỉ được khởi tạo khi
+    nhận diện đang ở màn hình chọn Phúc lợi.
     """
-    if swipe_positions is None:
-        swipe_positions = [
-            ("hoat_dong_phuc_loi_item1", "hoat_dong_phuc_loi_item2"),
-            ("hoat_dong_phuc_loi_item1", "hoat_dong_phuc_loi_item2"),
-            ("hoat_dong_phuc_loi_item2", "hoat_dong_phuc_loi_item1"),
-            ("hoat_dong_phuc_loi_item2", "hoat_dong_phuc_loi_item1"),
-        ]
-    else:
-        # Không sửa danh sách của bên gọi.
+    # Không sửa danh sách swipe do bên gọi truyền vào.
+    if swipe_positions is not None:
         swipe_positions = list(swipe_positions)
     selected_steps = {
         step for step in (_STEP_QUOC_VAN, _STEP_DIEM_DANH) if step in steps
@@ -135,6 +129,13 @@ def run(
             continue
 
         if template_name == "hoat_dong/dang_chon_phuc_loi":
+            if swipe_positions is None:
+                swipe_positions = [
+                    ("hoat_dong_phuc_loi_item1", "hoat_dong_phuc_loi_item2"),
+                    ("hoat_dong_phuc_loi_item1", "hoat_dong_phuc_loi_item2"),
+                    ("hoat_dong_phuc_loi_item2", "hoat_dong_phuc_loi_item1"),
+                    ("hoat_dong_phuc_loi_item2", "hoat_dong_phuc_loi_item1"),
+                ]
             if len(swipe_positions) == 0:
                 log(
                     f"[{account.username}] Đã hết tọa độ swipe nhưng vẫn ở "
