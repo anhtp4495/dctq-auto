@@ -394,25 +394,76 @@
         }
       }
     },
-    "quan_doan": {
-      "source_image": "resources/screens/quan_doan/man_hinh_chinh.png",
+    "quan_doan_1": {
+      "source_image": "resources/screens/quan_doan/man_hinh_chinh_1.png",
       "templates": {
         "quan_doan_man_hinh_chinh": {
-          "description": "Màn hình chính mục Quân đoàn.",
-          "rect": {
-            "top": 167,
-            "left": 28,
-            "right": 95,
-            "bottom": 221
-          },
+          "description": "Màn hình [Quân Đoàn].",
+          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
+          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
           "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED",
-          "search_rect": {
-            "top": 0,
-            "left": 0,
-            "right": 1920,
-            "bottom": 1080
-          }
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_doan_cau_van": {
+          "description": "Màn hình [Quân Đoàn] - [Cầu Vận].",
+          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
+          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_doan_chua_nhan_tui_phuc": {
+          "description": "Màn hình [Quân Đoàn] - [Túi Phúc].",
+          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
+          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_doan_chua_diem_danh": {
+          "description": "Màn hình [Quân Đoàn] - [Điểm danh].",
+          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
+          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_doan_chua_dong_gop_luong_thao": {
+          "description": "Màn hình [Quân Đoàn] - [Lương Thảo].",
+          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
+          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_doan_chua_dong_gop_knb": {
+          "description": "Màn hình [Quân Đoàn] - [KNB].",
+          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
+          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
+    "quan_doan_2": {
+      "source_image": "resources/screens/quan_doan/man_hinh_chinh_2.png",
+      "templates": {
+        "quan_doan_da_nhan_tui_phuc": {
+          "description": "Màn hình [Quân Đoàn] - [Túi Phúc].",
+          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
+          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_doan_da_diem_danh": {
+          "description": "Màn hình [Quân Đoàn] - [Điểm danh].",
+          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
+          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_doan_da_dong_gop_luong_thao": {
+          "description": "Màn hình [Quân Đoàn] - [Lương Thảo].",
+          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
+          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
