@@ -100,7 +100,7 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> boo
                 log(f"[{account.username}] Không click được {button_name}: {exc}")
                 return False
 
-        log(f"[{account.username}] Đã click các mốc quà Điểm danh 10/20/30 ngày.")
+        log(f"[{account.username}] Điểm danh hoàn tất.")
         return True
 
     try:
