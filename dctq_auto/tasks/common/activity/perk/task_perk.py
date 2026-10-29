@@ -36,7 +36,7 @@ def get_template_names(steps) -> list[str]:
         ))
 
     template_names.extend((
-        "hoat_dong/phuc_loi",
+        "hoat_dong/dang_chon_phuc_loi",
         "hoat_dong/dang_chon_hoat_dong",
     ))
     return template_names
@@ -151,7 +151,7 @@ def run(
             worker, account, steps, device, ocr_client, log,
             screenshot=None, swipe_positions=None,
         )
-    if template_name == "hoat_dong/phuc_loi":
+    if template_name == "hoat_dong/dang_chon_phuc_loi":
         if swipe_positions is None:
             swipe_positions = [
                 ("hoat_dong_phuc_loi_item1", "hoat_dong_phuc_loi_item2"),
