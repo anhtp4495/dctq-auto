@@ -73,3 +73,6 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None):
                 log(f"[{account.username}] Lỗi khi thoát màn hình Quân đoàn: {exc}")
 
     return steps
+
+def steps_run( worker, account, steps, device, ocr_client, log, screenshot=None) -> list[str]:
+    return worker._run_guild_screen_task("task_receive_lucky_bag", device, ocr_client)
