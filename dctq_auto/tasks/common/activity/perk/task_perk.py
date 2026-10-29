@@ -1,4 +1,4 @@
-"""Điều phối các tác vụ thuộc màn hình Hoạt động - Phúc lợi."""
+""""Điều phối các tác vụ thuộc màn hình Hoạt động - Phúc lợi."""
 
 import time
 
@@ -74,8 +74,14 @@ def _swipe_buttons(device, source_name, target_name, account, log):
     time.sleep(0.7)
 
 
-def run(worker, account, steps, device, ocr_client, log) -> list[str]:
-    """Nhận diện trạng thái Phúc lợi và chạy các step đã chọn."""
+def run(
+    worker, account, steps, device, ocr_client, log, screenshot=None
+) -> list[str]:
+    """Nhận diện trạng thái Phúc lợi và chạy các step đã chọn.
+
+    Nếu được truyền screenshot, dùng ảnh đó cho vòng nhận diện đầu tiên;
+    các vòng sau chụp màn hình mới sau mỗi thao tác.
+    """
     selected_steps = {
         step for step in (_STEP_QUOC_VAN, _STEP_DIEM_DANH) if step in steps
     }
@@ -90,10 +96,15 @@ def run(worker, account, steps, device, ocr_client, log) -> list[str]:
             break
 
         try:
-            screenshot = device.screenshot()
-            screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
+            current_screenshot = screenshot
+            screenshot = None  # Chỉ dùng ảnh truyền vào ở vòng đầu tiên.
+            if current_screenshot is None:
+                current_screenshot = device.screenshot()
+            screen_bgr = cv2.cvtColor(
+                np.asarray(current_screenshot), cv2.COLOR_RGB2BGR
+            )
         except Exception as exc:
-            log(f"[{account.username}] Không chụp được màn hình Phúc lợi: {exc}")
+            log(f"[{account.username}] Không chụp/đọc được màn hình Phúc lợi: {exc}")
             break
 
         template_name, template, match = _find_template(
