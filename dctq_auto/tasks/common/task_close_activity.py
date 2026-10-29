@@ -71,8 +71,7 @@ def close_activity(self, account, device, ocr_client, log, screenshot=None) -> b
                 x, y = ButtonPositions().get("hoat_dong", "dong_man_hinh")
                 log(
                     f"[{account.username}] Màn hình Hoạt động vẫn đang mở "
-                    f"({template.id}); click dong_man_hinh_hoat_dong tại ({x}, {y}) "
-                    "rồi kiểm tra lại."
+                    f"({template.id}); click đóng màn hình tại ({x}, {y}) "
                 )
                 device.shell(f"input tap {x} {y}")
                 time.sleep(1.0)
