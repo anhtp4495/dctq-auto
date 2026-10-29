@@ -17,13 +17,11 @@ def run(worker, steps, device, ocr_client, on_complete=None) -> list[str]:
     Màn hình Quân đoàn được giữ nguyên giữa các step.
     """
     remaining = []
-    for key, label, task_runner in _TASKS:
-        if key not in steps:
-            continue
+    selected_tasks = [item for item in _TASKS if item[0] in steps]
+    for index, (key, label, task_runner) in enumerate(selected_tasks):
         if not worker._wait_if_paused():
             worker.log_message.emit("Đã dừng trước khi chạy tác vụ Quân đoàn.")
-            remaining.extend(item[0] for item in _TASKS if item[0] in steps and item[0] not in remaining and item[0] != key)
-            remaining.append(key)
+            remaining.extend(item[0] for item in selected_tasks[index:])
             break
         success = task_runner(worker, device, ocr_client)
         if success:
@@ -32,6 +30,6 @@ def run(worker, steps, device, ocr_client, on_complete=None) -> list[str]:
         else:
             remaining.append(key)
             if not worker._wait_if_paused():
-                remaining.extend(item[0] for item in _TASKS if item[0] in steps and item[0] not in remaining)
+                remaining.extend(item[0] for item in selected_tasks[index + 1:])
                 break
     return remaining
