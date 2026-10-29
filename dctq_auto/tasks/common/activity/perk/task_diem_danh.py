@@ -81,7 +81,10 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> boo
         return False
 
     if template_name == _TEMPLATE_DANG_CHON_DIEM_DANH:
-        log(f"[{account.username}] Đã nhận diện trạng thái Phúc lợi Điểm danh; xem như điểm danh hoàn tất.")
+        # Click qua_diem_danh_10_ngay
+        # Click qua_diem_danh_20_ngay
+        # Click qua_diem_danh_30_ngay
+        log(f"[{account.username}] Điểm danh hoàn tất.")
         return True
 
     try:
