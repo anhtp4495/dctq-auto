@@ -123,7 +123,7 @@ def run(
             return steps
         return run(
             worker, account, steps, device, ocr_client, log,
-            screenshot=None, swipe_positions=swipe_positions,
+            screenshot=None, swipe_positions=None,
         )
     if template_name == "hoat_dong/dang_chon_phuc_loi":
         if swipe_positions is None:
@@ -169,7 +169,7 @@ def run(
             return steps
         return run(
             worker, account, steps, device, ocr_client, log,
-            screenshot=None, swipe_positions=swipe_positions,
+            screenshot=None, swipe_positions=None,
         )
     if template_name == "hoat_dong/dang_chon_phuc_loi_diem_danh":
         if _STEP_DIEM_DANH not in selected_steps:
@@ -189,6 +189,6 @@ def run(
             return steps
         return run(
             worker, account, steps, device, ocr_client, log,
-            screenshot=None, swipe_positions=swipe_positions,
+            screenshot=None, swipe_positions=None,
         )
     return steps
