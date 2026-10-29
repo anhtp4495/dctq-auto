@@ -105,16 +105,10 @@ def steps_run(worker, account, steps, device, ocr_client, log, screenshot=None) 
         log(f"[{account.username}] Không nhận diện được trạng thái Quân đoàn; giữ lại step chưa chạy.")
         return steps
 
-    # Màn hình chính Quân đoàn được xem là hoàn tất nhóm tác vụ Quân đoàn.
     if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH:
-        steps_to_remove = _GUILD_STEP_IDS.intersection(steps)
-        for step in steps_to_remove:
-            steps.remove(step)
-        if steps_to_remove:
-            log(
-                f"[{account.username}] Đã xác nhận màn hình chính Quân đoàn; "
-                f"đánh dấu hoàn tất các step: {', '.join(sorted(steps_to_remove))}."
-            )
+        # Màn hình chính chỉ xác nhận đang ở Quân đoàn, không đồng nghĩa các step đã hoàn tất.
+        # Tiếp tục giữ các step để chờ template trạng thái cụ thể của từng tác vụ.
+        log(f"[{account.username}] Đang ở màn hình chính Quân đoàn; chưa xác định step cần thực hiện.")
         return steps
 
     if template_name == _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH:
