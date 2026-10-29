@@ -98,7 +98,7 @@ def run(
     # Tiếp tục nhận diện bằng đệ quy sau mỗi thao tác thay đổi màn hình.
     if not worker._wait_if_paused():
         log(f"[{account.username}] Phúc lợi đã dừng theo yêu cầu.")
-        break
+        return steps
 
     try:
         current_screenshot = screenshot
@@ -110,21 +110,21 @@ def run(
         )
     except Exception as exc:
         log(f"[{account.username}] Không chụp/đọc được màn hình Phúc lợi: {exc}")
-        break
+        return steps
 
     template_name, template, match = _find_template(
         screen_bgr, templates, account, log
     )
     if template_name is None:
         log(f"[{account.username}] Không nhận diện được trạng thái Phúc lợi; giữ lại step chưa chạy.")
-        break
+        return steps
 
     if template_name == "hoat_dong/dang_chon_hoat_dong":
         try:
             _tap_button(device, "hoat_dong_phuc_loi", account, log)
         except Exception as exc:
             log(f"[{account.username}] Không mở được mục Phúc lợi: {exc}")
-            break
+            return steps
         return run(
             worker, account, steps, device, ocr_client, log,
             screenshot=None, swipe_positions=swipe_positions,
@@ -142,7 +142,7 @@ def run(
                 f"[{account.username}] Đã hết tọa độ swipe nhưng vẫn ở "
                 "màn hình Phúc lợi; dừng và giữ lại step chưa chạy."
             )
-            break
+            return steps
         try:
             source_name, target_name = swipe_positions.pop(0)
             _swipe_buttons(
@@ -150,7 +150,7 @@ def run(
             )
         except Exception as exc:
             log(f"[{account.username}] Không điều chỉnh được danh sách Phúc lợi: {exc}")
-            break
+            return steps
         return run(
             worker, account, steps, device, ocr_client, log,
             screenshot=None, swipe_positions=swipe_positions,
@@ -158,7 +158,7 @@ def run(
     if template_name == "hoat_dong/dang_chon_phuc_loi_le_bao_quoc_van":
         if _STEP_QUOC_VAN not in selected_steps:
             log(f"[{account.username}] Đang ở lễ bao Quốc Vận nhưng step này không được chọn.")
-            break
+            return steps
         try:
             success = bool(task_le_bao_quoc_van.run(worker, device, ocr_client))
         except Exception as exc:
@@ -166,11 +166,11 @@ def run(
             success = False
         if not success:
             log(f"[{account.username}] Giữ lại step {_STEP_QUOC_VAN} để thử lại.")
-            break
+            return steps
         steps.remove(_STEP_QUOC_VAN)
         selected_steps.discard(_STEP_QUOC_VAN)
         if not selected_steps:
-            break
+            return steps
         return run(
             worker, account, steps, device, ocr_client, log,
             screenshot=None, swipe_positions=swipe_positions,
@@ -178,7 +178,7 @@ def run(
     if template_name == "hoat_dong/dang_chon_phuc_loi_diem_danh":
         if _STEP_DIEM_DANH not in selected_steps:
             log(f"[{account.username}] Đang ở Điểm danh nhưng step này không được chọn.")
-            break
+            return steps
         try:
             success = bool(task_diem_danh.run(worker, device, ocr_client))
         except Exception as exc:
@@ -186,11 +186,11 @@ def run(
             success = False
         if not success:
             log(f"[{account.username}] Giữ lại step {_STEP_DIEM_DANH} để thử lại.")
-            break
+            return steps
         steps.remove(_STEP_DIEM_DANH)
         selected_steps.discard(_STEP_DIEM_DANH)
         if not selected_steps:
-            break
+            return steps
         return run(
             worker, account, steps, device, ocr_client, log,
             screenshot=None, swipe_positions=swipe_positions,
