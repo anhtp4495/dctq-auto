@@ -76,6 +76,13 @@ class UtilityTaskRunnerMixin:
         completed = 0
         self.progress_changed.emit(0, max(1, total), "Bắt đầu tác vụ")
 
+        # Mở/Tắt màn hình Hoạt động trong tab Tác vụ hiện chưa được triển khai.
+        # Hai tác vụ Phúc lợi sẽ được gom thành steps và chạy qua task_activity.
+        for key, label in selected:
+            if key in ("task_open_activity", "task_close_activity"):
+                self.log_message.emit(f"{label}: IGNORE — chưa xử lý tác vụ này trong tab Tác vụ.")
+                self.task_progress_changed.emit(label, "ignored", 0, 1)
+
         # Gameplay automation for these actions is not implemented in the real
         # ADB flow yet. Report an explicit failed status for each selected task.
         implemented = {
@@ -146,7 +153,7 @@ class UtilityTaskRunnerMixin:
                 # Do not retain the password in the worker configuration after use.
                 self._config.pop("login_password", None)
 
-        if self._config.get("task_open_activity"):
+        if self._config.get("task_open_activity") and False:
             label = "Mở màn hình Hoạt động"
             self.task_progress_changed.emit(label, "running", 0, 1)
             if self._run_open_activity(device):
@@ -170,7 +177,61 @@ class UtilityTaskRunnerMixin:
                 self.task_progress_changed.emit(label, "failed", 0, 1)
                 self.progress_changed.emit(completed, max(1, total), "Lỗi: Chọn Phúc Lợi")
 
+        activity_steps = []
         if self._config.get("nhan_le_bao_quoc_van"):
+            activity_steps.append("hoat_dong_phuc_loi_le_bao_quoc_van")
+        if self._config.get("diem_danh"):
+            activity_steps.append("hoat_dong_phuc_loi_diem_danh")
+
+        if activity_steps:
+            from dctq_auto.tasks.common.activity import task_activity
+
+            activity_account = SimpleNamespace(
+                username=self._config.get("login_username") or self._serial or "Tác vụ"
+            )
+            before_steps = list(activity_steps)
+            self.log_message.emit(
+                f"Hoạt động > Phúc lợi: gửi steps {before_steps} vào task_activity."
+            )
+            self.task_progress_changed.emit("Hoạt động > Phúc lợi", "running", 0, len(before_steps))
+            try:
+                remaining_steps = task_activity.run(
+                    self, activity_account, activity_steps, device, ocr_client,
+                    lambda message: self.log_message.emit(message),
+                )
+                completed_steps = len(before_steps) - len(remaining_steps)
+                if completed_steps:
+                    completed += completed_steps
+                    for step, label in (
+                        ("hoat_dong_phuc_loi_le_bao_quoc_van", "Nhận lễ bao quốc vận"),
+                        ("hoat_dong_phuc_loi_diem_danh", "Điểm danh"),
+                    ):
+                        if step in before_steps and step not in remaining_steps:
+                            self.task_progress_changed.emit(label, "done", 1, 1)
+                for step, label in (
+                    ("hoat_dong_phuc_loi_le_bao_quoc_van", "Nhận lễ bao quốc vận"),
+                    ("hoat_dong_phuc_loi_diem_danh", "Điểm danh"),
+                ):
+                    if step in remaining_steps:
+                        self.task_progress_changed.emit(label, "failed", 0, 1)
+                self.task_progress_changed.emit(
+                    "Hoạt động > Phúc lợi",
+                    "done" if not remaining_steps else "failed",
+                    completed_steps,
+                    len(before_steps),
+                )
+                self.progress_changed.emit(
+                    completed, max(1, total),
+                    "Hoàn tất Hoạt động > Phúc lợi" if not remaining_steps
+                    else "Hoạt động > Phúc lợi còn step chưa hoàn thành",
+                )
+            except Exception as exc:
+                self.log_message.emit(f"Chạy task_activity thất bại: {exc}")
+                self.task_progress_changed.emit(
+                    "Hoạt động > Phúc lợi", "failed", 0, len(before_steps)
+                )
+
+        if False and self._config.get("nhan_le_bao_quoc_van"):
             label = "Nhận lễ bao quốc vận"
             self.task_progress_changed.emit(label, "running", 0, 1)
             if not self._wait_if_paused():
@@ -189,7 +250,7 @@ class UtilityTaskRunnerMixin:
                     completed, max(1, total), "Lỗi: Nhận lễ bao Quốc vận"
                 )
 
-        if self._config.get("diem_danh"):
+        if False and self._config.get("diem_danh"):
             self.task_progress_changed.emit("Điểm danh", "running", 0, 1)
             if not self._wait_if_paused():
                 self.log_message.emit("Đã dừng theo yêu cầu.")
@@ -207,7 +268,7 @@ class UtilityTaskRunnerMixin:
                     completed, max(1, total), "Lỗi: Điểm danh"
                 )
 
-        if self._config.get("task_close_activity"):
+        if False and self._config.get("task_close_activity"):
             label = "Tắt màn hình Hoạt động"
             self.task_progress_changed.emit(label, "running", 0, 1)
             if self._run_close_activity(device):
