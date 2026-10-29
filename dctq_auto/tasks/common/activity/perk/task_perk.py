@@ -101,15 +101,11 @@ def run(
         return steps
 
     try:
-        current_screenshot = screenshot
-        screenshot = None  # Chỉ dùng ảnh truyền vào ở vòng đầu tiên.
-        if current_screenshot is None:
-            current_screenshot = device.screenshot()
-        screen_bgr = cv2.cvtColor(
-            np.asarray(current_screenshot), cv2.COLOR_RGB2BGR
-        )
+        if screenshot is None:
+            screenshot = device.screenshot()
+        screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
     except Exception as exc:
-        log(f"[{account.username}] Không chụp/đọc được màn hình Phúc lợi: {exc}")
+        log(f"[{account.username}] Không chụp được màn hình để nhận diện Phúc lợi: {exc}")
         return steps
 
     template_name, template, match = _find_template(
