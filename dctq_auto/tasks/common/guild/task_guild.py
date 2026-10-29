@@ -1,21 +1,25 @@
 """Điều hướng các bước thuộc màn hình Quân đoàn."""
 
-from dctq_auto.tasks.common.guild import task_bao_danh, task_cau_van, task_tui_phuc
+from dctq_auto.tasks.common.guild import (
+    task_blessing,
+    task_daily_check_in,
+    task_donate_rations,
+    task_knb,
+    task_lucky_bag,
+)
 
 
 _TASKS = (
-    ("bao_danh_quan_doan", "Báo danh quân đoàn", task_bao_danh.run),
-    ("task_receive_lucky_bag", "Nhận túi phúc", task_tui_phuc.run),
-    ("task_guild_fortune", "Cầu vận quân đoàn (5 lần)", task_cau_van.run),
+    ("bao_danh_quan_doan", "Báo danh quân đoàn", task_daily_check_in.run),
+    ("task_receive_lucky_bag", "Nhận túi phúc", task_lucky_bag.run),
+    ("task_guild_fortune", "Cầu vận quân đoàn (5 lần)", task_blessing.run),
+    ("task_donate_rations", "Đóng góp lương thảo", task_donate_rations.run),
+    ("task_donate_knb", "Đóng góp KNB", task_knb.run),
 )
 
 
 def run(worker, steps, device, ocr_client, on_complete=None) -> list[str]:
-    """Chạy lần lượt các tác vụ Quân đoàn đã chọn.
-
-    Trả về danh sách step thất bại hoặc chưa chạy do người dùng yêu cầu dừng.
-    Màn hình Quân đoàn được giữ nguyên giữa các step.
-    """
+    """Chạy lần lượt các tác vụ Quân đoàn đã chọn, giữ nguyên màn hình."""
     remaining = []
     selected_tasks = [item for item in _TASKS if item[0] in steps]
     for index, (key, label, task_runner) in enumerate(selected_tasks):
