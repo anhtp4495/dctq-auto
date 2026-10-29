@@ -5,7 +5,7 @@ import time
 import cv2
 import numpy as np
 
-from dctq_auto.tasks.common.activity.perk.config import (
+from dctq_auto.tasks.common.activity.perk.constants import (
     _TEMPLATE_DA_NHAN_LE_BAO_MIEN_PHI,
     _TEMPLATE_NHAN_LE_BAO_MIEN_PHI,
 )
