@@ -111,6 +111,15 @@ def get_template_names(steps) -> list[str]:
             _TEMPLATE_QUAN_DOAN_DA_BAO_DANH,
         ))
 
+    if _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO in steps:
+        template_names.extend((
+            _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO,
+            _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO,
+        ))
+
+    if _STEP_QUAN_DOAN_DONG_GOP_KNB in steps:
+        template_names.append(_TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_KNB)
+
     if _STEP_QUAN_DOAN_TUI_PHUC in steps:
         template_names.extend((
             _TEMPLATE_QUAN_DOAN_CHUA_NHAN_TUI_PHUC,
@@ -120,16 +129,7 @@ def get_template_names(steps) -> list[str]:
     if _STEP_QUAN_DOAN_CAU_VAN in steps:
         template_names.append(_TEMPLATE_QUAN_DOAN_CAU_VAN)
 
-    if _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO in steps:
-        template_names.extend((
-            _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO,
-            _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO,
-        ))
-
-    if _STEP_QUAN_DOAN_DONG_GOP_KNB in steps:
-        template_names.append(_TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_KNB)
-        # Thêm template trạng thái đã đóng góp KNB khi được khai báo trong templates.json.
-
+    template_names.append(_TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH)
     return template_names
 
 
