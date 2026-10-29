@@ -135,8 +135,9 @@ def steps_run(worker, account, steps, device, ocr_client, log, screenshot=None) 
         # Template xác nhận đã báo danh; hoàn tất step mà không thao tác lần nữa.
         if _STEP_QUAN_DOAN_BAO_DANH in steps:
             steps.remove(_STEP_QUAN_DOAN_BAO_DANH)
-            return steps_run(worker, account, steps, device, ocr_client, log)
-        return steps
+
+        log(f"[{account.username}] Phát hiện đã báo danh.")
+        return steps_run(worker, account, steps, device, ocr_client, log)
 
     if template_name == _TEMPLATE_QUAN_DOAN_CHUA_NHAN_TUI_PHUC:
         if _STEP_QUAN_DOAN_TUI_PHUC not in selected_steps:
@@ -155,8 +156,9 @@ def steps_run(worker, account, steps, device, ocr_client, log, screenshot=None) 
     if template_name == _TEMPLATE_QUAN_DOAN_DA_NHAN_TUI_PHUC:
         if _STEP_QUAN_DOAN_TUI_PHUC in steps:
             steps.remove(_STEP_QUAN_DOAN_TUI_PHUC)
-            return steps_run(worker, account, steps, device, ocr_client, log)
-        return steps
+
+        log(f"[{account.username}] Phát hiện đã nhận túi phúc.")
+        return steps_run(worker, account, steps, device, ocr_client, log)
 
     if template_name == _TEMPLATE_QUAN_DOAN_CAU_VAN:
         if _STEP_QUAN_DOAN_CAU_VAN not in selected_steps:
@@ -189,8 +191,9 @@ def steps_run(worker, account, steps, device, ocr_client, log, screenshot=None) 
     if template_name == _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO:
         if _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO in steps:
             steps.remove(_STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO)
-            return steps_run(worker, account, steps, device, ocr_client, log)
-        return steps
+        
+        log(f"[{account.username}] Phát hiện đã đóng góp lương thảo.")
+        return steps_run(worker, account, steps, device, ocr_client, log)
 
     if template_name == _TEMPLATE_QUAN_DOAN_DONG_GOP_KNB:
         if _STEP_QUAN_DOAN_DONG_GOP_KNB not in selected_steps:
