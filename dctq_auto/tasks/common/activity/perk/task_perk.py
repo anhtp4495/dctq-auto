@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 
 from dctq_auto.config.button_positions import ButtonPositions
-from dctq_auto.tasks.common.activity.perk.config import (
+from dctq_auto.tasks.common.activity.perk.constants import (
     _STEP_DIEM_DANH,
     _STEP_QUOC_VAN,
     _TEMPLATE_CHUA_CHON_DIEM_DANH,
