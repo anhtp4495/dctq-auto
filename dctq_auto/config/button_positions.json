@@ -3,6 +3,18 @@
     "dong_man_hinh": {
       "x": -1,
       "y": -1
+    },
+    "hoat_dong_phuc_loi": {
+      "x": -1,
+      "y": -1
+    },
+    "hoat_dong_phuc_loi_item1": {
+      "x": -1,
+      "y": -1
+    },
+    "hoat_dong_phuc_loi_item2": {
+      "x": -1,
+      "y": -1
     }
   }
 }
