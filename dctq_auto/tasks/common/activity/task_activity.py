@@ -2,8 +2,8 @@
 
 from dctq_auto.tasks.common.activity import task_close_activity, task_open_activity
 from dctq_auto.tasks.common.activity.perk import (
-    task_hoat_dong_phuc_loi_diem_danh,
-    task_hoat_dong_phuc_loi_le_bao_quoc_van,
+    task_diem_danh,
+    task_le_bao_quoc_van,
 )
 
 
@@ -11,12 +11,12 @@ _ACTIVITY_STEPS = (
     (
         "hoat_dong_phuc_loi_diem_danh",
         "Điểm danh",
-        task_hoat_dong_phuc_loi_diem_danh,
+        task_diem_danh,
     ),
     (
         "hoat_dong_phuc_loi_le_bao_quoc_van",
         "Nhận lễ bao Quốc Vận",
-        task_hoat_dong_phuc_loi_le_bao_quoc_van,
+        task_le_bao_quoc_van,
     ),
 )
 
