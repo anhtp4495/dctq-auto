@@ -6,14 +6,15 @@ import cv2
 import numpy as np
 
 from dctq_auto.config.button_positions import ButtonPositions
+from dctq_auto.tasks.common.activity.perk.config import (
+    _TEMPLATE_DANG_CHON_DIEM_DANH,
+    _TEMPLATE_NGAY_CAN_DIEM_DANH,
+    _TEMPLATE_XAC_NHAN_DIEM_DANH_BU,
+)
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
 
-
-_TEMPLATE_NGAY_CAN_DIEM_DANH = "hoat_dong/ngay_can_diem_danh"
-_TEMPLATE_XAC_NHAN_DIEM_DANH_BU = "hoat_dong/xac_nhan_diem_danh_bu"
-_TEMPLATE_DANG_CHON_DIEM_DANH = "hoat_dong/dang_chon_phuc_loi_diem_danh"
 
 _TEMPLATE_NAMES = (
     _TEMPLATE_NGAY_CAN_DIEM_DANH,
