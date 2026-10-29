@@ -5,6 +5,7 @@ import time
 import cv2
 import numpy as np
 
+from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
@@ -81,10 +82,22 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> boo
         return False
 
     if template_name == _TEMPLATE_DANG_CHON_DIEM_DANH:
-        # Click qua_diem_danh_10_ngay
-        # Click qua_diem_danh_20_ngay
-        # Click qua_diem_danh_30_ngay
-        log(f"[{account.username}] Điểm danh hoàn tất.")
+        positions = ButtonPositions()
+        for button_name in (
+            "qua_diem_danh_10_ngay",
+            "qua_diem_danh_20_ngay",
+            "qua_diem_danh_30_ngay",
+        ):
+            try:
+                x, y = positions.get("hoat_dong", button_name)
+                log(f"[{account.username}] Click {button_name} tại ({x}, {y}).")
+                device.shell(f"input tap {x} {y}")
+                time.sleep(0.7)
+            except Exception as exc:
+                log(f"[{account.username}] Không click được {button_name}: {exc}")
+                return False
+
+        log(f"[{account.username}] Đã click các mốc quà Điểm danh 10/20/30 ngày.")
         return True
 
     try:
