@@ -1,5 +1,12 @@
 """Điều phối các bước thuộc màn hình Quân đoàn."""
 
+from dctq_auto.config.constants import (
+    _STEP_QUAN_DOAN_BAO_DANH,
+    _STEP_QUAN_DOAN_CAU_VAN,
+    _STEP_QUAN_DOAN_DONG_GOP_KNB,
+    _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO,
+    _STEP_QUAN_DOAN_TUI_PHUC,
+)
 from dctq_auto.tasks.common.guild import (
     task_blessing,
     task_close_guild,
@@ -9,14 +16,21 @@ from dctq_auto.tasks.common.guild import (
     task_lucky_bag,
     task_open_guild,
 )
-from dctq_auto.tasks.common.guild.constants import GUILD_STEP_IDS
+
+GUILD_STEP_IDS = {
+    _STEP_QUAN_DOAN_BAO_DANH,
+    _STEP_QUAN_DOAN_TUI_PHUC,
+    _STEP_QUAN_DOAN_CAU_VAN,
+    _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO,
+    _STEP_QUAN_DOAN_DONG_GOP_KNB,
+}
 
 _TASKS = (
-    ("quan_doan_bao_danh", "Báo danh quân đoàn", task_daily_check_in.run),
-    ("quan_doan_tui_phuc", "Nhận túi phúc", task_lucky_bag.run),
-    ("quan_doan_cau_van", "Cầu vận quân đoàn (5 lần)", task_blessing.run),
-    ("quan_doan_dong_gop_luong_thao", "Đóng góp lương thảo", task_donate_rations.run),
-    ("quan_doan_dong_gop_knb", "Đóng góp KNB", task_knb.run),
+    (_STEP_QUAN_DOAN_BAO_DANH, "Báo danh quân đoàn", task_daily_check_in.run),
+    (_STEP_QUAN_DOAN_TUI_PHUC, "Nhận túi phúc", task_lucky_bag.run),
+    (_STEP_QUAN_DOAN_CAU_VAN, "Cầu vận quân đoàn (5 lần)", task_blessing.run),
+    (_STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO, "Đóng góp lương thảo", task_donate_rations.run),
+    (_STEP_QUAN_DOAN_DONG_GOP_KNB, "Đóng góp KNB", task_knb.run),
 )
 
 
