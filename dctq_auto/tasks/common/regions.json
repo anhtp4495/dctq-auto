@@ -1759,6 +1759,31 @@
             "x": 0.188542,
             "y": 0.691667
           }
+        },
+        {
+          "name": "dong_man_hinh_hoat_dong",
+          "text": "Nút đóng màn hình Hoạt động / Phúc Lợi",
+          "confidence": null,
+          "bounds": {
+            "left": -1,
+            "top": -1,
+            "right": -1,
+            "bottom": -1
+          },
+          "rect": {
+            "x": -1,
+            "y": -1,
+            "width": 0,
+            "height": 0
+          },
+          "center": {
+            "x_px": -1,
+            "y_px": -1
+          },
+          "center_ratio": {
+            "x": -1,
+            "y": -1
+          }
         }
       ]
     },
