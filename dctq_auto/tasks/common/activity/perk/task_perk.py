@@ -36,7 +36,7 @@ def get_template_names(steps) -> list[str]:
         ))
 
     template_names.extend((
-        "hoat_dong/dang_chon_phuc_loi",
+        "hoat_dong/phuc_loi",
         "hoat_dong/dang_chon_hoat_dong",
     ))
     return template_names
@@ -151,7 +151,7 @@ def run(
             worker, account, steps, device, ocr_client, log,
             screenshot=None, swipe_positions=None,
         )
-    if template_name == "hoat_dong/dang_chon_phuc_loi":
+    if template_name == "hoat_dong/phuc_loi":
         if swipe_positions is None:
             swipe_positions = [
                 ("hoat_dong_phuc_loi_item1", "hoat_dong_phuc_loi_item2"),
@@ -198,7 +198,7 @@ def run(
             log(f"[{account.username}] Đang ở lễ bao Quốc Vận nhưng step này không được chọn.")
             return steps
         try:
-            success = bool(task_le_bao_quoc_van.run(worker, device, ocr_client))
+            success = bool(task_le_bao_quoc_van.run(worker, account, steps, device, ocr_client, log))
         except Exception as exc:
             log(f"[{account.username}] Nhận lễ bao Quốc Vận thất bại: {exc}")
             success = False
@@ -215,7 +215,7 @@ def run(
             log(f"[{account.username}] Đang ở Điểm danh nhưng step này không được chọn.")
             return steps
         try:
-            success = bool(task_diem_danh.run(worker, device, ocr_client))
+            success = bool(task_diem_danh.run(worker, account, steps, device, ocr_client, log))
         except Exception as exc:
             log(f"[{account.username}] Điểm danh thất bại: {exc}")
             success = False
