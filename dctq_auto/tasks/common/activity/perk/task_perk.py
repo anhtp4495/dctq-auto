@@ -164,9 +164,6 @@ def run(
             log(f"[{account.username}] Giữ lại step {_STEP_QUOC_VAN} để thử lại.")
             return steps
         steps.remove(_STEP_QUOC_VAN)
-        selected_steps.discard(_STEP_QUOC_VAN)
-        if not selected_steps:
-            return steps
         return run(
             worker, account, steps, device, ocr_client, log,
             screenshot=None, swipe_positions=None,
@@ -184,9 +181,6 @@ def run(
             log(f"[{account.username}] Giữ lại step {_STEP_DIEM_DANH} để thử lại.")
             return steps
         steps.remove(_STEP_DIEM_DANH)
-        selected_steps.discard(_STEP_DIEM_DANH)
-        if not selected_steps:
-            return steps
         return run(
             worker, account, steps, device, ocr_client, log,
             screenshot=None, swipe_positions=None,
