@@ -1,42 +1,169 @@
-"""Điều phối các tác vụ thuộc mục Hoạt động - Phúc lợi."""
+"""Điều phối các tác vụ thuộc màn hình Hoạt động - Phúc lợi."""
 
+import time
+
+import cv2
+import numpy as np
+
+from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.tasks.common.activity.perk import (
     task_diem_danh,
     task_le_bao_quoc_van,
 )
+from dctq_auto.vision.template_matching import match_template
+from dctq_auto.vision.template_report import report_template_match
+from dctq_auto.vision.template_store import get_templates
 
 
-_PERK_STEPS = (
-    (
-        "hoat_dong_phuc_loi_diem_danh",
-        "Điểm danh",
-        task_diem_danh,
-    ),
-    (
-        "hoat_dong_phuc_loi_le_bao_quoc_van",
-        "Nhận lễ bao Quốc Vận",
-        task_le_bao_quoc_van,
-    ),
+template_names = (
+    "hoat_dong/dang_chon_phuc_loi_le_bao_quoc_van",
+    "hoat_dong/dang_chon_phuc_loi_diem_danh",
+    "hoat_dong/dang_chon_phuc_loi",
+    "hoat_dong/dang_chon_hoat_dong",
 )
+
+_STEP_QUOC_VAN = "hoat_dong_phuc_loi_le_bao_quoc_van"
+_STEP_DIEM_DANH = "hoat_dong_phuc_loi_diem_danh"
+
+
+def _find_template(screen_bgr, templates, account, log):
+    """Trả về template khớp đầu tiên theo thứ tự ưu tiên đã khai báo."""
+    for template_name in template_names:
+        template = templates.get(template_name)
+        if template is None:
+            log(f"[{account.username}] Không tải được template {template_name}; bỏ qua.")
+            continue
+        try:
+            match = match_template(
+                screen_bgr,
+                template.image,
+                threshold=template.threshold,
+                method=template.method,
+                search_rect=template.search_rect,
+            )
+        except (ValueError, cv2.error) as exc:
+            log(f"[{account.username}] Lỗi template matching {template_name}: {exc}")
+            continue
+        if match is not None:
+            report_template_match(
+                log,
+                context=f"[{account.username}]",
+                template=template,
+                match=match,
+            )
+            return template_name, template, match
+    return None, None, None
+
+
+def _tap_button(device, button_name, account, log):
+    x, y = ButtonPositions().get("hoat_dong", button_name)
+    log(f"[{account.username}] Click {button_name} tại ({x}, {y}).")
+    device.shell(f"input tap {x} {y}")
+    time.sleep(0.7)
+
+
+def _swipe_buttons(device, source_name, target_name, account, log):
+    positions = ButtonPositions()
+    x1, y1 = positions.get("hoat_dong", source_name)
+    x2, y2 = positions.get("hoat_dong", target_name)
+    log(
+        f"[{account.username}] Vuốt danh sách Phúc lợi từ "
+        f"{source_name} ({x1}, {y1}) đến {target_name} ({x2}, {y2})."
+    )
+    device.shell(f"input swipe {x1} {y1} {x2} {y2} 400")
+    time.sleep(0.7)
 
 
 def run(worker, account, steps, device, ocr_client, log) -> list[str]:
-    """Chạy các tác vụ Phúc lợi được chọn; giữ lại bước lỗi để có thể thử lại."""
-    for step_id, label, task_module in _PERK_STEPS:
-        if step_id not in steps:
-            continue
+    """Nhận diện trạng thái Phúc lợi và chạy các step đã chọn."""
+    selected_steps = {
+        step for step in (_STEP_QUOC_VAN, _STEP_DIEM_DANH) if step in steps
+    }
+    if not selected_steps:
+        return steps
+
+    templates = get_templates(template_names)
+    # Giới hạn số vòng để tránh lặp vô hạn nếu template hoặc thao tác không đổi màn hình.
+    for _ in range(8):
+        if not worker._wait_if_paused():
+            log(f"[{account.username}] Phúc lợi đã dừng theo yêu cầu.")
+            break
 
         try:
-            log(f"[{account.username}] Bắt đầu bước Phúc lợi: {label}.")
-            success = bool(task_module.run(worker, device, ocr_client))
+            screenshot = device.screenshot()
+            screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
         except Exception as exc:
-            log(f"[{account.username}] Bước Phúc lợi {label} thất bại: {exc}")
+            log(f"[{account.username}] Không chụp được màn hình Phúc lợi: {exc}")
             break
 
-        if not success:
-            log(f"[{account.username}] Giữ lại bước {step_id} để thử lại.")
+        template_name, template, match = _find_template(
+            screen_bgr, templates, account, log
+        )
+        if template_name is None:
+            log(f"[{account.username}] Không nhận diện được trạng thái Phúc lợi; giữ lại step chưa chạy.")
             break
 
-        steps.remove(step_id)
+        if template_name == "hoat_dong/dang_chon_hoat_dong":
+            try:
+                _tap_button(device, "hoat_dong_phuc_loi", account, log)
+            except Exception as exc:
+                log(f"[{account.username}] Không mở được mục Phúc lợi: {exc}")
+                break
+            continue
+
+        if template_name == "hoat_dong/dang_chon_phuc_loi":
+            try:
+                if _STEP_QUOC_VAN in selected_steps:
+                    _swipe_buttons(
+                        device, "hoat_dong_phuc_loi_item1",
+                        "hoat_dong_phuc_loi_item2", account, log,
+                    )
+                elif _STEP_DIEM_DANH in selected_steps:
+                    _swipe_buttons(
+                        device, "hoat_dong_phuc_loi_item2",
+                        "hoat_dong_phuc_loi_item1", account, log,
+                    )
+                else:
+                    break
+            except Exception as exc:
+                log(f"[{account.username}] Không điều chỉnh được danh sách Phúc lợi: {exc}")
+                break
+            continue
+
+        if template_name == "hoat_dong/dang_chon_phuc_loi_le_bao_quoc_van":
+            if _STEP_QUOC_VAN not in selected_steps:
+                log(f"[{account.username}] Đang ở lễ bao Quốc Vận nhưng step này không được chọn.")
+                break
+            try:
+                success = bool(task_le_bao_quoc_van.run(worker, device, ocr_client))
+            except Exception as exc:
+                log(f"[{account.username}] Nhận lễ bao Quốc Vận thất bại: {exc}")
+                success = False
+            if not success:
+                log(f"[{account.username}] Giữ lại step {_STEP_QUOC_VAN} để thử lại.")
+                break
+            steps.remove(_STEP_QUOC_VAN)
+            selected_steps.discard(_STEP_QUOC_VAN)
+            if not selected_steps:
+                break
+            continue
+
+        if template_name == "hoat_dong/dang_chon_phuc_loi_diem_danh":
+            if _STEP_DIEM_DANH not in selected_steps:
+                log(f"[{account.username}] Đang ở Điểm danh nhưng step này không được chọn.")
+                break
+            try:
+                success = bool(task_diem_danh.run(worker, device, ocr_client))
+            except Exception as exc:
+                log(f"[{account.username}] Điểm danh thất bại: {exc}")
+                success = False
+            if not success:
+                log(f"[{account.username}] Giữ lại step {_STEP_DIEM_DANH} để thử lại.")
+                break
+            steps.remove(_STEP_DIEM_DANH)
+            selected_steps.discard(_STEP_DIEM_DANH)
+            if not selected_steps:
+                break
+            continue
 
     return steps
