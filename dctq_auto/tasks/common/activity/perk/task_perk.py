@@ -15,15 +15,31 @@ from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
 
 
-template_names = (
-    "hoat_dong/dang_chon_phuc_loi_le_bao_quoc_van",
-    "hoat_dong/dang_chon_phuc_loi_diem_danh",
-    "hoat_dong/dang_chon_phuc_loi",
-    "hoat_dong/dang_chon_hoat_dong",
-)
-
 _STEP_QUOC_VAN = "hoat_dong_phuc_loi_le_bao_quoc_van"
 _STEP_DIEM_DANH = "hoat_dong_phuc_loi_diem_danh"
+
+
+def get_template_names(steps) -> list[str]:
+    """Lấy danh sách template cần nhận diện theo các step được chọn."""
+    template_names = []
+
+    if _STEP_QUOC_VAN in steps:
+        template_names.extend((
+            "hoat_dong/dang_chon_phuc_loi_le_bao_quoc_van",
+            "hoat_dong/chua_chon_phuc_loi_le_bao_quoc_van",
+        ))
+
+    if _STEP_DIEM_DANH in steps:
+        template_names.extend((
+            "hoat_dong/dang_chon_phuc_loi_diem_danh",
+            "hoat_dong/chua_chon_phuc_loi_diem_danh",
+        ))
+
+    template_names.extend((
+        "hoat_dong/dang_chon_phuc_loi",
+        "hoat_dong/dang_chon_hoat_dong",
+    ))
+    return template_names
 
 
 def _find_template(screen_bgr, templates, account, log):
@@ -94,6 +110,7 @@ def run(
     if not selected_steps:
         return steps
 
+    template_names = get_template_names(steps)
     templates = get_templates(template_names)
     # Tiếp tục nhận diện bằng đệ quy sau mỗi thao tác thay đổi màn hình.
     if not worker._wait_if_paused():
