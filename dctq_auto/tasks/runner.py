@@ -32,7 +32,6 @@ class UtilityTaskRunnerMixin:
             ("bao_danh_quan_doan", "Báo danh quân đoàn"),
             ("task_receive_lucky_bag", "Nhận túi phúc"),
             ("task_guild_fortune", "Cầu vận quân đoàn (5 lần)"),
-            ("dong_gop_knb", "Đóng góp KNB"),
             ("tham_do_lanh_dia", "Thăm dò lãnh địa"),
             ("nhiem_vu_luu_ly_thap", "Lưu Ly Tháp"),
             ("task_open_battle", "Mở màn hình Giao Tranh"),
@@ -238,13 +237,16 @@ class UtilityTaskRunnerMixin:
                     completed, max(1, total), "Lỗi: Vào quân đoàn"
                 )
 
+        guild_config_keys = (
+            ("bao_danh_quan_doan", "bao_danh_quan_doan"),
+            ("task_receive_lucky_bag", "task_receive_lucky_bag"),
+            ("task_guild_fortune", "task_guild_fortune"),
+            ("task_donate_rations", "task_donate_rations"),
+            ("task_donate_knb", "dong_gop_knb"),
+        )
         guild_steps = [
-            key for key in (
-                "bao_danh_quan_doan",
-                "task_receive_lucky_bag",
-                "task_guild_fortune",
-            )
-            if self._config.get(key)
+            task_key for task_key, config_key in guild_config_keys
+            if self._config.get(config_key)
         ]
         if guild_steps:
             from dctq_auto.tasks.common.guild import task_guild
