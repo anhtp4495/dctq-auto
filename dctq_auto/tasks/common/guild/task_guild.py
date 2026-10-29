@@ -49,4 +49,44 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None):
     return steps
 
 def steps_run( worker, account, steps, device, ocr_client, log, screenshot=None) -> list[str]:
-    return worker._run_guild_screen_task("task_receive_lucky_bag", device, ocr_client)
+    selected_steps = {
+        step for step in (_GUILD_STEP_IDS) if step in steps
+    }
+    if not selected_steps:
+        return steps
+
+    template_names = get_template_names(steps)
+    templates = get_templates(template_names)
+    # Tiếp tục nhận diện bằng đệ quy sau mỗi thao tác thay đổi màn hình.
+    if not worker._wait_if_paused():
+        log(f"[{account.username}] Quân đoàn đã dừng theo yêu cầu.")
+        return steps
+
+    try:
+        if screenshot is None:
+            screenshot = device.screenshot()
+        screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
+    except Exception as exc:
+        log(f"[{account.username}] Không chụp được màn hình để nhận diện Quân đoàn: {exc}")
+        return steps
+
+    template_name, template, match = _find_template(
+        screen_bgr, templates, template_names, account, log
+    )
+    if template_name is None:
+        log(f"[{account.username}] Không nhận diện được trạng thái Quân đoàn; giữ lại step chưa chạy.")
+        return steps
+
+    return steps
+
+def get_template_names(steps) -> list[str]:
+    """Lấy danh sách template cần nhận diện theo các step được chọn."""
+    template_names = []
+
+    if _STEP_QUAN_DOAN_BAO_DANH in steps:
+        template_names.extend((
+            _TEMPLATE_QUAN_DOAN_BAO_DANH,
+            _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH,
+        ))
+
+    return template_names
