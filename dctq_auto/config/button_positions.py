@@ -1,4 +1,10 @@
-"""Load, truy xuất và lưu tọa độ các nút giao diện."""
+"""Load, truy xuất và lưu tọa độ các nút giao diện.
+
+Quy ước tọa độ ADB: x là trục ngang (trái → phải), y là trục dọc
+(trên → dưới). Với màn hình 1080x1920, x thuộc chiều rộng 1080 và
+y thuộc chiều cao 1920. File JSON không hỗ trợ comment; ghi chú quy ước
+ở đây để tránh nhầm lẫn khi nhập tọa độ.
+"""
 
 import json
 from pathlib import Path
