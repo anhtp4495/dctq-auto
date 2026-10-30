@@ -1,10 +1,14 @@
 """Điều phối tác vụ đóng góp Lương thảo trong màn hình Quân đoàn."""
 
+import time
+
 import cv2
 import numpy as np
 
 from dctq_auto.config.constants import (
     _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO,
+    _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO,
+    _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO,
     _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO,
     _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO,
     _TEMPLATE_QUAN_DOAN_XAC_NHAN_DONG_GOP_LUONG_THAO,
@@ -24,6 +28,8 @@ def get_template_names(steps) -> list[str]:
         return []
 
     return [
+        _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO,
+        _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO,
         _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO,
         _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO,
         _TEMPLATE_QUAN_DOAN_XAC_NHAN_DONG_GOP_LUONG_THAO,
@@ -63,14 +69,19 @@ def _find_template(screen_bgr, templates, template_names, account, log):
     return None, None, None
 
 
+def _tap_match_center(device, match, account, log):
+    """Click trung điểm vùng template được nhận diện."""
+    x = (match.left + match.right) // 2
+    y = (match.top + match.bottom) // 2
+    log(f"[{account.username}] Click trung điểm template tại ({x}, {y}).")
+    device.shell(f"input tap {x} {y}")
+    time.sleep(0.7)
+
+
 def run(
     worker, account, steps, device, ocr_client, log, screenshot=None,
 ) -> list[str]:
-    """Nhận diện trạng thái đóng góp Lương thảo.
-
-    Đây là khung điều phối theo cấu trúc task_perk.py. Phần thao tác click và
-    xác nhận sẽ được bổ sung sau khi hoàn thiện flow thực tế.
-    """
+    """Nhận diện và điều hướng vào màn hình đóng góp Lương thảo."""
     selected_steps = {
         step
         for step in (_STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO,)
@@ -104,8 +115,25 @@ def run(
         )
         return steps
 
+    if template_name == _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO:
+        if _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO in steps:
+            steps.remove(_STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO)
+        log(f"[{account.username}] Đã xác nhận đóng góp Lương thảo thành công.")
+        return steps
+
+    if template_name == _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO:
+        try:
+            _tap_match_center(device, match, account, log)
+        except Exception as exc:
+            log(f"[{account.username}] Không mở được màn hình đóng góp Lương thảo: {exc}")
+            return steps
+        return run(
+            worker, account, steps, device, ocr_client, log,
+            screenshot=None,
+        )
+
     log(
         f"[{account.username}] Đã nhận diện trạng thái {template_name}; "
-        "khung thao tác đóng góp Lương thảo đang chờ hoàn thiện."
+        "các thao tác đóng góp tiếp theo đang chờ hoàn thiện."
     )
     return steps
