@@ -3,46 +3,31 @@
     "id": "hoat_dong_phuc_loi_le_bao_quoc_van",
     "config_key": "clone_receive_quoc_van",
     "display_name": "Nhận lễ bao Quốc Vận",
-    "priority": 10000,
-    "templates": [
-      "hoat_dong/hoat_dong_man_hinh_chinh"
-    ]
+    "priority": 10000
   },
   {
     "id": "hoat_dong_phuc_loi_diem_danh",
     "config_key": "clone_daily_check_in",
     "display_name": "Điểm danh",
-    "priority": 10001,
-    "templates": [
-      "hoat_dong/hoat_dong_man_hinh_chinh"
-    ]
+    "priority": 10001
   },
   {
     "id": "quan_doan_bao_danh",
     "config_key": "clone_guild_check_in",
     "display_name": "Báo danh quân đoàn",
-    "priority": 10100,
-    "templates": [
-      "quan_doan/quan_doan_man_hinh_chinh"
-    ]
+    "priority": 10100
   },
   {
     "id": "quan_doan_tui_phuc",
     "config_key": "clone_receive_lucky_bag",
     "display_name": "Nhận túi phúc",
-    "priority": 10101,
-    "templates": [
-      "quan_doan/quan_doan_man_hinh_chinh"
-    ]
+    "priority": 10101
   },
   {
     "id": "quan_doan_cau_van",
     "config_key": "clone_guild_fortune",
     "display_name": "Cầu vận quân đoàn",
-    "priority": 10102,
-    "templates": [
-      "quan_doan/quan_doan_man_hinh_chinh"
-    ]
+    "priority": 10102
   },
   {
     "id": "chien_tranh_quan_doan_nhan_thuong",
@@ -66,18 +51,12 @@
     "id": "quan_doan_dong_gop_knb",
     "config_key": "clone_guild_donate_knb",
     "display_name": "Đóng góp KNB",
-    "priority": 10103,
-    "templates": [
-      "quan_doan/quan_doan_man_hinh_chinh"
-    ]
+    "priority": 10103
   },
   {
     "id": "quan_doan_dong_gop_luong_thao",
     "config_key": "clone_guild_donate_rations",
     "display_name": "Đóng góp Lương Thảo",
-    "priority": 10104,
-    "templates": [
-      "quan_doan/quan_doan_man_hinh_chinh"
-    ]
+    "priority": 10104
   }
 ]
