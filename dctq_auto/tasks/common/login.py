@@ -83,7 +83,7 @@ def handle_post_login(
         "accounts1/waiting",
         "accounts9/cap_nhat_thong_tin",
         "accounts9/close_cap_nhat_thong_tin",
-        "accounts5/trang_ca_nhan",
+        "accounts2/man_hinh_chinh",
     )
     templates = get_templates(template_names)
 
@@ -145,7 +145,7 @@ def handle_post_login(
             time.sleep(1)
             return handle_post_login(worker, account, device, ocr_client)
 
-        if template.id == "trang_ca_nhan":
+        if template.id == "man_hinh_chinh":
             worker.log_message.emit(f"[{account.username}] Đăng nhập thành công.")
             return True, None
 
