@@ -249,8 +249,22 @@
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
+        "chua_chon_phuc_loi": {
+          "description": "Màn hình Hoạt động - Chưa chọn Phúc lợi.",
+          "rect": { "top": 408, "left": 73, "right": 190, "bottom": 447},
+          "search_rect": { "top": 100, "left": 50, "right": 250, "bottom": 700},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
         "dang_chon_hoat_dong": {
           "description": "Màn hình Hoạt động - Đang chọn Hoạt động.",
+          "rect": { "top": 788, "left": 73, "right": 190, "bottom": 832},
+          "search_rect": { "top": 100, "left": 50, "right": 250, "bottom": 700},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "chua_chon_hoat_dong": {
+          "description": "#Màn hình Hoạt động - Chưa chọn Hoạt động.",
           "rect": { "top": 788, "left": 73, "right": 190, "bottom": 832},
           "search_rect": { "top": 100, "left": 50, "right": 250, "bottom": 700},
           "threshold": 0.85,

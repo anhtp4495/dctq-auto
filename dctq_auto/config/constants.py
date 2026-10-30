@@ -39,7 +39,9 @@ _TEMPLATE_CHUA_CHON_LE_BAO_QUOC_VAN = "hoat_dong.phuc_loi/chua_chon_le_bao_quoc_
 _TEMPLATE_DANG_CHON_DIEM_DANH = "hoat_dong.phuc_loi/dang_chon_diem_danh"
 _TEMPLATE_CHUA_CHON_DIEM_DANH = "hoat_dong.phuc_loi/chua_chon_diem_danh"
 _TEMPLATE_DANG_CHON_PHUC_LOI = "hoat_dong/dang_chon_phuc_loi"
+_TEMPLATE_CHUA_CHON_PHUC_LOI = "hoat_dong/chua_chon_phuc_loi"
 _TEMPLATE_DANG_CHON_HOAT_DONG = "hoat_dong/dang_chon_hoat_dong"
+_TEMPLATE_CHUA_CHON_HOAT_DONG = "hoat_dong/chua_chon_hoat_dong"
 
 # Template dùng bên trong tác vụ Điểm danh.
 _TEMPLATE_NGAY_CAN_DIEM_DANH = "hoat_dong/ngay_can_diem_danh"

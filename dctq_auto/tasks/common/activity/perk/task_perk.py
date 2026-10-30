@@ -12,9 +12,9 @@ from dctq_auto.config.constants import (
     _TEMPLATE_CHUA_CHON_DIEM_DANH,
     _TEMPLATE_CHUA_CHON_LE_BAO_QUOC_VAN,
     _TEMPLATE_DANG_CHON_DIEM_DANH,
-    _TEMPLATE_DANG_CHON_HOAT_DONG,
     _TEMPLATE_DANG_CHON_LE_BAO_QUOC_VAN,
     _TEMPLATE_DANG_CHON_PHUC_LOI,
+    _TEMPLATE_CHUA_CHON_PHUC_LOI,
 )
 from dctq_auto.tasks.common.activity.perk import (
     task_diem_danh,
@@ -43,7 +43,7 @@ def get_template_names(steps) -> list[str]:
 
     template_names.extend((
         _TEMPLATE_DANG_CHON_PHUC_LOI,
-        _TEMPLATE_DANG_CHON_HOAT_DONG,
+        _TEMPLATE_CHUA_CHON_PHUC_LOI,
     ))
     return template_names
 
@@ -147,9 +147,9 @@ def run(
         log(f"[{account.username}] Không nhận diện được trạng thái Phúc lợi; giữ lại step chưa chạy.")
         return steps
 
-    if template_name == _TEMPLATE_DANG_CHON_HOAT_DONG:
+    if template_name == _TEMPLATE_CHUA_CHON_PHUC_LOI:
         try:
-            _tap_button(device, "hoat_dong_phuc_loi", account, log)
+            _tap_match_center(device, match, account, log)
         except Exception as exc:
             log(f"[{account.username}] Không mở được mục Phúc lợi: {exc}")
             return steps
