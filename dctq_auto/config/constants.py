@@ -4,6 +4,9 @@
 _STEP_QUOC_VAN = "hoat_dong_phuc_loi_le_bao_quoc_van"
 _STEP_DIEM_DANH = "hoat_dong_phuc_loi_diem_danh"
 
+# Nhóm step thuộc màn hình Hoạt động - Phúc lợi.
+_ACTIVITY_PERK_STEP_IDS = (_STEP_QUOC_VAN, _STEP_DIEM_DANH)
+
 _STEP_QUAN_DOAN_BAO_DANH = "quan_doan_bao_danh"
 _STEP_QUAN_DOAN_TUI_PHUC = "quan_doan_tui_phuc"
 _STEP_QUAN_DOAN_CAU_VAN = "quan_doan_cau_van"
@@ -42,6 +45,7 @@ _TEMPLATE_QUAN_DOAN_DONG_GOP_20_KNB = "quan_doan.knb/quan_doan_dong_gop_20_knb"
 _TEMPLATE_QUAN_DOAN_DONG_GOP_40_KNB = "quan_doan.knb/quan_doan_dong_gop_40_knb"
 
 # Template dùng để điều hướng trong màn hình Hoạt động - Phúc lợi.
+_TEMPLATE_MAIN_HOAT_DONG = "main/hoat_dong"
 _TEMPLATE_DANG_CHON_LE_BAO_QUOC_VAN = "hoat_dong.phuc_loi/dang_chon_le_bao_quoc_van"
 _TEMPLATE_CHUA_CHON_LE_BAO_QUOC_VAN = "hoat_dong.phuc_loi/chua_chon_le_bao_quoc_van"
 _TEMPLATE_DANG_CHON_DIEM_DANH = "hoat_dong.phuc_loi/dang_chon_diem_danh"
