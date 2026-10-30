@@ -55,9 +55,11 @@ def _match_account_template(screen_bgr, template):
         grayscale=True,
     )
 
+# Số lần tối đa xác định game đã tải thành công
+_MAX_TRY_DETECT_MAIN_SCREEN = 20
 
 def handle_post_login(
-    worker, account, device, ocr_client, try_time: int = 3
+    worker, account, device, ocr_client, current_try: int = 1
 ) -> tuple[bool | None, str | None]:
     """Xử lý trạng thái sau khi gửi đăng nhập bằng template matching.
 
@@ -65,12 +67,6 @@ def handle_post_login(
     update_information: đóng hộp thoại rồi kiểm tra lại.
     profile: xác nhận đăng nhập thành công.
     """
-    if try_time <= 0:
-        worker.log_message.emit(
-            f"[{account.username}] Đã hết số lần thử xử lý trạng thái hậu đăng nhập."
-        )
-        return False, "Hết số lần thử xác minh trạng thái sau đăng nhập"
-
     if not worker._wait_if_paused():
         worker.log_message.emit("Đã dừng theo yêu cầu.")
         return None, None
@@ -128,14 +124,14 @@ def handle_post_login(
                 )
                 return False, "Không đóng được cửa sổ Địch Quân Tập Kích"
             time.sleep(1)
-            return handle_post_login(worker, account, device, ocr_client, try_time - 1)
+            return handle_post_login(worker, account, device, ocr_client)
 
         if template.id == "waiting":
             worker.log_message.emit(
                 f"[{account.username}] Đang chờ đăng nhập hoàn tất; kiểm tra lại sau 3 giây."
             )
             time.sleep(3)
-            return handle_post_login(worker, account, device, ocr_client, try_time - 1)
+            return handle_post_login(worker, account, device, ocr_client)
 
         if template.id == "cap_nhat_thong_tin" or template.id == "close_cap_nhat_thong_tin":
             worker.log_message.emit(
@@ -149,14 +145,18 @@ def handle_post_login(
                 )
                 return False, "Không đóng được hộp thoại cập nhật thông tin"
             time.sleep(1)
-            return handle_post_login(worker, account, device, ocr_client, try_time - 1)
+            return handle_post_login(worker, account, device, ocr_client)
 
         if template.id == "man_hinh_chinh":
             worker.log_message.emit(f"[{account.username}] Đăng nhập thành công.")
             return True, None
 
+    if current_try < _MAX_TRY_DETECT_MAIN_SCREEN:
+        worker.log_message.emit(f"[{account.username}] Chưa xác định đã tải game thành công - Thử lại lần {current_try}.")
+        return handle_post_login(worker, account, device, ocr_client, current_try + 1)
+
     worker.log_message.emit(
-        f"[{account.username}] Không nhận diện được trạng thái hậu đăng nhập từ 3 template."
+        f"[{account.username}] Không nhận diện được trạng thái hậu đăng nhập từ {len(templates)} template."
     )
     return False, "Không xác định được trạng thái sau đăng nhập"
 

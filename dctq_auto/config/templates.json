@@ -112,8 +112,8 @@
       "templates": {
         "tuy_chon": {
           "description": "Đang mở màn hình - Tùy chọn tài khoản.",
-          "rect": { "top": 71, "left": 799, "right": 1131, "bottom": 162 },
-          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "rect": { "top": 700, "left": 759, "right": 1153, "bottom": 763},
+          "search_rect": { "top": 92, "left": 599, "right": 1363, "bottom": 1006},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
@@ -124,20 +124,10 @@
       "templates": {
         "cai_dat_nguoi_dung": {
           "description": "Đang mở màn hình - Cài đặt người dùng.",
-          "rect": {
-            "top": 86,
-            "left": 732,
-            "right": 1195,
-            "bottom": 154
-          },
+          "rect": { "top": 775, "left": 878, "right": 1048, "bottom": 829},
+          "search_rect":{ "top": 728, "left": 696, "right": 1530, "bottom": 956},
           "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED",
-          "search_rect": {
-            "top": 0,
-            "left": 0,
-            "right": 1920,
-            "bottom": 1080
-          }
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
@@ -146,20 +136,10 @@
       "templates": {
         "doi_tai_khoan": {
           "description": "Đang mở màn hình - Đổi tài khoản.",
-          "rect": {
-            "top": 247,
-            "left": 813,
-            "right": 1105,
-            "bottom": 316
-          },
+          "rect": { "top": 662, "left": 1042, "right": 1317, "bottom": 753},
+          "search_rect": { "top": 242, "left": 666, "right": 1380, "bottom": 839},
           "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED",
-          "search_rect": {
-            "top": 0,
-            "left": 0,
-            "right": 1920,
-            "bottom": 1080
-          }
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
