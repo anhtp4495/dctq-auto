@@ -13,7 +13,7 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None):
     """
     activity_open_attempted = False
     try:
-        selected_perk_steps = set(_ACTIVITY_PERK_STEP_IDS).intersection(steps)
+        selected_perk_steps = _ACTIVITY_PERK_STEP_IDS.intersection(steps)
         if not selected_perk_steps:
             return steps
 
