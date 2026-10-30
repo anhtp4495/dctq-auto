@@ -1,4 +1,4 @@
-"""Cấu hình tập trung các step và template của nhóm tác vụ Phúc lợi."""
+"""Cấu hình tập trung các định danh step và template dùng chung trong ứng dụng."""
 
 # Step được chọn từ cấu hình tác vụ.
 _STEP_QUOC_VAN = "hoat_dong_phuc_loi_le_bao_quoc_van"
