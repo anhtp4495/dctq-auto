@@ -30,8 +30,10 @@ def get_template_names(steps) -> list[str]:
     return [
         _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO,
         _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO,
-        _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO,
+        #
         _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO,
+        #
+        _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO,
         _TEMPLATE_QUAN_DOAN_XAC_NHAN_DONG_GOP_LUONG_THAO,
         _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_1,
         _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_2,
@@ -122,15 +124,8 @@ def run(
         return steps
 
     if template_name == _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO:
-        try:
-            _tap_match_center(device, match, account, log)
-        except Exception as exc:
-            log(f"[{account.username}] Không mở được màn hình đóng góp Lương thảo: {exc}")
-            return steps
-        return run(
-            worker, account, steps, device, ocr_client, log,
-            screenshot=None,
-        )
+        _tap_match_center(device, match, account, log)
+        return run(worker, account, steps, device, ocr_client, log, screenshot=None)
 
     log(
         f"[{account.username}] Đã nhận diện trạng thái {template_name}; "
