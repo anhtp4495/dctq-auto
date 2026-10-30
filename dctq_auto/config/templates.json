@@ -436,6 +436,41 @@
           "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
+        },
+        "xac_nhan_dong_gop_luong_thao": {
+          "description": "#Màn hình [Quân Đoàn] - Màn hình [Đóng góp Lương Thảo] - Xác nhận.",
+          "rect": { "top": 222, "left": 730, "right": 1194, "bottom": 290},
+          "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "lay_them_luong_thao_1": {
+          "description": "#Màn hình [Quân Đoàn] - Màn hình [Đóng góp Lương Thảo] - Làm đầy kho bằng túi lương.",
+          "rect": { "top": 222, "left": 730, "right": 1194, "bottom": 290},
+          "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "lay_them_luong_thao_2": {
+          "description": "#Màn hình [Quân Đoàn] - Màn hình [Đóng góp Lương Thảo] - Làm đầy kho bằng túi lương.",
+          "rect": { "top": 222, "left": 730, "right": 1194, "bottom": 290},
+          "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "lay_them_luong_thao_KNB": {
+          "description": "#Màn hình [Quân Đoàn] - Màn hình [Đóng góp Lương Thảo] - Làm đầy kho bằng KNB.",
+          "rect": { "top": 222, "left": 730, "right": 1194, "bottom": 290},
+          "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "xac_nhan_lay_them_luong_thao": {
+          "description": "#Màn hình [Quân Đoàn] - Màn hình [Đóng góp Lương Thảo] - Xác nhận.",
+          "rect": { "top": 222, "left": 730, "right": 1194, "bottom": 290},
+          "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
