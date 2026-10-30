@@ -1,20 +1,30 @@
 {
   "hoat_dong": {
     "dong_man_hinh": {
-      "x": -1,
-      "y": -1
+      "x": 138,
+      "y": 1860
     },
     "hoat_dong_phuc_loi": {
       "x": -1,
       "y": -1
     },
     "hoat_dong_phuc_loi_item1": {
-      "x": -1,
-      "y": -1
+      "x": 200,
+      "y": 350
     },
     "hoat_dong_phuc_loi_item2": {
-      "x": -1,
-      "y": -1
+      "x": 750,
+      "y": 350
+    }
+  },
+  "quan_doan": {
+    "dong_man_hinh": {
+      "x": 64,
+      "y": 1864
+    },
+    "thoat_man_hinh_cau_van": {
+      "x": 100,
+      "y": 1774
     }
   }
 }

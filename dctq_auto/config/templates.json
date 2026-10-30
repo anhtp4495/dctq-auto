@@ -6,37 +6,17 @@
       "templates": {
         "hoat_dong": {
           "description": "Màn hình chính - Lối vào [Hoạt Động].",
-          "rect": {
-            "top": 751,
-            "left": 28,
-            "right": 82,
-            "bottom": 823
-          },
+          "rect": { "top": 751, "left": 28, "right": 82, "bottom": 823 },
+          "search_rect": { "top": 700, "left": 0, "right": 200, "bottom": 900},
           "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED",
-          "search_rect": {
-            "top": 0,
-            "left": 0,
-            "right": 1920,
-            "bottom": 1080
-          }
+          "match_method": "TM_CCOEFF_NORMED"
         },
         "chien_tranh": {
           "description": "Màn hình chính - Lối vào [Chiến Tranh].",
-          "rect": {
-            "top": 113,
-            "left": 1287,
-            "right": 1357,
-            "bottom": 195
-          },
+          "rect": { "top": 113, "left": 1287, "right": 1357, "bottom": 195 },
+          "search_rect": { "top": 100, "left": 800, "right": 1500, "bottom": 350},
           "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED",
-          "search_rect": {
-            "top": 0,
-            "left": 0,
-            "right": 1920,
-            "bottom": 1080
-          }
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
@@ -45,20 +25,10 @@
       "templates": {
         "waiting": {
           "description": "Nhận diện màn hình đang chờ đăng nhập.",
-          "rect": {
-            "top": 518,
-            "left": 960,
-            "right": 1046,
-            "bottom": 561
-          },
+          "rect": { "top": 518, "left": 960, "right": 1046, "bottom": 561 },
+          "search_rect": { "top": 469, "left": 837, "right": 1076, "bottom": 612},
           "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED",
-          "search_rect": {
-            "top": 0,
-            "left": 0,
-            "right": 1920,
-            "bottom": 1080
-          }
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
@@ -67,20 +37,10 @@
       "templates": {
         "man_hinh_chinh": {
           "description": "Màn hình chính của game.",
-          "rect": {
-            "top": 167,
-            "left": 28,
-            "right": 95,
-            "bottom": 221
-          },
+          "rect": { "top": 167, "left": 28, "right": 95, "bottom": 221 },
+          "search_rect": { "top": 0, "left": 0, "right": 433, "bottom": 407},
           "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED",
-          "search_rect": {
-            "top": 0,
-            "left": 0,
-            "right": 1920,
-            "bottom": 1080
-          }
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
@@ -266,14 +226,9 @@
             "right": 1153,
             "bottom": 192
           },
+          "search_rect": { "top": 50, "left": 300, "right": 1500, "bottom": 400},
           "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED",
-          "search_rect": {
-            "top": 0,
-            "left": 0,
-            "right": 1920,
-            "bottom": 1080
-          }
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
@@ -282,54 +237,24 @@
       "templates": {
         "hoat_dong_man_hinh_chinh": {
           "description": "Màn hình chính mục Hoạt động.",
-          "rect": {
-            "top": 167,
-            "left": 28,
-            "right": 95,
-            "bottom": 221
-          },
+          "rect": { "top": 55, "left": 14, "right": 202, "bottom": 138},
+          "search_rect":  { "top": 0, "left": 0, "right": 300, "bottom": 200},
           "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED",
-          "search_rect": {
-            "top": 0,
-            "left": 0,
-            "right": 1920,
-            "bottom": 1080
-          }
+          "match_method": "TM_CCOEFF_NORMED"
         },
         "dang_chon_phuc_loi": {
           "description": "Màn hình Hoạt động - Đang chọn Phúc lợi.",
-          "rect": {
-            "top": 342,
-            "left": 77,
-            "right": 191,
-            "bottom": 382
-          },
+          "rect": { "top": 338, "left": 73, "right": 190, "bottom": 397},
+          "search_rect": { "top": 100, "left": 50, "right": 250, "bottom": 700},
           "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED",
-          "search_rect": {
-            "top": 0,
-            "left": 0,
-            "right": 1920,
-            "bottom": 1080
-          }
+          "match_method": "TM_CCOEFF_NORMED"
         },
         "dang_chon_hoat_dong": {
           "description": "Màn hình Hoạt động - Đang chọn Hoạt động.",
-          "rect": {
-            "top": 167,
-            "left": 28,
-            "right": 95,
-            "bottom": 221
-          },
+          "rect": { "top": 788, "left": 73, "right": 190, "bottom": 832},
+          "search_rect": { "top": 100, "left": 50, "right": 250, "bottom": 700},
           "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED",
-          "search_rect": {
-            "top": 0,
-            "left": 0,
-            "right": 1920,
-            "bottom": 1080
-          }
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
@@ -338,130 +263,196 @@
       "templates": {
         "dang_chon_le_bao_quoc_van": {
           "description": "Màn hình [Hoạt động] - [Phúc lợi] - Đang chọn [Lễ bao Quốc vận].",
-          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
-          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "rect": { "top": 305, "left": 528, "right": 736, "bottom": 400},
+          "search_rect": { "top": 0, "left": 150, "right": 500, "bottom": 1050},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "chua_chon_le_bao_quoc_van": {
-          "description": "Màn hình [Hoạt động] - [Phúc lợi] - Đang chọn [Lễ bao Quốc vận].",
-          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
-          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "description": "Màn hình [Hoạt động] - [Phúc lợi] - Chưa chọn [Lễ bao Quốc vận].",
+          "rect": { "top": 290, "left": 245, "right": 439, "bottom": 407},
+          "search_rect": { "top": 0, "left": 150, "right": 500, "bottom": 1050},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "dang_chon_diem_danh": {
           "description": "Màn hình [Hoạt động] - [Phúc lợi] - Đang chọn [Điểm danh].",
-          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
-          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "rect": { "top": 775, "left": 242, "right": 437, "bottom": 825},
+          "search_rect": { "top": 0, "left": 150, "right": 500, "bottom": 1050},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "chua_chon_diem_danh": {
-          "description": "Màn hình [Hoạt động] - [Phúc lợi] - Đang chọn [Điểm danh].",
-          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
-          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "description": "Màn hình [Hoạt động] - [Phúc lợi] - Chưa chọn [Điểm danh].",
+          "rect": { "top": 764, "left": 549, "right": 717, "bottom": 830},
+          "search_rect": { "top": 0, "left": 150, "right": 500, "bottom": 1050},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "dang_chon_trung_thu_thue": {
           "description": "Màn hình [Hoạt động] - [Phúc lợi] - Đang chọn [Trưng thu thuế].",
-          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
-          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "rect": { "top": 744, "left": 854, "right": 1026, "bottom": 832},
+          "search_rect": { "top": 0, "left": 150, "right": 500, "bottom": 1050},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "chua_chon_trung_thu_thue": {
-          "description": "Màn hình [Hoạt động] - [Phúc lợi] - Đang chọn [Trưng thu thuế].",
-          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
-          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "description": "Màn hình [Hoạt động] - [Phúc lợi] - Chưa chọn [Trưng thu thuế].",
+          "rect": { "top": 748, "left": 1178, "right": 1344, "bottom": 842},
+          "search_rect": { "top": 0, "left": 150, "right": 500, "bottom": 1050},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "dang_chon_gift_code": {
           "description": "Màn hình [Hoạt động] - [Phúc lợi] - Đang chọn [Gift Code].",
-          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
-          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "rect": { "top": 910, "left": 1186, "right": 1340, "bottom": 976},
+          "search_rect": { "top": 0, "left": 150, "right": 500, "bottom": 1050},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "chua_chon_gift_code": {
-          "description": "Màn hình [Hoạt động] - [Phúc lợi] - Đang chọn [Gift Code].",
-          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
-          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "description": "Màn hình [Hoạt động] - [Phúc lợi] - Chưa chọn [Gift Code].",
+          "rect": { "top": 900, "left": 860, "right": 1016, "bottom": 976},
+          "search_rect": { "top": 0, "left": 150, "right": 500, "bottom": 1050},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
-    "quan_doan_1": {
-      "source_image": "resources/screens/quan_doan/man_hinh_chinh_1.png",
+    "quan_doan": {
+      "source_image": "resources/screens/quan_doan/man_hinh_chinh.png",
       "templates": {
         "quan_doan_man_hinh_chinh": {
           "description": "Màn hình [Quân Đoàn].",
-          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
-          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "rect": { "top": 22, "left": 182, "right": 936, "bottom": 104},
+          "search_rect": { "top": 0, "left": 0, "right": 1154, "bottom": 148},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "quan_doan_cau_van": {
           "description": "Màn hình [Quân Đoàn] - [Cầu Vận].",
-          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
-          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "rect": { "top": 490, "left": 540, "right": 760, "bottom": 672},
+          "search_rect": { "top": 418, "left": 54, "right": 1870, "bottom": 758},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_doan_lanh_dia_chien": {
+          "description": "Màn hình [Quân Đoàn] - [Lãnh địa chiến].",
+          "rect": { "top": 528, "left": 916, "right": 1164, "bottom": 660},
+          "search_rect": { "top": 418, "left": 54, "right": 1870, "bottom": 758},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "quan_doan_chua_nhan_tui_phuc": {
           "description": "Màn hình [Quân Đoàn] - [Túi Phúc].",
-          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
-          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "rect": { "top": 522, "left": 1332, "right": 1486, "bottom": 672},
+          "search_rect": { "top": 418, "left": 54, "right": 1870, "bottom": 758},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_doan_da_nhan_tui_phuc": {
+          "description": "Màn hình [Quân Đoàn] - Đã nhận [Túi Phúc].",
+          "rect": { "top": 482, "left": 112, "right": 424, "bottom": 728},
+          "search_rect": { "top": 418, "left": 54, "right": 1870, "bottom": 758},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "quan_doan_chua_bao_danh": {
-          "description": "Màn hình [Quân Đoàn] - [Báo danh].",
-          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
-          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "description": "Màn hình [Quân Đoàn] - Chưa [Báo danh].",
+          "rect": { "top": 838, "left": 1604, "right": 1750, "bottom": 964},
+          "search_rect": { "top": 786, "left": 1048, "right": 1888, "bottom": 1050},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "quan_doan_chua_dong_gop_luong_thao": {
-          "description": "Màn hình [Quân Đoàn] - [Lương Thảo].",
-          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
-          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "description": "Màn hình [Quân Đoàn] - Chưa đóng góp [Lương Thảo].",
+          "rect": { "top": 838, "left": 1162, "right": 1312,"bottom": 964},
+          "search_rect": { "top": 786, "left": 1048, "right": 1888, "bottom": 1050},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "quan_doan_dong_gop_knb": {
           "description": "Màn hình [Quân Đoàn] - [KNB].",
-          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
-          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+          "rect": { "top": 838, "left": 1396, "right": 1532, "bottom": 964},
+          "search_rect": { "top": 786, "left": 1048, "right": 1888, "bottom": 1050},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_doan_da_bao_danh": {
+          "description": "Màn hình [Quân Đoàn] - Đã [Báo danh].",
+          "rect": { "top": 852, "left": 578, "right": 704, "bottom": 952},
+          "search_rect": { "top": 786, "left": 1048, "right": 1888, "bottom": 1050},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_doan_da_dong_gop_luong_thao": {
+          "description": "Màn hình [Quân Đoàn] - Đã đóng góp [Lương Thảo].",
+          "rect": { "top": 852, "left": 126, "right": 252, "bottom": 952},
+          "search_rect": { "top": 786, "left": 1048, "right": 1888, "bottom": 1050},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
-    "quan_doan_2": {
-      "source_image": "resources/screens/quan_doan/man_hinh_chinh_2.png",
+    "quan_doan.cau_van": {
+      "source_image": "resources/screens/quan_doan/cau_van.png",
       "templates": {
-        "quan_doan_da_nhan_tui_phuc": {
-          "description": "Màn hình [Quân Đoàn] - [Túi Phúc].",
-          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
-          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+        "quan_doan_man_hinh_cau_van": {
+          "description": "Màn hình [Quân Đoàn] - Màn hình [Cầu vận].",
+          "rect": { "top": 58, "left": 750, "right": 1166, "bottom": 120},
+          "search_rect": { "top": 2, "left": 110, "right": 1918, "bottom": 284},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
-        "quan_doan_da_bao_danh": {
-          "description": "Màn hình [Quân Đoàn] - [Báo danh].",
-          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
-          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+        "quan_doan_co_the_cau_van": {
+          "description": "Màn hình [Quân Đoàn] - Màn hình [Cầu vận].",
+          "rect": { "top": 870, "left": 498, "right": 700, "bottom": 936},
+          "search_rect": { "top": 738, "left": 172, "right": 962, "bottom": 1060},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
+    "quan_doan.luong_thao": {
+      "source_image": "resources/screens/quan_doan/dong_gop_luong_thao.png",
+      "templates": {
+        "quan_doan_man_hinh_dong_gop_luong_thao": {
+          "description": "Màn hình [Quân Đoàn] - Màn hình [Đóng góp Lương Thảo].",
+          "rect": { "top": 222, "left": 730, "right": 1194, "bottom": 290},
+          "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
+    "quan_doan.knb": {
+      "source_image": "resources/screens/quan_doan/dong_gop_knb.png",
+      "templates": {
+        "quan_doan_man_hinh_dong_gop_knb": {
+          "description": "Màn hình [Quân Đoàn] - Màn hình [Đóng góp KNB].",
+          "rect": { "top": 218, "left": 732, "right": 1172, "bottom": 292},
+          "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
-        "quan_doan_da_dong_gop_luong_thao": {
-          "description": "Màn hình [Quân Đoàn] - [Lương Thảo].",
-          "rect": { "top": 342, "left": 77, "right": 191, "bottom": 382},
-          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
+        "quan_doan_dong_gop_10_knb": {
+          "description": "Màn hình [Quân Đoàn] - [Đóng góp KNB] - 10.",
+          "rect": { "top": 742, "left": 894, "right": 1070, "bottom": 822},
+          "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_doan_dong_gop_20_knb": {
+          "description": "Màn hình [Quân Đoàn] - [Đóng góp KNB] - 20.",
+          "rect": { "top": 600, "left": 888, "right": 1070, "bottom": 674},
+          "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_doan_dong_gop_40_knb": {
+          "description": "Màn hình [Quân Đoàn] - [Đóng góp KNB] - 40.",
+          "rect": { "top": 452, "left": 876, "right": 1070, "bottom": 520},
+          "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
