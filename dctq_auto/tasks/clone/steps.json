@@ -61,5 +61,23 @@
     "templates": [
       "chien_tranh/chien_tranh_man_hinh_chinh"
     ]
+  },
+  {
+    "id": "quan_doan_dong_gop_knb",
+    "config_key": "clone_guild_donate_knb",
+    "display_name": "Đóng góp KNB",
+    "priority": 10103,
+    "templates": [
+      "quan_doan/quan_doan_man_hinh_chinh"
+    ]
+  },
+  {
+    "id": "quan_doan_dong_gop_luong_thao",
+    "config_key": "clone_guild_donate_rations",
+    "display_name": "Đóng góp Lương Thảo",
+    "priority": 10104,
+    "templates": [
+      "quan_doan/quan_doan_man_hinh_chinh"
+    ]
   }
 ]
