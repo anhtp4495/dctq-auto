@@ -62,10 +62,10 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
     template_names = (
         "accounts3/dang_nhap",
         "accounts1/waiting",
-        "accounts5/trang_ca_nhan",
         "accounts6/tuy_chon",
         "accounts7/cai_dat_nguoi_dung",
         "accounts8/doi_tai_khoan",
+        "accounts2/man_hinh_chinh",
     )
 
     try:
@@ -125,9 +125,8 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
         time.sleep(3)
         return run_logout_flow(worker, account, device, ocr_client)
 
-    if detected_state == "trang_ca_nhan":
-        tap_x = int(screenshot.width * 0.029167)
-        tap_y = int(screenshot.height * 0.071296)
+    if detected_state == "man_hinh_chinh":
+        tap_x, tap_x = ButtonPositions().get("main", "profile")
         worker.log_message.emit(
             f"[{account.username}] Mở profile tại ({tap_x}, {tap_y}); "
             "sẽ nhận diện lại màn hình sau thao tác."

@@ -1,4 +1,10 @@
 {
+  "main": {
+    "profile": {
+      "x": 65,
+      "y": 65
+    }
+  },
   "hoat_dong": {
     "dong_man_hinh": {
       "x": 138,
