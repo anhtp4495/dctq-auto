@@ -333,8 +333,8 @@
         },
         "quan_doan_chua_nhan_tui_phuc": {
           "description": "Màn hình [Quân Đoàn] - [Túi Phúc].",
-          "rect": { "top": 522, "left": 1332, "right": 1486, "bottom": 672},
-          "search_rect": { "top": 418, "left": 54, "right": 1870, "bottom": 758},
+          "rect": { "top": 472, "left": 1268, "right": 1612, "bottom": 727},
+          "search_rect": { "top": 418, "left": 54, "right": 11870, "bottom": 758},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
