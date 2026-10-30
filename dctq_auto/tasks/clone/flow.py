@@ -826,7 +826,16 @@ def run_clone_flow_optimize_account(
     import numpy as np
 
     template_names = get_templates_by_steps(steps)
+    # Activity và Guild đã được gọi trực tiếp ở trên; không dispatch lại qua template.
     templates = get_templates(template_names)
+    template_names = [
+        name for name in template_names
+        if templates.get(name) is None
+        or templates[name].id not in {
+            "hoat_dong_man_hinh_chinh",
+            "quan_doan_man_hinh_chinh",
+        }
+    ]
 
     try:
         screenshot = device.screenshot()
