@@ -29,8 +29,8 @@ class CloneStepRegistry:
             config_key = str(item.get("config_key", "")).strip()
             priority = item.get("priority")
 
-            if not step_id or not display_name or not config_key:
-                raise ValueError("Each clone step requires id, display_name, and config_key.")
+            if not step_id or not config_key:
+                raise ValueError("Each clone step requires id and config_key.")
             if not isinstance(priority, int):
                 raise ValueError(f"Clone step {step_id!r} requires an integer priority.")
             if step_id in self._steps:
@@ -55,6 +55,17 @@ class CloneStepRegistry:
         """Return the display label for an ID, or the ID itself if unknown."""
         step = self._steps.get(step_id)
         return step["display_name"] if step else step_id
+
+    def get_display_name_by_config_key(
+        self,
+        config_key: str,
+        default_value: str,
+    ) -> str:
+        """Return a configured display name, or default_value when unavailable."""
+        for step in self._steps.values():
+            if step["config_key"] == config_key and step["display_name"]:
+                return step["display_name"]
+        return default_value
 
     def get_enabled_steps(self, config: dict[str, Any]) -> list[str]:
         """Return enabled step IDs ordered by priority."""
