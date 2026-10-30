@@ -5,6 +5,11 @@ import time
 import cv2
 import numpy as np
 
+from dctq_auto.config.constants import (
+    _TEMPLATE_MAIN_HOAT_DONG,
+    _TEMPLATE_DANG_CHON_PHUC_LOI,
+    _TEMPLATE_DANG_CHON_HOAT_DONG,
+)
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
@@ -20,9 +25,9 @@ def close_activity(self, account, device, ocr_client, log, screenshot=None) -> b
     log(f"[{account.username}] Bắt đầu kiểm tra đóng màn hình [Hoạt động].")
 
     template_names = (
-        "main/hoat_dong",
-        "hoat_dong/dang_chon_phuc_loi",
-        "hoat_dong/dang_chon_hoat_dong",
+        _TEMPLATE_MAIN_HOAT_DONG,
+        _TEMPLATE_DANG_CHON_PHUC_LOI,
+        _TEMPLATE_DANG_CHON_HOAT_DONG,
     )
     templates = get_templates(template_names)
 
@@ -62,11 +67,11 @@ def close_activity(self, account, device, ocr_client, log, screenshot=None) -> b
             match=match,
         )
 
-        if template.id == "hoat_dong":
+        if template_name == _TEMPLATE_MAIN_HOAT_DONG:
             log(f"[{account.username}] Đã xác nhận đóng màn hình [Hoạt động] thành công.")
             return True
 
-        if template.id in ("dang_chon_phuc_loi", "dang_chon_hoat_dong"):
+        if template_name in (_TEMPLATE_DANG_CHON_PHUC_LOI, _TEMPLATE_DANG_CHON_HOAT_DONG):
             try:
                 x, y = ButtonPositions().get("hoat_dong", "dong_man_hinh")
                 log(
