@@ -589,10 +589,10 @@ class BotWorker(
         BotWorker._input_text(device, value)
 
     def _run_clone_login(self, device) -> None:
-        """Delegate the shared account/game flow to tasks.common."""
-        from dctq_auto.tasks.clone.flow import run_clone_flow
+        """Run the optimized Clone flow for the configured accounts."""
+        from dctq_auto.tasks.clone.flow import run_clone_flow_optimize
 
-        run_clone_flow(self, device)
+        run_clone_flow_optimize(self, device)
 
 
     def run(self) -> None:
