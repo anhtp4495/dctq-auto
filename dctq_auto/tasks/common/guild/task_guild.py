@@ -54,6 +54,11 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None):
         if not selected_steps:
             return steps
 
+        # TEST: ép chạy thử step đóng góp Lương thảo.
+        if _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO not in steps:
+            steps.append(_STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO)
+        selected_steps.add(_STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO)
+
         guild_open_attempted = True
         if not task_open_guild.run(
             worker, account, device, ocr_client, log, screenshot=screenshot
