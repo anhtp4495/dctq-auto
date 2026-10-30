@@ -412,14 +412,14 @@
       "source_image": "resources/screens/quan_doan/cau_van.png",
       "templates": {
         "quan_doan_man_hinh_cau_van": {
-          "description": "Màn hình [Quân Đoàn] - Màn hình [Cầu vận].",
+          "description": "Màn hình [Quân Đoàn] - [Cầu vận].",
           "rect": { "top": 58, "left": 750, "right": 1166, "bottom": 120},
           "search_rect": { "top": 2, "left": 110, "right": 1918, "bottom": 284},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "quan_doan_co_the_cau_van": {
-          "description": "Màn hình [Quân Đoàn] - Màn hình [Cầu vận].",
+          "description": "Màn hình [Quân Đoàn] - [Cầu vận].",
           "rect": { "top": 870, "left": 498, "right": 700, "bottom": 936},
           "search_rect": { "top": 738, "left": 172, "right": 962, "bottom": 1060},
           "threshold": 0.85,
@@ -431,42 +431,49 @@
       "source_image": "resources/screens/quan_doan/dong_gop_luong_thao.png",
       "templates": {
         "quan_doan_man_hinh_dong_gop_luong_thao": {
-          "description": "Màn hình [Quân Đoàn] - Màn hình [Đóng góp Lương Thảo].",
+          "description": "Màn hình [Quân Đoàn] - [Đóng góp Lương Thảo].",
+          "rect": { "top": 222, "left": 730, "right": 1194, "bottom": 290},
+          "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_doan_dong_man_hinh_dong_gop_luong_thao": {
+          "description": "#Màn hình [Quân Đoàn] - [Đóng góp Lương Thảo] - Đóng màn hình.",
           "rect": { "top": 222, "left": 730, "right": 1194, "bottom": 290},
           "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "xac_nhan_dong_gop_luong_thao": {
-          "description": "#Màn hình [Quân Đoàn] - Màn hình [Đóng góp Lương Thảo] - Xác nhận.",
+          "description": "#Màn hình [Quân Đoàn] - [Đóng góp Lương Thảo] - Xác nhận.",
           "rect": { "top": 222, "left": 730, "right": 1194, "bottom": 290},
           "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "lay_them_luong_thao_1": {
-          "description": "#Màn hình [Quân Đoàn] - Màn hình [Đóng góp Lương Thảo] - Làm đầy kho bằng túi lương.",
+          "description": "#Màn hình [Quân Đoàn] - [Đóng góp Lương Thảo] - Làm đầy kho bằng túi lương.",
           "rect": { "top": 222, "left": 730, "right": 1194, "bottom": 290},
           "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "lay_them_luong_thao_2": {
-          "description": "#Màn hình [Quân Đoàn] - Màn hình [Đóng góp Lương Thảo] - Làm đầy kho bằng túi lương.",
+          "description": "#Màn hình [Quân Đoàn] - [Đóng góp Lương Thảo] - Làm đầy kho bằng túi lương.",
           "rect": { "top": 222, "left": 730, "right": 1194, "bottom": 290},
           "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "lay_them_luong_thao_KNB": {
-          "description": "#Màn hình [Quân Đoàn] - Màn hình [Đóng góp Lương Thảo] - Làm đầy kho bằng KNB.",
+          "description": "#Màn hình [Quân Đoàn] - [Đóng góp Lương Thảo] - Làm đầy kho bằng KNB.",
           "rect": { "top": 222, "left": 730, "right": 1194, "bottom": 290},
           "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "xac_nhan_lay_them_luong_thao": {
-          "description": "#Màn hình [Quân Đoàn] - Màn hình [Đóng góp Lương Thảo] - Xác nhận.",
+          "description": "#Màn hình [Quân Đoàn] - [Đóng góp Lương Thảo] - Xác mở lúa kho lương.",
           "rect": { "top": 222, "left": 730, "right": 1194, "bottom": 290},
           "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
           "threshold": 0.85,
@@ -478,7 +485,7 @@
       "source_image": "resources/screens/quan_doan/dong_gop_knb.png",
       "templates": {
         "quan_doan_man_hinh_dong_gop_knb": {
-          "description": "Màn hình [Quân Đoàn] - Màn hình [Đóng góp KNB].",
+          "description": "Màn hình [Quân Đoàn] - [Đóng góp KNB].",
           "rect": { "top": 218, "left": 732, "right": 1172, "bottom": 292},
           "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
           "threshold": 0.85,
