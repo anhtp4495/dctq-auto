@@ -1,13 +1,8 @@
 """Điều phối các bước thuộc màn hình [Hoạt động]."""
 
+from dctq_auto.config.constants import _ACTIVITY_PERK_STEP_IDS
 from dctq_auto.tasks.common.activity import task_close_activity, task_open_activity
 from dctq_auto.tasks.common.activity.perk import task_perk
-
-
-_PERK_STEP_IDS = {
-    "hoat_dong_phuc_loi_diem_danh",
-    "hoat_dong_phuc_loi_le_bao_quoc_van",
-}
 
 
 def run(worker, account, steps, device, ocr_client, log, screenshot=None):
@@ -18,7 +13,7 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None):
     """
     activity_open_attempted = False
     try:
-        selected_perk_steps = _PERK_STEP_IDS.intersection(steps)
+        selected_perk_steps = set(_ACTIVITY_PERK_STEP_IDS).intersection(steps)
         if not selected_perk_steps:
             return steps
 
