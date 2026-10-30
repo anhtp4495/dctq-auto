@@ -93,20 +93,17 @@
       "templates": {
         "trang_ca_nhan": {
           "description": "Nhận diện màn hình profile sau khi vào game.",
-          "rect": {
-            "top": 33,
-            "left": 793,
-            "right": 1122,
-            "bottom": 98
-          },
+          "rect": { "top": 33, "left": 793, "right": 1122, "bottom": 98 },
+          "search_rect": { "top": 0, "left": 750, "right": 1200, "bottom": 200 },
           "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED",
-          "search_rect": {
-            "top": 0,
-            "left": 0,
-            "right": 1920,
-            "bottom": 1080
-          }
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "trang_ca_nhan_tuy_chon": {
+          "description": "Nhận diện màn hình profile sau khi vào game.",
+          "rect": { "top": 987, "left": 1774, "right": 1811, "bottom": 1037},
+          "search_rect": { "top": 955, "left": 1739, "right": 1872, "bottom": 1060},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
@@ -115,20 +112,10 @@
       "templates": {
         "tuy_chon": {
           "description": "Đang mở màn hình - Tùy chọn tài khoản.",
-          "rect": {
-            "top": 71,
-            "left": 799,
-            "right": 1131,
-            "bottom": 162
-          },
+          "rect": { "top": 71, "left": 799, "right": 1131, "bottom": 162 },
+          "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
           "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED",
-          "search_rect": {
-            "top": 0,
-            "left": 0,
-            "right": 1920,
-            "bottom": 1080
-          }
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },

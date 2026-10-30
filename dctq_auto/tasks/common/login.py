@@ -247,7 +247,8 @@ def prepare_login(
         "accounts1/waiting",
         "accounts5/trang_ca_nhan",
         "accounts9/cap_nhat_thong_tin",
-        "accounts9/close_cap_nhat_thong_tin"
+        "accounts9/close_cap_nhat_thong_tin",
+        "accounts2/man_hinh_chinh",
     )
     templates = get_templates(template_names)
 
@@ -305,7 +306,7 @@ def prepare_login(
     if detected_state == "dang_nhap":
         return True, None
 
-    if detected_state == "trang_ca_nhan":
+    if detected_state in ("trang_ca_nhan", "man_hinh_chinh"):
         worker.log_message.emit(
             f"[{account.username}] Đang ở màn hình profile; gọi quy trình đăng xuất."
         )

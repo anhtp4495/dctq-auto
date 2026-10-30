@@ -9,6 +9,7 @@ from dctq_auto.tasks.base import TaskSpec
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_store import get_templates
 from dctq_auto.vision.template_report import report_template_match
+from dctq_auto.config.button_positions import ButtonPositions
 
 SPEC = TaskSpec(
     key="clone_logout",
@@ -16,6 +17,14 @@ SPEC = TaskSpec(
     description="Đăng xuất sau khi hoàn tất các nhiệm vụ của tài khoản.",
     category="clone",
 )
+
+def _tap_match_center(device, match, account, log):
+    """Click trung điểm vùng template được nhận diện."""
+    x = (match.left + match.right) // 2
+    y = (match.top + match.bottom) // 2
+    log(f"[{account.username}] Click trung điểm template tại ({x}, {y}).")
+    device.shell(f"input tap {x} {y}")
+    time.sleep(0.7)
 
 
 def prepare_logout(worker, account, device, ocr_client) -> tuple[bool | None, str | None]:
@@ -66,6 +75,7 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
         "accounts7/cai_dat_nguoi_dung",
         "accounts8/doi_tai_khoan",
         "accounts2/man_hinh_chinh",
+        "accounts5/trang_ca_nhan_tuy_chon",
     )
 
     try:
@@ -126,12 +136,18 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
         return run_logout_flow(worker, account, device, ocr_client)
 
     if detected_state == "man_hinh_chinh":
-        tap_x, tap_x = ButtonPositions().get("main", "profile")
+        tap_x, tap_y = ButtonPositions().get("main", "profile")
         worker.log_message.emit(
             f"[{account.username}] Mở profile tại ({tap_x}, {tap_y}); "
             "sẽ nhận diện lại màn hình sau thao tác."
         )
         device.shell(f"input tap {tap_x} {tap_y}")
+        time.sleep(1.5)
+        return run_logout_flow(worker, account, device, ocr_client)
+
+    if detected_state == "trang_ca_nhan_tuy_chon":
+        _tap_match_center(device, match, account, worker.log_message.emit)
+
         time.sleep(1.5)
         return run_logout_flow(worker, account, device, ocr_client)
 
