@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
 )
 
 from dctq_auto.tasks.common.accounts import load_accounts
+from dctq_auto.tasks.clone.step_registry import get_clone_step_registry
 
 
 class CloneTab(QWidget):
@@ -24,6 +25,7 @@ class CloneTab(QWidget):
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
+        step_registry = get_clone_step_registry()
         outer_layout = QVBoxLayout(self)
         outer_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -70,9 +72,15 @@ class CloneTab(QWidget):
 
         phuc_loi_group = QGroupBox("Hoạt động - Phúc lợi")
         phuc_loi_layout = QVBoxLayout(phuc_loi_group)
-        self.clone_daily_check_in = QCheckBox("Điểm danh")
+        self.clone_daily_check_in = QCheckBox(
+            step_registry.get_display_name_by_config_key("clone_daily_check_in", "Điểm danh")
+        )
         self.clone_daily_check_in.setChecked(True)
-        self.clone_receive_quoc_van = QCheckBox("Nhận lễ bao quốc vận")
+        self.clone_receive_quoc_van = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_receive_quoc_van", "Nhận lễ bao quốc vận"
+            )
+        )
         self.clone_receive_quoc_van.setChecked(False)
         phuc_loi_layout.addWidget(self.clone_receive_quoc_van)
         phuc_loi_layout.addWidget(self.clone_daily_check_in)
@@ -80,11 +88,23 @@ class CloneTab(QWidget):
 
         guild_group = QGroupBox("Quân đoàn")
         guild_layout = QVBoxLayout(guild_group)
-        self.clone_guild_check_in = QCheckBox("Báo danh quân đoàn")
+        self.clone_guild_check_in = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_guild_check_in", "Báo danh quân đoàn"
+            )
+        )
         self.clone_guild_check_in.setChecked(True)
-        self.clone_receive_lucky_bag = QCheckBox("Nhận túi phúc")
+        self.clone_receive_lucky_bag = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_receive_lucky_bag", "Nhận túi phúc"
+            )
+        )
         self.clone_receive_lucky_bag.setChecked(True)
-        self.clone_guild_fortune = QCheckBox("Cầu vận quân đoàn (5 lần)")
+        self.clone_guild_fortune = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_guild_fortune", "Cầu vận quân đoàn (5 lần)"
+            )
+        )
         for checkbox in (
             self.clone_guild_check_in,
             self.clone_receive_lucky_bag,
@@ -93,9 +113,15 @@ class CloneTab(QWidget):
             guild_layout.addWidget(checkbox)
         layout.addWidget(guild_group)
 
-        self.clone_quoc_chien = QCheckBox("Quốc chiến")
+        self.clone_quoc_chien = QCheckBox(
+            step_registry.get_display_name_by_config_key("clone_quoc_chien", "Quốc chiến")
+        )
         layout.addWidget(self.clone_quoc_chien)
-        self.clone_reward_guild = QCheckBox("Nhận Thưởng - Quân Đoàn")
+        self.clone_reward_guild = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_reward_guild", "Nhận Thưởng - Quân Đoàn"
+            )
+        )
         layout.addWidget(self.clone_reward_guild)
 
         layout.addStretch(1)
