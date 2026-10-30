@@ -105,10 +105,22 @@ class CloneTab(QWidget):
                 "clone_guild_fortune", "Cầu vận quân đoàn (5 lần)"
             )
         )
+        self.clone_guild_donate_knb = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_guild_donate_knb", "Đóng góp KNB"
+            )
+        )
+        self.clone_guild_donate_rations = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_guild_donate_rations", "Đóng góp Lương Thảo"
+            )
+        )
         for checkbox in (
             self.clone_guild_check_in,
             self.clone_receive_lucky_bag,
             self.clone_guild_fortune,
+            self.clone_guild_donate_knb,
+            self.clone_guild_donate_rations,
         ):
             guild_layout.addWidget(checkbox)
         layout.addWidget(guild_group)
@@ -213,6 +225,8 @@ class CloneTab(QWidget):
             "clone_guild_check_in": self.clone_guild_check_in.isChecked(),
             "clone_receive_lucky_bag": self.clone_receive_lucky_bag.isChecked(),
             "clone_guild_fortune": self.clone_guild_fortune.isChecked(),
+            "clone_guild_donate_knb": self.clone_guild_donate_knb.isChecked(),
+            "clone_guild_donate_rations": self.clone_guild_donate_rations.isChecked(),
             "clone_quoc_chien": self.clone_quoc_chien.isChecked(),
             "clone_reward_guild": self.clone_reward_guild.isChecked(),
             "clone_logout": True,
