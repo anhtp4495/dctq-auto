@@ -15,10 +15,7 @@ from PIL import ImageOps
 from dctq_auto.adb.client import AdbClient
 from dctq_auto.automation.battle_testkit import BattleSnapshot, run_mock_battle
 from dctq_auto.tasks.common.accounts import load_accounts
-from dctq_auto.tasks.clone.step_registry import (
-    get_clone_step_registry,
-    get_templates_by_steps,
-)
+from dctq_auto.tasks.clone.step_registry import get_clone_step_registry
 
 
 def run_clone_flow(self, device) -> None:
@@ -739,14 +736,8 @@ def run_clone_flow_optimize_account(
     step_registry = get_clone_step_registry()
     if _tong_steps is None:
         _tong_steps = len(steps)
-        templates = get_templates_by_steps(steps)
         self.log_message.emit(
             f"[{account.username}] Clone Optimize — bắt đầu tác vụ tài khoản {index}/{total}."
-        )
-        self.log_message.emit(
-            f"[{account.username}] Clone Optimize — template cần dùng "
-            f"({len(templates)} duy nhất): "
-            + (", ".join(templates) if templates else "(không có)")
         )
         self._config["_clone_guild_screen_closed"] = False
         _ocr_client = AdbClient(serial=self._serial)
@@ -820,180 +811,16 @@ def run_clone_flow_optimize_account(
             _common_tasks_done=True,
         )
 
-    # Nhận diện màn hình theo cùng format với handle_post_login() trong login.py.
-    from dctq_auto.vision.template_matching import match_template
-    from dctq_auto.vision.template_report import report_template_match
-    from dctq_auto.vision.template_store import get_templates
-    import cv2
-    import numpy as np
-
-    template_names = get_templates_by_steps(steps)
-    # Activity và Guild đã được gọi trực tiếp ở trên; không dispatch lại qua template.
-    templates = get_templates(template_names)
-    template_names = [
-        name for name in template_names
-        if templates.get(name) is None
-        or templates[name].id not in {
-            "hoat_dong_man_hinh_chinh",
-            "quan_doan_man_hinh_chinh",
-        }
+    # Các step còn lại hiện chưa có task runner riêng (ví dụ: Chiến tranh).
+    # Không dùng Template Matching tổng quát ở Clone Optimize nữa.
+    remaining_labels = [
+        step_registry.get_label(step_id) for step_id in steps
     ]
-
-    try:
-        screenshot = device.screenshot()
-        screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
-    except Exception as exc:
-        self.log_message.emit(
-            f"[{account.username}] Không chụp được màn hình để Template Matching: {exc}"
-        )
-        return False
-
-    for template_name in template_names:
-        template = templates.get(template_name)
-        if template is None:
-            self.log_message.emit(
-                f"[{account.username}] Không tải được template {template_name}; bỏ qua."
-            )
-            continue
-
-        try:
-            match = match_template(
-                screen_bgr,
-                template.image,
-                threshold=template.threshold,
-                method=template.method,
-            )
-        except (ValueError, cv2.error) as exc:
-            self.log_message.emit(
-                f"[{account.username}] Lỗi template matching {template_name}: {exc}"
-            )
-            continue
-
-        if match is None:
-            continue
-
-        report_template_match(
-            self.log_message.emit,
-            context=f"[{account.username}]",
-            template=template,
-            match=match,
-        )
-
-        # Điều phối trực tiếp theo template.id, không cần tra ngược step_registry.
-        if template.id == "hoat_dong_man_hinh_chinh":
-            handler = handle_step_hoat_dong
-            ten_buoc = "Hoạt động"
-        elif template.id == "quan_doan_man_hinh_chinh":
-            handler = handle_step_quan_doan
-            ten_buoc = "Quân đoàn"
-        elif template.id == "chien_tranh_man_hinh_chinh":
-            handler = handle_step_chien_tranh
-            ten_buoc = "Chiến tranh"
-        else:
-            self.log_message.emit(
-                f"[{account.username}] Template {template.id} khớp nhưng chưa có handler."
-            )
-            continue
-
-        nhan_tac_vu = f"{account.username} - {ten_buoc}"
-        self.log_message.emit(
-            f"[{account.username}] Template ID {template.id} khớp; "
-            f"gọi {handler.__name__}."
-        )
-        self.log_message.emit(
-            f"[{account.username}] Bước {_so_thu_tu}/{_tong_steps}: {ten_buoc}."
-        )
-        self.task_progress_changed.emit(nhan_tac_vu, "running", 0, 1)
-
-        remaining_steps = handler(
-            self,
-            account,
-            steps,
-            device,
-            _ocr_client,
-            self.log_message.emit,
-            screenshot=screenshot,
-        )
-        if remaining_steps is None:
-            remaining_steps = steps
-        if remaining_steps == steps:
-            self.log_message.emit(
-                f"[{account.username}] Handler {handler.__name__} hiện chưa xử lý step; "
-                "dừng tại đây để tránh đệ quy lặp vô hạn."
-            )
-            self.task_progress_changed.emit(nhan_tac_vu, "failed", 0, 1)
-            return False
-
-        steps[:] = remaining_steps
-        self.task_progress_changed.emit(nhan_tac_vu, "done", 1, 1)
-        return run_clone_flow_optimize_account(
-            self,
-            account,
-            steps,
-            device,
-            index,
-            total,
-            _ocr_client=_ocr_client,
-            _tat_ca_thanh_cong=_tat_ca_thanh_cong,
-            _so_thu_tu=_so_thu_tu + 1,
-            _tong_steps=_tong_steps,
-            _common_tasks_done=True,
-        )
-
     self.log_message.emit(
-        f"[{account.username}] Không template nào khớp màn hình hiện tại."
+        f"[{account.username}] WARNING — các step chưa được triển khai task runner: "
+        + ", ".join(remaining_labels)
     )
-
-    from dctq_auto.tasks.common.close_knowned_dialog import close_knowned_dialog
-
-    if close_knowned_dialog(
-        self, account, device, _ocr_client, self.log_message.emit
-    ):
-        self.log_message.emit(
-            f"[{account.username}] Đã đóng dialog đã biết; thử nhận diện màn hình lại."
-        )
-        return run_clone_flow_optimize_account(
-            self,
-            account,
-            steps,
-            device,
-            index,
-            total,
-            _ocr_client=_ocr_client,
-            _tat_ca_thanh_cong=_tat_ca_thanh_cong,
-            _so_thu_tu=_so_thu_tu,
-            _tong_steps=_tong_steps,
-            _common_tasks_done=True,
-        )
-
     return False
-
-def handle_step_hoat_dong(
-    self, account, steps, device, ocr_client, log, screenshot=None
-):
-    """Điều phối nhóm bước Hoạt động qua task_activity."""
-    from dctq_auto.tasks.common.activity.task_activity import run as run_activity
-
-    return run_activity(
-        self, account, steps, device, ocr_client, log, screenshot=screenshot
-    )
-
-def handle_step_quan_doan(
-    self, account, steps, device, ocr_client, log, screenshot=None
-):
-    """Khung xử lý nhóm template Quân đoàn."""
-    if screenshot is None:
-        screenshot = device.screenshot()
-    return steps
-
-
-def handle_step_chien_tranh(
-    self, account, steps, device, ocr_client, log, screenshot=None
-):
-    """Khung xử lý nhóm template Chiến tranh."""
-    if screenshot is None:
-        screenshot = device.screenshot()
-    return steps
 
 
 def _run_clone_reward_guild_step(self, device) -> bool:
