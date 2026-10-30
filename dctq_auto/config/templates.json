@@ -17,6 +17,13 @@
           "search_rect": { "top": 100, "left": 800, "right": 1500, "bottom": 350},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_doan_mo_chat": {
+          "description": "Màn hình chính - Mở trò chuyện.",
+          "rect": { "top": 494, "left": 1866, "right": 1916, "bottom": 589},
+          "search_rect": { "top": 413, "left": 1748, "right": 1919, "bottom": 700},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
@@ -476,6 +483,25 @@
           "description": "Màn hình [Quân Đoàn] - [Đóng góp KNB] - 40.",
           "rect": { "top": 452, "left": 876, "right": 1070, "bottom": 520},
           "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
+    "quan_doan.chat": {
+      "source_image": "resources/screens/quan_doan/chat_quan_doan.png",
+      "templates": {
+        "quan_doan_tat_chat": {
+          "description": "Màn hình chính - Tắt trò chuyện.",
+          "rect": { "top": 491, "left": 861, "right": 912, "bottom": 610},
+          "search_rect": { "top": 417, "left": 771, "right": 1919, "bottom": 1079},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "vao_quan_doan": {
+          "description": "Màn hình chính - Vào Quân đoàn.",
+          "rect": { "top": 961, "left": 1286, "right": 1522, "bottom": 1032},
+          "search_rect": { "top": 417, "left": 771, "right": 1919, "bottom": 1079},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
