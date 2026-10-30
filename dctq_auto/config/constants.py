@@ -4,8 +4,6 @@
 _STEP_QUOC_VAN = "hoat_dong_phuc_loi_le_bao_quoc_van"
 _STEP_DIEM_DANH = "hoat_dong_phuc_loi_diem_danh"
 
-# Nhóm step thuộc màn hình Hoạt động - Phúc lợi.
-_ACTIVITY_PERK_STEP_IDS = frozenset((_STEP_QUOC_VAN, _STEP_DIEM_DANH))
 
 _STEP_QUAN_DOAN_BAO_DANH = "quan_doan_bao_danh"
 _STEP_QUAN_DOAN_TUI_PHUC = "quan_doan_tui_phuc"
