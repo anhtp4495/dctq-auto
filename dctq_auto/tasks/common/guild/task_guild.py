@@ -178,13 +178,14 @@ def steps_run(worker, account, steps, device, ocr_client, log, screenshot=None) 
         if _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO not in selected_steps:
             return steps
         try:
-            return task_donate_rations.run(
+            steps = task_donate_rations.run(
                 worker, account, steps, device, ocr_client, log
             )
         except Exception as exc:
             log(f"[{account.username}] Đóng góp lương thảo thất bại: {exc}")
             log(f"[{account.username}] Giữ lại step đóng góp lương thảo để thử lại.")
             return steps
+        return steps_run(worker, account, steps, device, ocr_client, log)
 
     if template_name == _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO:
         if _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO in steps:
