@@ -57,7 +57,7 @@ def _match_account_template(screen_bgr, template):
 
 
 def handle_post_login(
-    worker, account, device, ocr_client
+    worker, account, device, ocr_client, try_time: int = 3
 ) -> tuple[bool | None, str | None]:
     """Xử lý trạng thái sau khi gửi đăng nhập bằng template matching.
 
@@ -65,6 +65,12 @@ def handle_post_login(
     update_information: đóng hộp thoại rồi kiểm tra lại.
     profile: xác nhận đăng nhập thành công.
     """
+    if try_time <= 0:
+        worker.log_message.emit(
+            f"[{account.username}] Đã hết số lần thử xử lý trạng thái hậu đăng nhập."
+        )
+        return False, "Hết số lần thử xác minh trạng thái sau đăng nhập"
+
     if not worker._wait_if_paused():
         worker.log_message.emit("Đã dừng theo yêu cầu.")
         return None, None
@@ -122,14 +128,14 @@ def handle_post_login(
                 )
                 return False, "Không đóng được cửa sổ Địch Quân Tập Kích"
             time.sleep(1)
-            return handle_post_login(worker, account, device, ocr_client)
+            return handle_post_login(worker, account, device, ocr_client, try_time - 1)
 
         if template.id == "waiting":
             worker.log_message.emit(
                 f"[{account.username}] Đang chờ đăng nhập hoàn tất; kiểm tra lại sau 3 giây."
             )
             time.sleep(3)
-            return handle_post_login(worker, account, device, ocr_client)
+            return handle_post_login(worker, account, device, ocr_client, try_time - 1)
 
         if template.id == "cap_nhat_thong_tin" or template.id == "close_cap_nhat_thong_tin":
             worker.log_message.emit(
@@ -143,7 +149,7 @@ def handle_post_login(
                 )
                 return False, "Không đóng được hộp thoại cập nhật thông tin"
             time.sleep(1)
-            return handle_post_login(worker, account, device, ocr_client)
+            return handle_post_login(worker, account, device, ocr_client, try_time - 1)
 
         if template.id == "man_hinh_chinh":
             worker.log_message.emit(f"[{account.username}] Đăng nhập thành công.")
@@ -356,4 +362,4 @@ def login_account(
     if verified is not True:
         return verified, error
 
-    return handle_post_login(worker, account, device, ocr_client)
+    return handle_post_login(worker, account, device, ocr_client, try_time - 1)
