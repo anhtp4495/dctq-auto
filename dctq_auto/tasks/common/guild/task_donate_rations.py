@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 
 from dctq_auto.config.constants import (
+    _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO,
     _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO,
     _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO,
     _TEMPLATE_QUAN_DOAN_XAC_NHAN_DONG_GOP_LUONG_THAO,
@@ -17,8 +18,11 @@ from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
 
 
-def get_template_names() -> list[str]:
-    """Lấy danh sách template cần nhận diện trong màn hình đóng góp Lương thảo."""
+def get_template_names(steps) -> list[str]:
+    """Lấy danh sách template cần nhận diện theo các step đóng góp Lương thảo."""
+    if _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO not in steps:
+        return []
+
     return [
         _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO,
         _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO,
@@ -67,11 +71,16 @@ def run(
     Đây là khung điều phối theo cấu trúc task_perk.py. Phần thao tác click và
     xác nhận sẽ được bổ sung sau khi hoàn thiện flow thực tế.
     """
-    template_names = get_template_names()
-    templates = get_templates(template_names)
-    if not templates:
-        log(f"[{account.username}] Chưa có template hợp lệ cho đóng góp Lương thảo.")
+    selected_steps = {
+        step
+        for step in (_STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO,)
+        if step in steps
+    }
+    if not selected_steps:
         return steps
+
+    template_names = get_template_names(steps)
+    templates = get_templates(template_names)
 
     if not worker._wait_if_paused():
         log(f"[{account.username}] Đóng góp Lương thảo đã dừng theo yêu cầu.")
