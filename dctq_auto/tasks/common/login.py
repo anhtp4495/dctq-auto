@@ -362,4 +362,4 @@ def login_account(
     if verified is not True:
         return verified, error
 
-    return handle_post_login(worker, account, device, ocr_client, try_time - 1)
+    return handle_post_login(worker, account, device, ocr_client)
