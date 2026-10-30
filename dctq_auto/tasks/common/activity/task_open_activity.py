@@ -5,6 +5,11 @@ import time
 import cv2
 import numpy as np
 
+from dctq_auto.config.constants import (
+    _TEMPLATE_MAIN_HOAT_DONG,
+    _TEMPLATE_DANG_CHON_PHUC_LOI,
+    _TEMPLATE_DANG_CHON_HOAT_DONG,
+)
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
@@ -22,9 +27,9 @@ def open_activity(
     log(f"[{account.username}] Bắt đầu mở màn hình [Hoạt động].")
 
     template_names = (
-        "main/hoat_dong",
-        "hoat_dong/dang_chon_phuc_loi",
-        "hoat_dong/dang_chon_hoat_dong",
+        _TEMPLATE_MAIN_HOAT_DONG,
+        _TEMPLATE_DANG_CHON_PHUC_LOI,
+        _TEMPLATE_DANG_CHON_HOAT_DONG,
     )
     templates = get_templates(template_names)
 
@@ -64,14 +69,14 @@ def open_activity(
             match=match,
         )
 
-        if template.id in ("dang_chon_phuc_loi", "dang_chon_hoat_dong"):
+        if template_name in (_TEMPLATE_DANG_CHON_PHUC_LOI, _TEMPLATE_DANG_CHON_HOAT_DONG):
             log(
                 f"[{account.username}] Đã xác nhận màn hình [Hoạt động] "
                 f"({template.id})."
             )
             return True
 
-        if template.id == "hoat_dong":
+        if template_name == _TEMPLATE_MAIN_HOAT_DONG:
             x = round((match.left + match.right) / 2)
             y = round((match.top + match.bottom) / 2)
             log(
