@@ -681,8 +681,9 @@ def run_clone_flow_optimize(self, device) -> None:
             failed_count += 1
             continue
 
+        # Mỗi account cần danh sách step riêng vì các task sẽ loại step đã hoàn tất.
         result = run_clone_flow_optimize_account(
-            self, account, selected_steps, device, index, total
+            self, account, list(selected_steps), device, index, total
         )
         if result is not None:
             try:
@@ -730,6 +731,7 @@ def run_clone_flow_optimize_account(
     self, account, steps: list[str], device, index: int, total: int,
     _ocr_client=None, _tat_ca_thanh_cong: bool = True,
     _so_thu_tu: int = 1, _tong_steps: int | None = None,
+    _common_tasks_done: bool = False,
 ) -> bool | None:
     """Chạy đệ quy từng bước Clone Optimize; bước đã xử lý sẽ bị xóa khỏi steps."""
     step_registry = get_clone_step_registry()
@@ -757,6 +759,64 @@ def run_clone_flow_optimize_account(
     if not self._wait_if_paused():
         self.log_message.emit(f"[{account.username}] Đã dừng khi đang chạy tác vụ.")
         return None
+
+    # Chạy tuần tự các nhóm task dùng chung trước khi xử lý các nhóm khác.
+    if not _common_tasks_done:
+        from dctq_auto.tasks.common.activity.task_activity import run as run_activity
+        from dctq_auto.tasks.common.guild.task_guild import run as run_guild
+
+        common_tasks = (
+            ("Hoạt động", run_activity),
+            ("Quân đoàn", run_guild),
+        )
+        for task_label, task_runner in common_tasks:
+            if not self._wait_if_paused():
+                self.log_message.emit(f"[{account.username}] Đã dừng trước task {task_label}.")
+                return None
+            self.log_message.emit(
+                f"[{account.username}] Clone Optimize — bắt đầu task {task_label}."
+            )
+            progress_label = f"{account.username} - {task_label}"
+            self.task_progress_changed.emit(progress_label, "running", 0, 1)
+            try:
+                steps_before = list(steps)
+                remaining_steps = task_runner(
+                    self, account, steps, device, _ocr_client,
+                    self.log_message.emit,
+                )
+                if remaining_steps is not None:
+                    steps[:] = remaining_steps
+                task_changed = steps != steps_before
+                self.task_progress_changed.emit(
+                    progress_label,
+                    "done" if task_changed or not steps else "failed",
+                    1 if task_changed or not steps else 0,
+                    1,
+                )
+                self.log_message.emit(
+                    f"[{account.username}] Task {task_label} "
+                    f"{'đã xử lý step' if task_changed else 'không có step hoàn tất'}."
+                )
+            except Exception as exc:
+                _tat_ca_thanh_cong = False
+                self.task_progress_changed.emit(progress_label, "failed", 0, 1)
+                self.log_message.emit(
+                    f"[{account.username}] Task {task_label} gặp lỗi: {exc}; tiếp tục task kế tiếp."
+                )
+
+        return run_clone_flow_optimize_account(
+            self,
+            account,
+            steps,
+            device,
+            index,
+            total,
+            _ocr_client=_ocr_client,
+            _tat_ca_thanh_cong=_tat_ca_thanh_cong,
+            _so_thu_tu=_so_thu_tu,
+            _tong_steps=_tong_steps,
+            _common_tasks_done=True,
+        )
 
     # Nhận diện màn hình theo cùng format với handle_post_login() trong login.py.
     from dctq_auto.vision.template_matching import match_template
@@ -866,6 +926,7 @@ def run_clone_flow_optimize_account(
             _tat_ca_thanh_cong=_tat_ca_thanh_cong,
             _so_thu_tu=_so_thu_tu + 1,
             _tong_steps=_tong_steps,
+            _common_tasks_done=True,
         )
 
     self.log_message.emit(
@@ -891,6 +952,7 @@ def run_clone_flow_optimize_account(
             _tat_ca_thanh_cong=_tat_ca_thanh_cong,
             _so_thu_tu=_so_thu_tu,
             _tong_steps=_tong_steps,
+            _common_tasks_done=True,
         )
 
     return False
