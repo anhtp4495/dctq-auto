@@ -55,6 +55,7 @@ def close_guild(
                 threshold=template.threshold,
                 method=template.method,
                 search_rect=template.search_rect,
+                grayscale=template.grayscale,
             )
         except (ValueError, cv2.error) as exc:
             log(f"[{account.username}] Lỗi template matching {template_name}: {exc}")
