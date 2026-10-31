@@ -52,6 +52,7 @@ def _find_template(screen_bgr, templates, template_names, account, log):
                 threshold=template.threshold,
                 method=template.method,
                 search_rect=template.search_rect,
+                grayscale=template.grayscale,
             )
         except (ValueError, cv2.error) as exc:
             log(f"[{account.username}] Lỗi template matching {template_name}: {exc}")
