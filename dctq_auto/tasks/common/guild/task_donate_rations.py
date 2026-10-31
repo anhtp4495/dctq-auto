@@ -11,9 +11,9 @@ from dctq_auto.config.constants import (
     _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO,
 
     _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO,
-    _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO,
     _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_KNB,
     _TEMPLATE_QUAN_DOAN_DUNG_NHANH,
+    _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO,
     _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
 )
 from dctq_auto.vision.template_matching import match_template
@@ -140,10 +140,11 @@ def run(
         return run(worker, account, steps, device, ocr_client, log, screenshot=None)
 
     if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO:
+        tap_x, tap_y = ButtonPositions().get("quan_doan.luong_thao", "dong_gop")
         log(
-            f"[{account.username}] Bắt đầu đóng góp lương thảo ..."
+            f"[{account.username}] Click đóng góp lương thảo tại ({tap_x}, {tap_y}); "
         )
-        _tap_match_center(device, match, account, log)
+        device.shell(f"input tap {tap_x} {tap_y}")
         return run(worker, account, steps, device, ocr_client, log, screenshot=None)
         
     if template_name == _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO:

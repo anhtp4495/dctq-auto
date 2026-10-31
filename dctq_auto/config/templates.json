@@ -370,7 +370,7 @@
           "description": "Màn hình [Quân Đoàn] - Đã [Báo danh].",
           "rect": { "top": 852, "left": 578, "right": 704, "bottom": 952},
           "search_rect": { "top": 786, "left": 1048, "right": 1888, "bottom": 1050},
-          "threshold": 0.990,
+          "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "quan_doan_da_dong_gop_luong_thao": {
