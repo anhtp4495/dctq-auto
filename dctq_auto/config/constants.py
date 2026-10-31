@@ -37,6 +37,7 @@ _TEMPLATE_QUAN_DOAN_DA_BAO_DANH = "quan_doan/quan_doan_da_bao_danh"
 _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO = "quan_doan/quan_doan_chua_dong_gop_luong_thao"
 _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO = "quan_doan/quan_doan_da_dong_gop_luong_thao"
 _TEMPLATE_QUAN_DOAN_DONG_GOP_KNB = "quan_doan/quan_doan_dong_gop_knb"
+_TEMPLATE_QUAN_DOAN_CHUA_DU_DIEU_KIEN_DONG_GOP_KNB = "quan_doan/quan_doan_chua_du_dieu_kien_dong_gop_knb"
 
 # Template dùng bên trong màn hình Cầu vận Quân đoàn.
 _TEMPLATE_QUAN_DOAN_MAN_HINH_CAU_VAN = "quan_doan.cau_van/quan_doan_man_hinh_cau_van"

@@ -365,6 +365,15 @@
           "rect": { "top": 838, "left": 1396, "right": 1532, "bottom": 964},
           "search_rect": { "top": 786, "left": 1048, "right": 1888, "bottom": 1050},
           "threshold": 0.85,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_doan_chua_du_dieu_kien_dong_gop_knb": {
+          "description": "Màn hình [Quân Đoàn] - [KNB].",
+          "rect": { "top": 837, "left": 834, "right": 981, "bottom": 968},
+          "search_rect": { "top": 786, "left": 1048, "right": 1888, "bottom": 1050},
+          "threshold": 0.95,
+          "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "quan_doan_da_bao_danh": {

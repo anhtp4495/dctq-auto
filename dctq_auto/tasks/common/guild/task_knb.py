@@ -8,6 +8,7 @@ import numpy as np
 from dctq_auto.config.constants import (
     _STEP_QUAN_DOAN_DONG_GOP_KNB,
     _TEMPLATE_QUAN_DOAN_DONG_GOP_KNB,
+    _TEMPLATE_QUAN_DOAN_CHUA_DU_DIEU_KIEN_DONG_GOP_KNB,
     _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_KNB,
     _TEMPLATE_QUAN_DOAN_DONG_GOP_10_KNB,
     _TEMPLATE_QUAN_DOAN_DONG_GOP_20_KNB,
@@ -25,6 +26,7 @@ def get_template_names(steps) -> list[str]:
         return []
 
     return [
+        _TEMPLATE_QUAN_DOAN_CHUA_DU_DIEU_KIEN_DONG_GOP_KNB,
         _TEMPLATE_QUAN_DOAN_DONG_GOP_KNB,
         _TEMPLATE_QUAN_DOAN_DONG_GOP_10_KNB,
         _TEMPLATE_QUAN_DOAN_DONG_GOP_20_KNB,
@@ -118,6 +120,12 @@ def _run(
             "Không xác định được trạng thái đóng góp KNB; dừng và bỏ step.",
         )
 
+    if template_name == _TEMPLATE_QUAN_DOAN_CHUA_DU_DIEU_KIEN_DONG_GOP_KNB:
+        return _finish_step(
+            steps, account, log,
+            "Không đủ điều kiện đóng góp KNB; dừng và bỏ step.",
+        )
+
     if template_name == _TEMPLATE_QUAN_DOAN_DONG_GOP_40_KNB:
         return _finish_step(
             steps, account, log,
@@ -125,7 +133,7 @@ def _run(
         )
 
     if template_name == _TEMPLATE_QUAN_DOAN_DONG_GOP_KNB:
-        _tap_match_center(device, match, account, log, "[Quân đoàn] - Click đóng góp KNB")
+        _tap_match_center(device, match, account, log, f"[Quân đoàn] - Click đóng góp KNB - {current_try} lần")
         return _run(
             worker, account, steps, device, ocr_client, log, None,
             templates, skipped_templates, current_try = current_try + 1
