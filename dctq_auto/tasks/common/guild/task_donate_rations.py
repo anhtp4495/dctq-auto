@@ -166,10 +166,13 @@ def run(
         device.shell(f"input tap {tap_x} {tap_y}")
         return run(worker, account, steps, device, ocr_client, log, screenshot=None)
 
-    if template_name in (_TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO, _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO):
+    if template_name == _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO:
         _tap_match_center(device, match, account, log)
         return run(worker, account, steps, device, ocr_client, log, screenshot=None)
 
+    if template_name == _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO:
+        steps.remove(_STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO)
+        return steps
     log(
         f"[{account.username}] Tiếp tục ..."
     )

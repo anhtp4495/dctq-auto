@@ -360,7 +360,7 @@
           "match_method": "TM_CCOEFF_NORMED"
         },
         "quan_doan_chua_dong_gop_luong_thao_100": {
-          "description": "Màn hình [Quân Đoàn] - Chưa đóng góp [Lương Thảo].",
+          "description": "Màn hình [Quân Đoàn] - Chưa đóng góp [Lương Thảo] 100.",
           "rect": { "top": 838, "left": 1162, "right": 1312,"bottom": 964},
           "search_rect": { "top": 786, "left": 1048, "right": 1888, "bottom": 1050},
           "threshold": 1.00,
