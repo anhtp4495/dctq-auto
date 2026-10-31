@@ -405,51 +405,37 @@
       "source_image": "resources/screens/quan_doan/dong_gop_luong_thao.png",
       "templates": {
         "quan_doan_man_hinh_dong_gop_luong_thao": {
-          "description": "Màn hình [Quân Đoàn] - [Đóng góp Lương Thảo].",
+          "description": "[Quân Đoàn] - [Lương Thảo] - [Đóng góp quân đoàn]",
           "rect": { "top": 222, "left": 730, "right": 1194, "bottom": 290},
           "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
-        "quan_doan_dong_man_hinh_dong_gop_luong_thao": {
-          "description": "#Màn hình [Quân Đoàn] - [Đóng góp Lương Thảo] - Đóng màn hình.",
-          "rect": { "top": 222, "left": 730, "right": 1194, "bottom": 290},
-          "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
+        "dung_nhanh": {
+          "description": "[Quân Đoàn] - [Lương Thảo] - [Dùng nhanh]",
+          "rect": { "top": 410, "left": 796, "right": 1094, "bottom": 476},
+          "search_rect": { "top": 12, "left": 472, "right": 1446, "bottom": 644},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "dong_man_hinh_dong_gop_luong_thao": {
+          "description": "[Quân Đoàn] - [Lương Thảo] - [X]",
+          "rect": { "top": 204, "left": 1356, "right": 1444, "bottom": 300},
+          "search_rect": { "top": 162, "left": 1168, "right": 1544, "bottom": 368},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "xac_nhan_dong_gop_luong_thao": {
-          "description": "#Màn hình [Quân Đoàn] - [Đóng góp Lương Thảo] - Xác nhận.",
-          "rect": { "top": 222, "left": 730, "right": 1194, "bottom": 290},
-          "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
-          "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED"
-        },
-        "lay_them_luong_thao_1": {
-          "description": "#Màn hình [Quân Đoàn] - [Đóng góp Lương Thảo] - Làm đầy kho bằng túi lương.",
-          "rect": { "top": 222, "left": 730, "right": 1194, "bottom": 290},
-          "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
-          "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED"
-        },
-        "lay_them_luong_thao_2": {
-          "description": "#Màn hình [Quân Đoàn] - [Đóng góp Lương Thảo] - Làm đầy kho bằng túi lương.",
+          "description": "#Màn hình [Quân Đoàn] - [Đóng góp Lương Thảo] - [Xác nhận]",
           "rect": { "top": 222, "left": 730, "right": 1194, "bottom": 290},
           "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "lay_them_luong_thao_KNB": {
-          "description": "#Màn hình [Quân Đoàn] - [Đóng góp Lương Thảo] - Làm đầy kho bằng KNB.",
-          "rect": { "top": 222, "left": 730, "right": 1194, "bottom": 290},
-          "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
-          "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED"
-        },
-        "xac_nhan_lay_them_luong_thao": {
-          "description": "#Màn hình [Quân Đoàn] - [Đóng góp Lương Thảo] - Xác mở lúa kho lương.",
-          "rect": { "top": 222, "left": 730, "right": 1194, "bottom": 290},
-          "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
+          "description": "[Quân Đoàn] - [Lương Thảo] - [KNB]",
+          "rect": { "top": 764, "left": 1652, "right": 1772, "bottom": 872},
+          "search_rect": { "top": 356, "left": 534, "right": 1406, "bottom": 818},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
