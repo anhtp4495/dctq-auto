@@ -69,7 +69,7 @@ def _tap_match_center(device, match, account, log):
 
 def run(
     worker, account, steps, device, ocr_client, log, screenshot=None,
-) -> bool:
+) -> list[str]:
     """Nhận diện trạng thái báo danh và thực hiện báo danh nếu chưa hoàn thành."""
     
     selected_steps = {
