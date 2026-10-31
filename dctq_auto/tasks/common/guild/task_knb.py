@@ -7,6 +7,7 @@ import numpy as np
 
 from dctq_auto.config.constants import (
     _STEP_QUAN_DOAN_DONG_GOP_KNB,
+    _TEMPLATE_QUAN_DOAN_DONG_GOP_KNB,
     _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_KNB,
     _TEMPLATE_QUAN_DOAN_DONG_GOP_10_KNB,
     _TEMPLATE_QUAN_DOAN_DONG_GOP_20_KNB,
@@ -15,6 +16,7 @@ from dctq_auto.config.constants import (
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
+from dctq_auto.config.button_positions import ButtonPositions
 
 
 def get_template_names(steps) -> list[str]:
@@ -23,10 +25,11 @@ def get_template_names(steps) -> list[str]:
         return []
 
     return [
-        _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_KNB,
+        _TEMPLATE_QUAN_DOAN_DONG_GOP_KNB,
         _TEMPLATE_QUAN_DOAN_DONG_GOP_10_KNB,
         _TEMPLATE_QUAN_DOAN_DONG_GOP_20_KNB,
         _TEMPLATE_QUAN_DOAN_DONG_GOP_40_KNB,
+        _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_KNB,
     ]
 
 
@@ -76,9 +79,12 @@ def _finish_step(steps, account, log, message):
     return steps
 
 
+# Số lần tối đa xác định game đã tải thành công
+_MAX_TRY_DETECT_MAIN_SCREEN = 10
+
 def _run(
     worker, account, steps, device, ocr_client, log, screenshot,
-    templates, skipped_templates,
+    templates, current_try: int = 1,
 ) -> list[str]:
     if _STEP_QUAN_DOAN_DONG_GOP_KNB not in steps:
         return steps
@@ -97,10 +103,7 @@ def _run(
             f"Không chụp được màn hình đóng góp KNB ({exc}); kết thúc step.",
         )
 
-    template_names = [
-        name for name in get_template_names(steps)
-        if name not in skipped_templates
-    ]
+    template_names = get_template_names(steps)
     template_name, match = _find_template(
         screen_bgr, templates, template_names, account, log
     )
@@ -117,23 +120,32 @@ def _run(
             "Đã nhận diện mức đóng góp 40 KNB; dừng và bỏ step.",
         )
 
+    if template_name in (_TEMPLATE_QUAN_DOAN_DONG_GOP_KNB, _TEMPLATE_QUAN_DOAN_DONG_GOP_10_KNB, _TEMPLATE_QUAN_DOAN_DONG_GOP_20_KNB ):
+        label = "[Quân đoàn] - Đóng góp KNB"
+        _tap_match_center(device, match, account, log, label)
+        return _run(
+            worker, account, steps, device, ocr_client, log, None,
+            templates
+        )
+        
     if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_KNB:
-        label = "màn hình đóng góp KNB"
-    elif template_name == _TEMPLATE_QUAN_DOAN_DONG_GOP_10_KNB:
-        label = "mức đóng góp 10 KNB"
-    elif template_name == _TEMPLATE_QUAN_DOAN_DONG_GOP_20_KNB:
-        label = "mức đóng góp 20 KNB"
-    else:
-        return _finish_step(
-            steps, account, log,
-            "Gặp trạng thái đóng góp KNB không hỗ trợ; dừng và bỏ step.",
+        tap_x, tap_y = ButtonPositions().get("quan_doan.knb", "dong_man_hinh")
+        log(
+            f"[{account.username}] Đóng màn hình góp KNB ({tap_x}, {tap_y}); "
+        )
+        device.shell(f"input tap {tap_x} {tap_y}")
+
+    if current_try < _MAX_TRY_DETECT_MAIN_SCREEN:
+        time.sleep(0.7)
+        log(f"[{account.username}] [Quân đoàn] Đóng góp KNB chưa xong - Thử lại lần {current_try}.")
+        return _run(
+            worker, account, steps, device, ocr_client, log, None,
+            templates, current_try = current_try + 1
         )
 
-    _tap_match_center(device, match, account, log, label)
-    skipped_templates.add(template_name)
-    return _run(
-        worker, account, steps, device, ocr_client, log, None,
-        templates, skipped_templates,
+    return _finish_step(
+        steps, account, log,
+        label,
     )
 
 
