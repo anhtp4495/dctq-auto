@@ -398,6 +398,20 @@
           "search_rect": { "top": 738, "left": 172, "right": 962, "bottom": 1060},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_doan_het_luot_cau_van1": {
+          "description": "Màn hình [Quân Đoàn] - [Cầu vận] - Hết lượt.",
+          "rect": { "top": 584, "left": 181, "right": 333, "bottom": 656},
+          "search_rect": { "top": 851, "left": 141, "right": 384, "bottom": 1016},
+          "threshold": 0.95,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_doan_het_luot_cau_van2": {
+          "description": "Màn hình [Quân Đoàn] - [Cầu vận] - Hết lượt.",
+          "rect": { "top": 520, "left": 491, "right": 707, "bottom": 620},
+          "search_rect": { "top": 842, "left": 422, "right": 817, "bottom": 1032},
+          "threshold": 0.95,
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
