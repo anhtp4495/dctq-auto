@@ -33,14 +33,10 @@ _TEMPLATE_QUAN_DOAN_MAN_HINH_CAU_VAN = "quan_doan.cau_van/quan_doan_man_hinh_cau
 _TEMPLATE_QUAN_DOAN_CO_THE_CAU_VAN = "quan_doan.cau_van/quan_doan_co_the_cau_van"
 
 # Template dùng bên trong màn hình đóng góp Lương thảo Quân đoàn.
+_TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO      = "quan_doan.luong_thao/quan_doan_man_hinh_dong_gop_luong_thao"
 _TEMPLATE_QUAN_DOAN_DUNG_NHANH = "quan_doan.luong_thao/dung_nhanh"
-_TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO = "quan_doan.luong_thao/quan_doan_man_hinh_dong_gop_luong_thao"
-_TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO = "quan_doan.luong_thao/quan_doan_dong_man_hinh_dong_gop_luong_thao"
-_TEMPLATE_QUAN_DOAN_XAC_NHAN_DONG_GOP_LUONG_THAO = "quan_doan.luong_thao/xac_nhan_dong_gop_luong_thao"
-_TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_1 = "quan_doan.luong_thao/lay_them_luong_thao_1"
-_TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_2 = "quan_doan.luong_thao/lay_them_luong_thao_2"
+_TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO = "quan_doan.luong_thao/dong_man_hinh_dong_gop_luong_thao"
 _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_KNB = "quan_doan.luong_thao/lay_them_luong_thao_KNB"
-_TEMPLATE_QUAN_DOAN_XAC_NHAN_LAY_THEM_LUONG_THAO = "quan_doan.luong_thao/xac_nhan_lay_them_luong_thao"
 
 # Template dùng bên trong màn hình đóng góp KNB Quân đoàn.
 _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_KNB = "quan_doan.knb/quan_doan_man_hinh_dong_gop_knb"

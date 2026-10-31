@@ -9,13 +9,11 @@ from dctq_auto.config.constants import (
     _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO,
     _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO,
     _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO,
+
     _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO,
     _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO,
-    _TEMPLATE_QUAN_DOAN_XAC_NHAN_DONG_GOP_LUONG_THAO,
-    _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_1,
-    _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_2,
     _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_KNB,
-    _TEMPLATE_QUAN_DOAN_XAC_NHAN_LAY_THEM_LUONG_THAO,
+    _TEMPLATE_QUAN_DOAN_DUNG_NHANH,
 )
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
@@ -31,14 +29,10 @@ def get_template_names(steps) -> list[str]:
         _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO,
         _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO,
         #
-        _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO,
-        #
         _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO,
-        _TEMPLATE_QUAN_DOAN_XAC_NHAN_DONG_GOP_LUONG_THAO,
-        _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_1,
-        _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_2,
+        _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO,
         _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_KNB,
-        _TEMPLATE_QUAN_DOAN_XAC_NHAN_LAY_THEM_LUONG_THAO,
+        _TEMPLATE_QUAN_DOAN_DUNG_NHANH,
     ]
 
 
@@ -117,9 +111,23 @@ def run(
         )
         return steps
 
+        
+    if template_name == _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_KNB:
+        tap_x, tap_y = ButtonPositions().get("quan_doan.luong_thao", "dong_man_hinh")
+        log(
+            f"[{account.username}] Không đủ tài nguyên - [HỦY] đóng góp tại ({tap_x}, {tap_y}); "
+        )
+        device.shell(f"input tap {tap_x} {tap_y}")
+        time.sleep(1.5)
+        device.shell(f"input tap {tap_x} {tap_y}")
+        if _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO in steps:
+            steps.remove(_STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO)
+        return steps
+        
     if template_name == _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO:
         if _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO in steps:
             steps.remove(_STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO)
+        
         log(f"[{account.username}] Đã xác nhận đóng góp Lương thảo thành công.")
         return steps
 
@@ -127,8 +135,29 @@ def run(
         _tap_match_center(device, match, account, log)
         return run(worker, account, steps, device, ocr_client, log, screenshot=None)
 
+    if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO:
+        log(
+            f"[{account.username}] Bắt đầu đóng góp lương thảo ..."
+        )
+        _tap_match_center(device, match, account, log)
+        return run(worker, account, steps, device, ocr_client, log, screenshot=None)
+        
+    if template_name == _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO:
+        log(
+            f"[{account.username}] Đang ở màn hình đóng góp lương thảo ..."
+        )
+        _tap_match_center(device, match, account, log)
+        return run(worker, account, steps, device, ocr_client, log, screenshot=None)
+
+    if template_name == _TEMPLATE_QUAN_DOAN_DUNG_NHANH:
+        tap_x, tap_y = ButtonPositions().get("quan_doan.luong_thao", "xac_nhan")
+        log(
+            f"[{account.username}] Dùng nhanh túi lúa tại ({tap_x}, {tap_y}); "
+        )
+        device.shell(f"input tap {tap_x} {tap_y}")
+        return run(worker, account, steps, device, ocr_client, log, screenshot=None)
+
     log(
-        f"[{account.username}] Đã nhận diện trạng thái {template_name}; "
-        "các thao tác đóng góp tiếp theo đang chờ hoàn thiện."
+        f"[{account.username}] Tiếp tục ..."
     )
-    return steps
+    return run(worker, account, steps, device, ocr_client, log, screenshot=None)

@@ -20,7 +20,7 @@
         },
         "quan_doan_mo_chat": {
           "description": "Màn hình chính - Mở trò chuyện.",
-          "rect": { "top": 494, "left": 1866, "right": 1916, "bottom": 589},
+          "rect": { "top": 499, "left": 1877, "right": 1919, "bottom": 587},
           "search_rect": { "top": 413, "left": 1748, "right": 1919, "bottom": 700},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
@@ -425,13 +425,6 @@
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
-        "xac_nhan_dong_gop_luong_thao": {
-          "description": "#Màn hình [Quân Đoàn] - [Đóng góp Lương Thảo] - [Xác nhận]",
-          "rect": { "top": 222, "left": 730, "right": 1194, "bottom": 290},
-          "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
-          "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED"
-        },
         "lay_them_luong_thao_KNB": {
           "description": "[Quân Đoàn] - [Lương Thảo] - [KNB]",
           "rect": { "top": 764, "left": 1652, "right": 1772, "bottom": 872},
@@ -479,7 +472,7 @@
       "templates": {
         "quan_doan_tat_chat": {
           "description": "Màn hình chính - Tắt trò chuyện.",
-          "rect": { "top": 491, "left": 861, "right": 912, "bottom": 610},
+          "rect": { "top": 501, "left": 867, "right": 907, "bottom": 576},
           "search_rect": { "top": 417, "left": 771, "right": 1919, "bottom": 1079},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
