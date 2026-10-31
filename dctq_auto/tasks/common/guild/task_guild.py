@@ -77,130 +77,32 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None):
 
 
 # Số lần tối đa xác định game đã tải thành công
-_MAX_TRY_DETECT_MAIN_SCREEN = 20
+_MAX_TRY_DETECT_MAIN_SCREEN = 3
 
 def steps_run(worker, account, steps, device, ocr_client, log, screenshot=None, current_try: int = 1) -> list[str]:
     """Nhận diện trạng thái Quân đoàn và chạy các step có thể xác định."""
+
     selected_steps = {step for step in _GUILD_STEP_IDS if step in steps}
     if not selected_steps:
         return steps
 
-    template_names = get_template_names(selected_steps)
-    templates = get_templates(template_names)
-    if not templates:
-        log(f"[{account.username}] Chưa có template hợp lệ cho các bước Quân đoàn; giữ nguyên step.")
-        return steps
-
-    if not worker._wait_if_paused():
-        log(f"[{account.username}] Quân đoàn đã dừng theo yêu cầu.")
-        return steps
-
-    try:
-        if screenshot is None:
-            screenshot = device.screenshot()
-        screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
-    except Exception as exc:
-        log(f"[{account.username}] Không chụp được màn hình để nhận diện Quân đoàn: {exc}")
-        return steps
-
-    template_name, template, match = _find_template(
-        screen_bgr, templates, template_names, account, log
-    )
-    if template_name is None:
-        log(f"[{account.username}] Không nhận diện được trạng thái Quân đoàn; giữ lại step chưa chạy.")
-        return steps
-
-    if template_name == _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH:
-        if _STEP_QUAN_DOAN_BAO_DANH not in selected_steps:
-            return steps
+    if _STEP_QUAN_DOAN_BAO_DANH in selected_steps:
         try:
-            success = task_daily_check_in.run(worker, device, ocr_client)
+            steps = task_daily_check_in.run(
+                worker, account, steps, device, ocr_client, log
+            )
         except Exception as exc:
             log(f"[{account.username}] Báo danh Quân đoàn thất bại: {exc}")
-            success = False
-        if not success:
-            log(f"[{account.username}] Giữ lại step báo danh Quân đoàn để thử lại.")
             return steps
-        steps.remove(_STEP_QUAN_DOAN_BAO_DANH)
-        return steps_run(worker, account, steps, device, ocr_client, log)
 
-    if template_name == _TEMPLATE_QUAN_DOAN_DA_BAO_DANH:
-        # Template xác nhận đã báo danh; hoàn tất step mà không thao tác lần nữa.
-        if _STEP_QUAN_DOAN_BAO_DANH in steps:
-            steps.remove(_STEP_QUAN_DOAN_BAO_DANH)
-
-        log(f"[{account.username}] Phát hiện đã báo danh.")
-        return steps_run(worker, account, steps, device, ocr_client, log)
-
-    if template_name == _TEMPLATE_QUAN_DOAN_CHUA_NHAN_TUI_PHUC:
-        if _STEP_QUAN_DOAN_TUI_PHUC not in selected_steps:
-            return steps
-        try:
-            success = task_lucky_bag.run(worker, device, ocr_client)
-        except Exception as exc:
-            log(f"[{account.username}] Nhận Túi phúc thất bại: {exc}")
-            success = False
-        if not success:
-            log(f"[{account.username}] Giữ lại step Túi phúc để thử lại.")
-            return steps
-        steps.remove(_STEP_QUAN_DOAN_TUI_PHUC)
-        return steps_run(worker, account, steps, device, ocr_client, log)
-
-    if template_name == _TEMPLATE_QUAN_DOAN_DA_NHAN_TUI_PHUC:
-        if _STEP_QUAN_DOAN_TUI_PHUC in steps:
-            steps.remove(_STEP_QUAN_DOAN_TUI_PHUC)
-
-        log(f"[{account.username}] Phát hiện đã nhận túi phúc.")
-        return steps_run(worker, account, steps, device, ocr_client, log)
-
-    if template_name == _TEMPLATE_QUAN_DOAN_CAU_VAN:
-        if _STEP_QUAN_DOAN_CAU_VAN not in selected_steps:
-            return steps
-        try:
-            success = task_blessing.run(worker, device, ocr_client)
-        except Exception as exc:
-            log(f"[{account.username}] Cầu vận Quân đoàn thất bại: {exc}")
-            success = False
-        if not success:
-            log(f"[{account.username}] Giữ lại step Cầu vận để thử lại.")
-            return steps
-        steps.remove(_STEP_QUAN_DOAN_CAU_VAN)
-        return steps_run(worker, account, steps, device, ocr_client, log)
-
-    if template_name == _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO:
-        if _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO not in selected_steps:
-            return steps
+    if _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO in selected_steps:
         try:
             steps = task_donate_rations.run(
                 worker, account, steps, device, ocr_client, log
             )
         except Exception as exc:
             log(f"[{account.username}] Đóng góp lương thảo thất bại: {exc}")
-            log(f"[{account.username}] Giữ lại step đóng góp lương thảo để thử lại.")
             return steps
-        return steps_run(worker, account, steps, device, ocr_client, log)
-
-    if template_name == _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO:
-        if _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO in steps:
-            steps.remove(_STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO)
-        
-        log(f"[{account.username}] Phát hiện đã đóng góp lương thảo.")
-        return steps_run(worker, account, steps, device, ocr_client, log)
-
-    if template_name == _TEMPLATE_QUAN_DOAN_DONG_GOP_KNB:
-        if _STEP_QUAN_DOAN_DONG_GOP_KNB not in selected_steps:
-            return steps
-        # TODO: Thêm xác nhận trạng thái đã đóng góp KNB; hiện chỉ có template "chưa đóng góp".
-        try:
-            success = task_knb.run(worker, device, ocr_client)
-        except Exception as exc:
-            log(f"[{account.username}] Đóng góp KNB thất bại: {exc}")
-            success = False
-        if not success:
-            log(f"[{account.username}] Giữ lại step đóng góp KNB để thử lại.")
-            return steps
-        steps.remove(_STEP_QUAN_DOAN_DONG_GOP_KNB)
-        return steps_run(worker, account, steps, device, ocr_client, log)
 
     if current_try < _MAX_TRY_DETECT_MAIN_SCREEN:
         worker.log_message.emit(f"[{account.username}] [Quân đoàn] Chưa chạy xong - Thử lại lần {current_try}.")
