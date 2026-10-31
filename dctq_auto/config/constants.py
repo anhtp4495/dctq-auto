@@ -1,5 +1,15 @@
 """Cấu hình tập trung các định danh step và template dùng chung trong ứng dụng."""
 
+# Template dùng trong quy trình đăng nhập và xác minh tài khoản.
+_TEMPLATE_ACCOUNT_DICH_QUAN_TAP_KICH = "accounts10/dich_quan_tap_kich"
+_TEMPLATE_ACCOUNT_WAITING = "accounts1/waiting"
+_TEMPLATE_ACCOUNT_CAP_NHAT_THONG_TIN = "accounts9/cap_nhat_thong_tin"
+_TEMPLATE_ACCOUNT_CLOSE_CAP_NHAT_THONG_TIN = "accounts9/close_cap_nhat_thong_tin"
+_TEMPLATE_ACCOUNT_MAN_HINH_CHINH = "accounts2/man_hinh_chinh"
+_TEMPLATE_ACCOUNT_THONG_TIN_DANG_NHAP_KHONG_DUNG = "accounts4/thong_tin_dang_nhap_khong_dung"
+_TEMPLATE_ACCOUNT_TRANG_CA_NHAN = "accounts5/trang_ca_nhan"
+_TEMPLATE_ACCOUNT_DANG_NHAP = "accounts3/dang_nhap"
+
 # Step được chọn từ cấu hình tác vụ.
 _STEP_QUOC_VAN = "hoat_dong_phuc_loi_le_bao_quoc_van"
 _STEP_DIEM_DANH = "hoat_dong_phuc_loi_diem_danh"

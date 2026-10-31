@@ -5,6 +5,16 @@ import time
 import cv2
 import numpy as np
 
+from dctq_auto.config.constants import (
+    _TEMPLATE_ACCOUNT_CAP_NHAT_THONG_TIN,
+    _TEMPLATE_ACCOUNT_CLOSE_CAP_NHAT_THONG_TIN,
+    _TEMPLATE_ACCOUNT_DANG_NHAP,
+    _TEMPLATE_ACCOUNT_DICH_QUAN_TAP_KICH,
+    _TEMPLATE_ACCOUNT_MAN_HINH_CHINH,
+    _TEMPLATE_ACCOUNT_THONG_TIN_DANG_NHAP_KHONG_DUNG,
+    _TEMPLATE_ACCOUNT_TRANG_CA_NHAN,
+    _TEMPLATE_ACCOUNT_WAITING,
+)
 from dctq_auto.tasks.base import TaskSpec
 from dctq_auto.tasks.common.logout import logout_account
 from dctq_auto.vision.template_matching import match_template
@@ -81,11 +91,11 @@ def handle_post_login(
         return False, "Không xác minh được trạng thái sau đăng nhập"
 
     template_names = (
-        "accounts10/dich_quan_tap_kich",
-        "accounts1/waiting",
-        "accounts9/cap_nhat_thong_tin",
-        "accounts9/close_cap_nhat_thong_tin",
-        "accounts2/man_hinh_chinh",
+        _TEMPLATE_ACCOUNT_DICH_QUAN_TAP_KICH,
+        _TEMPLATE_ACCOUNT_WAITING,
+        _TEMPLATE_ACCOUNT_CAP_NHAT_THONG_TIN,
+        _TEMPLATE_ACCOUNT_CLOSE_CAP_NHAT_THONG_TIN,
+        _TEMPLATE_ACCOUNT_MAN_HINH_CHINH,
     )
     templates = get_templates(template_names)
 
@@ -185,9 +195,9 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
 
     # get_templates tự đọc cấu hình, cắt ảnh và cache template đã tải.
     template_names = (
-        "accounts4/thong_tin_dang_nhap_khong_dung",
-        "accounts1/waiting",
-        "accounts5/trang_ca_nhan",
+        _TEMPLATE_ACCOUNT_THONG_TIN_DANG_NHAP_KHONG_DUNG,
+        _TEMPLATE_ACCOUNT_WAITING,
+        _TEMPLATE_ACCOUNT_TRANG_CA_NHAN,
     )
     templates = get_templates(template_names)
 
@@ -242,13 +252,13 @@ def prepare_login(
         return False, "Đã dừng theo yêu cầu"
 
     template_names = (
-        "accounts10/dich_quan_tap_kich",
-        "accounts3/dang_nhap",
-        "accounts1/waiting",
-        "accounts5/trang_ca_nhan",
-        "accounts9/cap_nhat_thong_tin",
-        "accounts9/close_cap_nhat_thong_tin",
-        "accounts2/man_hinh_chinh",
+        _TEMPLATE_ACCOUNT_DICH_QUAN_TAP_KICH,
+        _TEMPLATE_ACCOUNT_DANG_NHAP,
+        _TEMPLATE_ACCOUNT_WAITING,
+        _TEMPLATE_ACCOUNT_TRANG_CA_NHAN,
+        _TEMPLATE_ACCOUNT_CAP_NHAT_THONG_TIN,
+        _TEMPLATE_ACCOUNT_CLOSE_CAP_NHAT_THONG_TIN,
+        _TEMPLATE_ACCOUNT_MAN_HINH_CHINH,
     )
     templates = get_templates(template_names)
 
