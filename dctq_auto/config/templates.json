@@ -448,21 +448,21 @@
           "description": "Màn hình [Quân Đoàn] - [Đóng góp KNB] - 10.",
           "rect": { "top": 742, "left": 894, "right": 1070, "bottom": 822},
           "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
-          "threshold": 0.85,
+          "threshold": 0.95,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "quan_doan_dong_gop_20_knb": {
           "description": "Màn hình [Quân Đoàn] - [Đóng góp KNB] - 20.",
           "rect": { "top": 600, "left": 888, "right": 1070, "bottom": 674},
           "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
-          "threshold": 0.85,
+          "threshold": 0.95,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "quan_doan_dong_gop_40_knb": {
           "description": "Màn hình [Quân Đoàn] - [Đóng góp KNB] - 40.",
           "rect": { "top": 452, "left": 876, "right": 1070, "bottom": 520},
           "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
-          "threshold": 0.85,
+          "threshold": 0.95,
           "match_method": "TM_CCOEFF_NORMED"
         }
       }
