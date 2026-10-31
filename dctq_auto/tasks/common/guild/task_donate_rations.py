@@ -27,13 +27,14 @@ def get_template_names(steps) -> list[str]:
         return []
 
     return [
-        _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO,
         _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO,
+        _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO,
         #
         _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO,
         _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO,
         _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_KNB,
         _TEMPLATE_QUAN_DOAN_DUNG_NHANH,
+        _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH, # fallback
     ]
 
 
@@ -94,6 +95,7 @@ def run(
         log(f"[{account.username}] Đóng góp Lương thảo đã dừng theo yêu cầu.")
         return steps
 
+    log(f"[{account.username}] Bắt đầu [Đóng góp Lương thảo] ...")
     try:
         if screenshot is None:
             screenshot = device.screenshot()
@@ -124,7 +126,7 @@ def run(
         if _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO in steps:
             steps.remove(_STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO)
         return steps
-        
+
     if template_name == _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO:
         if _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO in steps:
             steps.remove(_STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO)
