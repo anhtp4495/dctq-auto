@@ -9,7 +9,6 @@ from dctq_auto.config.constants import (
     _STEP_QUAN_DOAN_DONG_GOP_KNB,
     _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO,
     _STEP_QUAN_DOAN_TUI_PHUC,
-    _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
     _TEMPLATE_QUAN_DOAN_CAU_VAN,
     _TEMPLATE_QUAN_DOAN_CHUA_NHAN_TUI_PHUC,
     _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH,
@@ -18,6 +17,7 @@ from dctq_auto.config.constants import (
     _TEMPLATE_QUAN_DOAN_DA_NHAN_TUI_PHUC,
     _TEMPLATE_QUAN_DOAN_DA_BAO_DANH,
     _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO,
+    _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
 )
 from dctq_auto.tasks.common.guild import (
     task_blessing,

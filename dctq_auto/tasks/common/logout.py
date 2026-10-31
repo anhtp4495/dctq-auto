@@ -170,8 +170,11 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
     )
     return False
 
+# Số lần tối đa xác định game đã tải thành công
+_MAX_TRY_DETECT_MAIN_SCREEN = 20
+
 def handle_post_logout(
-    worker, account, device, ocr_client
+    worker, account, device, ocr_client, current_try: int = 1
 ) -> tuple[bool | None, str | None]:
     """Xác minh trạng thái sau khi đăng xuất bằng template matching."""
     if not worker._config.get("clone_logout", True):
@@ -243,6 +246,10 @@ def handle_post_logout(
             time.sleep(3)
             return handle_post_logout(worker, account, device, ocr_client)
 
+    if current_try < _MAX_TRY_DETECT_MAIN_SCREEN:
+        worker.log_message.emit(f"[{account.username}] Chưa xác định đã đã đăng xuất thành công - Thử lại lần {current_try}.")
+        return handle_post_logout(worker, account, device, ocr_client, current_try + 1)
+
     worker.log_message.emit(
         f"[{account.username}] Đăng xuất thất bại."
     )
@@ -261,7 +268,7 @@ def logout_account(
     if logout_result is not True:
         if logout_result is None:
             return None, None
-        return False, "Không thể thực hiện thao tác đăng xuất"
+        #return False, "Không thể thực hiện thao tác đăng xuất"
 
     return handle_post_logout(worker, account, device, ocr_client)
 

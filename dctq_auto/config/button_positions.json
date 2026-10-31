@@ -7,40 +7,36 @@
   },
   "hoat_dong": {
     "dong_man_hinh": {
-      "x": 138,
-      "y": 1860
-    },
-    "hoat_dong_phuc_loi": {
-      "x": -1,
-      "y": -1
+      "x": 1860,
+      "y": 138
     },
     "hoat_dong_phuc_loi_item1": {
-      "x": 200,
-      "y": 350
+      "x": 350,
+      "y": 200
     },
     "hoat_dong_phuc_loi_item2": {
-      "x": 750,
-      "y": 350
+      "x": 350,
+      "y": 750
     }
   },
   "quan_doan": {
     "dong_man_hinh": {
-      "x": 64,
-      "y": 1864
+      "x": 1864,
+      "y": 64
     },
     "thoat_man_hinh_cau_van": {
-      "x": 100,
-      "y": 1774
+      "x": 1774,
+      "y": 100
     }
   },
   "quan_doan.luong_thao": {
     "dong_man_hinh": {
-      "x": 252,
-      "y": 1398
+      "x": 1398,
+      "y": 252
     },
     "xac_nhan": {
-      "x": 870,
-      "y": 1174
+      "x": 1174,
+      "y": 870
     }
   }
 }

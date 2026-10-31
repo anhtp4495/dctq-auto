@@ -8,6 +8,7 @@ import numpy as np
 from dctq_auto.config.constants import (
     _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH,
     _TEMPLATE_QUAN_DOAN_DA_BAO_DANH,
+    _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
 )
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
@@ -57,8 +58,9 @@ def run(
 ) -> bool:
     """Nhận diện trạng thái báo danh và thực hiện báo danh nếu chưa hoàn thành."""
     template_names = (
-        _TEMPLATE_QUAN_DOAN_DA_BAO_DANH,
         _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH,
+        _TEMPLATE_QUAN_DOAN_DA_BAO_DANH,
+        _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
     )
     templates = get_templates(template_names)
 
@@ -92,4 +94,11 @@ def run(
         _tap_match_center(device, match, account, log)
         return run(worker, account, device, ocr_client, log, screenshot=None)
 
+    if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH:
+        _tap_match_center(device, match, account, log)
+        return run(worker, account, device, ocr_client, log, screenshot=None)
+
+    log(
+        f"[{account.username}] Không nhận diện được trạng thái báo danh - Kết thúc [Báo danh Quân đoàn] "
+    )
     return False
