@@ -386,14 +386,14 @@
       "source_image": "resources/screens/quan_doan/cau_van.png",
       "templates": {
         "quan_doan_man_hinh_cau_van": {
-          "description": "Màn hình [Quân Đoàn] - [Cầu vận].",
+          "description": "Màn hình [Quân Đoàn] - [Cầu vận] - Còn lượt.",
           "rect": { "top": 58, "left": 750, "right": 1166, "bottom": 120},
           "search_rect": { "top": 2, "left": 110, "right": 1918, "bottom": 284},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "quan_doan_co_the_cau_van": {
-          "description": "Màn hình [Quân Đoàn] - [Cầu vận].",
+          "description": "Màn hình [Quân Đoàn] - [Cầu vận] - Hết lượt.",
           "rect": { "top": 870, "left": 498, "right": 700, "bottom": 936},
           "search_rect": { "top": 738, "left": 172, "right": 962, "bottom": 1060},
           "threshold": 0.85,
