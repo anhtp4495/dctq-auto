@@ -7,12 +7,17 @@ import numpy as np
 
 from dctq_auto.config.constants import (
     _STEP_QUAN_DOAN_TUI_PHUC,
-    _TEMPLATE_QUAN_DOAN_CHUA_NHAN_TUI_PHUC,
+    #
     _TEMPLATE_QUAN_DOAN_DA_NHAN_TUI_PHUC,
+    _TEMPLATE_QUAN_DOAN_CHUA_NHAN_TUI_PHUC,
+    _TEMPLATE_QUAN_DOAN_TUI_PHUC_CHI_TIET,
+    _TEMPLATE_QUAN_DOAN_MAN_HINH_NHAN_TUI_PHUC,
+    _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
 )
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
+from dctq_auto.config.button_positions import ButtonPositions
 
 
 def _find_template(screen_bgr, templates, template_names, account, log):
@@ -54,7 +59,8 @@ def _tap_match_center(device, match, account, log):
 
 
 def run(
-    worker, account, steps, device, ocr_client, log, screenshot=None,
+    worker, account, steps, device, ocr_client, log,
+    screenshot=None, positions=None,
 ) -> list[str]:
     """Nhận diện trạng thái Túi phúc và nhận nếu chưa nhận."""
     if _STEP_QUAN_DOAN_TUI_PHUC not in steps:
@@ -63,6 +69,9 @@ def run(
     template_names = (
         _TEMPLATE_QUAN_DOAN_DA_NHAN_TUI_PHUC,
         _TEMPLATE_QUAN_DOAN_CHUA_NHAN_TUI_PHUC,
+        _TEMPLATE_QUAN_DOAN_TUI_PHUC_CHI_TIET,
+        _TEMPLATE_QUAN_DOAN_MAN_HINH_NHAN_TUI_PHUC,
+        _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH, # fallback
     )
     templates = get_templates(template_names)
 
@@ -70,6 +79,7 @@ def run(
         log(f"[{account.username}] Nhận Túi phúc Quân đoàn đã dừng theo yêu cầu.")
         return steps
 
+    log(f"[{account.username}] Bắt đầu Nhận túi phúc ...")
     try:
         if screenshot is None:
             screenshot = device.screenshot()
@@ -88,13 +98,45 @@ def run(
         )
         return steps
 
-    if template_name == _TEMPLATE_QUAN_DOAN_DA_NHAN_TUI_PHUC:
-        log(f"[{account.username}] Đã xác nhận nhận Túi phúc Quân đoàn thành công.")
-        steps.remove(_STEP_QUAN_DOAN_TUI_PHUC)
-        return steps
+    if template_name in (_TEMPLATE_QUAN_DOAN_DA_NHAN_TUI_PHUC, _TEMPLATE_QUAN_DOAN_CHUA_NHAN_TUI_PHUC):
+        
+        if positions is None:
+            positions = [
+                (ButtonPositions().get("quan_doan.tui_phuc", "tuong")),
+                (ButtonPositions().get("quan_doan.tui_phuc", "truong_thanh")),
+                (ButtonPositions().get("quan_doan.tui_phuc", "knb")),
+            ]
 
-    if template_name == _TEMPLATE_QUAN_DOAN_CHUA_NHAN_TUI_PHUC:
+        if len(positions) == 0:
+            steps.remove(_STEP_QUAN_DOAN_TUI_PHUC)
+            return steps
+
+        log(f"[{account.username}] Click Nhận túi phúc Quân đoàn.")
         _tap_match_center(device, match, account, log)
-        return run(worker, account, steps, device, ocr_client, log, screenshot=None)
+        return run(worker, account, steps, device, ocr_client, log, screenshot=None, positions=positions)
+        
+    if template_name == _TEMPLATE_QUAN_DOAN_TUI_PHUC_CHI_TIET:
+        tap_x, tap_y = ButtonPositions().get("quan_doan.tui_phuc", "dong_man_hinh")
+        log(
+            f"[{account.username}] Dùng nhanh túi lúa tại ({tap_x}, {tap_y}); "
+        )
+        device.shell(f"input tap {tap_x} {tap_y}")
+        return run(worker, account, steps, device, ocr_client, log, screenshot=None, positions=positions)
 
+    if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_NHAN_TUI_PHUC:
+
+        if positions is not None and len(positions) > 0:
+            tap_x, tap_y = positions.pop(0)
+            log(
+                f"[{account.username}] Nhận túi phúc tại ({tap_x}, {tap_y}); "
+            )
+            device.shell(f"input tap {tap_x} {tap_y}")
+            return run(worker, account, steps, device, ocr_client, log, screenshot=None, positions=positions)
+    
+    if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH:
+        steps.remove(_STEP_QUAN_DOAN_TUI_PHUC)
+        
+    log(
+        f"[{account.username}] Nhận túi phúc thất bại."
+    )
     return steps

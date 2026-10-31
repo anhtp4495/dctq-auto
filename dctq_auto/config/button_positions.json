@@ -31,6 +31,10 @@
     "bao_danh": {
       "x": 1711,
       "y": 889
+    },
+    "nhan_tui_phuc": {
+      "x": 1711,
+      "y": 889
     }
   },
   "quan_doan.luong_thao": {
@@ -45,6 +49,24 @@
     "xac_nhan": {
       "x": 1174,
       "y": 870
+    }
+  },
+  "quan_doan.tui_phuc": {
+    "dong_man_hinh": {
+      "x": 1750,
+      "y": 50
+    },
+    "tuong": {
+      "x": 450,
+      "y": 400
+    },
+    "truong_thanh": {
+      "x": 950,
+      "y": 400
+    },
+    "knb": {
+      "x": 1450,
+      "y": 400
     }
   }
 }

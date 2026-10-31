@@ -486,6 +486,25 @@
         }
       }
     },
+    "quan_doan.tui_phuc": {
+      "source_image": "resources/screens/quan_doan/tui_phuc.png",
+      "templates": {
+        "man_hinh_nhan_tui_phuc": {
+          "description": "[Quân Đoàn] - [Túi Phúc] - [Chi tiết].",
+          "rect": { "top": 58, "left": 750, "right": 1166, "bottom": 120},
+          "search_rect":  { "top": 10, "left": 10, "right": 1800, "bottom": 200},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "chi_tiet": {
+          "description": "[Quân Đoàn] - [Túi Phúc] - [Chi tiết].",
+          "rect": { "top": 58, "left": 750, "right": 1166, "bottom": 120},
+          "search_rect":  { "top": 0, "left": 0, "right": 1900, "bottom": 150},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
     "chien_tranh": {
       "source_image": "resources/screens/chien_tranh/man_hinh_chinh.png",
       "templates": {

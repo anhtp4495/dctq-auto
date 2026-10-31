@@ -44,6 +44,10 @@ _TEMPLATE_QUAN_DOAN_DONG_GOP_10_KNB = "quan_doan.knb/quan_doan_dong_gop_10_knb"
 _TEMPLATE_QUAN_DOAN_DONG_GOP_20_KNB = "quan_doan.knb/quan_doan_dong_gop_20_knb"
 _TEMPLATE_QUAN_DOAN_DONG_GOP_40_KNB = "quan_doan.knb/quan_doan_dong_gop_40_knb"
 
+# Template dùng bên trong màn hình nhận túi phúc.
+_TEMPLATE_QUAN_DOAN_MAN_HINH_NHAN_TUI_PHUC = "quan_doan.tui_phuc/man_hinh_nhan_tui_phuc"
+_TEMPLATE_QUAN_DOAN_TUI_PHUC_CHI_TIET = "quan_doan.tui_phuc/chi_tiet"
+
 # Template dùng để điều hướng trong màn hình Hoạt động - Phúc lợi.
 _TEMPLATE_MAIN_HOAT_DONG = "main/hoat_dong"
 _TEMPLATE_DANG_CHON_LE_BAO_QUOC_VAN = "hoat_dong.phuc_loi/dang_chon_le_bao_quoc_van"
