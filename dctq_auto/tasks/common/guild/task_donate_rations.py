@@ -14,6 +14,7 @@ from dctq_auto.config.constants import (
     _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO,
     _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_KNB,
     _TEMPLATE_QUAN_DOAN_DUNG_NHANH,
+    _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
 )
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match

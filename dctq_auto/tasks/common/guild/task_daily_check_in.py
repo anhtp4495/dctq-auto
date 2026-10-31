@@ -115,17 +115,19 @@ def run(
             steps.remove(_STEP_QUAN_DOAN_BAO_DANH)
         return steps
 
-    if template_name == _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH:
-        log(f"[{account.username}] Chưa báo danh.")
-        _tap_match_center(device, match, account, log)
-        return run(worker, account, steps, device, ocr_client, log, screenshot=None)
-
     if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH:
         tap_x, tap_y = ButtonPositions().get("quan_doan", "bao_danh")
         log(
             f"[{account.username}] Không phát hiện được templates - Click báo danh theo ButtonPositions tại ({tap_x}, {tap_y}); "
         )
         device.shell(f"input tap {tap_x} {tap_y}")
+        if _STEP_QUAN_DOAN_BAO_DANH in steps:
+            steps.remove(_STEP_QUAN_DOAN_BAO_DANH)
+        return steps
+
+    if template_name == _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH:
+        log(f"[{account.username}] Chưa báo danh.")
+        _tap_match_center(device, match, account, log)
         return run(worker, account, steps, device, ocr_client, log, screenshot=None)
 
     log(f"[{account.username}] =========================================")
