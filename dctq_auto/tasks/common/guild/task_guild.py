@@ -1,5 +1,7 @@
 """Điều phối các bước thuộc màn hình [Quân đoàn]."""
 
+import time
+
 import cv2
 import numpy as np
 
