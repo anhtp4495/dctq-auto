@@ -110,6 +110,8 @@ def run(
         return steps
 
     if template_name == _TEMPLATE_QUAN_DOAN_DA_BAO_DANH:
+        log(f"[{account.username}] Đã báo danh.")
+        _tap_match_center(device, match, account, log)
         log(f"[{account.username}] Đã xác nhận báo danh Quân đoàn thành công.")
         if _STEP_QUAN_DOAN_BAO_DANH in steps:
             steps.remove(_STEP_QUAN_DOAN_BAO_DANH)

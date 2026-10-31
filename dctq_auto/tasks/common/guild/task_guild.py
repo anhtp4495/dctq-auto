@@ -62,9 +62,9 @@ def steps_run(
     task_steps = (
         (_STEP_QUAN_DOAN_BAO_DANH, task_daily_check_in, "Báo danh Quân đoàn"),
         (_STEP_QUAN_DOAN_TUI_PHUC, task_lucky_bag, "Nhận Túi phúc Quân đoàn"),
-        (_STEP_QUAN_DOAN_CAU_VAN, task_blessing, "Cầu vận Quân đoàn"),
         (_STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO, task_donate_rations, "Đóng góp Lương thảo"),
         (_STEP_QUAN_DOAN_DONG_GOP_KNB, task_knb, "Đóng góp KNB"),
+        (_STEP_QUAN_DOAN_CAU_VAN, task_blessing, "Cầu vận Quân đoàn"),
     )
 
     for step, task, task_name in task_steps:

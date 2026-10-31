@@ -8,7 +8,9 @@ import numpy as np
 from dctq_auto.config.constants import (
     _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO,
     _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO,
+    _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO_100,
     _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO,
+    _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO_100,
 
     _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO,
     _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_KNB,
@@ -29,7 +31,9 @@ def get_template_names(steps) -> list[str]:
 
     return [
         _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO,
+        _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO_100,
         _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO,
+        _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO_100,
         #
         _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO,
         _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO,
@@ -115,6 +119,17 @@ def run(
         )
         return steps
 
+
+    if template_name == _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO_100:
+        steps.remove(_STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO)
+        log(f"[{account.username}] Đã xác nhận đóng góp Lương thảo thành công.")
+        return steps
+
+    if template_name == _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO_100:
+        log(f"[{account.username}] Click Đóng góp Lương thảo.")
+        _tap_match_center(device, match, account, log)
+        time.sleep(1.5)
+        return run(worker, account, steps, device, ocr_client, log, screenshot=None)
         
     if template_name == _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_KNB:
         tap_x, tap_y = ButtonPositions().get("quan_doan.luong_thao", "dong_man_hinh")
@@ -127,17 +142,6 @@ def run(
         if _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO in steps:
             steps.remove(_STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO)
         return steps
-
-    if template_name == _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO:
-        if _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO in steps:
-            steps.remove(_STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO)
-        
-        log(f"[{account.username}] Đã xác nhận đóng góp Lương thảo thành công.")
-        return steps
-
-    if template_name == _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO:
-        _tap_match_center(device, match, account, log)
-        return run(worker, account, steps, device, ocr_client, log, screenshot=None)
 
     if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO:
         tap_x, tap_y = ButtonPositions().get("quan_doan.luong_thao", "dong_gop")
@@ -160,6 +164,10 @@ def run(
             f"[{account.username}] Dùng nhanh túi lúa tại ({tap_x}, {tap_y}); "
         )
         device.shell(f"input tap {tap_x} {tap_y}")
+        return run(worker, account, steps, device, ocr_client, log, screenshot=None)
+
+    if template_name in (_TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO, _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO):
+        _tap_match_center(device, match, account, log)
         return run(worker, account, steps, device, ocr_client, log, screenshot=None)
 
     log(

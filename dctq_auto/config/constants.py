@@ -25,7 +25,9 @@ _TEMPLATE_QUAN_DOAN_DA_NHAN_TUI_PHUC = "quan_doan/quan_doan_da_nhan_tui_phuc"
 _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH = "quan_doan/quan_doan_chua_bao_danh"
 _TEMPLATE_QUAN_DOAN_DA_BAO_DANH = "quan_doan/quan_doan_da_bao_danh"
 _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO = "quan_doan/quan_doan_chua_dong_gop_luong_thao"
+_TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO_100 = "quan_doan/quan_doan_chua_dong_gop_luong_thao_100"
 _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO = "quan_doan/quan_doan_da_dong_gop_luong_thao"
+_TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO_100 = "quan_doan/quan_doan_da_dong_gop_luong_thao_100"
 _TEMPLATE_QUAN_DOAN_DONG_GOP_KNB = "quan_doan/quan_doan_dong_gop_knb"
 
 # Template dùng bên trong màn hình Cầu vận Quân đoàn.
