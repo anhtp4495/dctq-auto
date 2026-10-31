@@ -334,7 +334,7 @@
         "quan_doan_chua_nhan_tui_phuc": {
           "description": "Màn hình [Quân Đoàn] - [Túi Phúc].",
           "rect": { "top": 472, "left": 1268, "right": 1612, "bottom": 727},
-          "search_rect": { "top": 418, "left": 54, "right": 11870, "bottom": 758},
+          "search_rect": { "top": 418, "left": 54, "right": 1870, "bottom": 758},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
@@ -498,7 +498,7 @@
         },
         "chi_tiet": {
           "description": "[Quân Đoàn] - [Túi Phúc] - [Chi tiết].",
-          "rect": { "top": 58, "left": 750, "right": 1166, "bottom": 120},
+          "rect": { "top": 970, "left": 750, "right": 1166, "bottom": 1035},
           "search_rect":  { "top": 0, "left": 0, "right": 1900, "bottom": 150},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
