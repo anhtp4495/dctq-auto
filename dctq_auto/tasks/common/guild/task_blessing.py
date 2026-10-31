@@ -30,9 +30,9 @@ def get_template_names(steps) -> list[str]:
 
     return [
         _TEMPLATE_QUAN_DOAN_CAU_VAN,
-        _TEMPLATE_QUAN_DOAN_CO_THE_CAU_VAN,
         _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN1,
         _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN2,
+        _TEMPLATE_QUAN_DOAN_CO_THE_CAU_VAN,
         _TEMPLATE_QUAN_DOAN_MAN_HINH_CAU_VAN,
     ]
 
