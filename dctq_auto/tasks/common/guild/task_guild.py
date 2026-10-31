@@ -74,7 +74,10 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None):
     return steps
 
 
-def steps_run(worker, account, steps, device, ocr_client, log, screenshot=None) -> list[str]:
+# Số lần tối đa xác định game đã tải thành công
+_MAX_TRY_DETECT_MAIN_SCREEN = 20
+
+def steps_run(worker, account, steps, device, ocr_client, log, screenshot=None, current_try: int = 1) -> list[str]:
     """Nhận diện trạng thái Quân đoàn và chạy các step có thể xác định."""
     selected_steps = {step for step in _GUILD_STEP_IDS if step in steps}
     if not selected_steps:
@@ -103,18 +106,6 @@ def steps_run(worker, account, steps, device, ocr_client, log, screenshot=None) 
     )
     if template_name is None:
         log(f"[{account.username}] Không nhận diện được trạng thái Quân đoàn; giữ lại step chưa chạy.")
-        return steps
-
-    # Màn hình chính Quân đoàn được xem là hoàn tất nhóm tác vụ Quân đoàn.
-    if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH:
-        steps_to_remove = _GUILD_STEP_IDS.intersection(steps)
-        for step in steps_to_remove:
-            steps.remove(step)
-        if steps_to_remove:
-            log(
-                f"[{account.username}] Đã xác nhận màn hình chính Quân đoàn; "
-                f"đánh dấu hoàn tất các step: {', '.join(sorted(steps_to_remove))}."
-            )
         return steps
 
     if template_name == _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH:
@@ -209,6 +200,19 @@ def steps_run(worker, account, steps, device, ocr_client, log, screenshot=None) 
         steps.remove(_STEP_QUAN_DOAN_DONG_GOP_KNB)
         return steps_run(worker, account, steps, device, ocr_client, log)
 
+    if current_try < _MAX_TRY_DETECT_MAIN_SCREEN:
+        worker.log_message.emit(f"[{account.username}] [Quân đoàn] Chưa chạy xong - Thử lại lần {current_try}.")
+        time.sleep(1.5)
+        return steps_run(worker, account, steps, device, ocr_client, log, current_try + 1)
+
+    steps_to_remove = _GUILD_STEP_IDS.intersection(steps)
+    for step in steps_to_remove:
+        steps.remove(step)
+    if steps_to_remove:
+        log(
+            f"[{account.username}] Đã thử lại {current_try} lần; "
+            f"Các step chưa hoàn tất: {', '.join(sorted(steps_to_remove))}."
+        )
     return steps
 
 def get_template_names(steps) -> list[str]:

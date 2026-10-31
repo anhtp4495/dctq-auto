@@ -64,8 +64,11 @@ def run(
     )
     templates = get_templates(template_names)
 
+    (f"[{account.username}] Bắt đầu Báo danh Quân đoàn ...")
     if not worker._wait_if_paused():
+        log(f"[{account.username}] =========================================")
         log(f"[{account.username}] Báo danh Quân đoàn đã dừng theo yêu cầu.")
+        log(f"[{account.username}] =========================================")
         return False
 
     try:
@@ -98,7 +101,9 @@ def run(
         _tap_match_center(device, match, account, log)
         return run(worker, account, device, ocr_client, log, screenshot=None)
 
+    log(f"[{account.username}] =========================================")
     log(
         f"[{account.username}] Không nhận diện được trạng thái báo danh - Kết thúc [Báo danh Quân đoàn] "
     )
+    log(f"[{account.username}] =========================================")
     return False
