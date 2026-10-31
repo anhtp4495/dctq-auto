@@ -84,10 +84,8 @@ def _run(
         return steps
 
     if not worker._wait_if_paused():
-        return _finish_step(
-            steps, account, log,
-            "Đóng góp KNB đã dừng theo yêu cầu; kết thúc step.",
-        )
+        log(f"[{account.username}] Đóng góp KNB tạm dừng theo yêu cầu.")
+        return steps
 
     try:
         if screenshot is None:
