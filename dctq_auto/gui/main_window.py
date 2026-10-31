@@ -580,6 +580,8 @@ class MainWindow(QMainWindow):
                 "clone_guild_check_in",
                 "clone_receive_lucky_bag",
                 "clone_guild_fortune",
+                "clone_guild_donate_knb",
+                "clone_guild_donate_rations",
                 "clone_quoc_chien",
                 "clone_reward_guild",
             )
