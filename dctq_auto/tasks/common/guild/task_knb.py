@@ -85,7 +85,7 @@ _MAX_TRY_DETECT_MAIN_SCREEN = 10
 
 def _run(
     worker, account, steps, device, ocr_client, log, screenshot,
-    templates, current_try: int = 1,
+    templates, skipped_templates, current_try: int = 1,
 ) -> list[str]:
     if _STEP_QUAN_DOAN_DONG_GOP_KNB not in steps:
         return steps
@@ -104,7 +104,10 @@ def _run(
             f"Không chụp được màn hình đóng góp KNB ({exc}); kết thúc step.",
         )
 
-    template_names = get_template_names(steps)
+    template_names = [
+        name for name in get_template_names(steps)
+        if name not in skipped_templates
+    ]
     template_name, match = _find_template(
         screen_bgr, templates, template_names, account, log
     )
@@ -121,12 +124,19 @@ def _run(
             "Đã nhận diện mức đóng góp 40 KNB; dừng và bỏ step.",
         )
 
-    if template_name in (_TEMPLATE_QUAN_DOAN_DONG_GOP_KNB, _TEMPLATE_QUAN_DOAN_DONG_GOP_10_KNB, _TEMPLATE_QUAN_DOAN_DONG_GOP_20_KNB ):
-        label = "[Quân đoàn] - Đóng góp KNB"
-        _tap_match_center(device, match, account, log, label)
+    if template_name == _TEMPLATE_QUAN_DOAN_DONG_GOP_KNB:
+        _tap_match_center(device, match, account, log, "[Quân đoàn] - Click đóng góp KNB")
         return _run(
             worker, account, steps, device, ocr_client, log, None,
-            templates
+            templates, skipped_templates, current_try = current_try + 1
+        )
+
+    if template_name in (_TEMPLATE_QUAN_DOAN_DONG_GOP_10_KNB, _TEMPLATE_QUAN_DOAN_DONG_GOP_20_KNB):
+        _tap_match_center(device, match, account, log, f"[Quân đoàn] - Đóng góp KNB - {template_name}")
+        skipped_templates.add(template_name)
+        return _run(
+            worker, account, steps, device, ocr_client, log, None,
+            templates, skipped_templates
         )
         
     if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_KNB:
@@ -141,12 +151,12 @@ def _run(
         log(f"[{account.username}] [Quân đoàn] Đóng góp KNB chưa xong - Thử lại lần {current_try}.")
         return _run(
             worker, account, steps, device, ocr_client, log, None,
-            templates, current_try = current_try + 1
+            templates, skipped_templates, current_try = current_try + 1
         )
 
     return _finish_step(
         steps, account, log,
-        label,
+        f"[Quân đoàn] - Đã thử đóng góp KNB {current_try} lần",
     )
 
 

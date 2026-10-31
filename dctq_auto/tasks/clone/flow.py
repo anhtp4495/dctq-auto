@@ -651,7 +651,7 @@ def run_clone_flow_optimize(self, device) -> None:
     success_count = 0
     failed_count = 0
     from dctq_auto.tasks.common.login import login_account
-    from dctq_auto.tasks.common.logout import run_logout_flow
+    from dctq_auto.tasks.common.logout import logout_account
 
     for index, account in enumerate(enabled_accounts, start=1):
         if not self._wait_if_paused():
@@ -691,7 +691,7 @@ def run_clone_flow_optimize(self, device) -> None:
                         f"[{account.username}] Đã dừng trước khi đăng xuất."
                     )
                     return
-                logout_result = run_logout_flow(self, account, device, ocr_client)
+                logout_result = logout_account(self, account, device, ocr_client)
             except Exception as exc:
                 self.log_message.emit(f"[{account.username}] Lỗi đăng xuất: {exc}")
                 logout_result = False

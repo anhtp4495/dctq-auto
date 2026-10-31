@@ -356,14 +356,8 @@
           "description": "Màn hình [Quân Đoàn] - Chưa đóng góp [Lương Thảo].",
           "rect": { "top": 838, "left": 1162, "right": 1312,"bottom": 964},
           "search_rect": { "top": 786, "left": 1048, "right": 1888, "bottom": 1050},
-          "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED"
-        },
-        "quan_doan_chua_dong_gop_luong_thao_100": {
-          "description": "Màn hình [Quân Đoàn] - Chưa đóng góp [Lương Thảo] 100.",
-          "rect": { "top": 838, "left": 1162, "right": 1312,"bottom": 964},
-          "search_rect": { "top": 786, "left": 1048, "right": 1888, "bottom": 1050},
-          "threshold": 1.00,
+          "threshold": 0.95,
+          "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "quan_doan_dong_gop_knb": {
@@ -384,14 +378,8 @@
           "description": "Màn hình [Quân Đoàn] - Đã đóng góp [Lương Thảo].",
           "rect": { "top": 852, "left": 126, "right": 252, "bottom": 952},
           "search_rect": { "top": 786, "left": 1048, "right": 1888, "bottom": 1050},
-          "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED"
-        },
-        "quan_doan_da_dong_gop_luong_thao_100": {
-          "description": "Màn hình [Quân Đoàn] - Đã đóng góp [Lương Thảo].",
-          "rect": { "top": 852, "left": 126, "right": 252, "bottom": 952},
-          "search_rect": { "top": 786, "left": 1048, "right": 1888, "bottom": 1050},
-          "threshold": 0.99,
+          "threshold": 0.95,
+          "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         }
       }

@@ -8,9 +8,7 @@ import numpy as np
 from dctq_auto.config.constants import (
     _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO,
     _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO,
-    _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO_100,
     _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO,
-    _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO_100,
 
     _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO,
     _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_KNB,
@@ -31,9 +29,7 @@ def get_template_names(steps) -> list[str]:
 
     return [
         _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO,
-        _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO_100,
         _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO,
-        _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO_100,
         #
         _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO,
         _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO,
@@ -125,46 +121,18 @@ def _run(
         )
         return steps
 
-    if template_name == _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO_100:
+    if template_name == _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO:
         return _finish_step(
-            steps, account, log, "Đã xác nhận đóng góp đủ 100 Lương thảo."
+            steps, account, log, "Đã xác nhận đóng góp Lương thảo."
         )
 
-    if template_name == _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO_100:
+    if template_name == _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO:
         log(f"[{account.username}] Click Đóng góp Lương thảo (mức 100).")
         _tap_match_center(device, match, account, log)
         time.sleep(1.5)
         return _run(
             worker, account, steps, device, ocr_client, log, None,
             templates, current_try=1,
-        )
-
-    if template_name in (
-        _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO,
-        _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO,
-    ):
-        if current_try >= _MAX_TRY_DETECT_MAIN_SCREEN:
-            return _finish_step(
-                steps, account, log,
-                "Đã thử nhận diện trạng thái đã/chưa đóng góp "
-                f"{_MAX_TRY_DETECT_MAIN_SCREEN} lần nhưng template vẫn không phân biệt được; "
-                "kết thúc step để tránh lặp vô hạn.",
-            )
-
-        state_label = (
-            "ĐÃ đóng góp"
-            if template_name == _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO
-            else "CHƯA đóng góp"
-        )
-        log(
-            f"[{account.username}] Template nhận diện trạng thái {state_label} "
-            f"có thể bị nhầm; click trung điểm và kiểm tra lại "
-            f"(lần {current_try}/{_MAX_TRY_DETECT_MAIN_SCREEN})."
-        )
-        _tap_match_center(device, match, account, log)
-        return _run(
-            worker, account, steps, device, ocr_client, log, None,
-            templates, current_try=current_try + 1,
         )
 
     if template_name == _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_KNB:
@@ -205,13 +173,23 @@ def _run(
             templates, current_try=1,
         )
 
+
+    if current_try >= _MAX_TRY_DETECT_MAIN_SCREEN:
+        return _finish_step(
+            steps, account, log,
+            "Đã thử nhận diện trạng thái đã/chưa đóng góp "
+            f"{_MAX_TRY_DETECT_MAIN_SCREEN} lần nhưng template vẫn không phân biệt được; "
+            "kết thúc step để tránh lặp vô hạn.",
+        )
+        
     if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH:
         log(f"[{account.username}] Đã quay về màn hình chính Quân đoàn; kiểm tra lại.")
+        
+        _tap_match_center(device, match, account, log)
         return _run(
             worker, account, steps, device, ocr_client, log, None,
-            templates, current_try=1,
+            templates, current_try=current_try + 1,
         )
-
     return steps
 
 
