@@ -62,7 +62,7 @@ def _match_account_template(screen_bgr, template):
         template.image,
         threshold=template.threshold,
         method=template.method,
-        grayscale=True,
+        grayscale=template.grayscale,
     )
 
 # Số lần tối đa xác định game đã tải thành công
@@ -214,7 +214,7 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
                 template.image,
                 threshold=threshold,
                 method=method,
-                grayscale=True,
+                grayscale=template.grayscale,
             )
         except (ValueError, cv2.error) as exc:
             worker.log_message.emit(
