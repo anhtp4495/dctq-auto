@@ -15,6 +15,7 @@ from dctq_auto.config.constants import (
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
+from dctq_auto.config.button_positions import ButtonPositions
 
 
 def get_template_names(steps) -> list[str]:
