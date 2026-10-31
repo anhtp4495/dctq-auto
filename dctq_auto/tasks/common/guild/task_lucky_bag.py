@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 
 from dctq_auto.config.constants import (
+    _STEP_QUAN_DOAN_TUI_PHUC,
     _TEMPLATE_QUAN_DOAN_CHUA_NHAN_TUI_PHUC,
     _TEMPLATE_QUAN_DOAN_DA_NHAN_TUI_PHUC,
 )
@@ -53,9 +54,12 @@ def _tap_match_center(device, match, account, log):
 
 
 def run(
-    worker, account, device, ocr_client, log, screenshot=None,
-) -> bool:
+    worker, account, steps, device, ocr_client, log, screenshot=None,
+) -> list[str]:
     """Nhận diện trạng thái Túi phúc và nhận nếu chưa nhận."""
+    if _STEP_QUAN_DOAN_TUI_PHUC not in steps:
+        return steps
+
     template_names = (
         _TEMPLATE_QUAN_DOAN_DA_NHAN_TUI_PHUC,
         _TEMPLATE_QUAN_DOAN_CHUA_NHAN_TUI_PHUC,
@@ -64,7 +68,7 @@ def run(
 
     if not worker._wait_if_paused():
         log(f"[{account.username}] Nhận Túi phúc Quân đoàn đã dừng theo yêu cầu.")
-        return False
+        return steps
 
     try:
         if screenshot is None:
@@ -72,7 +76,7 @@ def run(
         screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
     except Exception as exc:
         log(f"[{account.username}] Không chụp được màn hình Túi phúc Quân đoàn: {exc}")
-        return False
+        return steps
 
     template_name, _, match = _find_template(
         screen_bgr, templates, template_names, account, log
@@ -80,16 +84,17 @@ def run(
     if template_name is None:
         log(
             f"[{account.username}] Không nhận diện được trạng thái Túi phúc "
-            "Quân đoàn; chưa thể xác nhận hoàn thành."
+            "Quân đoàn; giữ lại step để thử lại."
         )
-        return False
+        return steps
 
     if template_name == _TEMPLATE_QUAN_DOAN_DA_NHAN_TUI_PHUC:
         log(f"[{account.username}] Đã xác nhận nhận Túi phúc Quân đoàn thành công.")
-        return True
+        steps.remove(_STEP_QUAN_DOAN_TUI_PHUC)
+        return steps
 
     if template_name == _TEMPLATE_QUAN_DOAN_CHUA_NHAN_TUI_PHUC:
         _tap_match_center(device, match, account, log)
-        return run(worker, account, device, ocr_client, log, screenshot=None)
+        return run(worker, account, steps, device, ocr_client, log, screenshot=None)
 
-    return False
+    return steps
