@@ -691,14 +691,18 @@ def run_clone_flow_optimize(self, device) -> None:
                         f"[{account.username}] Đã dừng trước khi đăng xuất."
                     )
                     return
-                logout_result = logout_account(self, account, device, ocr_client)
+                logout_result, logout_error = logout_account(
+                    self, account, device, ocr_client
+                )
             except Exception as exc:
                 self.log_message.emit(f"[{account.username}] Lỗi đăng xuất: {exc}")
-                logout_result = False
+                logout_result, logout_error = False, str(exc)
 
             if logout_result is not True:
                 self.log_message.emit(
-                    f"[{account.username}] Đăng xuất thất bại; đánh dấu tài khoản thất bại."
+                    f"[{account.username}] Đăng xuất thất bại"
+                    + (f": {logout_error}" if logout_error else ";")
+                    + " đánh dấu tài khoản thất bại."
                 )
                 result = False
 
