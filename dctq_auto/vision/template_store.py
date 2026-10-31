@@ -32,6 +32,7 @@ class LoadedTemplate:
     image: np.ndarray
     threshold: float
     method: int
+    grayscale: bool
     search_rect: tuple[int, int, int, int]
 
 
@@ -71,6 +72,9 @@ def _load_screen_templates(screen_name: str) -> dict[str, LoadedTemplate]:
             threshold = float(definition.get("threshold", 0.85))
             method_name = definition.get("match_method", "TM_CCOEFF_NORMED")
             method = _METHODS[method_name]
+            grayscale = definition.get("grayscale", True)
+            if not isinstance(grayscale, bool):
+                raise ValueError("grayscale phải là true hoặc false")
             search_rect_config = definition["search_rect"]
             search_rect = (
                 int(search_rect_config["top"]),
@@ -118,6 +122,7 @@ def _load_screen_templates(screen_name: str) -> dict[str, LoadedTemplate]:
             image=template_image,
             threshold=threshold,
             method=method,
+            grayscale=grayscale,
             search_rect=search_rect,
         )
 
