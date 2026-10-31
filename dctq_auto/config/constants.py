@@ -33,6 +33,7 @@ _TEMPLATE_QUAN_DOAN_MAN_HINH_CAU_VAN = "quan_doan.cau_van/quan_doan_man_hinh_cau
 _TEMPLATE_QUAN_DOAN_CO_THE_CAU_VAN = "quan_doan.cau_van/quan_doan_co_the_cau_van"
 
 # Template dùng bên trong màn hình đóng góp Lương thảo Quân đoàn.
+_TEMPLATE_QUAN_DOAN_DUNG_NHANH = "quan_doan.luong_thao/dung_nhanh"
 _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO = "quan_doan.luong_thao/quan_doan_man_hinh_dong_gop_luong_thao"
 _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO = "quan_doan.luong_thao/quan_doan_dong_man_hinh_dong_gop_luong_thao"
 _TEMPLATE_QUAN_DOAN_XAC_NHAN_DONG_GOP_LUONG_THAO = "quan_doan.luong_thao/xac_nhan_dong_gop_luong_thao"
