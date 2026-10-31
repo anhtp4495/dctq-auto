@@ -77,7 +77,7 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None):
 
 
 # Số lần tối đa xác định game đã tải thành công
-_MAX_TRY_DETECT_MAIN_SCREEN = 3
+_MAX_TRY_DETECT_MAIN_SCREEN = 5
 
 def steps_run(worker, account, steps, device, ocr_client, log, screenshot=None, current_try: int = 1) -> list[str]:
     """Nhận diện trạng thái Quân đoàn và chạy các step có thể xác định."""
@@ -106,7 +106,6 @@ def steps_run(worker, account, steps, device, ocr_client, log, screenshot=None, 
 
     if current_try < _MAX_TRY_DETECT_MAIN_SCREEN:
         worker.log_message.emit(f"[{account.username}] [Quân đoàn] Chưa chạy xong - Thử lại lần {current_try}.")
-        time.sleep(1.5)
         return steps_run(worker, account, steps, device, ocr_client, log, screenshot=None, current_try=current_try + 1)
 
     steps_to_remove = _GUILD_STEP_IDS.intersection(steps)

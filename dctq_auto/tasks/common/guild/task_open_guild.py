@@ -15,8 +15,11 @@ from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
 
 
+# Số lần tối đa xác định game đã tải thành công
+_MAX_TRY_DETECT_MAIN_SCREEN = 3
+
 def open_guild(
-    self, account, device, ocr_client, log, screenshot=None
+    self, account, device, ocr_client, log, screenshot=None, current_try: int = 1
 ) -> bool:
     """Mở Quân đoàn bằng Template Matching; nhận screenshot có sẵn nếu được truyền vào."""
 
@@ -98,6 +101,10 @@ def open_guild(
             except Exception as exc:
                 log(f"[{account.username}] Mở màn hình [Quân đoàn] thất bại: {exc}")
                 return False
+
+    if current_try < _MAX_TRY_DETECT_MAIN_SCREEN:
+        worker.log_message.emit(f"[{account.username}] [Quân đoàn] Chưa chạy xong - Thử lại lần {current_try}.")
+        return open_guild(self, account, device, ocr_client, log, screenshot=None, current_try=current_try + 1)
 
     log(f"[{account.username}] Mở màn hình [Quân đoàn] thất bại.")
     return False
