@@ -18,6 +18,7 @@ from dctq_auto.config.constants import (
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
+from dctq_auto.config.button_positions import ButtonPositions
 
 
 def get_template_names(steps) -> list[str]:
@@ -101,7 +102,7 @@ def run(
         log(f"[{account.username}] Không chụp được màn hình đóng góp Lương thảo: {exc}")
         return steps
 
-    template_name, _, _ = _find_template(
+    template_name, _, match = _find_template(
         screen_bgr, templates, template_names, account, log
     )
     if template_name is None:
