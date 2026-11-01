@@ -13,6 +13,7 @@ _TEMPLATE_ACCOUNT_DANG_NHAP = "accounts3/dang_nhap"
 # Step được chọn từ cấu hình tác vụ.
 _STEP_QUOC_VAN = "hoat_dong_phuc_loi_le_bao_quoc_van"
 _STEP_DIEM_DANH = "hoat_dong_phuc_loi_diem_danh"
+_STEP_QUAN_SU_GIAO_TRANH = "quan_su_giao_tranh"
 
 
 _STEP_QUAN_DOAN_BAO_DANH = "quan_doan_bao_danh"
