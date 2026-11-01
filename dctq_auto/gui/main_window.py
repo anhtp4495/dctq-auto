@@ -1291,7 +1291,6 @@ class MainWindow(QMainWindow):
         self.task_glass_tower.toggled.connect(
             self.task_glass_tower_knb.setEnabled
         )
-        self.task_giao_tranh = QCheckBox("Giao Tranh")
         self.task_open_battle = QCheckBox("Mở màn hình Giao Tranh")
         self.task_open_battle_count = QSpinBox()
         self.task_open_battle_count.setRange(1, 60)
@@ -1491,7 +1490,6 @@ class MainWindow(QMainWindow):
         battle_count_row.addWidget(self.task_open_battle_count)
         battle_count_row.addWidget(QLabel("trận"))
         battle_count_row.addStretch(1)
-        battle_screen_layout.addWidget(self.task_giao_tranh)
         battle_screen_layout.addLayout(battle_count_row)
         # Hiển thị các tác vụ Giao Tranh theo đúng thứ tự quy trình người dùng chọn.
         battle_screen_layout.addWidget(self.task_open_battle)
@@ -1566,7 +1564,6 @@ class MainWindow(QMainWindow):
                 "utility_tasks_mode": True,
                 "task_login": self.task_login.isChecked(),
                 "task_close_guild": self.thoat_quan_doan_task.isChecked(),
-                "quan_su_giao_tranh": self.task_giao_tranh.isChecked(),
                 "task_open_battle": self.task_open_battle.isChecked(),
                 "task_open_battle_count": self.task_open_battle_count.value(),
                 "task_find_battle_opponent": self.task_find_battle_opponent.isChecked(),
@@ -1808,7 +1805,7 @@ class MainWindow(QMainWindow):
         if config.get("utility_tasks_mode") and not any(
             config.get(key) for key in (
                 "task_login",
-                "task_close_guild", "task_switch_account", "quan_su_giao_tranh",
+                "task_close_guild", "task_switch_account",
                 "task_open_battle",
                 "task_find_battle_opponent", "task_start_battle", "task_end_battle", "xuat_chien", "task_use_bazhen",
                 "task_enter_guild", "task_receive_lucky_bag", "task_guild_fortune",
@@ -1972,7 +1969,6 @@ class MainWindow(QMainWindow):
         if config.get("utility_tasks_mode"):
             task_labels = (
                 ("task_login", "Đăng nhập"),
-                ("quan_su_giao_tranh", "Giao Tranh"),
                 ("nhan_le_bao_quoc_van", "Nhận lễ bao quốc vận"),
                 ("diem_danh", "Điểm danh"),
                 ("task_enter_guild", "Vào quân đoàn"),
