@@ -4,7 +4,7 @@ from dctq_auto.tasks.common.shop.shop_war import (
     task_close_shop_war,
     task_open_shop_war,
 )
-from dctq_auto.tasks.common.shop.shop_prestige import task_shop_prestige
+from dctq_auto.tasks.common.shop.shop_war.shop_prestige import task_shop_prestige
 
 
 _WAR_SHOP_TASKS = (
