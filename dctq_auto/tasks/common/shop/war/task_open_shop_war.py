@@ -61,6 +61,9 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None, curren
             log(f"[{account.username}] Đã xác nhận đang ở [Shop Chiến Tranh].")
             return True
 
+        if current_try >= _MAX_TRY_OPEN_SHOP_WAR:
+            log(f"[{account.username}] Đã hết số lần thử mở [Shop Chiến Tranh].")
+            return False
         x = round((match.left + match.right) / 2)
         y = round((match.top + match.bottom) / 2)
         log(f"[{account.username}] Click tab [Shop Chiến Tranh] tại ({x}, {y}).")
