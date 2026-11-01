@@ -583,6 +583,20 @@
           "threshold": 0.95,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
+        },
+        "dong_man_hinh_cua_hang": {
+          "description": "[Màn hình chính] - [Cửa hàng] - [X]",
+          "rect": { "top": 26, "left": 1839, "right": 1880, "bottom": 76},
+          "search_rect":  { "top": 0, "left": 1750, "right": 1920, "bottom": 120},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "dong_man_hinh_xac_nhan_mua": {
+          "description": "[Màn hình chính] - [Cửa hàng] - [X] Xác nhận mua",
+          "rect":  { "top": 660, "left": 1797, "right": 1855, "bottom": 718},
+          "search_rect":  { "top": 200, "left": 500, "right": 1450, "bottom": 450},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
