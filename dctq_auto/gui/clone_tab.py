@@ -125,6 +125,16 @@ class CloneTab(QWidget):
             guild_layout.addWidget(checkbox)
         layout.addWidget(guild_group)
 
+        shop_group = QGroupBox("Cửa hàng")
+        shop_layout = QVBoxLayout(shop_group)
+        self.clone_buy_fortune_lot = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_buy_fortune_lot", "Cửa hàng Danh Vọng - Mua quẻ lành"
+            )
+        )
+        shop_layout.addWidget(self.clone_buy_fortune_lot)
+        layout.addWidget(shop_group)
+
         self.clone_quoc_chien = QCheckBox(
             step_registry.get_display_name_by_config_key("clone_quoc_chien", "Quốc chiến")
         )
@@ -227,6 +237,7 @@ class CloneTab(QWidget):
             "clone_guild_fortune": self.clone_guild_fortune.isChecked(),
             "clone_guild_donate_knb": self.clone_guild_donate_knb.isChecked(),
             "clone_guild_donate_rations": self.clone_guild_donate_rations.isChecked(),
+            "clone_buy_fortune_lot": self.clone_buy_fortune_lot.isChecked(),
             "clone_quoc_chien": self.clone_quoc_chien.isChecked(),
             "clone_reward_guild": self.clone_reward_guild.isChecked(),
             "clone_logout": True,
