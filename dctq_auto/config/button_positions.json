@@ -99,6 +99,14 @@
     "xac_nhan": {
       "x": 972,
       "y": 746
+    },
+    "cua_hang_danh_vong_item1": {
+      "x": 960,
+      "y": 270
+    },
+    "cua_hang_danh_vong_item2": {
+      "x": 960,
+      "y": 570
     }
   }
 }
