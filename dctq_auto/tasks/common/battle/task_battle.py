@@ -259,6 +259,12 @@ def task_open_battle(self, account, device, ocr_client, log, screenshot=None) ->
             account=account, log=log,
         )
         if xuat_chien is not None:
+            if not full_open:
+                log(
+                    f"[{account.username}] Đã tới giao diện Xuất chiến; "
+                    "dừng tại đây vì chưa chọn tác vụ mở trận."
+                )
+                return True
             chien_thuat = _match(
                 screen, templates.get(_TEMPLATE_QUAN_SU_GIAO_TRANH_CHIEN_THUAT),
                 account=account, log=log,
