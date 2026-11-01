@@ -27,10 +27,10 @@ def run(worker, account, device, ocr_client, log, screenshot=None, current_try=1
         return False
 
     template_names = (
-        _TEMPLATE_MAIN_CUA_HANG,
         _TEMPLATE_CUA_HANG_DONG_MAN_HINH_XAC_NHAN_MUA,
         _TEMPLATE_CUA_HANG_DONG_MAN_HINH,
         _TEMPLATE_CUA_HANG_THUONG_THANH,
+        _TEMPLATE_MAIN_CUA_HANG,
     )
     templates = get_templates(template_names)
 
