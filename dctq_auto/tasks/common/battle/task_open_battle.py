@@ -35,7 +35,7 @@ _OPEN_TEMPLATES = (
 )
 
 
-def task_open_battle(self, account, device, ocr_client, log, screenshot=None) -> bool:
+def run(self, account, device, ocr_client, log, screenshot=None) -> bool:
     """Điều hướng vào Giao Tranh, chọn bộ tọa độ và click Xuất chiến."""
     if not self._wait_if_paused():
         log(f"[{account.username}] Đã dừng trước khi mở Giao Tranh.")
