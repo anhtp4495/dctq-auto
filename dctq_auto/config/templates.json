@@ -628,7 +628,7 @@
         "man_hinh_mua_que_lanh": {
           "description": "[Màn hình chính] - [Cửa hàng] - [Shop Chiến Tranh] - [Shop Danh Vọng] - [Màn hình Mua Quẻ Lành]",
           "rect": { "top": 265, "left": 549, "right": 1379, "bottom": 372},
-          "search_rect":  { "top": 100, "left": 10, "right": 300, "bottom": 1000},
+          "search_rect":  { "top": 200, "left": 500, "right": 1450, "bottom": 450},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
