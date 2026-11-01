@@ -15,6 +15,22 @@ _STEP_QUOC_VAN = "hoat_dong_phuc_loi_le_bao_quoc_van"
 _STEP_DIEM_DANH = "hoat_dong_phuc_loi_diem_danh"
 _STEP_QUAN_SU_GIAO_TRANH = "quan_su_giao_tranh"
 
+# Template dùng trong quy trình Giao Tranh.
+_TEMPLATE_MAIN_QUAN_SU = "main/quan_su"
+_TEMPLATE_QUAN_SU_GIAO_TRANH_LOI_VAO = "quan_su.giao_tranh/loi_vao_giao_tranh"
+_TEMPLATE_QUAN_SU_GIAO_TRANH_CHUA_SU_DUNG_CANH_BAT_TRAN = "quan_su.giao_tranh/chua_su_dung_canh_bat_tran"
+_TEMPLATE_QUAN_SU_GIAO_TRANH_TIM_DOI_THU = "quan_su.giao_tranh/tim_doi_thu"
+_TEMPLATE_QUAN_SU_GIAO_TRANH_BAI_MIEN_CHIEN = "quan_su.giao_tranh/bai_mien_chien"
+_TEMPLATE_QUAN_SU_GIAO_TRANH_CAM_NANG = "quan_su.giao_tranh/cam_nang"
+_TEMPLATE_QUAN_SU_GIAO_TRANH_XUAT_CHIEN = "quan_su.giao_tranh/xuat_chien"
+_TEMPLATE_QUAN_SU_GIAO_TRANH_CHIEN_THUAT = "quan_su.giao_tranh/chien_thuat"
+_TEMPLATE_QUAN_SU_GIAO_TRANH_RUT_LUI = "quan_su.giao_tranh/rut_lui"
+_TEMPLATE_QUAN_SU_GIAO_TRANH_THU_QUAN = "quan_su.giao_tranh/thu_quan"
+_TEMPLATE_QUAN_SU_GIAO_TRANH_TRAN_SAU = "quan_su.giao_tranh/tran_sau"
+_TEMPLATE_QUAN_SU_GIAO_TRANH_HOI_THANH = "quan_su.giao_tranh/hoi_thanh"
+_TEMPLATE_QUAN_SU_GIAO_TRANH_1_CO = "quan_su.giao_tranh/1_co"
+_TEMPLATE_QUAN_SU_GIAO_TRANH_2_CO = "quan_su.giao_tranh/2_co"
+
 
 _STEP_QUAN_DOAN_BAO_DANH = "quan_doan_bao_danh"
 _STEP_QUAN_DOAN_TUI_PHUC = "quan_doan_tui_phuc"
