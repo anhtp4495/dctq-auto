@@ -17,15 +17,12 @@ from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
 
 
-_MAX_TRY_CLOSE_SHOP = 5
+_MAX_WAIT_MAIN_SCREEN_SECONDS = 10.0
+_SCREEN_POLL_INTERVAL_SECONDS = 0.5
 
 
-def run(worker, account, device, ocr_client, log, screenshot=None, current_try=1) -> bool:
-    """Đóng các lớp giao diện shop và xác nhận đã trở về màn hình chính."""
-    if not worker._wait_if_paused():
-        log(f"[{account.username}] Đã dừng khi đang đóng [Cửa hàng].")
-        return False
-
+def run(worker, account, device, ocr_client, log, screenshot=None) -> bool:
+    """Đóng các lớp giao diện shop và chờ xác nhận đã trở về màn hình chính."""
     template_names = (
         _TEMPLATE_CUA_HANG_DONG_MAN_HINH_XAC_NHAN_MUA,
         _TEMPLATE_CUA_HANG_DONG_MAN_HINH,
@@ -33,94 +30,107 @@ def run(worker, account, device, ocr_client, log, screenshot=None, current_try=1
         _TEMPLATE_MAIN_CUA_HANG,
     )
     templates = get_templates(template_names)
+    deadline = None
 
-    try:
-        if screenshot is None:
-            screenshot = device.screenshot()
-        screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
-    except Exception as exc:
-        log(f"[{account.username}] Không chụp được màn hình để đóng [Cửa hàng]: {exc}")
-        return False
-
-    for template_name in template_names:
-        template = templates.get(template_name)
-        if template is None:
-            log(f"[{account.username}] Không tải được template {template_name}; bỏ qua.")
-            continue
+    while True:
+        if not worker._wait_if_paused():
+            log(f"[{account.username}] Đã dừng khi đang đóng [Cửa hàng].")
+            return False
 
         try:
-            match = match_template(
-                screen_bgr,
-                template.image,
-                threshold=template.threshold,
-                method=template.method,
-                search_rect=template.search_rect,
-                grayscale=template.grayscale,
-            )
-        except (ValueError, cv2.error) as exc:
-            log(f"[{account.username}] Lỗi template matching {template_name}: {exc}")
-            continue
+            current_screenshot = screenshot if screenshot is not None else device.screenshot()
+            screen_bgr = cv2.cvtColor(np.asarray(current_screenshot), cv2.COLOR_RGB2BGR)
+            screenshot = None
+        except Exception as exc:
+            log(f"[{account.username}] Không chụp được màn hình để đóng [Cửa hàng]: {exc}")
+            return False
 
-        if match is None:
-            continue
+        matched_template = None
+        matched_result = None
 
-        report_template_match(
-            log, context=f"[{account.username}]", template=template, match=match
-        )
+        for template_name in template_names:
+            template = templates.get(template_name)
+            if template is None:
+                continue
 
-        if template_name == _TEMPLATE_MAIN_CUA_HANG:
-            log(f"[{account.username}] Đã xác nhận đóng [Cửa hàng] thành công.")
+            try:
+                match = match_template(
+                    screen_bgr,
+                    template.image,
+                    threshold=template.threshold,
+                    method=template.method,
+                    search_rect=template.search_rect,
+                    grayscale=template.grayscale,
+                )
+            except (ValueError, cv2.error) as exc:
+                log(f"[{account.username}] Lỗi template matching {template_name}: {exc}")
+                continue
+
+            if match is not None:
+                matched_template = template_name
+                matched_result = match
+                report_template_match(
+                    log, context=f"[{account.username}]", template=template, match=match
+                )
+                break
+
+        if matched_template == _TEMPLATE_MAIN_CUA_HANG:
+            log(f"[{account.username}] Đã xác nhận trở về giao diện chính sau khi đóng [Cửa hàng].")
             return True
 
-        if current_try >= _MAX_TRY_CLOSE_SHOP:
-            log(f"[{account.username}] Đã hết số lần thử đóng [Cửa hàng].")
-            return False
+        if matched_template is not None:
+            if matched_template in (
+                _TEMPLATE_CUA_HANG_DONG_MAN_HINH_XAC_NHAN_MUA,
+                _TEMPLATE_CUA_HANG_DONG_MAN_HINH,
+            ):
+                x = round((matched_result.left + matched_result.right) / 2)
+                y = round((matched_result.top + matched_result.bottom) / 2)
+                action = (
+                    "đóng cửa sổ xác nhận mua"
+                    if matched_template == _TEMPLATE_CUA_HANG_DONG_MAN_HINH_XAC_NHAN_MUA
+                    else "đóng màn hình cửa hàng"
+                )
+                log(
+                    f"[{account.username}] Phát hiện nút {action}; "
+                    f"click trung tâm ({x}, {y})."
+                )
+            else:
+                try:
+                    x, y = ButtonPositions().get("cua_hang", "dong_man_hinh")
+                except (KeyError, ValueError) as exc:
+                    log(f"[{account.username}] Không lấy được tọa độ đóng [Cửa hàng]: {exc}")
+                    return False
+                log(
+                    f"[{account.username}] Đang ở [Thương Thành]; "
+                    f"click buttonlocations cua_hang.dong_man_hinh tại ({x}, {y})."
+                )
 
-        if template_name in (
-            _TEMPLATE_CUA_HANG_DONG_MAN_HINH_XAC_NHAN_MUA,
-            _TEMPLATE_CUA_HANG_DONG_MAN_HINH,
-        ):
-            x = round((match.left + match.right) / 2)
-            y = round((match.top + match.bottom) / 2)
-            action = (
-                "đóng cửa sổ xác nhận mua"
-                if template_name == _TEMPLATE_CUA_HANG_DONG_MAN_HINH_XAC_NHAN_MUA
-                else "đóng màn hình cửa hàng"
-            )
-            log(f"[{account.username}] Phát hiện nút {action}; click trung tâm ({x}, {y}).")
-        else:
             try:
-                x, y = ButtonPositions().get("cua_hang", "dong_man_hinh")
-            except (KeyError, ValueError) as exc:
-                log(f"[{account.username}] Không lấy được tọa độ đóng [Cửa hàng]: {exc}")
+                device.shell(f"input tap {x} {y}")
+            except Exception as exc:
+                log(f"[{account.username}] Click đóng [Cửa hàng] thất bại: {exc}")
                 return False
-            log(
-                f"[{account.username}] Đang ở [Thương Thành]; "
-                f"click buttonlocations cua_hang.dong_man_hinh tại ({x}, {y})."
-            )
 
-        try:
-            device.shell(f"input tap {x} {y}")
-            time.sleep(1.0)
-        except Exception as exc:
-            log(f"[{account.username}] Click đóng [Cửa hàng] thất bại: {exc}")
+            if deadline is None:
+                deadline = time.monotonic() + _MAX_WAIT_MAIN_SCREEN_SECONDS
+
+            time.sleep(_SCREEN_POLL_INTERVAL_SECONDS)
+            continue
+
+        if deadline is None:
+            log(f"[{account.username}] Không xác định được trạng thái hiện tại của [Cửa hàng].")
             return False
 
-        return run(
-            worker, account, device, ocr_client, log,
-            screenshot=None, current_try=current_try + 1,
-        )
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            log(
+                f"[{account.username}] Hết {_MAX_WAIT_MAIN_SCREEN_SECONDS:.0f} giây "
+                "nhưng chưa xác nhận được đã trở về giao diện chính."
+            )
+            return False
 
-    if current_try < _MAX_TRY_CLOSE_SHOP:
         log(
-            f"[{account.username}] Chưa nhận diện được trạng thái [Cửa hàng]; "
-            f"chụp lại lần {current_try + 1}."
+            f"[{account.username}] Đang chờ giao diện chính sau khi đóng [Cửa hàng] "
+            f"(còn tối đa {remaining:.1f} giây)."
         )
-        time.sleep(0.7)
-        return run(
-            worker, account, device, ocr_client, log,
-            screenshot=None, current_try=current_try + 1,
-        )
-
-    log(f"[{account.username}] Không xác nhận được đã đóng [Cửa hàng].")
-    return False
+        time.sleep(min(_SCREEN_POLL_INTERVAL_SECONDS, remaining))
