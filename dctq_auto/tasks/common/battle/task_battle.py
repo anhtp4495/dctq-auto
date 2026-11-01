@@ -360,6 +360,8 @@ def battle_run(self, account, device, ocr_client, log) -> bool:
     completed_battles = 0
     hero_deployed = False
     battle_started_at = None
+    retreat_requested = False
+    awaiting_next_screen = False
     deadline = time.monotonic() + max(180, target_battles * 180)
 
     log(
@@ -390,7 +392,7 @@ def battle_run(self, account, device, ocr_client, log) -> bool:
             account=account, log=log,
         )
 
-        if next_battle is not None:
+        if next_battle is not None and not awaiting_next_screen:
             completed_battles += 1
             log(
                 f"[{account.username}] Phát hiện Trận sau: "
@@ -407,8 +409,13 @@ def battle_run(self, account, device, ocr_client, log) -> bool:
             )
             hero_deployed = False
             battle_started_at = None
+            retreat_requested = False
+            awaiting_next_screen = True
             time.sleep(1)
             continue
+
+        if next_battle is None and awaiting_next_screen:
+            awaiting_next_screen = False
 
         if retreat is not None and not hero_deployed:
             log(f"[{account.username}] Phát hiện Rút lui; bắt đầu thả 5 võ tướng.")
@@ -437,8 +444,9 @@ def battle_run(self, account, device, ocr_client, log) -> bool:
                 account=account, log=log,
                 battle_started_at=battle_started_at,
             )
-            if should_end:
+            if should_end and not retreat_requested:
                 x, y = _click_match(device, collect)
+                retreat_requested = True
                 log(
                     f"[{account.username}] Điều kiện chế độ {mode} đã đạt; "
                     f"click Thu quân tại ({x}, {y})."
