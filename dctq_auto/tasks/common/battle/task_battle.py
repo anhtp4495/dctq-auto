@@ -45,6 +45,16 @@ def build_clone_battle_config(config) -> dict:
     }
 
 
+def _mode(config) -> str:
+    if config.get("giao_tranh_nhanh_1_co"):
+        return "fast"
+    if config.get("ba_co"):
+        return "normal"
+    if config.get("task_battle_time_mode"):
+        return "time_limit"
+    return "normal"
+
+
 def pre_battle(config, steps, log) -> bool:
     """Kiểm tra cấu hình Giao Tranh trước khi bắt đầu."""
     if _STEP_QUAN_SU_GIAO_TRANH not in steps:
