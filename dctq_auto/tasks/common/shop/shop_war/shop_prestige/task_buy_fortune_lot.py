@@ -1,4 +1,6 @@
-"""Nhận diện trạng thái trong tác vụ [Cửa hàng Danh Vọng - Mua quẻ lành]."""
+"""Điều phối tác vụ [Cửa hàng Danh Vọng - Mua quẻ lành]."""
+
+import time
 
 import cv2
 import numpy as np
@@ -11,38 +13,25 @@ from dctq_auto.config.constants import (
     _TEMPLATE_CUA_HANG_DA_MUA_QUE_LANH,
     _TEMPLATE_CUA_HANG_MAN_HINH_MUA_QUE_LANH,
 )
+from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
 
 
-def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> list[str]:
-    """Nhận diện một trong các trạng thái shop; tạm thời ghi log và hoàn tất step."""
-    step = _STEP_CUA_HANG_DANH_VONG_MUA_QUE_LANH
-    if step not in steps:
-        return steps
+_MAX_SWIPE_FORTUNE_LOT = 2
 
-    if not worker._wait_if_paused():
-        log(f"[{account.username}] Nhận diện [Mua quẻ lành] đã dừng theo yêu cầu.")
-        return steps
 
-    template_names = (
-        _TEMPLATE_CUA_HANG_DANG_CHON_SHOP_CHIEN_TRANH,
-        _TEMPLATE_CUA_HANG_DANG_CHON_DANH_VONG,
-        _TEMPLATE_CUA_HANG_CHUA_MUA_QUE_LANH,
-        _TEMPLATE_CUA_HANG_DA_MUA_QUE_LANH,
-        _TEMPLATE_CUA_HANG_MAN_HINH_MUA_QUE_LANH,
-    )
-    templates = get_templates(template_names)
+def _finish_step(steps, account, log):
+    """Kết thúc step mua Quẻ lành."""
+    log(f"[{account.username}] [Quẻ lành] đã mua; kết thúc tác vụ.")
+    if _STEP_CUA_HANG_DANH_VONG_MUA_QUE_LANH in steps:
+        steps.remove(_STEP_CUA_HANG_DANH_VONG_MUA_QUE_LANH)
+    return steps
 
-    try:
-        if screenshot is None:
-            screenshot = device.screenshot()
-        screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
-    except Exception as exc:
-        log(f"[{account.username}] Không chụp được màn hình để nhận diện [Mua quẻ lành]: {exc}")
-        return steps
 
+def _find_template(screen_bgr, templates, template_names, account, log):
+    """Tìm template theo thứ tự ưu tiên và trả về kết quả khớp đầu tiên."""
     for template_name in template_names:
         template = templates.get(template_name)
         if template is None:
@@ -62,29 +51,144 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
             log(f"[{account.username}] Lỗi template matching {template_name}: {exc}")
             continue
 
-        if match is None:
-            continue
+        if match is not None:
+            report_template_match(
+                log,
+                context=f"[{account.username}]",
+                template=template,
+                match=match,
+            )
+            return template_name, template, match
 
-        report_template_match(
-            log,
-            context=f"[{account.username}]",
-            template=template,
-            match=match,
-        )
+    return None, None, None
 
-        if template_name == _TEMPLATE_CUA_HANG_DANG_CHON_SHOP_CHIEN_TRANH:
-            log(f"[{account.username}] Nhận diện: đang chọn tab [Shop Chiến Tranh].")
-        elif template_name == _TEMPLATE_CUA_HANG_DANG_CHON_DANH_VONG:
-            log(f"[{account.username}] Nhận diện: đang chọn tab [Shop Danh Vọng].")
-        elif template_name == _TEMPLATE_CUA_HANG_CHUA_MUA_QUE_LANH:
-            log(f"[{account.username}] Nhận diện: [Quẻ lành] chưa được mua.")
-        elif template_name == _TEMPLATE_CUA_HANG_DA_MUA_QUE_LANH:
-            log(f"[{account.username}] Nhận diện: [Quẻ lành] đã được mua.")
-        elif template_name == _TEMPLATE_CUA_HANG_MAN_HINH_MUA_QUE_LANH:
-            log(f"[{account.username}] Nhận diện: hộp thoại [Mua quẻ lành] đang mở.")
 
-        steps.remove(step)
+def _run(
+    worker, account, steps, device, ocr_client, log, screenshot,
+    templates, swipe_positions, fortune_clicked=False,
+) -> list[str]:
+    """Tìm Quẻ lành; cuộn tối đa hai lần cho đến khi thấy trạng thái mua."""
+    step = _STEP_CUA_HANG_DANH_VONG_MUA_QUE_LANH
+    if step not in steps:
         return steps
 
-    log(f"[{account.username}] Không nhận diện được trạng thái [Mua quẻ lành]; giữ lại step.")
+    if not worker._wait_if_paused():
+        log(f"[{account.username}] Mua [Quẻ lành] đã dừng theo yêu cầu.")
+        return steps
+
+    try:
+        if screenshot is None:
+            screenshot = device.screenshot()
+        screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
+    except Exception as exc:
+        log(f"[{account.username}] Không chụp được màn hình [Mua quẻ lành]: {exc}")
+        return steps
+
+    # Ưu tiên hai trạng thái của Quẻ lành để dừng cuộn ngay khi tìm thấy.
+    template_names = (
+        _TEMPLATE_CUA_HANG_DA_MUA_QUE_LANH,
+        _TEMPLATE_CUA_HANG_CHUA_MUA_QUE_LANH,
+        _TEMPLATE_CUA_HANG_DANG_CHON_DANH_VONG,
+        _TEMPLATE_CUA_HANG_DANG_CHON_SHOP_CHIEN_TRANH,
+        _TEMPLATE_CUA_HANG_MAN_HINH_MUA_QUE_LANH,
+    )
+    template_name, template, match = _find_template(
+        screen_bgr, templates, template_names, account, log
+    )
+
+    if template_name is None:
+        log(f"[{account.username}] Không nhận diện được trạng thái [Mua quẻ lành]; giữ lại step.")
+        return steps
+
+    if template_name == _TEMPLATE_CUA_HANG_DA_MUA_QUE_LANH:
+        swipe_positions.clear()
+        return _finish_step(steps, account, log)
+
+    if template_name == _TEMPLATE_CUA_HANG_CHUA_MUA_QUE_LANH:
+        swipe_positions.clear()
+        if fortune_clicked:
+            log(
+                f"[{account.username}] Đã click [Quẻ lành] nhưng màn hình vẫn báo chưa mua; "
+                "không click lặp, giữ lại step."
+            )
+            return steps
+
+        x = (match.left + match.right) // 2
+        y = match.bottom - 1
+        log(f"[{account.username}] Click sát đáy template [Quẻ lành] tại ({x}, {y}).")
+        try:
+            device.shell(f"input tap {x} {y}")
+            time.sleep(0.8)
+        except Exception as exc:
+            log(f"[{account.username}] Click [Quẻ lành] thất bại: {exc}")
+            return steps
+
+        return _run(
+            worker, account, steps, device, ocr_client, log, None,
+            templates, swipe_positions, fortune_clicked=True,
+        )
+
+    if template_name == _TEMPLATE_CUA_HANG_DANG_CHON_DANH_VONG:
+        if not swipe_positions:
+            log(
+                f"[{account.username}] Đã vuốt tìm [Quẻ lành] đủ "
+                f"{_MAX_SWIPE_FORTUNE_LOT} lần; không vuốt thêm."
+            )
+            return steps
+
+        start_x, start_y = ButtonPositions().get(
+            "cua_hang.chien_tranh.danh_vong", "cua_hang_danh_vong_item2"
+        )
+        end_x, end_y = ButtonPositions().get(
+            "cua_hang.chien_tranh.danh_vong", "cua_hang_danh_vong_item1"
+        )
+        swipe_number = _MAX_SWIPE_FORTUNE_LOT - len(swipe_positions) + 1
+        log(
+            f"[{account.username}] Vuốt Shop Danh Vọng từ ({start_x}, {start_y}) "
+            f"lên ({end_x}, {end_y}) để tìm [Quẻ lành] "
+            f"(lần {swipe_number}/{_MAX_SWIPE_FORTUNE_LOT})."
+        )
+        try:
+            device.shell(
+                f"input swipe {start_x} {start_y} {end_x} {end_y} 500"
+            )
+            time.sleep(0.8)
+        except Exception as exc:
+            log(f"[{account.username}] Vuốt tìm [Quẻ lành] thất bại: {exc}")
+            return steps
+
+        swipe_positions.pop()
+        return _run(
+            worker, account, steps, device, ocr_client, log, None,
+            templates, swipe_positions, fortune_clicked=False,
+        )
+
+    if template_name == _TEMPLATE_CUA_HANG_DANG_CHON_SHOP_CHIEN_TRANH:
+        log(f"[{account.username}] Nhận diện: đang chọn tab [Shop Chiến Tranh].")
+    elif template_name == _TEMPLATE_CUA_HANG_MAN_HINH_MUA_QUE_LANH:
+        log(f"[{account.username}] Nhận diện: hộp thoại [Mua quẻ lành] đang mở.")
+
     return steps
+
+
+def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> list[str]:
+    """Tìm và xử lý trạng thái mua Quẻ lành trong Shop Danh Vọng."""
+    if _STEP_CUA_HANG_DANH_VONG_MUA_QUE_LANH not in steps:
+        return steps
+
+    log(f"[{account.username}] Bắt đầu [Mua quẻ lành] ...")
+    template_names = (
+        _TEMPLATE_CUA_HANG_DA_MUA_QUE_LANH,
+        _TEMPLATE_CUA_HANG_CHUA_MUA_QUE_LANH,
+        _TEMPLATE_CUA_HANG_DANG_CHON_DANH_VONG,
+        _TEMPLATE_CUA_HANG_DANG_CHON_SHOP_CHIEN_TRANH,
+        _TEMPLATE_CUA_HANG_MAN_HINH_MUA_QUE_LANH,
+    )
+    templates = get_templates(template_names)
+
+    # Hai lượt vuốt từ item2 (dưới) lên item1 (trên).
+    swipe_positions = [1] * _MAX_SWIPE_FORTUNE_LOT
+    return _run(
+        worker, account, steps, device, ocr_client, log, screenshot,
+        templates, swipe_positions,
+    )
