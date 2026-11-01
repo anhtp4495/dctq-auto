@@ -114,5 +114,11 @@
       "x": 960,
       "y": 570
     }
+  },
+  "quan_su.giao_tranh.thu_quan": {
+    "xac_nhan": {
+      "x": 1131,
+      "y": 738
+    }
   }
 }

@@ -671,6 +671,95 @@
           }
         }
       }
+    },
+    "quan_su.giao_tranh": {
+      "source_image": "resources/screens/giao_tranh/man_hinh_chinh.png",
+      "templates": {
+        "loi_vao_giao_tranh": {
+          "description": "[Màn hình chính] - [Quân sự] - Lối vào [Giao Tranh]",
+          "rect": { "top": 770, "left": 254, "right": 306, "bottom": 831},
+          "search_rect":  { "top": 600, "left": 0, "right": 600, "bottom": 1070},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "chua_su_dung_canh_bat_tran": {
+          "description": "[Giao tranh] - [Canh bát trân]",
+          "rect": { "top": 841, "left": 1753, "right": 1791, "bottom": 881},
+          "search_rect":  { "top": 500, "left": 1110, "right": 1900, "bottom": 1070},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "da_dung_canh_bat_tran": {
+          "description": "[Giao tranh] - [Canh bát trân]",
+          "rect":  { "top": 565, "left": 1750, "right": 1788, "bottom": 608},
+          "search_rect":  { "top": 500, "left": 1110, "right": 1900, "bottom": 1070},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "tim_doi_thu": {
+          "description": "[Giao tranh] - [Tìm đối thủ]",
+          "rect": { "top": 730, "left": 1269, "right": 1513, "bottom": 794},
+          "search_rect":  { "top": 500, "left": 1110, "right": 1900, "bottom": 1070},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "xuat_chien": {
+          "description": "[Giao tranh] - [Xuất chiến]",
+          "rect": { "top": 456, "left": 522, "right": 699, "bottom": 515},
+          "search_rect":  { "top": 850, "left": 950, "right": 1900, "bottom": 1070},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "cam_nang": {
+          "description": "[Giao tranh] - [Cẩm nang]",
+          "rect": { "top": 970, "left": 1221, "right": 1353, "bottom": 1001},
+          "search_rect":  { "top": 850, "left": 950, "right": 1900, "bottom": 1070},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "chien_thuat": {
+          "description": "[Giao tranh] - [Chiến thuật]",
+          "rect": { "top": 967, "left": 1431, "right": 1602, "bottom": 1001},
+          "search_rect":  { "top": 850, "left": 950, "right": 1900, "bottom": 1070},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "rut_lui": {
+          "description": "[Giao tranh] - [Rút lui]",
+          "rect":  { "top": 239, "left": 62, "right": 170, "bottom": 286},
+          "search_rect":   { "top": 644, "left": 1, "right": 444, "bottom": 810},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "thu_quan": {
+          "description": "[Giao tranh] - [Thu quân]",
+          "rect": { "top": 129, "left": 63, "right": 181, "bottom": 168},
+          "search_rect":   { "top": 644, "left": 1, "right": 444, "bottom": 810},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "tran_sau": {
+          "description": "[Giao tranh] - [Trận sau]",
+          "rect": { "top": 720, "left": 621, "right": 716, "bottom": 771},
+          "search_rect":   { "top": 672, "left": 0, "right": 476, "bottom": 1079},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "hoi_thanh": {
+          "description": "[Giao tranh] - [Hồi thành]",
+          "rect": { "top": 942, "left": 704, "right": 925, "bottom": 1019},
+          "search_rect":   { "top": 851, "left": 1397, "right": 1919, "bottom": 1079},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "hop_thoai_thu_quan": {
+          "description": "[Giao tranh] - [Xác nhận thu quân?]",
+          "rect":  { "top": 195, "left": 1192, "right": 1430, "bottom": 275},
+          "search_rect":   { "top": 187, "left": 413, "right": 1587, "bottom": 887},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
     }
   }
 }
