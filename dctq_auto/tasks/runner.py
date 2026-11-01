@@ -300,7 +300,34 @@ class UtilityTaskRunnerMixin:
 
             completed = run_reward_weekly_doan_chien(self, device, completed, total)
 
-        if self._config.get("task_open_battle"):
+        battle_config_keys = (
+            "task_open_battle", "task_use_bazhen", "task_find_battle_opponent",
+            "xuat_chien", "task_start_battle", "task_battle_time_mode", "task_end_battle",
+        )
+        battle_flow_handled = any(self._config.get(key) for key in battle_config_keys)
+        if battle_flow_handled:
+            from dctq_auto.config.constants import _STEP_QUAN_SU_GIAO_TRANH
+            from dctq_auto.tasks.common.battle import task_battle
+
+            battle_account = SimpleNamespace(
+                username=self._config.get("login_username") or self._serial or "Tác vụ"
+            )
+            battle_steps = [_STEP_QUAN_SU_GIAO_TRANH]
+            failed_battle_tasks = task_battle.run(
+                self, battle_account, battle_steps, device, ocr_client,
+                lambda message: self.log_message.emit(message),
+            )
+            selected_battle_count = sum(
+                bool(self._config.get(key)) for key in battle_config_keys
+            )
+            completed += selected_battle_count - len(failed_battle_tasks)
+            self.progress_changed.emit(
+                completed, max(1, total),
+                "Hoàn tất Giao Tranh" if not failed_battle_tasks
+                else "Một số tác vụ Giao Tranh chưa hoàn tất",
+            )
+
+        if self._config.get("task_open_battle") and not battle_flow_handled:
             label = "Mở màn hình Giao Tranh"
             self.task_progress_changed.emit(label, "running", 0, 1)
             try:
@@ -706,7 +733,7 @@ class UtilityTaskRunnerMixin:
                     completed, max(1, total), f"Lỗi: {label}"
                 )
 
-        if self._config.get("task_use_bazhen"):
+        if self._config.get("task_use_bazhen") and not battle_flow_handled:
             label = "Sử dụng Canh Bát Trân"
             self.task_progress_changed.emit(label, "running", 0, 1)
             try:
@@ -747,7 +774,7 @@ class UtilityTaskRunnerMixin:
                     completed, max(1, total), f"Lỗi: {label}"
                 )
 
-        if self._config.get("task_find_battle_opponent"):
+        if self._config.get("task_find_battle_opponent") and not battle_flow_handled:
             label = "Tìm đối thủ Giao Tranh"
             self.task_progress_changed.emit(label, "running", 0, 1)
             try:
@@ -819,7 +846,7 @@ class UtilityTaskRunnerMixin:
                     completed, max(1, total), f"Lỗi: {label}"
                 )
 
-        if self._config.get("xuat_chien"):
+        if self._config.get("xuat_chien") and not battle_flow_handled:
             label = "Xuất chiến"
             self.task_progress_changed.emit(label, "running", 0, 1)
             rect = (1433, 970, 1614, 1016)
@@ -1230,7 +1257,7 @@ class UtilityTaskRunnerMixin:
 
         battle_number_for_start = [1]
 
-        if self._config.get("task_start_battle"):
+        if self._config.get("task_start_battle") and not battle_flow_handled:
             label = "Bắt đầu trận Giao Tranh"
             target_battles = max(1, int(self._config.get("task_open_battle_count", 1)))
             self.task_progress_changed.emit(label, "running", 1, target_battles)
@@ -1409,7 +1436,7 @@ class UtilityTaskRunnerMixin:
                     return False
             return True
 
-        if self._config.get("task_start_battle") and self._config.get("task_battle_time_mode", False):
+        if self._config.get("task_start_battle") and self._config.get("task_battle_time_mode", False) and not battle_flow_handled:
             label = "Thời gian tối đa Giao Tranh"
             self.task_progress_changed.emit(label, "running", 0, 1)
             try:
@@ -1449,7 +1476,7 @@ class UtilityTaskRunnerMixin:
                 self.task_progress_changed.emit(label, "failed", 0, target_battles)
                 self.progress_changed.emit(completed, max(1, total), f"Lỗi: {label}")
 
-        if self._config.get("task_end_battle"):
+        if self._config.get("task_end_battle") and not battle_flow_handled:
             label = "Kết thúc trận Giao Tranh"
             self.task_progress_changed.emit(label, "running", 0, 1)
             current_battle = 1
