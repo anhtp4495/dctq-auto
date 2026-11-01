@@ -582,8 +582,7 @@ class MainWindow(QMainWindow):
                 "clone_guild_fortune",
                 "clone_guild_donate_knb",
                 "clone_guild_donate_rations",
-                "clone_guild_donate_knb",
-                "clone_guild_donate_rations",
+                "clone_buy_fortune_lot",
                 "clone_quoc_chien",
                 "clone_reward_guild",
             )
@@ -1854,6 +1853,7 @@ class MainWindow(QMainWindow):
                     "clone_guild_check_in",
                     "clone_receive_lucky_bag",
                     "clone_guild_fortune",
+                    "clone_buy_fortune_lot",
                     "clone_logout",
                 ) if config.get(key)
             ]
