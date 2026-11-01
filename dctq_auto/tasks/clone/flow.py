@@ -558,6 +558,8 @@ def _get_clone_optimize_config(self) -> dict:
     # _config được tạo từ CloneTab.current_config(), nên các giá trị checkbox
     # đã được chuyển thành bool trước khi worker bắt đầu chạy.
     config = dict(self._config)
+    from dctq_auto.tasks.task_battle import get_battle_config
+    config["battle_config"] = get_battle_config(config)
 
     checkbox_labels = {
         "clone_daily_check_in": "Điểm danh",
