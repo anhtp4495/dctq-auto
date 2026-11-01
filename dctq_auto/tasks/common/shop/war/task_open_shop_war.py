@@ -7,7 +7,7 @@ import numpy as np
 
 from dctq_auto.config.constants import (
     _TEMPLATE_CUA_HANG_SHOP_CHIEN_TRANH,
-    _TEMPLATE_CUA_HANG_DANG_CHON_SHOP_CHIEN_TRANH,
+    _TEMPLATE_CUA_HANG_DANG_CHON_DANH_VONG,
 )
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
@@ -23,8 +23,11 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None, curren
         log(f"[{account.username}] Đã dừng khi mở [Shop Chiến Tranh].")
         return False
 
+    # Xác nhận đang ở màn hình chiến tranh bằng lối vào Shop Danh Vọng.
+    # Không dùng dang_chon_shop_chien_tranh ở đây vì hai template tab Chiến Tranh
+    # đang dùng cùng một vùng crop trong templates.json.
     template_names = (
-        _TEMPLATE_CUA_HANG_DANG_CHON_SHOP_CHIEN_TRANH,
+        _TEMPLATE_CUA_HANG_DANG_CHON_DANH_VONG,
         _TEMPLATE_CUA_HANG_SHOP_CHIEN_TRANH,
     )
     templates = get_templates(template_names)
@@ -54,7 +57,7 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None, curren
             continue
 
         report_template_match(log, context=f"[{account.username}]", template=template, match=match)
-        if template_name == _TEMPLATE_CUA_HANG_DANG_CHON_SHOP_CHIEN_TRANH:
+        if template_name == _TEMPLATE_CUA_HANG_DANG_CHON_DANH_VONG:
             log(f"[{account.username}] Đã xác nhận đang ở [Shop Chiến Tranh].")
             return True
 
