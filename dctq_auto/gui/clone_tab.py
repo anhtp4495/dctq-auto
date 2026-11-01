@@ -179,13 +179,13 @@ class CloneTab(QWidget):
         war_layout.addLayout(battle_mode_row)
 
         battle_mode_fast_row = QHBoxLayout()
-        battle_mode_fast_row.addSpacing(72)
+        battle_mode_fast_row.addSpacing(47)
         battle_mode_fast_row.addWidget(self.clone_battle_mode_fast)
         battle_mode_fast_row.addStretch(1)
         war_layout.addLayout(battle_mode_fast_row)
 
         battle_mode_normal_row = QHBoxLayout()
-        battle_mode_normal_row.addSpacing(72)
+        battle_mode_normal_row.addSpacing(47)
         battle_mode_normal_row.addWidget(self.clone_battle_mode_normal)
         battle_mode_normal_row.addStretch(1)
         war_layout.addLayout(battle_mode_normal_row)
