@@ -1,6 +1,9 @@
 """Điều phối các tác vụ thuộc [Shop Danh Vọng]."""
 
-from dctq_auto.tasks.common.shop.shop_war.shop_prestige import task_buy_fortune_lot
+from dctq_auto.tasks.common.shop.shop_war.shop_prestige import (
+    task_buy_fortune_lot,
+    task_open_shop_prestige,
+)
 
 
 _PRESTIGE_SHOP_TASKS = (
@@ -9,11 +12,17 @@ _PRESTIGE_SHOP_TASKS = (
 
 
 def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> list[str]:
-    """Lần lượt gọi các task con thuộc Shop Danh Vọng."""
+    """Mở Shop Danh Vọng rồi lần lượt gọi các task con."""
+    if not task_open_shop_prestige.run(
+        worker, account, steps, device, ocr_client, log, screenshot=screenshot
+    ):
+        log(f"[{account.username}] Không mở được [Shop Danh Vọng]; bỏ qua các tác vụ con.")
+        return steps
+
     for task, task_name in _PRESTIGE_SHOP_TASKS:
         try:
             steps = task.run(
-                worker, account, steps, device, ocr_client, log, screenshot=screenshot
+                worker, account, steps, device, ocr_client, log, screenshot=None
             )
         except Exception as exc:
             log(f"[{account.username}] {task_name} thất bại: {exc}")
