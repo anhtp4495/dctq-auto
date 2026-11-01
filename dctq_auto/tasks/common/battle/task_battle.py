@@ -564,6 +564,12 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
                 if not battle_ok:
                     failed.append(key)
 
+    if "task_end_battle" in selected and needs_battle and not battle_ok:
+        worker.task_progress_changed.emit(
+            _TASK_LABELS["task_end_battle"], "failed", 0, 1
+        )
+        failed.append("task_end_battle")
+
     if opened and battle_ok and config.get("task_end_battle"):
         close_ok = task_close_battle(worker, account, device, ocr_client, log)
         if close_ok:
