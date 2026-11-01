@@ -24,6 +24,17 @@ _STEP_QUAN_DOAN_DONG_GOP_KNB = "quan_doan_dong_gop_knb"
 # Step cửa hàng
 _STEP_CUA_HANG_DANH_VONG_MUA_QUE_LANH = "cua_hang_danh_vong_mua_que_lanh"
 
+# Template dùng trong màn hình Cửa hàng.
+_TEMPLATE_MAIN_CUA_HANG = "main/cua_hang"
+_TEMPLATE_CUA_HANG_THUONG_THANH = "cua_hang/thuong_thanh"
+_TEMPLATE_CUA_HANG_SHOP_CHIEN_TRANH = "cua_hang/shop_chien_tranh"
+_TEMPLATE_CUA_HANG_DANG_CHON_SHOP_CHIEN_TRANH = "cua_hang/dang_chon_shop_chien_tranh"
+_TEMPLATE_CUA_HANG_DANH_VONG = "cua_hang.chien_tranh.danh_vong/shop_danh_vong"
+_TEMPLATE_CUA_HANG_DANG_CHON_DANH_VONG = "cua_hang.chien_tranh.danh_vong/dang_chon_shop_danh_vong"
+_TEMPLATE_CUA_HANG_CHUA_MUA_QUE_LANH = "cua_hang.chien_tranh.danh_vong/chua_mua_que_lanh"
+_TEMPLATE_CUA_HANG_DA_MUA_QUE_LANH = "cua_hang.chien_tranh.danh_vong/da_mua_que_lanh"
+_TEMPLATE_CUA_HANG_MAN_HINH_MUA_QUE_LANH = "cua_hang.chien_tranh.danh_vong.mua_que_lanh/man_hinh_mua_que_lanh"
+
 # Template dùng để mở và đóng màn hình Quân đoàn.
 _TEMPLATE_MAIN_QUAN_DOAN_MO_CHAT = "main/quan_doan_mo_chat"
 _TEMPLATE_QUAN_DOAN_CHAT_VAO_QUAN_DOAN = "quan_doan.chat/vao_quan_doan"
