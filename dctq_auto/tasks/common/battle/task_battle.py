@@ -157,6 +157,7 @@ def task_open_battle(self, account, device, ocr_client, log, screenshot=None) ->
     templates = get_templates(_OPEN_TEMPLATES)
     positions = ButtonPositions()
     max_attempts = 60
+    full_open = bool(self._config.get("task_open_battle") or self._config.get("xuat_chien"))
 
     for attempt in range(1, max_attempts + 1):
         if not self._wait_if_paused():
@@ -205,6 +206,8 @@ def task_open_battle(self, account, device, ocr_client, log, screenshot=None) ->
                 x, y = _click_match(device, bazhen)
                 log(f"[{account.username}] Click sử dụng Canh Bát Trận tại ({x}, {y}).")
                 time.sleep(1)
+                if not full_open and not self._config.get("task_find_battle_opponent"):
+                    return True
                 continue
 
         # Bước 4: mở giao diện tìm đối thủ khi tác vụ được chọn.
@@ -216,6 +219,8 @@ def task_open_battle(self, account, device, ocr_client, log, screenshot=None) ->
             x, y = _click_match(device, opponent)
             log(f"[{account.username}] Click Tìm đối thủ tại ({x}, {y}).")
             time.sleep(1)
+            if not full_open:
+                return True
             continue
 
         # Bước 5: xử lý hộp thoại Kim Bài Miễn Chiến.
