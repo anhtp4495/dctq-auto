@@ -1,20 +1,16 @@
 """Điều phối các tác vụ thuộc màn hình [Cửa hàng]."""
 
-from dctq_auto.config.constants import _STEP_CUA_HANG_DANH_VONG_MUA_QUE_LANH
 from dctq_auto.tasks.common.shop import task_close_shop, task_open_shop
 from dctq_auto.tasks.common.shop.war import task_war
 
 
-_SHOP_STEP_IDS = {
-    _STEP_CUA_HANG_DANH_VONG_MUA_QUE_LANH,
-}
+_SHOP_TASKS = (
+    (task_war, "Shop Chiến Tranh"),
+)
 
 
 def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> list[str]:
-    """Mở shop, chạy các tác vụ đã chọn, sau đó đóng giao diện shop."""
-    if not _SHOP_STEP_IDS.intersection(steps):
-        return steps
-
+    """Mở shop, lần lượt chạy danh sách task con, sau đó đóng giao diện shop."""
     shop_opened = False
     try:
         if not task_open_shop.run(
@@ -24,10 +20,14 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
             return steps
         shop_opened = True
 
-        if _STEP_CUA_HANG_DANH_VONG_MUA_QUE_LANH in steps:
-            steps = task_war.run(
-                worker, account, steps, device, ocr_client, log
-            )
+        for task, task_name in _SHOP_TASKS:
+            try:
+                steps = task.run(
+                    worker, account, steps, device, ocr_client, log, screenshot=None
+                )
+            except Exception as exc:
+                log(f"[{account.username}] {task_name} thất bại: {exc}")
+
         return steps
     finally:
         if shop_opened:
