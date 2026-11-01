@@ -2,7 +2,7 @@
 
 from dctq_auto.config.constants import _STEP_CUA_HANG_DANH_VONG_MUA_QUE_LANH
 from dctq_auto.tasks.common.shop import task_close_shop, task_open_shop
-from dctq_auto.tasks.common.shop.war import task_buy_fortune_lot, task_open_shop_war
+from dctq_auto.tasks.common.shop.war import task_war
 
 
 _SHOP_STEP_IDS = {
@@ -25,14 +25,9 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
         shop_opened = True
 
         if _STEP_CUA_HANG_DANH_VONG_MUA_QUE_LANH in steps:
-            if task_open_shop_war.run(
+            steps = task_war.run(
                 worker, account, steps, device, ocr_client, log
-            ):
-                steps = task_buy_fortune_lot.run(
-                    worker, account, steps, device, ocr_client, log
-                )
-            else:
-                log(f"[{account.username}] Không mở được [Shop Chiến Tranh]; giữ lại step mua Quẻ lành.")
+            )
         return steps
     finally:
         if shop_opened:
