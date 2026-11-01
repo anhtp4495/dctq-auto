@@ -8,8 +8,21 @@ _SHOP_TASKS = (
     (task_shop_war, "Shop Chiến Tranh"),
 )
 
-\ndef pre_shop(steps, log) -> bool:\n    """Kiểm tra trước khi mở Cửa hàng xem có step nào đã triển khai được chọn không."""\n    return task_shop_war.pre_shop_war(steps, log)\n\n\ndef run(worker, account, steps, device, ocr_client, log, screenshot=None) -> list[str]:\n    """Mở shop, lần lượt chạy danh sách task con, sau đó đóng giao diện shop."""
-    if not pre_shop(steps, log):\n        return steps\n\n    shop_opened = False\n    try:\n        if not task_open_shop.run(\n            worker, account, device, ocr_client, log, screenshot=screenshot
+
+def pre_shop(steps, log) -> bool:
+    """Kiểm tra trước khi mở Cửa hàng xem có step nào đã triển khai được chọn không."""
+    return task_shop_war.pre_shop_war(steps, log)
+
+
+def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> list[str]:
+    """Mở shop, lần lượt chạy danh sách task con, sau đó đóng giao diện shop."""
+    if not pre_shop(steps, log):
+        return steps
+
+    shop_opened = False
+    try:
+        if not task_open_shop.run(
+            worker, account, device, ocr_client, log, screenshot=screenshot
         ):
             log(f"[{account.username}] Không mở được [Cửa hàng]; giữ nguyên step.")
             return steps
