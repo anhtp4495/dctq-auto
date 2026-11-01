@@ -96,6 +96,12 @@ def _click_match(device, match) -> tuple[int, int]:
     device.shell(f"input tap {x} {y}")
     return x, y
 
+def _swipe(device, start: tuple[int, int], end: tuple[int, int], duration_ms: int = 500) -> None:
+    """Kéo từ tọa độ bắt đầu đến tọa độ kết thúc bằng ADB."""
+    x1, y1 = start
+    x2, y2 = end
+    device.shell(f"input swipe {x1} {y1} {x2} {y2} {duration_ms}")
+
 
 def _mode(config) -> str:
     if config.get("giao_tranh_nhanh_1_co"):
@@ -368,6 +374,18 @@ def battle_run(self, account, device, ocr_client, log) -> bool:
         positions.get(group, f"vo_tuong_{index}")
         for index in range(1, 6)
     ]
+    hero_battle_points = [
+        positions.get(
+            "quan_su.giao_tranh", f"vi_tri_chien_dau_vo_tuong_{index}"
+        )
+        for index in range(1, 6)
+    ]
+    drag_point_a = positions.get(
+        "quan_su.giao_tranh", "diem_bat_dau_giao_tranh_1"
+    )
+    drag_point_b = positions.get(
+        "quan_su.giao_tranh", "diem_bat_dau_giao_tranh_2"
+    )
     mode = _mode(self._config)
     target_battles = max(1, int(self._config.get("task_open_battle_count", 1)))
     completed_battles = 0
@@ -453,20 +471,64 @@ def battle_run(self, account, device, ocr_client, log) -> bool:
             continue
 
         if retreat is not None and not hero_deployed:
-            log(f"[{account.username}] Phát hiện Rút lui; bắt đầu thả 5 võ tướng.")
-            for index, (x, y) in enumerate(hero_points, start=1):
+            log(
+                f"[{account.username}] Phát hiện Rút lui; chuẩn bị kéo thả 5 võ tướng."
+            )
+
+            # Đưa thao tác kéo từ A sang B hai lần để chuẩn bị thả hai võ tướng đầu.
+            for repeat in range(1, 3):
                 if not self._wait_if_paused():
-                    log(f"[{account.username}] Đã dừng trước khi thả võ tướng {index}.")
+                    log(f"[{account.username}] Đã dừng khi kéo điểm A -> B ({repeat}/2).")
                     return False
-                if index == 1:
-                    # Đồng hồ trận đấu bắt đầu đúng lúc click thả võ tướng đầu tiên.
-                    battle_started_at = time.monotonic()
-                device.shell(f"input tap {x} {y}")
+                _swipe(device, drag_point_a, drag_point_b)
                 log(
-                    f"[{account.username}] Thả võ tướng {index}/5 "
-                    f"tại ({x}, {y}) — bộ tọa độ {group}."
+                    f"[{account.username}] Kéo điểm A -> B lần {repeat}/2: "
+                    f"{drag_point_a} -> {drag_point_b}."
                 )
                 time.sleep(0.3)
+
+            # Thời gian trận bắt đầu ngay trước thao tác kéo võ tướng đầu tiên.
+            for index in range(2):
+                if not self._wait_if_paused():
+                    log(f"[{account.username}] Đã dừng trước khi thả võ tướng {index + 1}.")
+                    return False
+                if index == 0:
+                    battle_started_at = time.monotonic()
+                source = hero_points[index]
+                target = hero_battle_points[index]
+                _swipe(device, source, target)
+                log(
+                    f"[{account.username}] Thả võ tướng {index + 1}/5: "
+                    f"{source} -> {target}."
+                )
+                time.sleep(0.3)
+
+            # Đưa thao tác kéo từ B về A hai lần trước khi thả ba võ tướng còn lại.
+            for repeat in range(1, 3):
+                if not self._wait_if_paused():
+                    log(f"[{account.username}] Đã dừng khi kéo điểm B -> A ({repeat}/2).")
+                    return False
+                _swipe(device, drag_point_b, drag_point_a)
+                log(
+                    f"[{account.username}] Kéo điểm B -> A lần {repeat}/2: "
+                    f"{drag_point_b} -> {drag_point_a}."
+                )
+                time.sleep(0.3)
+
+            for index in range(2, 5):
+                if not self._wait_if_paused():
+                    log(f"[{account.username}] Đã dừng trước khi thả võ tướng {index + 1}.")
+                    return False
+                source = hero_points[index]
+                target = hero_battle_points[index]
+                _swipe(device, source, target)
+                log(
+                    f"[{account.username}] Thả võ tướng {index + 1}/5: "
+                    f"{source} -> {target}."
+                )
+                time.sleep(0.3)
+
+            # Chỉ đánh dấu đã thả sau khi đủ 5 tướng. Trong cùng trận không thả lại.
             hero_deployed = True
             if not self._config.get("task_end_battle") and mode == "normal":
                 log(f"[{account.username}] Đã thả đủ võ tướng; hoàn tất Bắt đầu trận.")
