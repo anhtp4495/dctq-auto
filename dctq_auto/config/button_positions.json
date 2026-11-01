@@ -115,6 +115,12 @@
       "y": 570
     }
   },
+  "quan_su.giao_tranh": {
+    "phat_dong_tan_cong_bo_bai_mien_chien": {
+      "x": 1140,
+      "y": 676
+    }
+  },
   "quan_su.giao_tranh.thu_quan": {
     "xac_nhan": {
       "x": 1131,

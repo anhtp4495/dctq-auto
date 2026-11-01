@@ -710,6 +710,13 @@
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
+        "bai_mien_chien": {
+          "description": "[Giao tranh] - [Tìm đối thủ] - [Kim bài miễn chiến]",
+          "rect": { "top": 393, "left": 1169, "right": 1558, "bottom": 464},
+          "search_rect":   { "top": 187, "left": 413, "right": 1587, "bottom": 887},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
         "xuat_chien": {
           "description": "[Giao tranh] - [Xuất chiến]",
           "rect": { "top": 456, "left": 522, "right": 699, "bottom": 515},
