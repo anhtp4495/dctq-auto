@@ -123,6 +123,34 @@
     "xac_nhan_dung_luong_thao": {
       "x": 1142,
       "y": 869
+    },
+    "diem_bat_dau_giao_tranh_1": {
+      "x": 960,
+      "y": 450
+    },
+    "diem_bat_dau_giao_tranh_2": {
+      "x": 960,
+      "y": 800
+    },
+    "vi_tri_chien_dau_vo_tuong_1": {
+      "x": 488,
+      "y": 512
+    },
+    "vi_tri_chien_dau_vo_tuong_2": {
+      "x": 1366,
+      "y": 487
+    },
+    "vi_tri_chien_dau_vo_tuong_3": {
+      "x": 436,
+      "y": 418
+    },
+    "vi_tri_chien_dau_vo_tuong_4": {
+      "x": 1491,
+      "y": 395
+    },
+    "vi_tri_chien_dau_vo_tuong_5": {
+      "x": 950,
+      "y": 744
     }
   },
   "quan_su.giao_tranh.danh_sach1": {
