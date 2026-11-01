@@ -772,6 +772,22 @@
           "search_rect":   { "top": 187, "left": 413, "right": 1587, "bottom": 887},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
+        },
+        "1_co": {
+          "description": "[Giao tranh] - [Trong trận] - 1 cờ",
+          "rect": { "top": 11, "left": 1042, "right": 1198, "bottom": 69},
+          "search_rect":   { "top": 187, "left": 413, "right": 1587, "bottom": 887},
+          "threshold": 0.85,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "2_co": {
+          "description": "[Giao tranh] - [Trong trận] - 2 cờ",
+          "rect": { "top": 13, "left": 1256, "right": 1402, "bottom": 69},
+          "search_rect":   { "top": 187, "left": 413, "right": 1587, "bottom": 887},
+          "threshold": 0.85,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     }
