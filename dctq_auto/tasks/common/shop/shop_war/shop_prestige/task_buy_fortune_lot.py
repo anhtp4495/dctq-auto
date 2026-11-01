@@ -87,11 +87,11 @@ def _run(
 
     # Ưu tiên hai trạng thái của Quẻ lành để dừng cuộn ngay khi tìm thấy.
     template_names = (
+        _TEMPLATE_CUA_HANG_MAN_HINH_MUA_QUE_LANH,
         _TEMPLATE_CUA_HANG_DA_MUA_QUE_LANH,
         _TEMPLATE_CUA_HANG_CHUA_MUA_QUE_LANH,
         _TEMPLATE_CUA_HANG_DANG_CHON_DANH_VONG,
         _TEMPLATE_CUA_HANG_DANG_CHON_SHOP_CHIEN_TRANH,
-        _TEMPLATE_CUA_HANG_MAN_HINH_MUA_QUE_LANH,
     )
     template_name, template, match = _find_template(
         screen_bgr, templates, template_names, account, log
@@ -242,11 +242,11 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
 
     log(f"[{account.username}] Bắt đầu [Mua quẻ lành] ...")
     template_names = (
+        _TEMPLATE_CUA_HANG_MAN_HINH_MUA_QUE_LANH,
         _TEMPLATE_CUA_HANG_DA_MUA_QUE_LANH,
         _TEMPLATE_CUA_HANG_CHUA_MUA_QUE_LANH,
         _TEMPLATE_CUA_HANG_DANG_CHON_DANH_VONG,
         _TEMPLATE_CUA_HANG_DANG_CHON_SHOP_CHIEN_TRANH,
-        _TEMPLATE_CUA_HANG_MAN_HINH_MUA_QUE_LANH,
     )
     templates = get_templates(template_names)
 
