@@ -53,7 +53,7 @@ def _tap_match(device, match, account, log, description):
 
 def run(
     worker, account, steps, device, ocr_client, log, screenshot=None,
-    current_try=1, purchase_submitted=False,
+    current_try=1, purchase_submitted=False, item_opened=False,
 ) -> list[str]:
     """Mở Danh Vọng, mua Quẻ lành một lần và xác nhận trạng thái đã mua."""
     if _STEP_CUA_HANG_DANH_VONG_MUA_QUE_LANH not in steps:
@@ -101,7 +101,7 @@ def run(
             return run(
                 worker, account, steps, device, ocr_client, log,
                 screenshot=None, current_try=current_try + 1,
-                purchase_submitted=True,
+                purchase_submitted=True, item_opened=item_opened,
             )
 
         try:
@@ -123,17 +123,27 @@ def run(
         return run(
             worker, account, steps, device, ocr_client, log,
             screenshot=None, current_try=current_try + 1,
-            purchase_submitted=True,
+            purchase_submitted=True, item_opened=item_opened,
         )
 
     if template_name == _TEMPLATE_CUA_HANG_CHUA_MUA_QUE_LANH:
         if purchase_submitted:
             log(f"[{account.username}] Đã gửi yêu cầu mua nhưng chưa xác nhận được Quẻ lành; giữ lại step.")
             return steps
+        if item_opened:
+            if current_try < _MAX_TRY_BUY_FORTUNE_LOT:
+                time.sleep(0.7)
+                return run(
+                    worker, account, steps, device, ocr_client, log,
+                    screenshot=None, current_try=current_try + 1,
+                    item_opened=True,
+                )
+            log(f"[{account.username}] Đã mở sản phẩm nhưng không nhận diện được hộp mua Quẻ lành; giữ lại step.")
+            return steps
         _tap_match(device, match, account, log, "sản phẩm [Quẻ lành]")
         return run(
             worker, account, steps, device, ocr_client, log,
-            screenshot=None, current_try=current_try + 1,
+            screenshot=None, current_try=current_try + 1, item_opened=True,
         )
 
     if template_name == _TEMPLATE_CUA_HANG_DANG_CHON_DANH_VONG:
@@ -153,7 +163,7 @@ def run(
         return run(
             worker, account, steps, device, ocr_client, log,
             screenshot=None, current_try=current_try + 1,
-            purchase_submitted=purchase_submitted,
+            purchase_submitted=purchase_submitted, item_opened=item_opened,
         )
 
     log(f"[{account.username}] Không xác định được trạng thái [Mua quẻ lành]; giữ lại step.")
