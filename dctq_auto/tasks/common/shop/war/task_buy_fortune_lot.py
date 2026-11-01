@@ -156,6 +156,16 @@ def run(
         )
 
     if template_name == _TEMPLATE_CUA_HANG_DANG_CHON_DANH_VONG:
+        if item_opened:
+            if current_try < _MAX_TRY_BUY_FORTUNE_LOT:
+                time.sleep(0.7)
+                return run(
+                    worker, account, steps, device, ocr_client, log,
+                    screenshot=None, current_try=current_try + 1,
+                    item_opened=True,
+                )
+            log(f"[{account.username}] Không nhận diện được hộp mua sau khi mở sản phẩm; giữ lại step.")
+            return steps
         if current_try >= _MAX_TRY_BUY_FORTUNE_LOT:
             log(f"[{account.username}] Đã hết số lần mở [Shop Danh Vọng]; giữ lại step.")
             return steps
