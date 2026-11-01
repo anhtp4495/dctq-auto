@@ -788,6 +788,14 @@
           "threshold": 0.85,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
+        },
+        "dung_luong_thao": {
+          "description": "[Giao tranh] - [Hộp thoại dùng lương thảo]",
+          "rect": { "top": 9, "left": 24, "right": 293, "bottom": 64},
+          "search_rect": { "top": 82, "left": 487, "right": 1436, "bottom": 1002},
+          "threshold": 0.85,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     }
