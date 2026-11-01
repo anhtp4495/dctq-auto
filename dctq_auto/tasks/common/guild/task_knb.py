@@ -127,6 +127,12 @@ def _run(
         )
 
     if template_name == _TEMPLATE_QUAN_DOAN_DONG_GOP_40_KNB:
+        tap_x, tap_y = ButtonPositions().get("quan_doan.knb", "dong_man_hinh")
+        log(
+            f"[{account.username}] Đóng màn hình góp KNB ({tap_x}, {tap_y}); "
+        )
+        device.shell(f"input tap {tap_x} {tap_y}")
+        time.sleep(1.5)
         return _finish_step(
             steps, account, log,
             "Đã nhận diện mức đóng góp 40 KNB; dừng và bỏ step.",
@@ -153,6 +159,7 @@ def _run(
             f"[{account.username}] Đóng màn hình góp KNB ({tap_x}, {tap_y}); "
         )
         device.shell(f"input tap {tap_x} {tap_y}")
+        time.sleep(0.7)
 
     if current_try < _MAX_TRY_DETECT_MAIN_SCREEN:
         time.sleep(0.7)

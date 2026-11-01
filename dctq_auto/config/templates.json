@@ -319,7 +319,7 @@
         },
         "quan_doan_cau_van": {
           "description": "Màn hình [Quân Đoàn] - [Cầu Vận].",
-          "rect": { "top": 490, "left": 540, "right": 760, "bottom": 672},
+          "rect": { "top": 527, "left": 527, "right": 716, "bottom": 653},
           "search_rect": { "top": 418, "left": 54, "right": 1870, "bottom": 758},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
