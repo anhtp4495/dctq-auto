@@ -146,15 +146,17 @@ class CloneTab(QWidget):
         )
         war_layout.addWidget(self.clone_quan_su_giao_tranh)
 
-        battle_settings_row = QHBoxLayout()
-        battle_settings_row.addWidget(QLabel("Số trận:"))
+        battle_count_row = QHBoxLayout()
+        battle_count_row.addWidget(QLabel("Số trận:"))
         self.clone_battle_count = QSpinBox()
         self.clone_battle_count.setRange(1, 60)
         self.clone_battle_count.setValue(15)
         self.clone_battle_count.setKeyboardTracking(False)
-        battle_settings_row.addWidget(self.clone_battle_count)
+        battle_count_row.addWidget(self.clone_battle_count)
+        battle_count_row.addStretch(1)
+        war_layout.addLayout(battle_count_row)
 
-        battle_settings_row.addWidget(QLabel("Chế độ:"))
+        battle_mode_row = QHBoxLayout()
         self.clone_battle_mode_group = QButtonGroup(self)
         self.clone_battle_mode_group.setExclusive(True)
         self.clone_battle_mode_fast = QCheckBox("Nhanh 1 cờ")
@@ -164,21 +166,31 @@ class CloneTab(QWidget):
         self.clone_battle_mode_group.addButton(self.clone_battle_mode_normal, 2)
         self.clone_battle_mode_group.addButton(self.clone_battle_mode_time_limit, 3)
         self.clone_battle_mode_time_limit.setChecked(True)
-        battle_settings_row.addWidget(self.clone_battle_mode_fast)
-        battle_settings_row.addWidget(self.clone_battle_mode_normal)
-        battle_settings_row.addWidget(self.clone_battle_mode_time_limit)
+        battle_mode_row.addWidget(self.clone_battle_mode_fast)
+        battle_mode_row.addWidget(self.clone_battle_mode_normal)
+        battle_mode_row.addWidget(self.clone_battle_mode_time_limit)
 
         self.clone_battle_time_limit = QSpinBox()
         self.clone_battle_time_limit.setRange(1, 180)
         self.clone_battle_time_limit.setValue(45)
         self.clone_battle_time_limit.setSuffix(" giây")
         self.clone_battle_time_limit.setKeyboardTracking(False)
-        battle_settings_row.addWidget(self.clone_battle_time_limit)
+        battle_mode_row.addWidget(self.clone_battle_time_limit)
         self.clone_battle_mode_time_limit.toggled.connect(
             self.clone_battle_time_limit.setEnabled
         )
         self.clone_battle_time_limit.setEnabled(True)
-        war_layout.addLayout(battle_settings_row)
+        war_layout.addLayout(battle_mode_row)
+
+        battle_mode_hint = QLabel(
+            "• Nhanh 1 cờ: Chỉ cần thắng trận là kết thúc.\\n"
+            "• Bình thường: Giao tranh đến khi tiêu diệt hết mục tiêu.\\n"
+            "• Thời gian tối đa: Nếu hết thời gian đã chọn mà chưa tiêu diệt hết mục tiêu, "
+            "trận đấu sẽ kết thúc."
+        )
+        battle_mode_hint.setWordWrap(True)
+        battle_mode_hint.setStyleSheet("color: #777;")
+        war_layout.addWidget(battle_mode_hint)
         layout.addWidget(war_group)
 
         self.clone_quoc_chien = QCheckBox(
