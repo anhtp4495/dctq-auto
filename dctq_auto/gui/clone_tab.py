@@ -182,15 +182,28 @@ class CloneTab(QWidget):
         self.clone_battle_time_limit.setEnabled(True)
         war_layout.addLayout(battle_mode_row)
 
-        battle_mode_hint = QLabel(
-            "• Nhanh 1 cờ: Chỉ cần thắng trận là kết thúc.\\n"
-            "• Bình thường: Giao tranh đến khi tiêu diệt hết mục tiêu.\\n"
-            "• Thời gian tối đa: Nếu hết thời gian đã chọn mà chưa tiêu diệt hết mục tiêu, "
-            "trận đấu sẽ kết thúc."
+        self.clone_battle_mode_hint = QLabel()
+        self.clone_battle_mode_hint.setWordWrap(True)
+        self.clone_battle_mode_hint.setStyleSheet("color: #777;")
+        war_layout.addWidget(self.clone_battle_mode_hint)
+
+        battle_mode_hints = {
+            1: "Nhanh 1 cờ: Chỉ cần thắng trận là kết thúc.",
+            2: "Bình thường: Giao tranh đến khi tiêu diệt hết mục tiêu.",
+            3: (
+                "Thời gian tối đa: Nếu hết thời gian đã chọn mà chưa tiêu diệt hết "
+                "mục tiêu, trận đấu sẽ kết thúc."
+            ),
+        }
+        for mode_id, hint in battle_mode_hints.items():
+            self.clone_battle_mode_group.button(mode_id).toggled.connect(
+                lambda checked, text=hint: (
+                    self.clone_battle_mode_hint.setText(text) if checked else None
+                )
+            )
+        self.clone_battle_mode_hint.setText(
+            battle_mode_hints[self.clone_battle_mode_group.checkedId()]
         )
-        battle_mode_hint.setWordWrap(True)
-        battle_mode_hint.setStyleSheet("color: #777;")
-        war_layout.addWidget(battle_mode_hint)
         layout.addWidget(war_group)
 
         self.clone_quoc_chien = QCheckBox(
