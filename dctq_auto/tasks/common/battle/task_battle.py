@@ -24,6 +24,7 @@ from dctq_auto.config.constants import (
     _TEMPLATE_QUAN_SU_GIAO_TRANH_XUAT_CHIEN,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_1_CO,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_2_CO,
+    _TEMPLATE_QUAN_SU_GIAO_TRANH_DUNG_LUONG_THAO,
 )
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
@@ -55,6 +56,7 @@ _BATTLE_TEMPLATES = (
     _TEMPLATE_QUAN_SU_GIAO_TRANH_HOI_THANH,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_1_CO,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_2_CO,
+    _TEMPLATE_QUAN_SU_GIAO_TRANH_DUNG_LUONG_THAO,
 )
 
 
@@ -389,6 +391,25 @@ def battle_run(self, account, device, ocr_client, log) -> bool:
         except Exception as exc:
             log(f"[{account.username}] Không chụp được màn hình trận đấu: {exc}")
             return False
+
+        # Sau khi bấm Xuất chiến, game có thể hiện hộp thoại xác nhận dùng
+        # lương thảo nếu tài nguyên không đủ cho lần xuất quân này.
+        dung_luong_thao = _match(
+            screen,
+            templates.get(_TEMPLATE_QUAN_SU_GIAO_TRANH_DUNG_LUONG_THAO),
+            account=account, log=log,
+        )
+        if dung_luong_thao is not None:
+            x, y = positions.get(
+                "quan_su.giao_tranh", "xac_nhan_dung_luong_thao"
+            )
+            device.shell(f"input tap {x} {y}")
+            log(
+                f"[{account.username}] Phát hiện hộp thoại Dùng lương thảo "
+                f"(thiếu tài nguyên khi xuất quân); xác nhận tại ({x}, {y})."
+            )
+            time.sleep(1)
+            continue
 
         retreat = _match(
             screen, templates.get(_TEMPLATE_QUAN_SU_GIAO_TRANH_RUT_LUI),
