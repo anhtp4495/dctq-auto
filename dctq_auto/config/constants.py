@@ -21,6 +21,9 @@ _STEP_QUAN_DOAN_CAU_VAN = "quan_doan_cau_van"
 _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO = "quan_doan_dong_gop_luong_thao"
 _STEP_QUAN_DOAN_DONG_GOP_KNB = "quan_doan_dong_gop_knb"
 
+# Step cửa hàng
+_STEP_CUA_HANG_DANH_VONG_MUA_QUE_LANH = "cua_hang_danh_vong_mua_que_lanh"
+
 # Template dùng để mở và đóng màn hình Quân đoàn.
 _TEMPLATE_MAIN_QUAN_DOAN_MO_CHAT = "main/quan_doan_mo_chat"
 _TEMPLATE_QUAN_DOAN_CHAT_VAO_QUAN_DOAN = "quan_doan.chat/vao_quan_doan"
