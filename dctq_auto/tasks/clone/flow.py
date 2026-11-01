@@ -761,10 +761,12 @@ def run_clone_flow_optimize_account(
     if not _common_tasks_done:
         from dctq_auto.tasks.common.activity.task_activity import run as run_activity
         from dctq_auto.tasks.common.guild.task_guild import run as run_guild
+        from dctq_auto.tasks.common.shop.task_shop import run as run_shop
 
         common_tasks = (
             ("Hoạt động", run_activity),
             ("Quân đoàn", run_guild),
+            ("Cửa hàng", run_shop),
         )
         for task_label, task_runner in common_tasks:
             if not self._wait_if_paused():
