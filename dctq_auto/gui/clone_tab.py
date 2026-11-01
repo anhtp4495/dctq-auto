@@ -191,10 +191,7 @@ class CloneTab(QWidget):
         battle_mode_hints = {
             1: "Chỉ cần thắng trận là kết thúc.",
             2: "Giao tranh đến khi tiêu diệt hết mục tiêu.",
-            3: (
-                "Nếu hết thời gian đã chọn mà chưa tiêu diệt hết "
-                "mục tiêu, trận đấu sẽ kết thúc."
-            ),
+            3: "Giới hạn thời gian trận giao tranh.",
         }
         for mode_id, hint in battle_mode_hints.items():
             self.clone_battle_mode_group.button(mode_id).toggled.connect(
