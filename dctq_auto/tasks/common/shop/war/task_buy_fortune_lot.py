@@ -66,8 +66,8 @@ def run(
         _TEMPLATE_CUA_HANG_MAN_HINH_MUA_QUE_LANH,
         _TEMPLATE_CUA_HANG_DA_MUA_QUE_LANH,
         _TEMPLATE_CUA_HANG_CHUA_MUA_QUE_LANH,
-        _TEMPLATE_CUA_HANG_DANG_CHON_DANH_VONG,
         _TEMPLATE_CUA_HANG_DANH_VONG,
+        _TEMPLATE_CUA_HANG_DANG_CHON_DANH_VONG,
     )
     templates = get_templates(template_names)
     try:
