@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-import time
-
 from dctq_auto.config.constants import (
     _STEP_QUAN_SU_GIAO_TRANH,
 )
-from dctq_auto.vision.template_store import get_templates
 from dctq_auto.tasks.common.battle import (
     task_close_battle,
     task_open_battle,
@@ -24,24 +21,6 @@ _TASK_LABELS = {
     "task_end_battle": "Kết thúc trận Giao Tranh",
 }
 
-_OPEN_TEMPLATES = (
-    _TEMPLATE_QUAN_SU_GIAO_TRANH_LOI_VAO,
-    _TEMPLATE_MAIN_QUAN_SU,
-    _TEMPLATE_QUAN_SU_GIAO_TRANH_CHUA_SU_DUNG_CANH_BAT_TRAN,
-    _TEMPLATE_QUAN_SU_GIAO_TRANH_TIM_DOI_THU,
-    _TEMPLATE_QUAN_SU_GIAO_TRANH_BAI_MIEN_CHIEN,
-    _TEMPLATE_QUAN_SU_GIAO_TRANH_CAM_NANG,
-    _TEMPLATE_QUAN_SU_GIAO_TRANH_XUAT_CHIEN,
-)
-_BATTLE_TEMPLATES = (
-    _TEMPLATE_QUAN_SU_GIAO_TRANH_RUT_LUI,
-    _TEMPLATE_QUAN_SU_GIAO_TRANH_THU_QUAN,
-    _TEMPLATE_QUAN_SU_GIAO_TRANH_TRAN_SAU,
-    _TEMPLATE_QUAN_SU_GIAO_TRANH_HOI_THANH,
-    _TEMPLATE_QUAN_SU_GIAO_TRANH_1_CO,
-    _TEMPLATE_QUAN_SU_GIAO_TRANH_2_CO,
-    _TEMPLATE_QUAN_SU_GIAO_TRANH_DUNG_LUONG_THAO,
-)
 
 
 def build_clone_battle_config(config) -> dict:
