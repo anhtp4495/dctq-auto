@@ -34,7 +34,7 @@ class CloneTab(QWidget):
 
         scroll_area = QScrollArea(self)
         scroll_area.setWidgetResizable(True)
-        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         scroll_area.setFrameShape(QScrollArea.Shape.NoFrame)
 
@@ -216,6 +216,9 @@ class CloneTab(QWidget):
         layout.addWidget(self.clone_reward_guild)
 
         layout.addStretch(1)
+        # Giữ đủ chiều rộng tối thiểu cho các điều khiển; nếu cửa sổ hẹp,
+        # người dùng có thể cuộn ngang để thấy các checkbox bị khuất.
+        page.setMinimumWidth(layout.minimumSize().width())
         scroll_area.setWidget(page)
         outer_layout.addWidget(scroll_area)
 
