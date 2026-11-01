@@ -11,7 +11,7 @@ from dctq_auto.tasks.common.battle.battle_utils import (
 )
 
 
-def task_close_battle(self, account, device, ocr_client, log) -> bool:
+def run(self, account, device, ocr_client, log) -> bool:
     """Chờ template Hồi thành và click trung điểm để rời Giao Tranh."""
     templates = get_templates((_TEMPLATE_QUAN_SU_GIAO_TRANH_HOI_THANH,))
     max_attempts = 180
