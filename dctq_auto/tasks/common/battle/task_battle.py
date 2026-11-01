@@ -36,7 +36,6 @@ _TASK_LABELS = {
     "task_find_battle_opponent": "Tìm đối thủ Giao Tranh",
     "xuat_chien": "Xuất chiến",
     "task_start_battle": "Bắt đầu trận Giao Tranh",
-    "task_battle_time_mode": "Thời gian tối đa Giao Tranh",
     "task_end_battle": "Kết thúc trận Giao Tranh",
 }
 
@@ -209,16 +208,15 @@ def task_open_battle(self, account, device, ocr_client, log, screenshot=None) ->
                 continue
 
         # Bước 4: mở giao diện tìm đối thủ khi tác vụ được chọn.
-        if self._config.get("task_find_battle_opponent"):
-            opponent = _match(
-                screen, templates.get(_TEMPLATE_QUAN_SU_GIAO_TRANH_TIM_DOI_THU),
-                account=account, log=log,
-            )
-            if opponent is not None:
-                x, y = _click_match(device, opponent)
-                log(f"[{account.username}] Click Tìm đối thủ tại ({x}, {y}).")
-                time.sleep(1)
-                continue
+        opponent = _match(
+            screen, templates.get(_TEMPLATE_QUAN_SU_GIAO_TRANH_TIM_DOI_THU),
+            account=account, log=log,
+        )
+        if opponent is not None:
+            x, y = _click_match(device, opponent)
+            log(f"[{account.username}] Click Tìm đối thủ tại ({x}, {y}).")
+            time.sleep(1)
+            continue
 
         # Bước 5: xử lý hộp thoại Kim Bài Miễn Chiến.
         immunity = _match(
@@ -518,6 +516,8 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
         )
         if not opened:
             failed.extend(selected)
+            for key in selected:
+                worker.task_progress_changed.emit(_TASK_LABELS[key], "failed", 0, 1)
         else:
             for key in (
                 "task_open_battle", "task_use_bazhen",
@@ -554,12 +554,6 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
                 _TASK_LABELS["task_end_battle"], "failed", 0, 1
             )
             failed.append("task_end_battle")
-    elif "task_end_battle" in selected and not needs_battle:
-        worker.task_progress_changed.emit(
-            _TASK_LABELS["task_end_battle"], "failed", 0, 1
-        )
-        failed.append("task_end_battle")
-
     for key in selected:
         if key not in (
             "task_open_battle", "task_use_bazhen",
@@ -568,7 +562,8 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
         ):
             continue
         # Các trạng thái đã được phát ở trên; không phát lại.
-    post_battle(log)
+    if not failed:
+        post_battle(log)
     if _STEP_QUAN_SU_GIAO_TRANH in steps:
         steps.remove(_STEP_QUAN_SU_GIAO_TRANH)
     return failed
