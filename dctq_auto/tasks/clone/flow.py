@@ -592,6 +592,8 @@ def _get_clone_optimize_config(self) -> dict:
 def run_clone_flow_optimize(self, device) -> None:
     """Điều phối toàn bộ Clone Optimize: đọc config một lần rồi xử lý từng account."""
     config = _get_clone_optimize_config(self)
+    # Keep the GUI snapshot (including BattleConfig) available to task runners.
+    self._config.update(config)
     account_file = str(config.get("clone_account_file", "") or "").strip()
     if not account_file:
         self.log_message.emit(
