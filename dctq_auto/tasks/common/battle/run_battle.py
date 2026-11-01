@@ -83,7 +83,7 @@ def _battle_mode_should_end(
     return False
 
 
-def battle_run(self, account, device, ocr_client, log) -> bool:
+def run(self, account, device, ocr_client, log) -> bool:
     """Thả võ tướng, theo dõi trạng thái trận và xử lý chế độ chiến đấu."""
     templates = get_templates(_BATTLE_TEMPLATES)
     group = getattr(self, "_battle_hero_position_group", None)
