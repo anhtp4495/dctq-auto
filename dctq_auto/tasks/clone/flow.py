@@ -795,9 +795,8 @@ def run_clone_flow_optimize_account(
             ("Hoạt động", run_activity),
             ("Quân đoàn", run_guild),
             ("Cửa hàng", run_shop),
+            ("Chiến tranh - Giao tranh", run_clone_battle),
         )
-        if "quan_su_giao_tranh" in steps:
-            common_tasks += (("Chiến tranh - Giao tranh", run_clone_battle),)
         for task_label, task_runner in common_tasks:
             if not self._wait_if_paused():
                 self.log_message.emit(f"[{account.username}] Đã dừng trước task {task_label}.")
