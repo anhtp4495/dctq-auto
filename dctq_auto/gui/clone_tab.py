@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
 
 from dctq_auto.tasks.common.accounts import load_accounts
 from dctq_auto.tasks.clone.step_registry import get_clone_step_registry
-from dctq_auto.tasks.battle_config import BattleConfig
+from dctq_auto.tasks.task_battle import BattleConfig
 
 
 class CloneTab(QWidget):
