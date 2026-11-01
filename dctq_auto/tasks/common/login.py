@@ -9,7 +9,7 @@ from dctq_auto.config.constants import (
     _TEMPLATE_ACCOUNT_CAP_NHAT_THONG_TIN,
     _TEMPLATE_ACCOUNT_CLOSE_CAP_NHAT_THONG_TIN,
     _TEMPLATE_ACCOUNT_DANG_NHAP,
-    _TEMPLATE_ACCOUNT_DICH_QUAN_TAP_KICH,
+    _TEMPLATE_THONG_BAO_DICH_QUAN_TAP_KICH,
     _TEMPLATE_ACCOUNT_MAN_HINH_CHINH,
     _TEMPLATE_ACCOUNT_THONG_TIN_DANG_NHAP_KHONG_DUNG,
     _TEMPLATE_ACCOUNT_TRANG_CA_NHAN,
@@ -17,6 +17,7 @@ from dctq_auto.config.constants import (
 )
 from dctq_auto.tasks.base import TaskSpec
 from dctq_auto.tasks.common.logout import logout_account
+from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_store import get_templates
 from dctq_auto.vision.template_report import report_template_match
@@ -91,7 +92,7 @@ def handle_post_login(
         return False, "Không xác minh được trạng thái sau đăng nhập"
 
     template_names = (
-        _TEMPLATE_ACCOUNT_DICH_QUAN_TAP_KICH,
+        _TEMPLATE_THONG_BAO_DICH_QUAN_TAP_KICH,
         _TEMPLATE_ACCOUNT_WAITING,
         _TEMPLATE_ACCOUNT_CAP_NHAT_THONG_TIN,
         _TEMPLATE_ACCOUNT_CLOSE_CAP_NHAT_THONG_TIN,
@@ -252,7 +253,7 @@ def prepare_login(
         return False, "Đã dừng theo yêu cầu"
 
     template_names = (
-        _TEMPLATE_ACCOUNT_DICH_QUAN_TAP_KICH,
+        _TEMPLATE_THONG_BAO_DICH_QUAN_TAP_KICH,
         _TEMPLATE_ACCOUNT_DANG_NHAP,
         _TEMPLATE_ACCOUNT_WAITING,
         _TEMPLATE_ACCOUNT_TRANG_CA_NHAN,
@@ -299,17 +300,16 @@ def prepare_login(
         detected_state = template.id
         break
 
-    if detected_state == "dich_quan_tap_kich":
+    if detected_state == "thong_bao_bi_tan_cong":
         worker.log_message.emit(
             f"[{account.username}] Phát hiện Địch Quân Tập Kích; đang đóng cửa sổ."
         )
-        try:
-            ocr_client.tap_ocr_target("close_dich_quan_tap_kich")
-        except Exception as exc:
-            worker.log_message.emit(
-                f"[{account.username}] Không đóng được cửa sổ Địch Quân Tập Kích: {exc}"
-            )
-            return False, "Không đóng được cửa sổ Địch Quân Tập Kích"
+        tap_x, tap_y = ButtonPositions().get("main.dich_quan_tap_kich", "dong_man_hinh")
+        log(
+            f"[{account.username}] Đóng màn hình Địch Quân Tập Kích "
+            f"theo ButtonPositions tại ({tap_x}, {tap_y})."
+        )
+        device.shell(f"input tap {tap_x} {tap_y}")
         time.sleep(1)
         return prepare_login(worker, account, device, ocr_client)
 

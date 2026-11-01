@@ -34,6 +34,18 @@
         }
       }
     },
+    "main.dich_quan_tap_kich": {
+      "source_image": "resources/screens/main/dich_quan_tap_kich.png",
+      "templates": {
+        "thong_bao_bi_tan_cong": {
+          "description": "[Màn hình chính] - [Địch Quân Tập Kích]",
+          "rect":  { "top": 121, "left": 756, "right": 1155, "bottom": 186},
+          "search_rect":  { "top": 7, "left": 298, "right": 1541, "bottom": 448},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
     "accounts1": {
       "source_image": "resources/screens/accounts/waiting.png",
       "templates": {
@@ -193,23 +205,6 @@
             "right": 1920,
             "bottom": 1080
           }
-        }
-      }
-    },
-    "accounts10": {
-      "source_image": "resources/screens/accounts/dich_quan_tap_kich.png",
-      "templates": {
-        "dich_quan_tap_kich": {
-          "description": "Đang mở màn hình - Cập nhật thông tin tài khoản.",
-          "rect": {
-            "top": 119,
-            "left": 748,
-            "right": 1153,
-            "bottom": 192
-          },
-          "search_rect": { "top": 50, "left": 300, "right": 1500, "bottom": 400},
-          "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },

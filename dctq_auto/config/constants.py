@@ -1,7 +1,7 @@
 """Cấu hình tập trung các định danh step và template dùng chung trong ứng dụng."""
 
 # Template dùng trong quy trình đăng nhập và xác minh tài khoản.
-_TEMPLATE_ACCOUNT_DICH_QUAN_TAP_KICH = "accounts10/dich_quan_tap_kich"
+_TEMPLATE_THONG_BAO_DICH_QUAN_TAP_KICH = "main.dich_quan_tap_kich/thong_bao_bi_tan_cong"
 _TEMPLATE_ACCOUNT_WAITING = "accounts1/waiting"
 _TEMPLATE_ACCOUNT_CAP_NHAT_THONG_TIN = "accounts9/cap_nhat_thong_tin"
 _TEMPLATE_ACCOUNT_CLOSE_CAP_NHAT_THONG_TIN = "accounts9/close_cap_nhat_thong_tin"

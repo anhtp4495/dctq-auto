@@ -201,7 +201,7 @@ def _run(
                 "cua_hang.chien_tranh.danh_vong", "xac_nhan"
             )
 
-            for index in range(10):
+            for index in range(6):
                 if not worker._wait_if_paused():
                     log(f"[{account.username}] Dừng tăng số lượng [Quẻ lành] theo yêu cầu.")
                     return steps
@@ -209,7 +209,7 @@ def _run(
                 time.sleep(0.15)
                 log(
                     f"[{account.username}] Tăng số lượng [Quẻ lành]: "
-                    f"{index + 1}/10."
+                    f"{index + 1}/6."
                 )
 
             if not worker._wait_if_paused():
