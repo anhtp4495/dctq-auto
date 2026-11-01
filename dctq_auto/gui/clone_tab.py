@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QComboBox,
     QGroupBox,
+    QButtonGroup,
     QPushButton,
     QScrollArea,
     QSpinBox,
@@ -154,14 +155,18 @@ class CloneTab(QWidget):
         battle_settings_row.addWidget(self.clone_battle_count)
 
         battle_settings_row.addWidget(QLabel("Chế độ:"))
-        self.clone_battle_mode = QComboBox()
-        self.clone_battle_mode.addItem("Nhanh 1 cờ", "fast")
-        self.clone_battle_mode.addItem("Bình thường", "normal")
-        self.clone_battle_mode.addItem("Thời gian tối đa", "time_limit")
-        self.clone_battle_mode.setCurrentIndex(
-            self.clone_battle_mode.findData("time_limit")
-        )
-        battle_settings_row.addWidget(self.clone_battle_mode, 1)
+        self.clone_battle_mode_group = QButtonGroup(self)
+        self.clone_battle_mode_group.setExclusive(True)
+        self.clone_battle_mode_fast = QCheckBox("Nhanh 1 cờ")
+        self.clone_battle_mode_normal = QCheckBox("Bình thường")
+        self.clone_battle_mode_time_limit = QCheckBox("Thời gian tối đa")
+        self.clone_battle_mode_group.addButton(self.clone_battle_mode_fast, 1)
+        self.clone_battle_mode_group.addButton(self.clone_battle_mode_normal, 2)
+        self.clone_battle_mode_group.addButton(self.clone_battle_mode_time_limit, 3)
+        self.clone_battle_mode_time_limit.setChecked(True)
+        battle_settings_row.addWidget(self.clone_battle_mode_fast)
+        battle_settings_row.addWidget(self.clone_battle_mode_normal)
+        battle_settings_row.addWidget(self.clone_battle_mode_time_limit)
 
         self.clone_battle_time_limit = QSpinBox()
         self.clone_battle_time_limit.setRange(1, 180)
@@ -169,10 +174,8 @@ class CloneTab(QWidget):
         self.clone_battle_time_limit.setSuffix(" giây")
         self.clone_battle_time_limit.setKeyboardTracking(False)
         battle_settings_row.addWidget(self.clone_battle_time_limit)
-        self.clone_battle_mode.currentIndexChanged.connect(
-            lambda _index: self.clone_battle_time_limit.setEnabled(
-                self.clone_battle_mode.currentData() == "time_limit"
-            )
+        self.clone_battle_mode_time_limit.toggled.connect(
+            self.clone_battle_time_limit.setEnabled
         )
         self.clone_battle_time_limit.setEnabled(True)
         war_layout.addLayout(battle_settings_row)
@@ -284,7 +287,13 @@ class CloneTab(QWidget):
             "clone_quan_su_giao_tranh": self.clone_quan_su_giao_tranh.isChecked(),
             "battle_config": BattleConfig(
                 battle_count=self.clone_battle_count.value(),
-                mode=self.clone_battle_mode.currentData(),
+                mode={
+                    self.clone_battle_mode_group.checkedId(): {
+                        1: "fast",
+                        2: "normal",
+                        3: "time_limit",
+                    }[self.clone_battle_mode_group.checkedId()]
+                }[self.clone_battle_mode_group.checkedId()],
                 time_limit_seconds=self.clone_battle_time_limit.value(),
             ),
             "clone_quoc_chien": self.clone_quoc_chien.isChecked(),
