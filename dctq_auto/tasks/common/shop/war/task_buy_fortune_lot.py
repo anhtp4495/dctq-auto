@@ -88,6 +88,9 @@ def run(
 
     if template_name == _TEMPLATE_CUA_HANG_MAN_HINH_MUA_QUE_LANH:
         if purchase_submitted:
+            if current_try >= _MAX_TRY_BUY_FORTUNE_LOT:
+                log(f"[{account.username}] Đã hết số lần kiểm tra hộp mua; giữ lại step.")
+                return steps
             try:
                 close_x, close_y = ButtonPositions().get(
                     "cua_hang.chien_tranh.danh_vong", "dong_man_hinh"
@@ -104,6 +107,9 @@ def run(
                 purchase_submitted=True, item_opened=item_opened,
             )
 
+        if current_try >= _MAX_TRY_BUY_FORTUNE_LOT:
+            log(f"[{account.username}] Đã hết số lần thử mua Quẻ lành; giữ lại step.")
+            return steps
         try:
             plus_x, plus_y = ButtonPositions().get(
                 "cua_hang.chien_tranh.danh_vong", "tang_so_luong"
@@ -140,6 +146,9 @@ def run(
                 )
             log(f"[{account.username}] Đã mở sản phẩm nhưng không nhận diện được hộp mua Quẻ lành; giữ lại step.")
             return steps
+        if current_try >= _MAX_TRY_BUY_FORTUNE_LOT:
+            log(f"[{account.username}] Đã hết số lần mở sản phẩm Quẻ lành; giữ lại step.")
+            return steps
         _tap_match(device, match, account, log, "sản phẩm [Quẻ lành]")
         return run(
             worker, account, steps, device, ocr_client, log,
@@ -147,6 +156,9 @@ def run(
         )
 
     if template_name == _TEMPLATE_CUA_HANG_DANG_CHON_DANH_VONG:
+        if current_try >= _MAX_TRY_BUY_FORTUNE_LOT:
+            log(f"[{account.username}] Đã hết số lần mở [Shop Danh Vọng]; giữ lại step.")
+            return steps
         _tap_match(device, match, account, log, "lối vào [Shop Danh Vọng]")
         return run(
             worker, account, steps, device, ocr_client, log,
