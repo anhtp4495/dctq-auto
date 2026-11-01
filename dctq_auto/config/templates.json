@@ -31,6 +31,13 @@
           "search_rect": { "top": 950, "left": 200, "right": 350, "bottom": 1070},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_su": {
+          "description": "Màn hình chính - Lối vào [Quân Sự]",
+          "rect": { "top": 982, "left": 247, "right": 303, "bottom": 1043},
+          "search_rect":  { "top": 600, "left": 0, "right": 600, "bottom": 1070},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
