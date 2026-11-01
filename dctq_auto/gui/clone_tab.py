@@ -156,8 +156,6 @@ class CloneTab(QWidget):
         battle_count_row.addStretch(1)
         war_layout.addLayout(battle_count_row)
 
-        battle_mode_row = QHBoxLayout()
-        battle_mode_row.addWidget(QLabel("Chế độ:"))
         self.clone_battle_mode_group = QButtonGroup(self)
         self.clone_battle_mode_group.setExclusive(True)
         self.clone_battle_mode_time_limit = QCheckBox("Thời gian tối đa")
@@ -167,21 +165,35 @@ class CloneTab(QWidget):
         self.clone_battle_mode_group.addButton(self.clone_battle_mode_normal, 2)
         self.clone_battle_mode_group.addButton(self.clone_battle_mode_time_limit, 3)
         self.clone_battle_mode_time_limit.setChecked(True)
-        battle_mode_row.addWidget(self.clone_battle_mode_time_limit)
 
+        battle_mode_row = QHBoxLayout()
+        battle_mode_row.addWidget(QLabel("Chế độ:"))
+        battle_mode_row.addWidget(self.clone_battle_mode_time_limit)
         self.clone_battle_time_limit = QSpinBox()
         self.clone_battle_time_limit.setRange(1, 180)
         self.clone_battle_time_limit.setValue(45)
         self.clone_battle_time_limit.setSuffix(" giây")
         self.clone_battle_time_limit.setKeyboardTracking(False)
         battle_mode_row.addWidget(self.clone_battle_time_limit)
-        battle_mode_row.addWidget(self.clone_battle_mode_fast)
-        battle_mode_row.addWidget(self.clone_battle_mode_normal)
+        battle_mode_row.addStretch(1)
+        war_layout.addLayout(battle_mode_row)
+
+        battle_mode_fast_row = QHBoxLayout()
+        battle_mode_fast_row.addSpacing(72)
+        battle_mode_fast_row.addWidget(self.clone_battle_mode_fast)
+        battle_mode_fast_row.addStretch(1)
+        war_layout.addLayout(battle_mode_fast_row)
+
+        battle_mode_normal_row = QHBoxLayout()
+        battle_mode_normal_row.addSpacing(72)
+        battle_mode_normal_row.addWidget(self.clone_battle_mode_normal)
+        battle_mode_normal_row.addStretch(1)
+        war_layout.addLayout(battle_mode_normal_row)
+
         self.clone_battle_mode_time_limit.toggled.connect(
             self.clone_battle_time_limit.setEnabled
         )
         self.clone_battle_time_limit.setEnabled(True)
-        war_layout.addLayout(battle_mode_row)
 
         self.clone_battle_mode_hint = QLabel()
         self.clone_battle_mode_hint.setWordWrap(True)
