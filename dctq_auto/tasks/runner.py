@@ -302,7 +302,7 @@ class UtilityTaskRunnerMixin:
 
         battle_config_keys = (
             "task_open_battle", "task_use_bazhen", "task_find_battle_opponent",
-            "xuat_chien", "task_start_battle", "task_battle_time_mode", "task_end_battle",
+            "xuat_chien", "task_start_battle", "task_end_battle",
         )
         battle_flow_handled = any(self._config.get(key) for key in battle_config_keys)
         if battle_flow_handled:
