@@ -20,6 +20,7 @@ from dctq_auto.vision.template_store import get_templates
 
 
 _MAX_SWIPE_FORTUNE_LOT = 2
+_MAX_TRY_BUY_FORTUNE_LOT = 3
 
 
 def _finish_step(steps, account, log):
@@ -65,7 +66,7 @@ def _find_template(screen_bgr, templates, template_names, account, log):
 
 def _run(
     worker, account, steps, device, ocr_client, log, screenshot,
-    templates, swipe_positions, fortune_clicked=False,
+    templates, swipe_positions, fortune_clicked=False, buy_try_count=0,
 ) -> list[str]:
     """Tìm Quẻ lành; cuộn tối đa hai lần cho đến khi thấy trạng thái mua."""
     step = _STEP_CUA_HANG_DANH_VONG_MUA_QUE_LANH
@@ -126,6 +127,7 @@ def _run(
         return _run(
             worker, account, steps, device, ocr_client, log, None,
             templates, swipe_positions, fortune_clicked=True,
+            buy_try_count=buy_try_count,
         )
 
     if template_name == _TEMPLATE_CUA_HANG_DANG_CHON_DANH_VONG:
@@ -161,10 +163,30 @@ def _run(
         return _run(
             worker, account, steps, device, ocr_client, log, None,
             templates, swipe_positions, fortune_clicked=False,
+            buy_try_count=buy_try_count,
         )
 
     if template_name == _TEMPLATE_CUA_HANG_DANG_CHON_SHOP_CHIEN_TRANH:
-        log(f"[{account.username}] Nhận diện: đang chọn tab [Shop Chiến Tranh].")
+        if buy_try_count >= _MAX_TRY_BUY_FORTUNE_LOT:
+            log(
+                f"[{account.username}] Đã thử tìm [Quẻ lành] "
+                f"{_MAX_TRY_BUY_FORTUNE_LOT} lần nhưng vẫn ở tab [Shop Chiến Tranh]; "
+                "giữ lại step."
+            )
+            return steps
+
+        next_try = buy_try_count + 1
+        log(
+            f"[{account.username}] Vẫn đang ở tab [Shop Chiến Tranh]; "
+            f"chờ 1 giây rồi thử tìm [Quẻ lành] lần {next_try}/{_MAX_TRY_BUY_FORTUNE_LOT}."
+        )
+        time.sleep(1.0)
+        return _run(
+            worker, account, steps, device, ocr_client, log, None,
+            templates, swipe_positions, fortune_clicked=fortune_clicked,
+            buy_try_count=next_try,
+        )
+
     elif template_name == _TEMPLATE_CUA_HANG_MAN_HINH_MUA_QUE_LANH:
         log(
             f"[{account.username}] Nhận diện hộp thoại [Mua quẻ lành]; "
