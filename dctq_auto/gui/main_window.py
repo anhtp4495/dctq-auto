@@ -1854,6 +1854,7 @@ class MainWindow(QMainWindow):
                     "clone_receive_lucky_bag",
                     "clone_guild_fortune",
                     "clone_buy_fortune_lot",
+                    "clone_quan_su_giao_tranh",
                     "clone_logout",
                 ) if config.get(key)
             ]
