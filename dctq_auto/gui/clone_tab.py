@@ -12,12 +12,14 @@ from PySide6.QtWidgets import (
     QGroupBox,
     QPushButton,
     QScrollArea,
+    QSpinBox,
     QVBoxLayout,
     QWidget,
 )
 
 from dctq_auto.tasks.common.accounts import load_accounts
 from dctq_auto.tasks.clone.step_registry import get_clone_step_registry
+from dctq_auto.tasks.battle_config import BattleConfig
 
 
 class CloneTab(QWidget):
@@ -142,6 +144,38 @@ class CloneTab(QWidget):
             )
         )
         war_layout.addWidget(self.clone_quan_su_giao_tranh)
+
+        battle_settings_row = QHBoxLayout()
+        battle_settings_row.addWidget(QLabel("Số trận:"))
+        self.clone_battle_count = QSpinBox()
+        self.clone_battle_count.setRange(1, 60)
+        self.clone_battle_count.setValue(15)
+        self.clone_battle_count.setKeyboardTracking(False)
+        battle_settings_row.addWidget(self.clone_battle_count)
+
+        battle_settings_row.addWidget(QLabel("Chế độ:"))
+        self.clone_battle_mode = QComboBox()
+        self.clone_battle_mode.addItem("Nhanh 1 cờ", "fast")
+        self.clone_battle_mode.addItem("Bình thường", "normal")
+        self.clone_battle_mode.addItem("Thời gian tối đa", "time_limit")
+        self.clone_battle_mode.setCurrentIndex(
+            self.clone_battle_mode.findData("time_limit")
+        )
+        battle_settings_row.addWidget(self.clone_battle_mode, 1)
+
+        self.clone_battle_time_limit = QSpinBox()
+        self.clone_battle_time_limit.setRange(1, 180)
+        self.clone_battle_time_limit.setValue(45)
+        self.clone_battle_time_limit.setSuffix(" giây")
+        self.clone_battle_time_limit.setKeyboardTracking(False)
+        battle_settings_row.addWidget(self.clone_battle_time_limit)
+        self.clone_battle_mode.currentIndexChanged.connect(
+            lambda _index: self.clone_battle_time_limit.setEnabled(
+                self.clone_battle_mode.currentData() == "time_limit"
+            )
+        )
+        self.clone_battle_time_limit.setEnabled(True)
+        war_layout.addLayout(battle_settings_row)
         layout.addWidget(war_group)
 
         self.clone_quoc_chien = QCheckBox(
@@ -248,6 +282,11 @@ class CloneTab(QWidget):
             "clone_guild_donate_rations": self.clone_guild_donate_rations.isChecked(),
             "clone_buy_fortune_lot": self.clone_buy_fortune_lot.isChecked(),
             "clone_quan_su_giao_tranh": self.clone_quan_su_giao_tranh.isChecked(),
+            "battle_config": BattleConfig(
+                battle_count=self.clone_battle_count.value(),
+                mode=self.clone_battle_mode.currentData(),
+                time_limit_seconds=self.clone_battle_time_limit.value(),
+            ),
             "clone_quoc_chien": self.clone_quoc_chien.isChecked(),
             "clone_reward_guild": self.clone_reward_guild.isChecked(),
             "clone_logout": True,
