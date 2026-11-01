@@ -24,6 +24,13 @@
           "search_rect": { "top": 413, "left": 1748, "right": 1919, "bottom": 700},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
+        },
+        "cua_hang": {
+          "description": "Màn hình chính - Lối vào [Cửa hàng]",
+          "rect": { "top": 982, "left": 247, "right": 303, "bottom": 1043},
+          "search_rect": { "top": 950, "left": 200, "right": 350, "bottom": 1070},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
@@ -525,6 +532,103 @@
           "description": "[Quân Đoàn] - [Túi Phúc] - [Chi tiết].",
           "rect": { "top": 970, "left": 750, "right": 1166, "bottom": 1035},
           "search_rect":  { "top": 0, "left": 0, "right": 1900, "bottom": 150},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
+    "cua_hang": {
+      "source_image": "resources/screens/cua_hang/man_hinh_chinh.png",
+      "templates": {
+        "thuong_thanh": {
+          "description": "[Màn hình chính] - [Cửa hàng] - Thương Thành",
+          "rect": { "top": 23, "left": 12, "right": 284, "bottom": 80},
+          "search_rect":  { "top": 0, "left": 0, "right": 350, "bottom": 120},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "shop_he_thong": {
+          "description": "[Màn hình chính] - [Cửa hàng] - Lối vào [Shop Hệ Thống]",
+          "rect": { "top": 162, "left": 44, "right": 227, "bottom": 214},
+          "search_rect":  { "top": 100, "left": 10, "right": 300, "bottom": 1000},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "shop_truong_thanh": {
+          "description": "[Màn hình chính] - [Cửa hàng] - Lối vào [Shop Trưởng Thành]",
+          "rect": { "top": 162, "left": 44, "right": 227, "bottom": 214},
+          "search_rect":  { "top": 100, "left": 10, "right": 300, "bottom": 1000},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "shop_chien_tranh": {
+          "description": "[Màn hình chính] - [Cửa hàng] - Lối vào [Shop Chiến Tranh]",
+          "rect": { "top": 162, "left": 44, "right": 227, "bottom": 214},
+          "search_rect":  { "top": 100, "left": 10, "right": 300, "bottom": 1000},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "dang_chon_shop_truong_thanh": {
+          "description": "[Màn hình chính] - [Cửa hàng] - [Shop Trưởng Thành]",
+          "rect": { "top": 291, "left": 620, "right": 846, "bottom": 336},
+          "search_rect":  { "top": 100, "left": 10, "right": 300, "bottom": 1000},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "dang_chon_shop_chien_tranh": {
+          "description": "[Màn hình chính] - [Cửa hàng] - [Shop Chiến Tranh]",
+          "rect": { "top": 162, "left": 44, "right": 227, "bottom": 214},
+          "search_rect":  { "top": 100, "left": 10, "right": 300, "bottom": 1000},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
+    "cua_hang.chien_tranh.danh_vong": {
+      "source_image": "resources/screens/cua_hang/shop_danh_vong.png",
+      "templates": {
+        "shop_danh_vong": {
+          "description": "[Màn hình chính] - [Cửa hàng] - [Shop Chiến Tranh] - [Shop Danh Vọng]",
+          "rect": { "top": 927, "left": 41, "right": 256, "bottom": 969},
+          "search_rect":  { "top": 100, "left": 10, "right": 300, "bottom": 1000},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "dang_chon_shop_danh_vong": {
+          "description": "[Màn hình chính] - [Cửa hàng] - [Shop Chiến Tranh] - Lối vào [Shop Danh Vọng]",
+          "rect": { "top": 511, "left": 41, "right": 256, "bottom": 558},
+          "search_rect":  { "top": 100, "left": 10, "right": 300, "bottom": 1000},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "chua_mua_que_lanh": {
+          "description": "[Màn hình chính] - [Cửa hàng] - [Shop Chiến Tranh] - [Shop Danh Vọng] - Quẻ lành x5",
+          "rect": { "top": 664, "left": 1194, "right": 1400, "bottom": 926},
+          "search_rect":  { "top": 100, "left": 330, "right": 1880, "bottom": 1050},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "da_mua_que_lanh": {
+          "description": "[Màn hình chính] - [Cửa hàng] - [Shop Chiến Tranh] - [Shop Danh Vọng] - Quẻ lành x0",
+          "rect":  { "top": 290, "left": 1182, "right": 1401, "bottom": 553},
+          "search_rect":  { "top": 100, "left": 330, "right": 1880, "bottom": 1050},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
+    "cua_hang.chien_tranh.danh_vong.mua_que_lanh": {
+      "source_image": "resources/screens/cua_hang/shop_danh_vong_mua_que_lanh.png",
+      "templates": {
+        "man_hinh_mua_que_lanh": {
+          "description": "[Màn hình chính] - [Cửa hàng] - [Shop Chiến Tranh] - [Shop Danh Vọng] - [Màn hình Mua Quẻ Lành]",
+          "rect": { "top": 265, "left": 549, "right": 1379, "bottom": 372},
+          "search_rect":  { "top": 100, "left": 10, "right": 300, "bottom": 1000},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }

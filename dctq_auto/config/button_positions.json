@@ -80,5 +80,19 @@
       "x": 1765,
       "y": 91
     }
+  },
+  "cua_hang.chien_tranh.danh_vong": {
+    "dong_man_hinh": {
+      "x": 1350,
+      "y": 302
+    },
+    "tang_so_luong": {
+      "x": 1292,
+      "y": 608
+    },
+    "xac_nhan": {
+      "x": 972,
+      "y": 746
+    }
   }
 }
