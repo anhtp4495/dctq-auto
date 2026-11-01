@@ -134,6 +134,15 @@ class CloneTab(QWidget):
         )
         shop_layout.addWidget(self.clone_buy_fortune_lot)
         layout.addWidget(shop_group)
+        war_group = QGroupBox("Chiến tranh")
+        war_layout = QVBoxLayout(war_group)
+        self.clone_quan_su_giao_tranh = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_quan_su_giao_tranh", "Chiến tranh - Giao tranh"
+            )
+        )
+        war_layout.addWidget(self.clone_quan_su_giao_tranh)
+        layout.addWidget(war_group)
 
         self.clone_quoc_chien = QCheckBox(
             step_registry.get_display_name_by_config_key("clone_quoc_chien", "Quốc chiến")
@@ -238,6 +247,7 @@ class CloneTab(QWidget):
             "clone_guild_donate_knb": self.clone_guild_donate_knb.isChecked(),
             "clone_guild_donate_rations": self.clone_guild_donate_rations.isChecked(),
             "clone_buy_fortune_lot": self.clone_buy_fortune_lot.isChecked(),
+            "clone_quan_su_giao_tranh": self.clone_quan_su_giao_tranh.isChecked(),
             "clone_quoc_chien": self.clone_quoc_chien.isChecked(),
             "clone_reward_guild": self.clone_reward_guild.isChecked(),
             "clone_logout": True,
