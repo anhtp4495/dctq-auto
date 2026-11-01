@@ -583,6 +583,7 @@ class MainWindow(QMainWindow):
                 "clone_guild_donate_knb",
                 "clone_guild_donate_rations",
                 "clone_buy_fortune_lot",
+                "clone_quan_su_giao_tranh",
                 "clone_quoc_chien",
                 "clone_reward_guild",
             )
