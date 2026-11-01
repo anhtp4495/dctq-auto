@@ -166,7 +166,49 @@ def _run(
     if template_name == _TEMPLATE_CUA_HANG_DANG_CHON_SHOP_CHIEN_TRANH:
         log(f"[{account.username}] Nhận diện: đang chọn tab [Shop Chiến Tranh].")
     elif template_name == _TEMPLATE_CUA_HANG_MAN_HINH_MUA_QUE_LANH:
-        log(f"[{account.username}] Nhận diện: hộp thoại [Mua quẻ lành] đang mở.")
+        log(
+            f"[{account.username}] Nhận diện hộp thoại [Mua quẻ lành]; "
+            "tăng số lượng 10 lần rồi xác nhận."
+        )
+        try:
+            positions = ButtonPositions()
+            quantity_x, quantity_y = positions.get(
+                "cua_hang.chien_tranh.danh_vong", "tang_so_luong"
+            )
+            confirm_x, confirm_y = positions.get(
+                "cua_hang.chien_tranh.danh_vong", "xac_nhan"
+            )
+
+            for index in range(10):
+                if not worker._wait_if_paused():
+                    log(f"[{account.username}] Dừng tăng số lượng [Quẻ lành] theo yêu cầu.")
+                    return steps
+                device.shell(f"input tap {quantity_x} {quantity_y}")
+                time.sleep(0.15)
+                log(
+                    f"[{account.username}] Tăng số lượng [Quẻ lành]: "
+                    f"{index + 1}/10."
+                )
+
+            if not worker._wait_if_paused():
+                log(f"[{account.username}] Dừng trước khi xác nhận mua [Quẻ lành].")
+                return steps
+
+            device.shell(f"input tap {confirm_x} {confirm_y}")
+            log(
+                f"[{account.username}] Đã click [Xác nhận] mua [Quẻ lành] "
+                f"tại ({confirm_x}, {confirm_y})."
+            )
+            time.sleep(1.0)
+        except Exception as exc:
+            log(f"[{account.username}] Thao tác hộp thoại mua [Quẻ lành] thất bại: {exc}")
+            return steps
+
+        # Sau khi xác nhận, chụp lại màn hình và nhận diện trạng thái đã mua.
+        return _run(
+            worker, account, steps, device, ocr_client, log, None,
+            templates, swipe_positions, fortune_clicked=False,
+        )
 
     return steps
 
