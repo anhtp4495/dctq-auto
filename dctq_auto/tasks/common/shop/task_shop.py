@@ -15,14 +15,14 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
     if not _SHOP_STEP_IDS.intersection(steps):
         return steps
 
-    shop_open_attempted = False
+    shop_opened = False
     try:
-        shop_open_attempted = True
         if not task_open_shop.run(
             worker, account, device, ocr_client, log, screenshot=screenshot
         ):
             log(f"[{account.username}] Không mở được [Cửa hàng]; giữ nguyên step.")
             return steps
+        shop_opened = True
 
         if _STEP_CUA_HANG_DANH_VONG_MUA_QUE_LANH in steps:
             if task_open_shop_war.run(
@@ -35,7 +35,7 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
                 log(f"[{account.username}] Không mở được [Shop Chiến Tranh]; giữ lại step mua Quẻ lành.")
         return steps
     finally:
-        if shop_open_attempted:
+        if shop_opened:
             try:
                 closed = task_close_shop.run(worker, account, device, ocr_client, log)
                 if not closed:
