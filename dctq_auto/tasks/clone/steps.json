@@ -66,20 +66,20 @@
     "priority": 10301
   },
   {
-    "id": "chien_tranh_giao_tranh",
-    "config_key": "clone_chien_tranh_giao_tranh",
+    "id": "quan_su_giao_tranh",
+    "config_key": "clone_quan_su_giao_tranh",
     "display_name": "Chiến tranh - Giao tranh",
     "priority": 10601
   },
   {
-    "id": "chien_tranh_tranh_ba",
-    "config_key": "clone_chien_tranh_tranh_ba",
+    "id": "quan_su_tranh_ba",
+    "config_key": "clone_quan_su_tranh_ba",
     "display_name": "Chiến tranh - Tranh Bá",
     "priority": 10701
   },
   {
-    "id": "chien_tranh_nhat_thong",
-    "config_key": "clone_chien_tranh_nhat_thong",
+    "id": "quan_su_nhat_thong",
+    "config_key": "clone_quan_su_nhat_thong",
     "display_name": "Chiến tranh - Nhất Thống",
     "priority": 10801
   }
