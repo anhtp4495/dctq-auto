@@ -210,7 +210,12 @@ def task_open_battle(self, account, device, ocr_client, log, screenshot=None) ->
                     return True
                 continue
 
-        # Bước 4: mở giao diện tìm đối thủ khi tác vụ được chọn.
+        if not full_open and not self._config.get("task_find_battle_opponent"):
+            # Nếu không yêu cầu mở tiếp quy trình, không tự ý tìm đối thủ.
+            log(f"[{account.username}] Đã xử lý bước Canh Bát Trận được chọn.")
+            return True
+
+        # Bước 4: mở giao diện tìm đối thủ.
         opponent = _match(
             screen, templates.get(_TEMPLATE_QUAN_SU_GIAO_TRANH_TIM_DOI_THU),
             account=account, log=log,
@@ -392,7 +397,13 @@ def battle_run(self, account, device, ocr_client, log) -> bool:
             account=account, log=log,
         )
 
-        if next_battle is not None and not awaiting_next_screen:
+        if awaiting_next_screen:
+            if next_battle is not None:
+                time.sleep(1)
+                continue
+            awaiting_next_screen = False
+
+        if next_battle is not None:
             completed_battles += 1
             log(
                 f"[{account.username}] Phát hiện Trận sau: "
@@ -413,9 +424,6 @@ def battle_run(self, account, device, ocr_client, log) -> bool:
             awaiting_next_screen = True
             time.sleep(1)
             continue
-
-        if next_battle is None and awaiting_next_screen:
-            awaiting_next_screen = False
 
         if retreat is not None and not hero_deployed:
             log(f"[{account.username}] Phát hiện Rút lui; bắt đầu thả 5 võ tướng.")
