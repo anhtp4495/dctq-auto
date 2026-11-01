@@ -30,6 +30,7 @@ _TEMPLATE_QUAN_SU_GIAO_TRANH_TRAN_SAU = "quan_su.giao_tranh/tran_sau"
 _TEMPLATE_QUAN_SU_GIAO_TRANH_HOI_THANH = "quan_su.giao_tranh/hoi_thanh"
 _TEMPLATE_QUAN_SU_GIAO_TRANH_1_CO = "quan_su.giao_tranh/1_co"
 _TEMPLATE_QUAN_SU_GIAO_TRANH_2_CO = "quan_su.giao_tranh/2_co"
+_TEMPLATE_QUAN_SU_GIAO_TRANH_DUNG_LUONG_THAO = "quan_su.giao_tranh/dung_luong_thao"
 
 
 _STEP_QUAN_DOAN_BAO_DANH = "quan_doan_bao_danh"
