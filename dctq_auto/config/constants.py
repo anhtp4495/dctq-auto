@@ -27,6 +27,8 @@ _STEP_CUA_HANG_DANH_VONG_MUA_QUE_LANH = "cua_hang_danh_vong_mua_que_lanh"
 # Template dùng trong màn hình Cửa hàng.
 _TEMPLATE_MAIN_CUA_HANG = "main/cua_hang"
 _TEMPLATE_CUA_HANG_THUONG_THANH = "cua_hang/thuong_thanh"
+_TEMPLATE_CUA_HANG_DONG_MAN_HINH = "cua_hang/dong_man_hinh_cua_hang"
+_TEMPLATE_CUA_HANG_DONG_MAN_HINH_XAC_NHAN_MUA = "cua_hang/dong_man_hinh_xac_nhan_mua"
 _TEMPLATE_CUA_HANG_SHOP_CHIEN_TRANH = "cua_hang/shop_chien_tranh"
 _TEMPLATE_CUA_HANG_DANG_CHON_SHOP_CHIEN_TRANH = "cua_hang/dang_chon_shop_chien_tranh"
 _TEMPLATE_CUA_HANG_DANH_VONG = "cua_hang.chien_tranh.danh_vong/shop_danh_vong"
