@@ -121,6 +121,50 @@
       "y": 676
     }
   },
+  "quan_su.giao_tranh.danh_sach1": {
+    "vo_tuong_1": {
+      "x": 582,
+      "y": 967
+    },
+    "vo_tuong_2": {
+      "x": 729,
+      "y": 967
+    },
+    "vo_tuong_3": {
+      "x": 896,
+      "y": 967
+    },
+    "vo_tuong_4": {
+      "x": 1060,
+      "y": 967
+    },
+    "vo_tuong_5": {
+      "x": 1178,
+      "y": 967
+    }
+  },
+  "quan_su.giao_tranh.danh_sach2": {
+    "vo_tuong_1": {
+      "x": 409,
+      "y": 964
+    },
+    "vo_tuong_2": {
+      "x": 571,
+      "y": 967
+    },
+    "vo_tuong_3": {
+      "x": 729,
+      "y": 967
+    },
+    "vo_tuong_4": {
+      "x": 867,
+      "y": 967
+    },
+    "vo_tuong_5": {
+      "x": 1016,
+      "y": 967
+    }
+  },
   "quan_su.giao_tranh.thu_quan": {
     "xac_nhan": {
       "x": 1131,
