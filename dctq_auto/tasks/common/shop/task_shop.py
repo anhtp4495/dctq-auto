@@ -1,11 +1,11 @@
 """Điều phối các tác vụ thuộc màn hình [Cửa hàng]."""
 
 from dctq_auto.tasks.common.shop import task_close_shop, task_open_shop
-from dctq_auto.tasks.common.shop.war import task_war
+from dctq_auto.tasks.common.shop.shop_war import task_shop_war
 
 
 _SHOP_TASKS = (
-    (task_war, "Shop Chiến Tranh"),
+    (task_shop_war, "Shop Chiến Tranh"),
 )
 
 
