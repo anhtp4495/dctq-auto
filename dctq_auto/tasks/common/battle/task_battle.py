@@ -103,6 +103,28 @@ def _swipe(device, start: tuple[int, int], end: tuple[int, int], duration_ms: in
     device.shell(f"input swipe {x1} {y1} {x2} {y2} {duration_ms}")
 
 
+def build_clone_battle_config(config) -> dict:
+    """Chuyển BattleConfig của Clone Optimize sang cấu hình task Giao Tranh."""
+    from dctq_auto.tasks.task_battle import get_battle_config
+
+    battle = get_battle_config(config)
+    return {
+        **config,
+        # Clone Optimize luôn chạy trọn quy trình từ màn hình chính đến Hồi thành.
+        "task_open_battle": True,
+        "task_use_bazhen": False,
+        "task_find_battle_opponent": True,
+        "xuat_chien": True,
+        "task_start_battle": True,
+        "task_end_battle": True,
+        "task_open_battle_count": battle.battle_count,
+        "giao_tranh_nhanh_1_co": battle.mode == "fast",
+        "ba_co": battle.mode == "normal",
+        "task_battle_time_mode": battle.mode == "time_limit",
+        "task_battle_time_limit": battle.time_limit_seconds,
+    }
+
+
 def _mode(config) -> str:
     if config.get("giao_tranh_nhanh_1_co"):
         return "fast"
