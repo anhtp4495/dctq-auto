@@ -447,7 +447,7 @@ def battle_run(self, account, device, ocr_client, log) -> bool:
                 )
                 time.sleep(0.3)
             hero_deployed = True
-            if not self._config.get("task_end_battle"):
+            if not self._config.get("task_end_battle") and mode == "normal":
                 log(f"[{account.username}] Đã thả đủ võ tướng; hoàn tất Bắt đầu trận.")
                 return True
             continue
@@ -466,6 +466,12 @@ def battle_run(self, account, device, ocr_client, log) -> bool:
                     f"click Thu quân tại ({x}, {y})."
                 )
                 time.sleep(1)
+                if not self._config.get("task_end_battle"):
+                    log(
+                        f"[{account.username}] Đã click Thu quân theo chế độ {mode}; "
+                        "hoàn tất tác vụ Bắt đầu trận."
+                    )
+                    return True
                 continue
 
         time.sleep(1)
