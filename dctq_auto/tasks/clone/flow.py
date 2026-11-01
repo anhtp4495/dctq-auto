@@ -567,6 +567,7 @@ def _get_clone_optimize_config(self) -> dict:
         "clone_guild_fortune": "Cầu vận quân đoàn",
         "clone_guild_donate_knb": "Đóng góp KNB",
         "clone_guild_donate_rations": "Đóng góp Lương Thảo",
+        "clone_buy_fortune_lot": "Cửa hàng Danh Vọng - Mua quẻ lành",
         "clone_quoc_chien": "Quốc chiến",
         "clone_reward_guild": "Nhận Thưởng - Quân Đoàn",
     }
