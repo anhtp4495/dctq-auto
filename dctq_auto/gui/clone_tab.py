@@ -288,11 +288,9 @@ class CloneTab(QWidget):
             "battle_config": BattleConfig(
                 battle_count=self.clone_battle_count.value(),
                 mode={
-                    self.clone_battle_mode_group.checkedId(): {
-                        1: "fast",
-                        2: "normal",
-                        3: "time_limit",
-                    }[self.clone_battle_mode_group.checkedId()]
+                    1: "fast",
+                    2: "normal",
+                    3: "time_limit",
                 }[self.clone_battle_mode_group.checkedId()],
                 time_limit_seconds=self.clone_battle_time_limit.value(),
             ),
