@@ -768,11 +768,36 @@ def run_clone_flow_optimize_account(
         from dctq_auto.tasks.common.guild.task_guild import run as run_guild
         from dctq_auto.tasks.common.shop.task_shop import run as run_shop
 
+        def run_clone_battle(self, account, steps, device, ocr_client, log):
+            """Chạy Giao Tranh bằng cấu hình BattleConfig của Clone Optimize."""
+            from dctq_auto.tasks.common.battle.task_battle import (
+                build_clone_battle_config,
+                run as run_battle,
+            )
+
+            original_config = self._config
+            self._config = build_clone_battle_config(original_config)
+            try:
+                failed_tasks = run_battle(
+                    self, account, steps, device, ocr_client, log
+                )
+            finally:
+                self._config = original_config
+
+            if failed_tasks:
+                raise RuntimeError(
+                    "Giao Tranh thất bại ở các tác vụ: "
+                    + ", ".join(failed_tasks)
+                )
+            return steps
+
         common_tasks = (
             ("Hoạt động", run_activity),
             ("Quân đoàn", run_guild),
             ("Cửa hàng", run_shop),
         )
+        if "quan_su_giao_tranh" in steps:
+            common_tasks += (("Chiến tranh - Giao tranh", run_clone_battle),)
         for task_label, task_runner in common_tasks:
             if not self._wait_if_paused():
                 self.log_message.emit(f"[{account.username}] Đã dừng trước task {task_label}.")
