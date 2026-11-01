@@ -544,9 +544,13 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
     )
     opened = True
     if needs_open:
-        opened = task_open_battle(
-            worker, account, device, ocr_client, log, screenshot=screenshot
-        )
+        try:
+            opened = task_open_battle(
+                worker, account, device, ocr_client, log, screenshot=screenshot
+            )
+        except Exception as exc:
+            log(f"[{account.username}] Mở Giao Tranh phát sinh lỗi: {exc}")
+            opened = False
         if not opened:
             failed.extend(selected)
             for key in selected:
@@ -564,7 +568,11 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
     )
     battle_ok = True
     if needs_battle:
-        battle_ok = battle_run(worker, account, device, ocr_client, log)
+        try:
+            battle_ok = battle_run(worker, account, device, ocr_client, log)
+        except Exception as exc:
+            log(f"[{account.username}] Chạy Giao Tranh phát sinh lỗi: {exc}")
+            battle_ok = False
         for key in ("task_start_battle", "task_battle_time_mode"):
             if key in selected:
                 worker.task_progress_changed.emit(
@@ -583,7 +591,11 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
         failed.append("task_end_battle")
 
     if opened and battle_ok and config.get("task_end_battle"):
-        close_ok = task_close_battle(worker, account, device, ocr_client, log)
+        try:
+            close_ok = task_close_battle(worker, account, device, ocr_client, log)
+        except Exception as exc:
+            log(f"[{account.username}] Hồi thành phát sinh lỗi: {exc}")
+            close_ok = False
         if close_ok:
             worker.task_progress_changed.emit(
                 _TASK_LABELS["task_end_battle"], "done", 1, 1
