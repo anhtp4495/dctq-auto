@@ -17,11 +17,7 @@ class TimeLimitPoller(BasePoller):
         if started_at is None:
             return observation
 
-        seconds = int(
-            context["config"].get("task_battle_time_limit")
-            or context["config"].get("thoi_gian_giao_tranh")
-            or 15
-        )
+        seconds = context["battle_config"].time_limit_seconds
         elapsed = time.monotonic() - started_at
         if elapsed >= seconds:
             account = context["account"]
