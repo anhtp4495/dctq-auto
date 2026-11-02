@@ -56,6 +56,8 @@ def run(self, account, device, ocr_client, log) -> bool:
 
     target_battles = max(1, int(config.get("task_open_battle_count", 1)))
     completed_battles = 0
+    # Giữ bộ đếm trên worker để post_battle có thể hậu kiểm sau finally/close.
+    self._battle_completed_count = 0
     hero_deployed = False
     retreat_requested = False
     awaiting_next_screen = False
@@ -99,6 +101,7 @@ def run(self, account, device, ocr_client, log) -> bool:
 
         if next_battle is not None:
             completed_battles += 1
+            self._battle_completed_count = completed_battles
             log(
                 f"[{account.username}] Phát hiện Trận sau: "
                 f"hoàn thành {completed_battles}/{target_battles} trận."
