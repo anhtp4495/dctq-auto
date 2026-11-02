@@ -269,9 +269,6 @@ def run(
         if match is None:
             continue
 
-        if match is None:
-            continue
-
         result = _handle_template_match(
             self=self,
             template_name=template_name,
