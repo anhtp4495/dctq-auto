@@ -33,11 +33,11 @@ class PincerBattle(BaseBattle):
             account=account,
             log=context["log"],
         )
-        group = (
-            "quan_su.giao_tranh.danh_sach1"
-            if strategy_match is not None
-            else "quan_su.giao_tranh.danh_sach2"
-        )
+        # Mặc định dùng danh_sach1; chỉ chuyển sang danh_sach2
+        # khi không nhận diện được template Chiến Thuật.
+        group = "quan_su.giao_tranh.danh_sach1"
+        if strategy_match is None:
+            group = "quan_su.giao_tranh.danh_sach2"
         context["hero_position_group"] = group
         context["log"](
             f"[{account.username}] Chọn bộ tọa độ võ tướng {group} "
