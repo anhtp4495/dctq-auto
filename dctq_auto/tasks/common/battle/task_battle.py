@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dctq_auto.config.constants import (
+    _STEP_QUAN_SU_GIAO_TRANH,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_HOI_THANH,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_LOI_VAO,
 )
@@ -27,6 +28,10 @@ def build_clone_battle_config(config) -> dict:
 
 def pre_battle(config, steps, log) -> bool:
     """Kiểm tra cấu hình Giao Tranh trước khi bắt đầu."""
+    if _STEP_QUAN_SU_GIAO_TRANH not in steps:
+        log("Giao Tranh: thiếu step quan_su_giao_tranh trong danh sách steps.")
+        return False
+
     from dctq_auto.tasks.task_battle import get_battle_config
 
     try:
@@ -42,8 +47,8 @@ def pre_battle(config, steps, log) -> bool:
     return True
 
 
-def post_battle(worker, account, device, log) -> None:
-    """Ghi log hậu kiểm trạng thái Giao Tranh, không quyết định thành công/thất bại."""
+def post_battle(worker, account, device, log) -> bool:
+    """Xác nhận đã thoát giao diện trận và hoàn thành đủ số trận yêu cầu."""
     from dctq_auto.tasks.task_battle import get_battle_config
 
     target_battles = get_battle_config(worker._config).battle_count
@@ -53,7 +58,7 @@ def post_battle(worker, account, device, log) -> None:
         screen = screen_bgr(device)
     except Exception as exc:
         log(f"[{account.username}] Hậu kiểm Giao Tranh: không chụp được màn hình: {exc}")
-        return
+        return False
 
     templates = get_templates((
         _TEMPLATE_QUAN_SU_GIAO_TRANH_HOI_THANH,
@@ -83,18 +88,20 @@ def post_battle(worker, account, device, log) -> None:
         f"số trận={completed_battles}/{target_battles}."
     )
     if screen_closed and count_reached:
-        log(f"[{account.username}] Hậu kiểm: đã đóng Giao Tranh và đủ số trận.")
-    else:
-        if not screen_closed:
-            log(
-                f"[{account.username}] Hậu kiểm: chưa nhận diện được "
-                "Hồi thành hoặc Lối vào Giao Tranh."
-            )
-        if not count_reached:
-            log(
-                f"[{account.username}] Hậu kiểm: số trận hoàn thành "
-                f"chưa đạt yêu cầu ({completed_battles}/{target_battles})."
-            )
+        log(f"[{account.username}] Hậu kiểm thành công: đã đóng Giao Tranh và đủ số trận.")
+        return True
+
+    if not screen_closed:
+        log(
+            f"[{account.username}] Hậu kiểm thất bại: chưa nhận diện được "
+            "Hồi thành hoặc Lối vào Giao Tranh."
+        )
+    if not count_reached:
+        log(
+            f"[{account.username}] Hậu kiểm thất bại: số trận hoàn thành "
+            f"chưa đạt yêu cầu ({completed_battles}/{target_battles})."
+        )
+    return False
 
 
 def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> list[str]:
@@ -102,10 +109,11 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
     config = worker._config
     # Không thực hiện bất kỳ thao tác UI nào nếu cấu hình không hợp lệ.
     if not pre_battle(config, steps, log):
-        return steps
+        return ["task_battle"]
 
     opened = False
     battle_ok = False
+    post_ok = False
 
     try:
         # Bước 1: mở Giao Tranh.
@@ -134,13 +142,16 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
 
     # Bước 4: hậu kiểm độc lập sau khi finally đã chạy xong.
     try:
-        post_battle(worker, account, device, log)
+        post_ok = post_battle(worker, account, device, log)
     except Exception as exc:
         log(f"[{account.username}] Hậu kiểm Giao Tranh phát sinh lỗi: {exc}")
+        post_ok = False
 
-    if not battle_ok:
+    if not battle_ok or not post_ok:
         failed = ["task_battle"]
     else:
         failed = []
 
+    if _STEP_QUAN_SU_GIAO_TRANH in steps:
+        steps.remove(_STEP_QUAN_SU_GIAO_TRANH)
     return failed
