@@ -14,6 +14,10 @@ from dctq_auto.config.constants import (
     _TEMPLATE_QUAN_SU_GIAO_TRANH_LOI_VAO,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_TIM_DOI_THU,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_XUAT_CHIEN,
+    _TEMPLATE_QUAN_SU_GIAO_TRANH_DUNG_LUONG_THAO,
+    _TEMPLATE_QUAN_SU_GIAO_TRANH_RUT_LUI,
+    _TEMPLATE_QUAN_SU_GIAO_TRANH_THU_QUAN,
+    _TEMPLATE_QUAN_SU_GIAO_TRANH_TRAN_SAU,
 )
 from dctq_auto.vision.template_store import get_templates
 from dctq_auto.vision.template_matching import match_template
@@ -28,6 +32,10 @@ _OPEN_TEMPLATES = (
     _TEMPLATE_QUAN_SU_GIAO_TRANH_TIM_DOI_THU,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_BAI_MIEN_CHIEN,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_XUAT_CHIEN,
+    _TEMPLATE_QUAN_SU_GIAO_TRANH_DUNG_LUONG_THAO,
+    _TEMPLATE_QUAN_SU_GIAO_TRANH_RUT_LUI,
+    _TEMPLATE_QUAN_SU_GIAO_TRANH_THU_QUAN,
+    _TEMPLATE_QUAN_SU_GIAO_TRANH_TRAN_SAU,
 )
 
 _MAX_TRIES = 60
@@ -101,7 +109,7 @@ def _handle_template_match(
     # Lối vào Giao Tranh.
     if template_name == _TEMPLATE_QUAN_SU_GIAO_TRANH_LOI_VAO:
         x, y = _click_match(device, match)
-        log(f"[{account.username}] Click lối vào Giao Tranh tại ({x}, {y}).")
+        log(f"[{account.username}] Click [Lối vào Giao Tranh] tại ({x}, {y}).")
         time.sleep(1)
         return run(
             self, account, device, ocr_client, log,
@@ -111,11 +119,8 @@ def _handle_template_match(
     # Khu vực Quân Sự.
     if template_name == _TEMPLATE_MAIN_QUAN_SU:
         x, y = _click_match(device, match)
-        log(
-            f"[{account.username}] Click Quân Sự tại ({x}, {y}); "
-            "sẽ tìm lối vào Giao Tranh."
-        )
-        time.sleep(1)
+        log(f"[{account.username}] Click [Quân Sự] tại ({x}, {y}).")
+        time.sleep(0.7)
         return run(
             self, account, device, ocr_client, log,
             current_try=current_try + 1,
@@ -123,12 +128,9 @@ def _handle_template_match(
 
     # Canh Bát Trận.
     if template_name == _TEMPLATE_QUAN_SU_GIAO_TRANH_CHUA_SU_DUNG_CANH_BAT_TRAN:
-        if not self._config.get("task_use_bazhen"):
-            return None
-
         x, y = _click_match(device, match)
         log(f"[{account.username}] Click sử dụng Canh Bát Trận tại ({x}, {y}).")
-        time.sleep(1)
+        time.sleep(0.7)
 
         return run(
             self, account, device, ocr_client, log,
@@ -162,6 +164,22 @@ def _handle_template_match(
             current_try=current_try + 1,
         )
 
+    # Sử dụng lương thảo.
+    if template_name == _TEMPLATE_QUAN_SU_GIAO_TRANH_DUNG_LUONG_THAO:
+        x, y = positions.get(
+            "quan_su.giao_tranh", "xac_nhan_dung_luong_thao"
+        )
+        device.shell(f"input tap {x} {y}")
+        log(
+            f"[{account.username}] Phát hiện Thiếu lương thảo; "
+            f"click để bổ sung lương thảo tại ({x}, {y})."
+        )
+        time.sleep(1)
+        return run(
+            self, account, device, ocr_client, log,
+            current_try=current_try + 1,
+        )
+
     # Xuất chiến: chỉ lúc này mới nhận diện Chiến Thuật để chọn group.
     if template_name == _TEMPLATE_QUAN_SU_GIAO_TRANH_XUAT_CHIEN:
         hero_position_group = detect_group(screen_bgr, account, log)
@@ -177,6 +195,15 @@ def _handle_template_match(
             "chờ vào trận."
         )
         time.sleep(1)
+        return True
+
+    # Đang trong trận Giao Tranh - run_battble sẽ xử lý tiếp.
+    if template_name in (
+        _TEMPLATE_QUAN_SU_GIAO_TRANH_RUT_LUI,
+        _TEMPLATE_QUAN_SU_GIAO_TRANH_THU_QUAN,
+        _TEMPLATE_QUAN_SU_GIAO_TRANH_TRAN_SAU,
+    ):
+        log(f"[{account.username}] Đang trong trận Giao Tranh - run_battble sẽ xử lý tiếp.")
         return True
 
     return None
