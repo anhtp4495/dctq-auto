@@ -10,16 +10,7 @@ from dctq_auto.tasks.common.battle.battle_strategies.pincer_battle import Pincer
 from dctq_auto.tasks.common.battle.polling.fast_poller import FastPoller
 from dctq_auto.tasks.common.battle.polling.normal_poller import NormalPoller
 from dctq_auto.tasks.common.battle.polling.time_limit_poller import TimeLimitPoller
-
-
-def _mode(config) -> str:
-    if config.get("giao_tranh_nhanh_1_co"):
-        return "fast"
-    if config.get("ba_co"):
-        return "normal"
-    if config.get("task_battle_time_mode"):
-        return "time_limit"
-    return "normal"
+from dctq_auto.tasks.task_battle import get_battle_config
 
 
 def _create_poller(mode):
@@ -33,7 +24,8 @@ def _create_poller(mode):
 def run(self, account, device, ocr_client, log) -> bool:
     """Chọn chiến thuật/poller và điều phối các sự kiện trong trận."""
     config = self._config
-    mode = _mode(config)
+    battle = get_battle_config(config)
+    mode = battle.mode
     strategy = PincerBattle()
     poller = _create_poller(mode)
     positions = ButtonPositions()
@@ -43,6 +35,7 @@ def run(self, account, device, ocr_client, log) -> bool:
         "account": account,
         "device": device,
         "config": config,
+        "battle_config": battle,
         "log": log,
         "wait_if_paused": self._wait_if_paused,
         # Bộ tọa độ được task_open_battle xác định trước khi click Xuất chiến.
@@ -54,7 +47,7 @@ def run(self, account, device, ocr_client, log) -> bool:
         "battle_started_at": None,
     }
 
-    target_battles = max(1, int(config.get("task_open_battle_count", 1)))
+    target_battles = battle.battle_count
     completed_battles = 0
     # Giữ bộ đếm trên worker để post_battle có thể hậu kiểm sau finally/close.
     self._battle_completed_count = 0
@@ -134,9 +127,6 @@ def run(self, account, device, ocr_client, log) -> bool:
             if not strategy.deploy(context):
                 return False
             hero_deployed = True
-            if not config.get("task_end_battle") and mode == "normal":
-                log(f"[{account.username}] Đã triển khai đủ võ tướng; hoàn tất Bắt đầu trận.")
-                return True
             continue
 
         if collect is not None and observation["should_end"] and not retreat_requested:
@@ -149,12 +139,6 @@ def run(self, account, device, ocr_client, log) -> bool:
                 f"click Thu quân tại ({x}, {y})."
             )
             time.sleep(1)
-            if not config.get("task_end_battle"):
-                log(
-                    f"[{account.username}] Đã click Thu quân theo chế độ {mode}; "
-                    "hoàn tất tác vụ Bắt đầu trận."
-                )
-                return True
             continue
 
     log(
