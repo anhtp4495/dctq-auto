@@ -53,6 +53,7 @@ def run(self, account, device, ocr_client, log) -> bool:
     self._battle_completed_count = 0
     hero_deployed = False
     retreat_requested = False
+    withdraw_confirmation_requested = False
     awaiting_next_screen = False
     deadline = time.monotonic() + max(180, target_battles * 180)
 
@@ -85,6 +86,7 @@ def run(self, account, device, ocr_client, log) -> bool:
 
         retreat = observation["retreat"]
         collect = observation["collect"]
+        withdraw_confirmation = observation["withdraw_confirmation"]
         next_battle = observation["next_battle"]
 
         if awaiting_next_screen:
@@ -113,7 +115,21 @@ def run(self, account, device, ocr_client, log) -> bool:
             hero_deployed = False
             context["battle_started_at"] = None
             retreat_requested = False
+            withdraw_confirmation_requested = False
             awaiting_next_screen = True
+            continue
+
+        # Nếu Thu quân kết thúc trận ngay, ưu tiên xử lý Trận sau ở trên.
+        # Chỉ click xác nhận khi hộp thoại thực sự xuất hiện.
+        if withdraw_confirmation is not None and not withdraw_confirmation_requested:
+            x, y = positions.get("quan_su.giao_tranh.thu_quan", "xac_nhan")
+            device.shell(f"input tap {x} {y}")
+            withdraw_confirmation_requested = True
+            log(
+                f"[{account.username}] Phát hiện hộp thoại Thu quân; "
+                f"click Xác nhận tại ({x}, {y})."
+            )
+            time.sleep(1)
             continue
 
         if retreat is not None and not hero_deployed:
