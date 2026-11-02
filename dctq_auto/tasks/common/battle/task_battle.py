@@ -233,7 +233,13 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
             failed.append("task_end_battle")
 
     if not opened:
-        failed.extend(key for key in selected if key not in failed)
+        for key in (
+            "task_open_battle", "task_use_bazhen",
+            "task_find_battle_opponent", "xuat_chien",
+        ):
+            if key in selected:
+                worker.task_progress_changed.emit(_TASK_LABELS[key], "failed", 0, 1)
+                failed.append(key)
 
     if _STEP_QUAN_SU_GIAO_TRANH in steps:
         steps.remove(_STEP_QUAN_SU_GIAO_TRANH)
