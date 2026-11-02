@@ -1,4 +1,4 @@
-""""Chiến thuật gọng kìm: A -> B thả 2 tướng, B -> A thả 3 tướng."""
+"""Chiến thuật gọng kìm: A -> B thả 2 tướng, B -> A thả 3 tướng."""
 
 import time
 
