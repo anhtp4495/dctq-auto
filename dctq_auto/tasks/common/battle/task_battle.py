@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from dctq_auto.config.constants import (
     _STEP_QUAN_SU_GIAO_TRANH,
+    _TEMPLATE_QUAN_SU_GIAO_TRANH_HOI_THANH,
+    _TEMPLATE_QUAN_SU_GIAO_TRANH_LOI_VAO,
 )
+from dctq_auto.vision.template_store import get_templates
+from dctq_auto.tasks.common.battle.battle_utils import match, screen_bgr
 from dctq_auto.tasks.common.battle import (
     task_close_battle,
     task_open_battle,
@@ -20,7 +24,6 @@ _TASK_LABELS = {
     "task_start_battle": "Bắt đầu trận Giao Tranh",
     "task_end_battle": "Kết thúc trận Giao Tranh",
 }
-
 
 
 def build_clone_battle_config(config) -> dict:
@@ -92,13 +95,63 @@ def pre_battle(config, steps, log) -> bool:
     return True
 
 
-def post_battle(log) -> None:
-    """Điểm hậu xử lý; hiện tại chỉ ghi log."""
-    log("Giao Tranh: hoàn tất quy trình, chưa có xử lý hậu trận.")
+def post_battle(worker, account, device, log) -> bool:
+    """Xác nhận đã thoát giao diện trận và hoàn thành đủ số trận yêu cầu."""
+    target_battles = max(1, int(worker._config.get("task_open_battle_count", 1)))
+    completed_battles = int(getattr(worker, "_battle_completed_count", 0))
+
+    try:
+        screen = screen_bgr(device)
+    except Exception as exc:
+        log(f"[{account.username}] Hậu kiểm Giao Tranh: không chụp được màn hình: {exc}")
+        return False
+
+    templates = get_templates((
+        _TEMPLATE_QUAN_SU_GIAO_TRANH_HOI_THANH,
+        _TEMPLATE_QUAN_SU_GIAO_TRANH_LOI_VAO,
+    ))
+    closed_template = None
+    for template_name in (
+        _TEMPLATE_QUAN_SU_GIAO_TRANH_HOI_THANH,
+        _TEMPLATE_QUAN_SU_GIAO_TRANH_LOI_VAO,
+    ):
+        found = match(
+            screen,
+            templates.get(template_name),
+            account=account,
+            log=log,
+        )
+        if found is not None:
+            closed_template = template_name
+            break
+
+    screen_closed = closed_template is not None
+    count_reached = completed_battles >= target_battles
+
+    log(
+        f"[{account.username}] Hậu kiểm Giao Tranh: "
+        f"đã đóng màn hình={screen_closed}, "
+        f"số trận={completed_battles}/{target_battles}."
+    )
+    if screen_closed and count_reached:
+        log(f"[{account.username}] Hậu kiểm thành công: đã đóng Giao Tranh và đủ số trận.")
+        return True
+
+    if not screen_closed:
+        log(
+            f"[{account.username}] Hậu kiểm thất bại: chưa nhận diện được "
+            "Hồi thành hoặc Lối vào Giao Tranh."
+        )
+    if not count_reached:
+        log(
+            f"[{account.username}] Hậu kiểm thất bại: số trận hoàn thành "
+            f"chưa đạt yêu cầu ({completed_battles}/{target_battles})."
+        )
+    return False
 
 
 def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> list[str]:
-    """Chạy quy trình Giao Tranh theo các tùy chọn được chọn trong GUI."""
+    """Chạy tuần tự pre_battle → open → battle → finally close → post_battle."""
     config = worker._config
     selected = [key for key in _TASK_LABELS if config.get(key)]
     if not selected:
@@ -106,35 +159,27 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
             steps.remove(_STEP_QUAN_SU_GIAO_TRANH)
         return steps
 
+    # Không thực hiện bất kỳ thao tác UI nào nếu cấu hình không hợp lệ.
     if not pre_battle(config, steps, log):
         for key in selected:
             worker.task_progress_changed.emit(_TASK_LABELS[key], "failed", 0, 1)
         return selected
 
-    failed = []
     for key in selected:
         worker.task_progress_changed.emit(_TASK_LABELS[key], "running", 0, 1)
 
-    needs_open = any(
-        config.get(key)
-        for key in (
-            "task_open_battle", "task_use_bazhen",
-            "task_find_battle_opponent", "xuat_chien",
+    failed = []
+    opened = False
+    battle_ok = False
+    post_ok = False
+
+    try:
+        # Bước 1: mở Giao Tranh.
+        opened = task_open_battle.run(
+            worker, account, device, ocr_client, log, screenshot=screenshot
         )
-    )
-    opened = True
-    if needs_open:
-        try:
-            opened = task_open_battle.run(
-                worker, account, device, ocr_client, log, screenshot=screenshot
-            )
-        except Exception as exc:
-            log(f"[{account.username}] Mở Giao Tranh phát sinh lỗi: {exc}")
-            opened = False
         if not opened:
-            failed.extend(selected)
-            for key in selected:
-                worker.task_progress_changed.emit(_TASK_LABELS[key], "failed", 0, 1)
+            log(f"[{account.username}] Không mở được Giao Tranh; bỏ qua run_battle.")
         else:
             for key in (
                 "task_open_battle", "task_use_bazhen",
@@ -143,58 +188,53 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
                 if key in selected:
                     worker.task_progress_changed.emit(_TASK_LABELS[key], "done", 1, 1)
 
-    needs_battle = opened and (
-        config.get("task_start_battle") or config.get("task_end_battle")
-    )
-    battle_ok = True
-    if needs_battle:
-        try:
+            # Bước 2: chạy và đếm số trận.
             battle_ok = run_battle.run(worker, account, device, ocr_client, log)
-        except Exception as exc:
-            log(f"[{account.username}] Chạy Giao Tranh phát sinh lỗi: {exc}")
-            battle_ok = False
-        for key in ("task_start_battle", "task_battle_time_mode"):
-            if key in selected:
-                worker.task_progress_changed.emit(
-                    _TASK_LABELS[key],
-                    "done" if battle_ok else "failed",
-                    1 if battle_ok else 0,
-                    1,
-                )
-                if not battle_ok:
-                    failed.append(key)
 
-    if "task_end_battle" in selected and needs_battle and not battle_ok:
-        worker.task_progress_changed.emit(
-            _TASK_LABELS["task_end_battle"], "failed", 0, 1
-        )
-        failed.append("task_end_battle")
+    except Exception as exc:
+        log(f"[{account.username}] Quy trình Giao Tranh phát sinh lỗi: {exc}")
 
-    if opened and battle_ok and config.get("task_end_battle"):
+    finally:
+        # Luôn thử đóng giao diện kể cả open/battle trả False hoặc phát sinh exception.
         try:
             close_ok = task_close_battle.run(worker, account, device, ocr_client, log)
+            log(
+                f"[{account.username}] Tác vụ đóng Giao Tranh "
+                f"{'thành công' if close_ok else 'chưa xác nhận được'}."
+            )
         except Exception as exc:
-            log(f"[{account.username}] Hồi thành phát sinh lỗi: {exc}")
-            close_ok = False
-        if close_ok:
-            worker.task_progress_changed.emit(
-                _TASK_LABELS["task_end_battle"], "done", 1, 1
-            )
-        else:
-            worker.task_progress_changed.emit(
-                _TASK_LABELS["task_end_battle"], "failed", 0, 1
-            )
+            log(f"[{account.username}] Đóng Giao Tranh phát sinh lỗi: {exc}")
+
+    # Bước 4: hậu kiểm độc lập sau khi finally đã chạy xong.
+    try:
+        post_ok = post_battle(worker, account, device, log)
+    except Exception as exc:
+        log(f"[{account.username}] Hậu kiểm Giao Tranh phát sinh lỗi: {exc}")
+        post_ok = False
+
+    if "task_start_battle" in selected:
+        worker.task_progress_changed.emit(
+            _TASK_LABELS["task_start_battle"],
+            "done" if battle_ok else "failed",
+            1 if battle_ok else 0,
+            1,
+        )
+        if not battle_ok:
+            failed.append("task_start_battle")
+
+    if "task_end_battle" in selected:
+        worker.task_progress_changed.emit(
+            _TASK_LABELS["task_end_battle"],
+            "done" if post_ok else "failed",
+            1 if post_ok else 0,
+            1,
+        )
+        if not post_ok:
             failed.append("task_end_battle")
-    for key in selected:
-        if key not in (
-            "task_open_battle", "task_use_bazhen",
-            "task_find_battle_opponent", "xuat_chien",
-            "task_start_battle", "task_battle_time_mode", "task_end_battle",
-        ):
-            continue
-        # Các trạng thái đã được phát ở trên; không phát lại.
-    if not failed:
-        post_battle(log)
+
+    if not opened:
+        failed.extend(key for key in selected if key not in failed)
+
     if _STEP_QUAN_SU_GIAO_TRANH in steps:
         steps.remove(_STEP_QUAN_SU_GIAO_TRANH)
-    return failed
+    return list(dict.fromkeys(failed))
