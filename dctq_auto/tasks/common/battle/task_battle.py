@@ -16,12 +16,6 @@ from dctq_auto.tasks.common.battle import (
 )
 
 
-_TASK_LABELS = {
-    "task_start_battle": "Bắt đầu trận Giao Tranh",
-    "task_end_battle": "Kết thúc trận Giao Tranh",
-}
-
-
 def build_clone_battle_config(config) -> dict:
     """Chuyển BattleConfig của Clone Optimize sang cấu hình task Giao Tranh."""
     from dctq_auto.tasks.task_battle import get_battle_config
@@ -149,7 +143,7 @@ def post_battle(worker, account, device, log) -> bool:
 def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> list[str]:
     """Chạy tuần tự pre_battle → open → battle → finally close → post_battle."""
     config = worker._config
-    selected = [key for key in _TASK_LABELS if config.get(key)]
+    selected = [key for key in ("task_start_battle", "task_end_battle") if config.get(key)]
     if not selected:
         if _STEP_QUAN_SU_GIAO_TRANH in steps:
             steps.remove(_STEP_QUAN_SU_GIAO_TRANH)
@@ -158,7 +152,8 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
     # Không thực hiện bất kỳ thao tác UI nào nếu cấu hình không hợp lệ.
     if not pre_battle(config, steps, log):
         for key in selected:
-            worker.task_progress_changed.emit(_TASK_LABELS[key], "failed", 0, 1)
+            label = "Bắt đầu trận Giao Tranh" if key == "task_start_battle" else "Kết thúc trận Giao Tranh"
+            worker.task_progress_changed.emit(label, "failed", 0, 1)
         return selected
 
     for key in selected:
@@ -203,7 +198,7 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
 
     if "task_start_battle" in selected:
         worker.task_progress_changed.emit(
-            _TASK_LABELS["task_start_battle"],
+            "Bắt đầu trận Giao Tranh",
             "done" if battle_ok else "failed",
             1 if battle_ok else 0,
             1,
@@ -213,7 +208,7 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
 
     if "task_end_battle" in selected:
         worker.task_progress_changed.emit(
-            _TASK_LABELS["task_end_battle"],
+            "Kết thúc trận Giao Tranh",
             "done" if post_ok else "failed",
             1 if post_ok else 0,
             1,
