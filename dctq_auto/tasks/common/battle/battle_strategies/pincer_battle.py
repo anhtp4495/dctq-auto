@@ -1,14 +1,9 @@
 """Chiến thuật gọng kìm: A -> B thả 2 tướng, B -> A thả 3 tướng."""
 
-from dctq_auto.config.button_positions import ButtonPositions
-from dctq_auto.config.constants import _TEMPLATE_QUAN_SU_GIAO_TRANH_CHIEN_THUAT
 import time
-from dctq_auto.vision.template_store import get_templates
-from dctq_auto.tasks.common.battle.battle_utils import (
-    match,
-    screen_bgr,
-    swipe,
-)
+
+from dctq_auto.config.button_positions import ButtonPositions
+from dctq_auto.tasks.common.battle.battle_utils import swipe
 
 from .base_battle import BaseBattle
 
@@ -16,48 +11,10 @@ from .base_battle import BaseBattle
 class PincerBattle(BaseBattle):
     """Triển khai 5 võ tướng theo hai cửa bằng thao tác kéo gọng kìm."""
 
-    def prepare(self, context) -> bool:
-        account = context["account"]
-        # task_open_battle truyền ảnh vừa dùng để nhận diện nút Xuất chiến,
-        # bảo đảm nhận diện Chiến Thuật trên cùng một trạng thái màn hình.
-        screen = context.get("screen")
-        if screen is None:
-            try:
-                screen = screen_bgr(context["device"])
-            except Exception as exc:
-                context["log"](
-                    f"[{account.username}] Không chụp được màn hình để chọn bộ võ tướng: {exc}"
-                )
-                return False
-
-        templates = get_templates((_TEMPLATE_QUAN_SU_GIAO_TRANH_CHIEN_THUAT,))
-        strategy_match = match(
-            screen,
-            templates.get(_TEMPLATE_QUAN_SU_GIAO_TRANH_CHIEN_THUAT),
-            account=account,
-            log=context["log"],
-        )
-
-        # Mặc định dùng danh_sach1; chỉ chuyển sang danh_sach2
-        # khi không tìm thấy template Chiến Thuật.
-        group = "quan_su.giao_tranh.danh_sach1"
-        if strategy_match is None:
-            group = "quan_su.giao_tranh.danh_sach2"
-
-        context["hero_position_group"] = group
-        context["log"](
-            f"[{account.username}] Chọn bộ tọa độ võ tướng {group} "
-            f"({'có' if strategy_match is not None else 'không có'} Chiến Thuật)."
-        )
-        return True
-
     def deploy(self, context) -> bool:
         account = context["account"]
         device = context["device"]
         log = context["log"]
-        if not context.get("hero_position_group") and not self.prepare(context):
-            return False
-
         positions = ButtonPositions()
         group = context["hero_position_group"]
         hero_points = [
