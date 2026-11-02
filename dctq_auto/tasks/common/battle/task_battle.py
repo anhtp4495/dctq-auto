@@ -20,30 +20,10 @@ def build_clone_battle_config(config) -> dict:
     """Chuyển BattleConfig của Clone Optimize sang cấu hình task Giao Tranh."""
     from dctq_auto.tasks.task_battle import get_battle_config
 
-    battle = get_battle_config(config)
     return {
         **config,
-        # Clone Optimize luôn chạy trọn quy trình từ màn hình chính đến Hồi thành.
-        "task_open_battle": True,
-        "task_use_bazhen": False,
-        "task_find_battle_opponent": True,
-        "xuat_chien": True,
-        "task_open_battle_count": battle.battle_count,
-        "giao_tranh_nhanh_1_co": battle.mode == "fast",
-        "ba_co": battle.mode == "normal",
-        "task_battle_time_mode": battle.mode == "time_limit",
-        "task_battle_time_limit": battle.time_limit_seconds,
+        "battle_config": get_battle_config(config),
     }
-
-
-def _mode(config) -> str:
-    if config.get("giao_tranh_nhanh_1_co"):
-        return "fast"
-    if config.get("ba_co"):
-        return "normal"
-    if config.get("task_battle_time_mode"):
-        return "time_limit"
-    return "normal"
 
 
 def pre_battle(config, steps, log) -> bool:
@@ -52,40 +32,26 @@ def pre_battle(config, steps, log) -> bool:
         log("Giao Tranh: thiếu step quan_su_giao_tranh trong danh sách steps.")
         return False
 
+    from dctq_auto.tasks.task_battle import get_battle_config
+
     try:
-        battle_count = int(config.get("task_open_battle_count", 1))
-        if battle_count < 1:
-            raise ValueError("Số trận phải lớn hơn hoặc bằng 1.")
-
-        selected_modes = sum(
-            bool(config.get(key))
-            for key in ("giao_tranh_nhanh_1_co", "ba_co", "task_battle_time_mode")
-        )
-        if selected_modes > 1:
-            raise ValueError("Chỉ được chọn một chế độ chiến đấu Giao Tranh.")
-
-        if config.get("task_battle_time_mode"):
-            seconds = int(
-                config.get("task_battle_time_limit")
-                or config.get("thoi_gian_giao_tranh")
-                or 0
-            )
-            if seconds < 1:
-                raise ValueError("Thời gian tối đa Giao Tranh phải lớn hơn 0 giây.")
+        battle = get_battle_config(config)
     except (TypeError, ValueError) as exc:
         log(f"Giao Tranh: cấu hình không hợp lệ: {exc}")
         return False
 
     log(
-        f"Giao Tranh: cấu hình hợp lệ — {battle_count} trận, "
-        f"chế độ {_mode(config)}."
+        f"Giao Tranh: cấu hình hợp lệ — {battle.battle_count} trận, "
+        f"chế độ {battle.mode}, giới hạn {battle.time_limit_seconds} giây."
     )
     return True
 
 
 def post_battle(worker, account, device, log) -> bool:
     """Xác nhận đã thoát giao diện trận và hoàn thành đủ số trận yêu cầu."""
-    target_battles = max(1, int(worker._config.get("task_open_battle_count", 1)))
+    from dctq_auto.tasks.task_battle import get_battle_config
+
+    target_battles = get_battle_config(worker._config).battle_count
     completed_battles = int(getattr(worker, "_battle_completed_count", 0))
 
     try:
