@@ -85,8 +85,6 @@ def _handle_template_match(
     ocr_client,
     log,
     current_try,
-    full_open,
-    find_opponent,
     positions,
 ) -> bool | None:
     """Xử lý hành động tương ứng với template vừa nhận diện.
@@ -132,9 +130,6 @@ def _handle_template_match(
         log(f"[{account.username}] Click sử dụng Canh Bát Trận tại ({x}, {y}).")
         time.sleep(1)
 
-        if not full_open and not find_opponent:
-            return True
-
         return run(
             self, account, device, ocr_client, log,
             current_try=current_try + 1,
@@ -145,9 +140,6 @@ def _handle_template_match(
         x, y = _click_match(device, match)
         log(f"[{account.username}] Click Tìm đối thủ tại ({x}, {y}).")
         time.sleep(1)
-
-        if not full_open:
-            return True
 
         return run(
             self, account, device, ocr_client, log,
@@ -172,13 +164,6 @@ def _handle_template_match(
 
     # Xuất chiến: chỉ lúc này mới nhận diện Chiến Thuật để chọn group.
     if template_name == _TEMPLATE_QUAN_SU_GIAO_TRANH_XUAT_CHIEN:
-        if not full_open:
-            log(
-                f"[{account.username}] Đã tới giao diện Xuất chiến; "
-                "dừng tại đây vì chưa chọn tác vụ mở trận."
-            )
-            return True
-
         hero_position_group = detect_group(screen_bgr, account, log)
         self._battle_hero_position_group = hero_position_group
         log(
@@ -235,10 +220,6 @@ def run(
         )
         return False
 
-    full_open = bool(
-        self._config.get("task_open_battle") or self._config.get("xuat_chien")
-    )
-    find_opponent = bool(self._config.get("task_find_battle_opponent"))
     positions = ButtonPositions()
 
     for template_name in template_names:
@@ -280,16 +261,10 @@ def run(
             ocr_client=ocr_client,
             log=log,
             current_try=current_try,
-            full_open=full_open,
-            find_opponent=find_opponent,
             positions=positions,
         )
         if result is not None:
             return result
-
-    if not full_open and not find_opponent:
-        log(f"[{account.username}] Đã xử lý bước Canh Bát Trận được chọn.")
-        return True
 
     log(
         f"[{account.username}] Mở Giao Tranh — chưa nhận diện được trạng thái "
