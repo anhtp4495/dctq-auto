@@ -768,7 +768,7 @@ def run_clone_flow_optimize_account(
         from dctq_auto.tasks.common.guild.task_guild import run as run_guild
         from dctq_auto.tasks.common.shop.task_shop import run as run_shop
 
-        def run_clone_battle(self, account, steps, device, ocr_client, log):
+        def run_raid_battle(self, account, steps, device, ocr_client, log):
             """Chạy Giao Tranh bằng cấu hình BattleConfig của Clone Optimize."""
             from dctq_auto.tasks.common.battle.task_battle import (
                 build_clone_battle_config,
@@ -788,11 +788,15 @@ def run_clone_flow_optimize_account(
 
             return remaining_steps
 
+        def run_ranked_battle(self, account, steps, device, ocr_client, log):
+            return steps
+
         common_tasks = (
             ("Hoạt động", run_activity),
             ("Quân đoàn", run_guild),
             ("Cửa hàng", run_shop),
-            ("Chiến tranh - Giao tranh", run_clone_battle),
+            ("Chiến tranh - Giao tranh", run_raid_battle),
+            ("Chiến tranh - Tranh bá", run_ranked_battle),
         )
         for task_label, task_runner in common_tasks:
             if not self._wait_if_paused():
