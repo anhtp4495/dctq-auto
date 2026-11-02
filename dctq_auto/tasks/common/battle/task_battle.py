@@ -115,7 +115,6 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
         return post_battle(worker, account, steps, device, log)
 
     opened = False
-    battle_ok = False
 
     try:
         # Bước 1: mở Giao Tranh.
@@ -126,7 +125,7 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
             log(f"[{account.username}] Không mở được Giao Tranh; bỏ qua run_battle.")
         else:
             # Bước 2: chạy và đếm số trận.
-            battle_ok = run_battle.run(worker, account, device, ocr_client, log)
+            run_battle.run(worker, account, device, ocr_client, log)
 
     except Exception as exc:
         log(f"[{account.username}] Quy trình Giao Tranh phát sinh lỗi: {exc}")
