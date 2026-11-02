@@ -9,7 +9,7 @@ from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.config.constants import (
     _TEMPLATE_MAIN_QUAN_SU,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_BAI_MIEN_CHIEN,
-    _TEMPLATE_QUAN_SU_GIAO_TRANH_CHIEN_THUAT,
+    _TEMPLATE_QUAN_SU_GIAO_TRANH_CHUA_CO_CHIEN_THUAT,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_CHUA_SU_DUNG_CANH_BAT_TRAN,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_LOI_VAO,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_TIM_DOI_THU,
@@ -43,7 +43,7 @@ _MAX_TRIES = 60
 
 def detect_group(screen_bgr, account, log) -> str:
     """Nhận diện Chiến Thuật để chọn bộ tọa độ võ tướng."""
-    template_name = _TEMPLATE_QUAN_SU_GIAO_TRANH_CHIEN_THUAT
+    template_name = _TEMPLATE_QUAN_SU_GIAO_TRANH_CHUA_CO_CHIEN_THUAT
     templates = get_templates((template_name,))
     template = templates.get(template_name)
 
@@ -70,8 +70,9 @@ def detect_group(screen_bgr, account, log) -> str:
         )
         return "quan_su.giao_tranh.danh_sach2"
 
+    # Đã có chiến thuật nên không match
     if match is None:
-        return "quan_su.giao_tranh.danh_sach2"
+        return "quan_su.giao_tranh.danh_sach1"
 
     report_template_match(
         log,
@@ -79,7 +80,7 @@ def detect_group(screen_bgr, account, log) -> str:
         template=template,
         match=match,
     )
-    return "quan_su.giao_tranh.danh_sach1"
+    return "quan_su.giao_tranh.danh_sach2"
 
 
 def _handle_template_match(

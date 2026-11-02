@@ -731,10 +731,10 @@
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
-        "chien_thuat": {
-          "description": "[Giao tranh] - [Chiến thuật]",
-          "rect": { "top": 967, "left": 1431, "right": 1602, "bottom": 1001},
-          "search_rect":  { "top": 850, "left": 950, "right": 1900, "bottom": 1070},
+        "chua_co_chien_thuat": {
+          "description": "[Giao tranh] - chưa có [Chiến thuật]",
+          "rect": { "top": 938, "left": 1244, "right": 1353, "bottom": 1047},
+          "search_rect":  { "top": 884, "left": 1156, "right": 1427, "bottom": 1071},
           "threshold": 0.95,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
