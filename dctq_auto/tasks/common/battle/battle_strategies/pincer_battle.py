@@ -39,7 +39,7 @@ class PincerBattle(BaseBattle):
             if not context["wait_if_paused"]():
                 log(f"[{account.username}] Đã dừng khi kéo điểm A -> B ({repeat}/2).")
                 return False
-            swipe(device, point_a, point_b)
+            swipe(device, point_a, point_b, account=account, log=log)
             time.sleep(0.3)
             log(
                 f"[{account.username}] Kéo điểm A -> B lần {repeat}/2: "
@@ -52,7 +52,13 @@ class PincerBattle(BaseBattle):
                 return False
             if index == 0 and context.get("mark_battle_started"):
                 context["mark_battle_started"]()
-            swipe(device, hero_points[index], battle_points[index])
+            swipe(
+                device,
+                hero_points[index],
+                battle_points[index],
+                account=account,
+                log=log,
+            )
             time.sleep(0.3)
             log(
                 f"[{account.username}] Thả võ tướng {index + 1}/5: "
@@ -64,7 +70,7 @@ class PincerBattle(BaseBattle):
             if not context["wait_if_paused"]():
                 log(f"[{account.username}] Đã dừng khi kéo điểm B -> A ({repeat}/2).")
                 return False
-            swipe(device, point_b, point_a)
+            swipe(device, point_b, point_a, account=account, log=log)
             time.sleep(0.3)
             log(
                 f"[{account.username}] Kéo điểm B -> A lần {repeat}/2: "
@@ -75,7 +81,13 @@ class PincerBattle(BaseBattle):
             if not context["wait_if_paused"]():
                 log(f"[{account.username}] Đã dừng trước khi thả võ tướng {index + 1}.")
                 return False
-            swipe(device, hero_points[index], battle_points[index])
+            swipe(
+                device,
+                hero_points[index],
+                battle_points[index],
+                account=account,
+                log=log,
+            )
             log(
                 f"[{account.username}] Thả võ tướng {index + 1}/5: "
                 f"{hero_points[index]} -> {battle_points[index]}."
