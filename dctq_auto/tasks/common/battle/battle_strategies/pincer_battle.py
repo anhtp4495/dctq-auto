@@ -2,6 +2,7 @@
 
 from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.config.constants import _TEMPLATE_QUAN_SU_GIAO_TRANH_CHIEN_THUAT
+import time
 from dctq_auto.vision.template_store import get_templates
 from dctq_auto.tasks.common.battle.battle_utils import (
     match,
@@ -76,6 +77,7 @@ class PincerBattle(BaseBattle):
                 log(f"[{account.username}] Đã dừng khi kéo điểm A -> B ({repeat}/2).")
                 return False
             swipe(device, point_a, point_b)
+            time.sleep(0.3)
             log(
                 f"[{account.username}] Kéo điểm A -> B lần {repeat}/2: "
                 f"{point_a} -> {point_b}."
@@ -88,6 +90,7 @@ class PincerBattle(BaseBattle):
             if index == 0 and context.get("mark_battle_started"):
                 context["mark_battle_started"]()
             swipe(device, hero_points[index], battle_points[index])
+            time.sleep(0.3)
             log(
                 f"[{account.username}] Thả võ tướng {index + 1}/5: "
                 f"{hero_points[index]} -> {battle_points[index]}."
@@ -99,6 +102,7 @@ class PincerBattle(BaseBattle):
                 log(f"[{account.username}] Đã dừng khi kéo điểm B -> A ({repeat}/2).")
                 return False
             swipe(device, point_b, point_a)
+            time.sleep(0.3)
             log(
                 f"[{account.username}] Kéo điểm B -> A lần {repeat}/2: "
                 f"{point_b} -> {point_a}."
