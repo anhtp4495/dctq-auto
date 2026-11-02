@@ -114,6 +114,7 @@ def run(self, account, device, ocr_client, log) -> bool:
             )
             hero_deployed = False
             context["battle_started_at"] = None
+            context["time_limit_reached_logged"] = False
             retreat_requested = False
             withdraw_confirmation_requested = False
             awaiting_next_screen = True
