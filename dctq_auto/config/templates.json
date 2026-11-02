@@ -735,7 +735,8 @@
           "description": "[Giao tranh] - [Chiến thuật]",
           "rect": { "top": 967, "left": 1431, "right": 1602, "bottom": 1001},
           "search_rect":  { "top": 850, "left": 950, "right": 1900, "bottom": 1070},
-          "threshold": 0.85,
+          "threshold": 0.95,
+          "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "rut_lui": {
