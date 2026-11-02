@@ -85,6 +85,8 @@ class PincerBattle(BaseBattle):
             if not context["wait_if_paused"]():
                 log(f"[{account.username}] Đã dừng trước khi thả võ tướng {index + 1}.")
                 return False
+            if index == 0 and context.get("mark_battle_started"):
+                context["mark_battle_started"]()
             swipe(device, hero_points[index], battle_points[index])
             log(
                 f"[{account.username}] Thả võ tướng {index + 1}/5: "
