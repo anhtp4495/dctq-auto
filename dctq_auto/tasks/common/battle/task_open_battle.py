@@ -33,9 +33,10 @@ _OPEN_TEMPLATES = (
 _MAX_TRIES = 60
 
 
-def detect_group(screen_bgr, templates, account, log) -> str:
+def detect_group(screen_bgr, account, log) -> str:
     """Nhận diện Chiến Thuật để chọn bộ tọa độ võ tướng."""
     template_name = _TEMPLATE_QUAN_SU_GIAO_TRANH_CHIEN_THUAT
+    templates = get_templates((template_name,))
     template = templates.get(template_name)
 
     if template is None:
@@ -231,9 +232,7 @@ def run(
                 )
                 return True
 
-            hero_position_group = detect_group(
-                screen_bgr, templates, account, log
-            )
+            hero_position_group = detect_group(screen_bgr, account, log)
             self._battle_hero_position_group = hero_position_group
             log(
                 f"[{account.username}] Chọn bộ tọa độ võ tướng "
