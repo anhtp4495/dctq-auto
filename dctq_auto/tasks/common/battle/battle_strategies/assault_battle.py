@@ -1,0 +1,1 @@
+"""Chiến đấu nhanh, bất ngờ - Dùng trong Quốc chiến"""

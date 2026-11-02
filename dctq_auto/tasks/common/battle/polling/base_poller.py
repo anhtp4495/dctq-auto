@@ -1,0 +1,1 @@
+"""Lớp cơ sở định nghĩa khoảng nghỉ định kỳ"""

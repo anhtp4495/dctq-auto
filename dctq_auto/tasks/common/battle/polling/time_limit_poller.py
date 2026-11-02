@@ -1,0 +1,1 @@
+"""Chế độ: Có giới hạn thời gian tối đa để kết thúc trận"""
