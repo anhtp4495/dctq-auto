@@ -29,7 +29,7 @@ def build_clone_battle_config(config) -> dict:
 def pre_battle(config, steps, log) -> bool:
     """Kiểm tra cấu hình Giao Tranh trước khi bắt đầu."""
     if _STEP_QUAN_SU_GIAO_TRANH not in steps:
-        log("Giao Tranh: thiếu step quan_su_giao_tranh trong danh sách steps.")
+        log("Không chọn chức năng [Giao Tranh].")
         return False
 
     from dctq_auto.tasks.task_battle import get_battle_config
@@ -38,6 +38,10 @@ def pre_battle(config, steps, log) -> bool:
         battle = get_battle_config(config)
     except (TypeError, ValueError) as exc:
         log(f"Giao Tranh: cấu hình không hợp lệ: {exc}")
+        return False
+
+    if battle.battle_count < 1:
+        log(f"Giao Tranh: Số trận ({battle.battle_count}) không hợp lệ.")
         return False
 
     log(
@@ -49,6 +53,9 @@ def pre_battle(config, steps, log) -> bool:
 
 def post_battle(worker, account, steps, device, log) -> list[str]:
     """Ghi log hậu kiểm, loại step Giao Tranh và trả lại steps còn lại."""
+    if _STEP_QUAN_SU_GIAO_TRANH not in steps:
+        return steps
+
     from dctq_auto.tasks.task_battle import get_battle_config
 
     target_battles = get_battle_config(worker._config).battle_count
