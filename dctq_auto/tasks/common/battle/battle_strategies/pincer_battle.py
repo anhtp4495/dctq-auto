@@ -18,13 +18,17 @@ class PincerBattle(BaseBattle):
 
     def prepare(self, context) -> bool:
         account = context["account"]
-        try:
-            screen = screen_bgr(context["device"])
-        except Exception as exc:
-            context["log"](
-                f"[{account.username}] Không chụp được màn hình để chọn bộ võ tướng: {exc}"
-            )
-            return False
+        # task_open_battle truyền ảnh vừa dùng để nhận diện nút Xuất chiến,
+        # bảo đảm nhận diện Chiến Thuật trên cùng một trạng thái màn hình.
+        screen = context.get("screen")
+        if screen is None:
+            try:
+                screen = screen_bgr(context["device"])
+            except Exception as exc:
+                context["log"](
+                    f"[{account.username}] Không chụp được màn hình để chọn bộ võ tướng: {exc}"
+                )
+                return False
 
         templates = get_templates((_TEMPLATE_QUAN_SU_GIAO_TRANH_CHIEN_THUAT,))
         strategy_match = match(
@@ -33,11 +37,13 @@ class PincerBattle(BaseBattle):
             account=account,
             log=context["log"],
         )
+
         # Mặc định dùng danh_sach1; chỉ chuyển sang danh_sach2
-        # khi không nhận diện được template Chiến Thuật.
+        # khi không tìm thấy template Chiến Thuật.
         group = "quan_su.giao_tranh.danh_sach1"
         if strategy_match is None:
             group = "quan_su.giao_tranh.danh_sach2"
+
         context["hero_position_group"] = group
         context["log"](
             f"[{account.username}] Chọn bộ tọa độ võ tướng {group} "
