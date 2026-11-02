@@ -1,9 +1,9 @@
-"""Chiến thuật gọng kìm: A -> B thả 2 tướng, B -> A thả 3 tướng."""
+""""Chiến thuật gọng kìm: A -> B thả 2 tướng, B -> A thả 3 tướng."""
 
 import time
 
 from dctq_auto.config.button_positions import ButtonPositions
-from dctq_auto.tasks.common.battle.battle_utils import swipe
+from dctq_auto.tasks.common.battle.battle_utils import swipe, tap
 
 from .base_battle import BaseBattle
 
@@ -34,6 +34,32 @@ class PincerBattle(BaseBattle):
             "quan_su.giao_tranh", "diem_bat_dau_giao_tranh_2"
         )
 
+        def deploy_hero(index: int) -> bool:
+            hero_number = index + 1
+            if not context["wait_if_paused"]():
+                log(f"[{account.username}] Đã dừng trước khi chọn võ tướng {hero_number}.")
+                return False
+            if index == 0 and context.get("mark_battle_started"):
+                context["mark_battle_started"]()
+
+            tap(device, hero_points[index], account=account, log=log)
+            time.sleep(0.3)
+            log(
+                f"[{account.username}] Chọn võ tướng {hero_number}/5 tại "
+                f"{hero_points[index]}."
+            )
+
+            if not context["wait_if_paused"]():
+                log(f"[{account.username}] Đã dừng trước khi thả võ tướng {hero_number}.")
+                return False
+            tap(device, battle_points[index], account=account, log=log)
+            time.sleep(0.3)
+            log(
+                f"[{account.username}] Thả võ tướng {hero_number}/5 tại "
+                f"{battle_points[index]}."
+            )
+            return True
+
         # Mở cửa thứ nhất và triển khai hai võ tướng đầu tiên.
         for repeat in range(1, 3):
             if not context["wait_if_paused"]():
@@ -47,23 +73,8 @@ class PincerBattle(BaseBattle):
             )
 
         for index in range(2):
-            if not context["wait_if_paused"]():
-                log(f"[{account.username}] Đã dừng trước khi thả võ tướng {index + 1}.")
+            if not deploy_hero(index):
                 return False
-            if index == 0 and context.get("mark_battle_started"):
-                context["mark_battle_started"]()
-            swipe(
-                device,
-                hero_points[index],
-                battle_points[index],
-                account=account,
-                log=log,
-            )
-            time.sleep(0.3)
-            log(
-                f"[{account.username}] Thả võ tướng {index + 1}/5: "
-                f"{hero_points[index]} -> {battle_points[index]}."
-            )
 
         # Mở cửa thứ hai và triển khai ba võ tướng còn lại.
         for repeat in range(1, 3):
@@ -78,20 +89,8 @@ class PincerBattle(BaseBattle):
             )
 
         for index in range(2, 5):
-            if not context["wait_if_paused"]():
-                log(f"[{account.username}] Đã dừng trước khi thả võ tướng {index + 1}.")
+            if not deploy_hero(index):
                 return False
-            swipe(
-                device,
-                hero_points[index],
-                battle_points[index],
-                account=account,
-                log=log,
-            )
-            log(
-                f"[{account.username}] Thả võ tướng {index + 1}/5: "
-                f"{hero_points[index]} -> {battle_points[index]}."
-            )
 
         log(f"[{account.username}] Đã triển khai đủ 5 võ tướng theo chiến thuật gọng kìm.")
         return True
