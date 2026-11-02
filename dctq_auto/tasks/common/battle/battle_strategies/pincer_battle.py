@@ -61,7 +61,7 @@ class PincerBattle(BaseBattle):
             return True
 
         # Mở cửa thứ nhất và triển khai hai võ tướng đầu tiên.
-        for repeat in range(1, 3):
+        for repeat in range(1, 2):
             if not context["wait_if_paused"]():
                 log(f"[{account.username}] Đã dừng khi kéo điểm A -> B ({repeat}/2).")
                 return False
@@ -77,7 +77,7 @@ class PincerBattle(BaseBattle):
                 return False
 
         # Mở cửa thứ hai và triển khai ba võ tướng còn lại.
-        for repeat in range(1, 3):
+        for repeat in range(1, 2):
             if not context["wait_if_paused"]():
                 log(f"[{account.username}] Đã dừng khi kéo điểm B -> A ({repeat}/2).")
                 return False
