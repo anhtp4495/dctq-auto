@@ -104,7 +104,7 @@ def open_guild(
                 return False
 
     if current_try < _MAX_TRY_DETECT_MAIN_SCREEN:
-        worker.log_message.emit(f"[{account.username}] [Quân đoàn] Chưa chạy xong - Thử lại lần {current_try}.")
+        log(f"[{account.username}] [Quân đoàn] Chưa chạy xong - Thử lại lần {current_try}.")
         return open_guild(self, account, device, ocr_client, log, screenshot=None, current_try=current_try + 1)
 
     log(f"[{account.username}] Mở màn hình [Quân đoàn] thất bại.")
