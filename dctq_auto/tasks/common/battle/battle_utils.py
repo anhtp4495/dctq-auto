@@ -43,6 +43,20 @@ def click_match(device, match_result) -> tuple[int, int]:
     return x, y
 
 
+def tap(
+    device,
+    point: tuple[int, int],
+    *,
+    account,
+    log,
+) -> None:
+    """Click vào tọa độ bằng ADB và ghi log lệnh."""
+    x, y = point
+    command = f"input tap {x} {y}"
+    log(f"[{account.username}] ADB: {command}")
+    device.shell(command)
+
+
 def swipe(
     device,
     start: tuple[int, int],
