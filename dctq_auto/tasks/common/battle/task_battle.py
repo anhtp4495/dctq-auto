@@ -28,8 +28,6 @@ def build_clone_battle_config(config) -> dict:
         "task_use_bazhen": False,
         "task_find_battle_opponent": True,
         "xuat_chien": True,
-        "task_start_battle": True,
-        "task_end_battle": True,
         "task_open_battle_count": battle.battle_count,
         "giao_tranh_nhanh_1_co": battle.mode == "fast",
         "ba_co": battle.mode == "normal",
@@ -143,23 +141,10 @@ def post_battle(worker, account, device, log) -> bool:
 def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> list[str]:
     """Chạy tuần tự pre_battle → open → battle → finally close → post_battle."""
     config = worker._config
-    selected = [key for key in ("task_start_battle", "task_end_battle") if config.get(key)]
-    if not selected:
-        if _STEP_QUAN_SU_GIAO_TRANH in steps:
-            steps.remove(_STEP_QUAN_SU_GIAO_TRANH)
-        return steps
-
     # Không thực hiện bất kỳ thao tác UI nào nếu cấu hình không hợp lệ.
     if not pre_battle(config, steps, log):
-        for key in selected:
-            label = "Bắt đầu trận Giao Tranh" if key == "task_start_battle" else "Kết thúc trận Giao Tranh"
-            worker.task_progress_changed.emit(label, "failed", 0, 1)
-        return selected
+        return ["task_battle"]
 
-    for key in selected:
-        worker.task_progress_changed.emit(_TASK_LABELS[key], "running", 0, 1)
-
-    failed = []
     opened = False
     battle_ok = False
     post_ok = False
@@ -196,26 +181,11 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
         log(f"[{account.username}] Hậu kiểm Giao Tranh phát sinh lỗi: {exc}")
         post_ok = False
 
-    if "task_start_battle" in selected:
-        worker.task_progress_changed.emit(
-            "Bắt đầu trận Giao Tranh",
-            "done" if battle_ok else "failed",
-            1 if battle_ok else 0,
-            1,
-        )
-        if not battle_ok:
-            failed.append("task_start_battle")
-
-    if "task_end_battle" in selected:
-        worker.task_progress_changed.emit(
-            "Kết thúc trận Giao Tranh",
-            "done" if post_ok else "failed",
-            1 if post_ok else 0,
-            1,
-        )
-        if not post_ok:
-            failed.append("task_end_battle")
+    if not battle_ok or not post_ok:
+        failed = ["task_battle"]
+    else:
+        failed = []
 
     if _STEP_QUAN_SU_GIAO_TRANH in steps:
         steps.remove(_STEP_QUAN_SU_GIAO_TRANH)
-    return list(dict.fromkeys(failed))
+    return failed
