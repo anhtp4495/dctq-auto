@@ -4,6 +4,7 @@ import time
 
 from dctq_auto.config.constants import (
     _TEMPLATE_QUAN_SU_GIAO_TRANH_DUNG_LUONG_THAO,
+    _TEMPLATE_QUAN_SU_GIAO_TRANH_HOP_THOAI_THU_QUAN,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_RUT_LUI,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_THU_QUAN,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_TRAN_SAU,
@@ -18,6 +19,7 @@ class BasePoller:
     templates = (
         _TEMPLATE_QUAN_SU_GIAO_TRANH_RUT_LUI,
         _TEMPLATE_QUAN_SU_GIAO_TRANH_THU_QUAN,
+        _TEMPLATE_QUAN_SU_GIAO_TRANH_HOP_THOAI_THU_QUAN,
         _TEMPLATE_QUAN_SU_GIAO_TRANH_TRAN_SAU,
         _TEMPLATE_QUAN_SU_GIAO_TRANH_DUNG_LUONG_THAO,
     )
@@ -50,6 +52,11 @@ class BasePoller:
             ),
             "collect": match(
                 screen, templates.get(_TEMPLATE_QUAN_SU_GIAO_TRANH_THU_QUAN),
+                account=account, log=context["log"],
+            ),
+            "withdraw_confirmation": match(
+                screen,
+                templates.get(_TEMPLATE_QUAN_SU_GIAO_TRANH_HOP_THOAI_THU_QUAN),
                 account=account, log=context["log"],
             ),
             "next_battle": match(
