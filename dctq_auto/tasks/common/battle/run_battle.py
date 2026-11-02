@@ -89,24 +89,26 @@ def run(self, account, device, ocr_client, log) -> bool:
         withdraw_confirmation = observation["withdraw_confirmation"]
         next_battle = observation["next_battle"]
 
-        if awaiting_next_screen:
-            if next_battle is not None:
-                continue
+        if awaiting_next_screen and next_battle is None:
+            # Template đã biến mất; sẵn sàng ghi nhận trận kế tiếp.
             awaiting_next_screen = False
 
         if next_battle is not None:
-            completed_battles += 1
-            self._battle_completed_count = completed_battles
-            log(
-                f"[{account.username}] Phát hiện Trận sau: "
-                f"hoàn thành {completed_battles}/{target_battles} trận."
-            )
-            if completed_battles >= target_battles:
-                log(f"[{account.username}] Đã đủ số trận; chuyển sang tác vụ Hồi thành.")
-                return True
+            if not awaiting_next_screen:
+                completed_battles += 1
+                self._battle_completed_count = completed_battles
+                log(
+                    f"[{account.username}] Phát hiện Trận sau: "
+                    f"hoàn thành {completed_battles}/{target_battles} trận."
+                )
+                if completed_battles >= target_battles:
+                    log(f"[{account.username}] Đã đủ số trận; chuyển sang tác vụ Hồi thành.")
+                    return True
 
             from dctq_auto.tasks.common.battle.battle_utils import click_match
 
+            # Cứ mỗi lần polling còn thấy Trận sau thì click lại, không tăng
+            # bộ đếm trận cho đến khi template biến mất rồi xuất hiện lại.
             x, y = click_match(device, next_battle)
             log(
                 f"[{account.username}] Còn trận tiếp theo; click Trận sau "
