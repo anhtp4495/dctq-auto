@@ -145,14 +145,19 @@ def run(self, account, device, ocr_client, log, screenshot=None) -> bool:
                     "dừng tại đây vì chưa chọn tác vụ mở trận."
                 )
                 return True
+
+            # Chọn danh sách võ tướng trên chính ảnh đã nhận diện Xuất chiến,
+            # hoàn tất việc này trước khi click nút Xuất chiến.
             strategy_context = {
                 "account": account,
                 "device": device,
+                "screen": screen,
                 "log": log,
             }
             if not PincerBattle().prepare(strategy_context):
                 return False
             self._battle_hero_position_group = strategy_context["hero_position_group"]
+
             x, y = _click_match(device, xuat_chien)
             log(f"[{account.username}] Click Xuất chiến tại ({x}, {y}); chờ vào trận.")
             time.sleep(1)
