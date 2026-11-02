@@ -45,13 +45,14 @@ def run(self, account, device, ocr_client, log) -> bool:
         "config": config,
         "log": log,
         "wait_if_paused": self._wait_if_paused,
-        "hero_position_group": getattr(self, "_battle_hero_position_group", None),
+        # Bộ tọa độ được task_open_battle xác định trước khi click Xuất chiến.
+        # Nếu run_battle được gọi độc lập, mặc định dùng danh_sach1.
+        "hero_position_group": (
+            getattr(self, "_battle_hero_position_group", None)
+            or "quan_su.giao_tranh.danh_sach1"
+        ),
         "battle_started_at": None,
     }
-
-    if not context["hero_position_group"] and not strategy.prepare(context):
-        return False
-    self._battle_hero_position_group = context["hero_position_group"]
 
     target_battles = max(1, int(config.get("task_open_battle_count", 1)))
     completed_battles = 0
