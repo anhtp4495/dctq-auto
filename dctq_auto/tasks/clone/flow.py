@@ -778,18 +778,15 @@ def run_clone_flow_optimize_account(
             original_config = self._config
             self._config = build_clone_battle_config(original_config)
             try:
-                failed_tasks = run_battle(
+                # task_battle.run() tự cập nhật steps và trả về danh sách còn lại;
+                # không còn trả về failed_tasks.
+                remaining_steps = run_battle(
                     self, account, steps, device, ocr_client, log
                 )
             finally:
                 self._config = original_config
 
-            if failed_tasks:
-                raise RuntimeError(
-                    "Giao Tranh thất bại ở các tác vụ: "
-                    + ", ".join(failed_tasks)
-                )
-            return steps
+            return remaining_steps
 
         common_tasks = (
             ("Hoạt động", run_activity),
