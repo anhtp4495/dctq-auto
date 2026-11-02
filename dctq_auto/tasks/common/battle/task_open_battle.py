@@ -16,6 +16,7 @@ from dctq_auto.config.constants import (
     _TEMPLATE_QUAN_SU_GIAO_TRANH_XUAT_CHIEN,
 )
 from dctq_auto.vision.template_store import get_templates
+from dctq_auto.tasks.common.battle.battle_strategies.pincer_battle import PincerBattle
 from dctq_auto.tasks.common.battle.battle_utils import (
     click_match as _click_match,
     match as _match,
@@ -144,6 +145,14 @@ def run(self, account, device, ocr_client, log, screenshot=None) -> bool:
                     "dừng tại đây vì chưa chọn tác vụ mở trận."
                 )
                 return True
+            strategy_context = {
+                "account": account,
+                "device": device,
+                "log": log,
+            }
+            if not PincerBattle().prepare(strategy_context):
+                return False
+            self._battle_hero_position_group = strategy_context["hero_position_group"]
             x, y = _click_match(device, xuat_chien)
             log(f"[{account.username}] Click Xuất chiến tại ({x}, {y}); chờ vào trận.")
             time.sleep(1)
