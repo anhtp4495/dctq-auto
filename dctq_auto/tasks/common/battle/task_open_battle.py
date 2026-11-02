@@ -74,6 +74,129 @@ def detect_group(screen_bgr, account, log) -> str:
     return "quan_su.giao_tranh.danh_sach1"
 
 
+def _handle_template_match(
+    self,
+    template_name,
+    template,
+    match,
+    screen_bgr,
+    account,
+    device,
+    ocr_client,
+    log,
+    current_try,
+    full_open,
+    find_opponent,
+    positions,
+) -> bool | None:
+    """Xử lý hành động tương ứng với template vừa nhận diện.
+
+    Trả về None nếu cần tiếp tục kiểm tra template khác.
+    """
+    report_template_match(
+        log,
+        context=f"[{account.username}]",
+        template=template,
+        match=match,
+    )
+
+    # Lối vào Giao Tranh.
+    if template_name == _TEMPLATE_QUAN_SU_GIAO_TRANH_LOI_VAO:
+        x, y = _click_match(device, match)
+        log(f"[{account.username}] Click lối vào Giao Tranh tại ({x}, {y}).")
+        time.sleep(1)
+        return run(
+            self, account, device, ocr_client, log,
+            current_try=current_try + 1,
+        )
+
+    # Khu vực Quân Sự.
+    if template_name == _TEMPLATE_MAIN_QUAN_SU:
+        x, y = _click_match(device, match)
+        log(
+            f"[{account.username}] Click Quân Sự tại ({x}, {y}); "
+            "sẽ tìm lối vào Giao Tranh."
+        )
+        time.sleep(1)
+        return run(
+            self, account, device, ocr_client, log,
+            current_try=current_try + 1,
+        )
+
+    # Canh Bát Trận.
+    if template_name == _TEMPLATE_QUAN_SU_GIAO_TRANH_CHUA_SU_DUNG_CANH_BAT_TRAN:
+        if not self._config.get("task_use_bazhen"):
+            return None
+
+        x, y = _click_match(device, match)
+        log(f"[{account.username}] Click sử dụng Canh Bát Trận tại ({x}, {y}).")
+        time.sleep(1)
+
+        if not full_open and not find_opponent:
+            return True
+
+        return run(
+            self, account, device, ocr_client, log,
+            current_try=current_try + 1,
+        )
+
+    # Tìm đối thủ.
+    if template_name == _TEMPLATE_QUAN_SU_GIAO_TRANH_TIM_DOI_THU:
+        x, y = _click_match(device, match)
+        log(f"[{account.username}] Click Tìm đối thủ tại ({x}, {y}).")
+        time.sleep(1)
+
+        if not full_open:
+            return True
+
+        return run(
+            self, account, device, ocr_client, log,
+            current_try=current_try + 1,
+        )
+
+    # Bài Miễn Chiến.
+    if template_name == _TEMPLATE_QUAN_SU_GIAO_TRANH_BAI_MIEN_CHIEN:
+        x, y = positions.get(
+            "quan_su.giao_tranh", "phat_dong_tan_cong_bo_bai_mien_chien"
+        )
+        device.shell(f"input tap {x} {y}")
+        log(
+            f"[{account.username}] Phát hiện Bài Miễn Chiến; "
+            f"click phát động giao tranh tại ({x}, {y})."
+        )
+        time.sleep(1)
+        return run(
+            self, account, device, ocr_client, log,
+            current_try=current_try + 1,
+        )
+
+    # Xuất chiến: chỉ lúc này mới nhận diện Chiến Thuật để chọn group.
+    if template_name == _TEMPLATE_QUAN_SU_GIAO_TRANH_XUAT_CHIEN:
+        if not full_open:
+            log(
+                f"[{account.username}] Đã tới giao diện Xuất chiến; "
+                "dừng tại đây vì chưa chọn tác vụ mở trận."
+            )
+            return True
+
+        hero_position_group = detect_group(screen_bgr, account, log)
+        self._battle_hero_position_group = hero_position_group
+        log(
+            f"[{account.username}] Chọn bộ tọa độ võ tướng "
+            f"{hero_position_group}."
+        )
+
+        x, y = _click_match(device, match)
+        log(
+            f"[{account.username}] Click Xuất chiến tại ({x}, {y}); "
+            "chờ vào trận."
+        )
+        time.sleep(1)
+        return True
+
+    return None
+
+
 def run(
     self,
     account,
@@ -146,106 +269,26 @@ def run(
         if match is None:
             continue
 
-        report_template_match(
-            log,
-            context=f"[{account.username}]",
+        if match is None:
+            continue
+
+        result = _handle_template_match(
+            self=self,
+            template_name=template_name,
             template=template,
             match=match,
+            screen_bgr=screen_bgr,
+            account=account,
+            device=device,
+            ocr_client=ocr_client,
+            log=log,
+            current_try=current_try,
+            full_open=full_open,
+            find_opponent=find_opponent,
+            positions=positions,
         )
-
-        # Lối vào Giao Tranh.
-        if template_name == _TEMPLATE_QUAN_SU_GIAO_TRANH_LOI_VAO:
-            x, y = _click_match(device, match)
-            log(f"[{account.username}] Click lối vào Giao Tranh tại ({x}, {y}).")
-            time.sleep(1)
-            return run(
-                self, account, device, ocr_client, log,
-                current_try=current_try + 1,
-            )
-
-        # Khu vực Quân Sự.
-        if template_name == _TEMPLATE_MAIN_QUAN_SU:
-            x, y = _click_match(device, match)
-            log(
-                f"[{account.username}] Click Quân Sự tại ({x}, {y}); "
-                "sẽ tìm lối vào Giao Tranh."
-            )
-            time.sleep(1)
-            return run(
-                self, account, device, ocr_client, log,
-                current_try=current_try + 1,
-            )
-
-        # Canh Bát Trận.
-        if template_name == _TEMPLATE_QUAN_SU_GIAO_TRANH_CHUA_SU_DUNG_CANH_BAT_TRAN:
-            if not self._config.get("task_use_bazhen"):
-                continue
-
-            x, y = _click_match(device, match)
-            log(f"[{account.username}] Click sử dụng Canh Bát Trận tại ({x}, {y}).")
-            time.sleep(1)
-
-            if not full_open and not find_opponent:
-                return True
-
-            return run(
-                self, account, device, ocr_client, log,
-                current_try=current_try + 1,
-            )
-
-        # Tìm đối thủ.
-        if template_name == _TEMPLATE_QUAN_SU_GIAO_TRANH_TIM_DOI_THU:
-            x, y = _click_match(device, match)
-            log(f"[{account.username}] Click Tìm đối thủ tại ({x}, {y}).")
-            time.sleep(1)
-
-            if not full_open:
-                return True
-
-            return run(
-                self, account, device, ocr_client, log,
-                current_try=current_try + 1,
-            )
-
-        # Bài Miễn Chiến.
-        if template_name == _TEMPLATE_QUAN_SU_GIAO_TRANH_BAI_MIEN_CHIEN:
-            x, y = positions.get(
-                "quan_su.giao_tranh", "phat_dong_tan_cong_bo_bai_mien_chien"
-            )
-            device.shell(f"input tap {x} {y}")
-            log(
-                f"[{account.username}] Phát hiện Bài Miễn Chiến; "
-                f"click phát động giao tranh tại ({x}, {y})."
-            )
-            time.sleep(1)
-            return run(
-                self, account, device, ocr_client, log,
-                current_try=current_try + 1,
-            )
-
-        # Xuất chiến: chỉ lúc này mới nhận diện Chiến Thuật để chọn group.
-        if template_name == _TEMPLATE_QUAN_SU_GIAO_TRANH_XUAT_CHIEN:
-            if not full_open:
-                log(
-                    f"[{account.username}] Đã tới giao diện Xuất chiến; "
-                    "dừng tại đây vì chưa chọn tác vụ mở trận."
-                )
-                return True
-
-            hero_position_group = detect_group(screen_bgr, account, log)
-            self._battle_hero_position_group = hero_position_group
-            log(
-                f"[{account.username}] Chọn bộ tọa độ võ tướng "
-                f"{hero_position_group}."
-            )
-
-            x, y = _click_match(device, match)
-            log(
-                f"[{account.username}] Click Xuất chiến tại ({x}, {y}); "
-                "chờ vào trận."
-            )
-            time.sleep(1)
-            return True
+        if result is not None:
+            return result
 
     if not full_open and not find_opponent:
         log(f"[{account.username}] Đã xử lý bước Canh Bát Trận được chọn.")
