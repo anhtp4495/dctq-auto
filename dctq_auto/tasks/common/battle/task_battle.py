@@ -17,10 +17,6 @@ from dctq_auto.tasks.common.battle import (
 
 
 _TASK_LABELS = {
-    "task_open_battle": "Mở màn hình Giao Tranh",
-    "task_use_bazhen": "Sử dụng Canh Bát Trận",
-    "task_find_battle_opponent": "Tìm đối thủ Giao Tranh",
-    "xuat_chien": "Xuất chiến",
     "task_start_battle": "Bắt đầu trận Giao Tranh",
     "task_end_battle": "Kết thúc trận Giao Tranh",
 }
@@ -181,13 +177,6 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
         if not opened:
             log(f"[{account.username}] Không mở được Giao Tranh; bỏ qua run_battle.")
         else:
-            for key in (
-                "task_open_battle", "task_use_bazhen",
-                "task_find_battle_opponent", "xuat_chien",
-            ):
-                if key in selected:
-                    worker.task_progress_changed.emit(_TASK_LABELS[key], "done", 1, 1)
-
             # Bước 2: chạy và đếm số trận.
             battle_ok = run_battle.run(worker, account, device, ocr_client, log)
 
@@ -231,15 +220,6 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
         )
         if not post_ok:
             failed.append("task_end_battle")
-
-    if not opened:
-        for key in (
-            "task_open_battle", "task_use_bazhen",
-            "task_find_battle_opponent", "xuat_chien",
-        ):
-            if key in selected:
-                worker.task_progress_changed.emit(_TASK_LABELS[key], "failed", 0, 1)
-                failed.append(key)
 
     if _STEP_QUAN_SU_GIAO_TRANH in steps:
         steps.remove(_STEP_QUAN_SU_GIAO_TRANH)
