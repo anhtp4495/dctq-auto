@@ -63,12 +63,12 @@ class PincerBattle(BaseBattle):
         # Mở cửa thứ nhất và triển khai hai võ tướng đầu tiên.
         for repeat in range(1, 2):
             if not context["wait_if_paused"]():
-                log(f"[{account.username}] Đã dừng khi kéo điểm A -> B ({repeat}/2).")
+                log(f"[{account.username}] Đã dừng khi kéo điểm A -> B ({repeat}/1).")
                 return False
             swipe(device, point_a, point_b, account=account, log=log)
             time.sleep(0.3)
             log(
-                f"[{account.username}] Kéo điểm A -> B lần {repeat}/2: "
+                f"[{account.username}] Kéo điểm A -> B lần {repeat}/1: "
                 f"{point_a} -> {point_b}."
             )
 
@@ -79,12 +79,12 @@ class PincerBattle(BaseBattle):
         # Mở cửa thứ hai và triển khai ba võ tướng còn lại.
         for repeat in range(1, 2):
             if not context["wait_if_paused"]():
-                log(f"[{account.username}] Đã dừng khi kéo điểm B -> A ({repeat}/2).")
+                log(f"[{account.username}] Đã dừng khi kéo điểm B -> A ({repeat}/1).")
                 return False
             swipe(device, point_b, point_a, account=account, log=log)
             time.sleep(0.3)
             log(
-                f"[{account.username}] Kéo điểm B -> A lần {repeat}/2: "
+                f"[{account.username}] Kéo điểm B -> A lần {repeat}/1: "
                 f"{point_b} -> {point_a}."
             )
 
