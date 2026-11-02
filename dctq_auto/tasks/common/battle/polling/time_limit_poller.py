@@ -21,10 +21,12 @@ class TimeLimitPoller(BasePoller):
         elapsed = time.monotonic() - started_at
         if elapsed >= seconds:
             account = context["account"]
-            context["log"](
-                f"[{account.username}] Đã vượt thời gian tối đa "
-                f"{seconds} giây (thực tế {elapsed:.1f} giây)."
-            )
+            if not context.get("time_limit_reached_logged", False):
+                context["log"](
+                    f"[{account.username}] Đã vượt thời gian tối đa "
+                    f"{seconds} giây (thực tế {elapsed:.1f} giây)."
+                )
+                context["time_limit_reached_logged"] = True
             observation["should_end"] = True
             observation["end_reason"] = "time_limit"
         return observation
