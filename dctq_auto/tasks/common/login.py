@@ -123,17 +123,16 @@ def handle_post_login(
             match=match,
         )
 
-        if template.id == "dich_quan_tap_kich":
+        if template.id  == "thong_bao_bi_tan_cong":
             worker.log_message.emit(
                 f"[{account.username}] Phát hiện Địch Quân Tập Kích; đang đóng cửa sổ."
             )
-            try:
-                ocr_client.tap_ocr_target("close_dich_quan_tap_kich")
-            except Exception as exc:
-                worker.log_message.emit(
-                    f"[{account.username}] Không đóng được cửa sổ Địch Quân Tập Kích: {exc}"
-                )
-                return False, "Không đóng được cửa sổ Địch Quân Tập Kích"
+            tap_x, tap_y = ButtonPositions().get("main.dich_quan_tap_kich", "dong_man_hinh")
+            log(
+                f"[{account.username}] Đóng màn hình Địch Quân Tập Kích "
+                f"theo ButtonPositions tại ({tap_x}, {tap_y})."
+            )
+            device.shell(f"input tap {tap_x} {tap_y}")
             time.sleep(1)
             return handle_post_login(worker, account, device, ocr_client)
 
