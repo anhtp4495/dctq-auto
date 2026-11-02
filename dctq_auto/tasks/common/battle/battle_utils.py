@@ -43,8 +43,18 @@ def click_match(device, match_result) -> tuple[int, int]:
     return x, y
 
 
-def swipe(device, start: tuple[int, int], end: tuple[int, int], duration_ms: int = 500) -> None:
-    """Kéo từ tọa độ bắt đầu đến tọa độ kết thúc bằng ADB."""
+def swipe(
+    device,
+    start: tuple[int, int],
+    end: tuple[int, int],
+    *,
+    account,
+    log,
+    duration_ms: int = 500,
+) -> None:
+    """Kéo từ tọa độ bắt đầu đến tọa độ kết thúc bằng ADB và ghi log lệnh."""
     x1, y1 = start
     x2, y2 = end
-    device.shell(f"input swipe {x1} {y1} {x2} {y2} {duration_ms}")
+    command = f"input swipe {x1} {y1} {x2} {y2} {duration_ms}"
+    log(f"[{account.username}] ADB: {command}")
+    device.shell(command)
