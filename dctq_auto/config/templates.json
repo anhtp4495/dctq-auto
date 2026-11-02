@@ -34,7 +34,7 @@
         },
         "quan_su": {
           "description": "Màn hình chính - Lối vào [Quân Sự]",
-          "rect": { "top": 982, "left": 247, "right": 303, "bottom": 1043},
+          "rect":  { "top": 918, "left": 29, "right": 171, "bottom": 1044},
           "search_rect":  { "top": 600, "left": 0, "right": 600, "bottom": 1070},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
