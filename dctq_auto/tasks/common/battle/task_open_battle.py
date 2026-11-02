@@ -10,13 +10,13 @@ from dctq_auto.config.constants import (
     _TEMPLATE_MAIN_QUAN_SU,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_BAI_MIEN_CHIEN,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_CAM_NANG,
+    _TEMPLATE_QUAN_SU_GIAO_TRANH_CHIEN_THUAT,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_CHUA_SU_DUNG_CANH_BAT_TRAN,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_LOI_VAO,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_TIM_DOI_THU,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_XUAT_CHIEN,
 )
 from dctq_auto.vision.template_store import get_templates
-from dctq_auto.tasks.common.battle.battle_strategies.pincer_battle import PincerBattle
 from dctq_auto.tasks.common.battle.battle_utils import (
     click_match as _click_match,
     match as _match,
@@ -31,6 +31,7 @@ _OPEN_TEMPLATES = (
     _TEMPLATE_QUAN_SU_GIAO_TRANH_TIM_DOI_THU,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_BAI_MIEN_CHIEN,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_CAM_NANG,
+    _TEMPLATE_QUAN_SU_GIAO_TRANH_CHIEN_THUAT,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_XUAT_CHIEN,
 )
 
@@ -146,17 +147,24 @@ def run(self, account, device, ocr_client, log, screenshot=None) -> bool:
                 )
                 return True
 
-            # Chọn danh sách võ tướng trên chính ảnh đã nhận diện Xuất chiến,
-            # hoàn tất việc này trước khi click nút Xuất chiến.
-            strategy_context = {
-                "account": account,
-                "device": device,
-                "screen": screen,
-                "log": log,
-            }
-            if not PincerBattle().prepare(strategy_context):
-                return False
-            self._battle_hero_position_group = strategy_context["hero_position_group"]
+            # Xác định bộ tọa độ võ tướng trước khi click Xuất chiến.
+            # Dùng cùng ảnh màn hình đã nhận diện nút Xuất chiến.
+            strategy_match = _match(
+                screen,
+                templates.get(_TEMPLATE_QUAN_SU_GIAO_TRANH_CHIEN_THUAT),
+                account=account,
+                log=log,
+            )
+            hero_position_group = (
+                "quan_su.giao_tranh.danh_sach1"
+                if strategy_match is not None
+                else "quan_su.giao_tranh.danh_sach2"
+            )
+            self._battle_hero_position_group = hero_position_group
+            log(
+                f"[{account.username}] Chọn bộ tọa độ võ tướng {hero_position_group} "
+                f"({'có' if strategy_match is not None else 'không có'} Chiến Thuật)."
+            )
 
             x, y = _click_match(device, xuat_chien)
             log(f"[{account.username}] Click Xuất chiến tại ({x}, {y}); chờ vào trận.")
