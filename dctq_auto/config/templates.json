@@ -38,6 +38,20 @@
           "search_rect":  { "top": 600, "left": 0, "right": 600, "bottom": 1070},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
+        },
+        "dang_mo_chien_tranh": {
+          "description": "Màn hình chính - Đang mở [Chiến Tranh].",
+          "rect":  { "top": 131, "left": 1457, "right": 1489, "bottom": 181},
+          "search_rect": { "top": 100, "left": 1400, "right": 1550, "bottom": 300},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "chua_mo_chien_tranh": {
+          "description": "Màn hình chính - Chưa mở [Chiến Tranh].",
+          "rect": { "top": 223, "left": 1459, "right": 1495, "bottom": 278},
+          "search_rect": { "top": 100, "left": 1400, "right": 1550, "bottom": 300},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
