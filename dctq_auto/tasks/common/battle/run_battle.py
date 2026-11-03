@@ -10,7 +10,7 @@ from dctq_auto.tasks.common.battle.battle_strategies.pincer_battle import Pincer
 from dctq_auto.tasks.common.battle.polling.fast_poller import FastPoller
 from dctq_auto.tasks.common.battle.polling.normal_poller import NormalPoller
 from dctq_auto.tasks.common.battle.polling.time_limit_poller import TimeLimitPoller
-from dctq_auto.tasks.task_battle import get_battle_config
+from dctq_auto.tasks.common.battle.battle_config import get_battle_config
 
 
 def _create_poller(mode):
