@@ -1,5 +1,6 @@
 """Điều phối trọn quy trình Tranh Bá."""
 
+from datetime import datetime, time
 from typing import Any, Mapping
 
 from dctq_auto.config.constants import _STEP_QUAN_SU_TRANH_BA
@@ -31,6 +32,15 @@ def pre_battle(config, steps, log) -> bool:
     if _STEP_QUAN_SU_TRANH_BA not in steps:
         log("Không chọn chức năng [Tranh Bá].")
         return False
+
+    current_time = datetime.now().time()
+    if not time(7, 0) <= current_time <= time(23, 0):
+        log(
+            "Tranh Bá chỉ được chạy trong khung giờ 07:00–23:00 "
+            f"(giờ máy tính hiện tại: {current_time.strftime('%H:%M:%S')})."
+        )
+        return False
+
     try:
         battle = (
             config.get("battle_config")
