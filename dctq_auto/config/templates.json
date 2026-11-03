@@ -674,22 +674,19 @@
     "chien_tranh": {
       "source_image": "resources/screens/chien_tranh/man_hinh_chinh.png",
       "templates": {
-        "chien_tranh_man_hinh_chinh": {
-          "description": "Màn hình chính mục Chiến tranh.",
-          "rect": {
-            "top": 167,
-            "left": 28,
-            "right": 95,
-            "bottom": 221
-          },
+        "man_hinh_chinh": {
+          "description": "[Chiến tranh]",
+          "rect": { "top": 145, "left": 831, "right": 1085, "bottom": 207},
+          "search_rect":  { "top": 68, "left": 112, "right": 1709, "bottom": 971},
           "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED",
-          "search_rect": {
-            "top": 0,
-            "left": 0,
-            "right": 1920,
-            "bottom": 1080
-          }
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "muu_binh": {
+          "description": "[Chiến tranh] - Lối vào [Mưu binh]",
+          "rect": { "top": 462, "left": 400, "right": 597, "bottom": 635},
+          "search_rect": { "top": 269, "left": 305, "right": 1613, "bottom": 887},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
