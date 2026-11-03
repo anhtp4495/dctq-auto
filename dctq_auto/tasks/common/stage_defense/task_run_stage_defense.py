@@ -137,7 +137,7 @@ def run(worker, account, device, log) -> bool:
             time.sleep(1)
             continue
 
-        time.sleep(1)
+        time.sleep(3)
 
     log(f"[{account.username}] Dừng Mưu Binh vì đã hết thời gian {_MAX_SECONDS // 60} phút.")
     return True
