@@ -9,6 +9,7 @@ from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.config.constants import (
     _TEMPLATE_CHIEN_TRANH_MUU_BINH,
     _TEMPLATE_CHIEN_TRANH_MAN_HINH_CHINH,
+    _TEMPLATE_MUU_BINH_MAN_HINH_CHINH,
     _TEMPLATE_MUU_BINH_CHIEN_DAU,
     _TEMPLATE_MUU_BINH_BAT_DAU,
     _TEMPLATE_MUU_BINH_HOI_THANH,
@@ -23,14 +24,21 @@ from dctq_auto.tasks.common.battle.battle_utils import click_match, swipe
 
 
 _MAX_TRIES = 60
-_OPEN_TEMPLATES = (
-    _TEMPLATE_CHIEN_TRANH_MUU_BINH,
-    _TEMPLATE_CHIEN_TRANH_MAN_HINH_CHINH,
-    _TEMPLATE_MUU_BINH_BAT_DAU,
+# Ưu tiên nhận diện trạng thái Mưu Binh trước để không điều hướng lại
+# khi tài khoản đã ở sẵn trong hoạt động.
+_MUU_BINH_STATE_TEMPLATES = (
     _TEMPLATE_MUU_BINH_HOP_THOAI_THUONG_VUOT_AI,
     _TEMPLATE_MUU_BINH_TU_DONG_DEN_AI_TIEP_THEO,
     _TEMPLATE_MUU_BINH_CHIEN_DAU,
     _TEMPLATE_MUU_BINH_HOI_THANH,
+)
+
+_OPEN_TEMPLATES = (
+    *_MUU_BINH_STATE_TEMPLATES,
+    _TEMPLATE_MUU_BINH_BAT_DAU,
+    _TEMPLATE_MUU_BINH_MAN_HINH_CHINH,
+    _TEMPLATE_CHIEN_TRANH_MUU_BINH,
+    _TEMPLATE_CHIEN_TRANH_MAN_HINH_CHINH,
     _TEMPLATE_MAIN_QUAN_SU,
 )
 
@@ -113,13 +121,14 @@ def run(self, account, device, ocr_client, log, current_try=1, has_swiped_war_me
         elif name == _TEMPLATE_MUU_BINH_TU_DONG_DEN_AI_TIEP_THEO:
             x, y = click_match(device, found)
             log(f"[{account.username}] Click Tự động đến ải tiếp theo tại ({x}, {y}).")
-        elif name in (
-            _TEMPLATE_MUU_BINH_CHIEN_DAU,
-            _TEMPLATE_MUU_BINH_HOI_THANH,
-            _TEMPLATE_MUU_BINH_HOP_THOAI_THUONG_VUOT_AI,
-        ):
-            log(f"[{account.username}] Đã mở Mưu Binh thành công; chuyển sang tự động vượt ải.")
+        elif name in _MUU_BINH_STATE_TEMPLATES:
+            log(f"[{account.username}] Đã ở sẵn trong Mưu Binh; chuyển sang tự động vượt ải.")
             return True
+        elif name == _TEMPLATE_MUU_BINH_MAN_HINH_CHINH:
+            log(
+                f"[{account.username}] Đã nhận diện màn hình chính Mưu Binh; "
+                "đang chờ nút Bắt đầu."
+            )
 
         time.sleep(1)
         return run(
