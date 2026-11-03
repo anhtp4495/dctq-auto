@@ -210,5 +210,23 @@
       "x": 1131,
       "y": 738
     }
+  },
+  "quan_su.tranh_ba": {
+    "dong_man_hinh": {
+      "x": 1750,
+      "y": 100
+    },
+    "dong_man_hinh_nhan_thuong": {
+      "x": 1622,
+      "y": 144
+    },
+    "xac_nhan_mua_the_luc": {
+      "x": 731,
+      "y": 713
+    },
+    "huy_mua_the_luc": {
+      "x": 1204,
+      "y": 702
+    }
   }
 }

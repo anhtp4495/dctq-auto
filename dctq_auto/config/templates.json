@@ -799,6 +799,99 @@
           "match_method": "TM_CCOEFF_NORMED"
         }
       }
+    },
+    "quan_su.tranh_ba": {
+      "source_image": "resources/screens/tranh_ba/man_hinh_chinh.png",
+      "templates": {
+        "loi_vao_tranh_ba": {
+          "description": "[Màn hình chính] - [Quân sự] - Lối vào [Tranh Bá]",
+          "rect": { "top": 964, "left": 353, "right": 400, "bottom": 1022},
+          "search_rect":  { "top": 600, "left": 0, "right": 600, "bottom": 1070},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "tim_doi_thu": {
+          "description": "[Tranh Bá] - [Chiến đấu]",
+          "rect": { "top": 176, "left": 114, "right": 399, "bottom": 263},
+          "search_rect":  { "top": 851, "left": 552, "right": 1784, "bottom": 1073},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "xuat_chien": {
+          "description": "[Tranh Bá] - [Xuất chiến]",
+          "rect": { "top": 218, "left": 1333, "right": 1504, "bottom": 272},
+          "search_rect":  { "top": 850, "left": 950, "right": 1900, "bottom": 1070},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "chua_co_chien_thuat": {
+          "description": "[Tranh Bá] - chưa có [Chiến thuật]",
+          "rect": { "top": 154, "left": 1107, "right": 1225, "bottom": 268},
+          "search_rect":  { "top": 884, "left": 1156, "right": 1427, "bottom": 1071},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "rut_lui": {
+          "description": "[Tranh Bá] - [Rút lui]",
+          "rect":  { "top": 358, "left": 1616, "right": 1716, "bottom": 415},
+          "search_rect":   { "top": 644, "left": 1, "right": 444, "bottom": 810},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "thu_quan": {
+          "description": "[Tranh Bá] - [Thu quân]",
+          "rect": { "top": 36, "left": 817, "right": 974, "bottom": 89},
+          "search_rect":   { "top": 644, "left": 1, "right": 444, "bottom": 810},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "tran_sau": {
+          "description": "[Tranh Bá] - [Trận sau]",
+          "rect": { "top": 29, "left": 312, "right": 505, "bottom": 89},
+          "search_rect": { "top": 758, "left": 541, "right": 1916, "bottom": 1076},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "hoi_thanh": {
+          "description": "[Tranh Bá] - [Hồi thành]",
+          "rect": { "top": 165, "left": 559, "right": 853, "bottom": 283},
+          "search_rect": { "top": 758, "left": 541, "right": 1916, "bottom": 1076},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "hop_thoai_thu_quan": {
+          "description": "[Tranh Bá] - [Xác nhận thu quân?]",
+          "rect": { "top": 504, "left": 867, "right": 1200, "bottom": 579},
+          "search_rect": { "top": 187, "left": 413, "right": 1587, "bottom": 887},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "1_co": {
+          "description": "[Tranh Bá] - [Trong trận] - 1 cờ",
+          "rect": { "top": 7, "left": 1333, "right": 1497, "bottom": 89},
+          "search_rect":   { "top": 187, "left": 413, "right": 1587, "bottom": 887},
+          "threshold": 0.85,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "2_co": {
+          "description": "[Tranh Bá] - [Trong trận] - 2 cờ",
+          "rect": { "top": 7, "left": 1522, "right": 1694, "bottom": 86},
+          "search_rect":   { "top": 187, "left": 413, "right": 1587, "bottom": 887},
+          "threshold": 0.85,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "mua_the_luc": {
+          "description": "[Tranh Bá] - [Hộp thoại mua thể lực KNB]",
+          "rect": { "top": 9, "left": 24, "right": 293, "bottom": 64},
+          "search_rect": { "top": 82, "left": 487, "right": 1436, "bottom": 1002},
+          "threshold": 0.85,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
     }
   }
 }
