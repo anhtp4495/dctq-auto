@@ -223,7 +223,8 @@ class CloneTab(QWidget):
         war_layout.addWidget(self.clone_quan_su_tranh_ba)
 
         ranked_battle_count_row = QHBoxLayout()
-        ranked_battle_count_row.addWidget(QLabel("Số trận:"))
+        ranked_battle_count_label = QLabel("Số trận:")
+        ranked_battle_count_row.addWidget(ranked_battle_count_label)
         self.clone_ranked_battle_count = QSpinBox()
         self.clone_ranked_battle_count.setRange(1, 15)
         self.clone_ranked_battle_count.setValue(6)
@@ -254,7 +255,8 @@ class CloneTab(QWidget):
         self.clone_ranked_battle_mode_time_limit.setChecked(True)
 
         ranked_battle_time_row = QHBoxLayout()
-        ranked_battle_time_row.addWidget(QLabel("Chế độ:"))
+        ranked_battle_mode_label = QLabel("Chế độ:")
+        ranked_battle_time_row.addWidget(ranked_battle_mode_label)
         ranked_battle_time_row.addWidget(self.clone_ranked_battle_mode_time_limit)
         self.clone_ranked_battle_time_limit = QSpinBox()
         self.clone_ranked_battle_time_limit.setRange(1, 180)
@@ -299,6 +301,30 @@ class CloneTab(QWidget):
                     if checked else None
                 )
             )
+        self.clone_ranked_battle_mode_hint.setText(
+            ranked_battle_mode_hints[self.clone_ranked_battle_mode_group.checkedId()]
+        )
+
+        ranked_battle_controls = (
+            ranked_battle_count_label,
+            self.clone_ranked_battle_count,
+            self.clone_ranked_battle_refill,
+            ranked_battle_mode_label,
+            self.clone_ranked_battle_mode_time_limit,
+            self.clone_ranked_battle_time_limit,
+            self.clone_ranked_battle_mode_fast,
+            self.clone_ranked_battle_mode_normal,
+            self.clone_ranked_battle_mode_hint,
+        )
+
+        def set_ranked_battle_controls_visible(visible: bool) -> None:
+            for control in ranked_battle_controls:
+                control.setVisible(visible)
+
+        self.clone_quan_su_tranh_ba.toggled.connect(
+            set_ranked_battle_controls_visible
+        )
+        set_ranked_battle_controls_visible(self.clone_quan_su_tranh_ba.isChecked())
 
         layout.addWidget(war_group)
 
