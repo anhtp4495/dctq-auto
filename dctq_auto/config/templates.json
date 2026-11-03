@@ -870,27 +870,6 @@
           "search_rect":  { "top": 758, "left": 380, "right": 1576, "bottom": 991},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
-        },
-        "thuong_vuot_ai_1": {
-          "description": "[Mưu Binh] - [Thưởng vượt ải]- [Quà 1]",
-          "rect": { "top": 247, "left": 384, "right": 722, "bottom": 731},
-          "search_rect": { "top": 218, "left": 322, "right": 1540, "bottom": 753},
-          "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED"
-        },
-        "thuong_vuot_ai_2": {
-          "description": "[Mưu Binh] - [Thưởng vượt ải]- [Quà 2]",
-          "rect": { "top": 251, "left": 787, "right": 1122, "bottom": 742},
-          "search_rect": { "top": 218, "left": 322, "right": 1540, "bottom": 753},
-          "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED"
-        },
-        "thuong_vuot_ai_3": {
-          "description": "[Mưu Binh] - [Thưởng vượt ải]- [Quà 3]",
-          "rect": { "top": 253, "left": 1178, "right": 1522, "bottom": 742},
-          "search_rect": { "top": 218, "left": 322, "right": 1540, "bottom": 753},
-          "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
@@ -927,6 +906,27 @@
           "search_rect": { "top": 218, "left": 322, "right": 1540, "bottom": 753},
           "threshold": 0.95,
           "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "thuong_vuot_ai_1": {
+          "description": "[Mưu Binh] - [Thưởng vượt ải]- [Quà 1]",
+          "rect": { "top": 522, "left": 1315, "right": 1390, "bottom": 569},
+          "search_rect": { "top": 218, "left": 322, "right": 1540, "bottom": 753},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "thuong_vuot_ai_2": {
+          "description": "[Mưu Binh] - [Thưởng vượt ải]- [Quà 2]",
+          "rect": { "top": 272, "left": 484, "right": 559, "bottom": 308},
+          "search_rect": { "top": 218, "left": 322, "right": 1540, "bottom": 753},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "thuong_vuot_ai_3": {
+          "description": "[Mưu Binh] - [Thưởng vượt ải]- [Quà 3]",
+          "rect": { "top": 265, "left": 845, "right": 942, "bottom": 311},
+          "search_rect": { "top": 218, "left": 322, "right": 1540, "bottom": 753},
+          "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
       }
