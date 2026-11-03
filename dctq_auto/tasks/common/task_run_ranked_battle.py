@@ -71,6 +71,7 @@ def run(self, account, device, ocr_client, log) -> bool:
                 completed += 1
                 self._ranked_battle_completed_count = completed
                 log(f"[{account.username}] Hoàn thành Tranh Bá {completed}/{target} trận.")
+                awaiting_next_screen = True
                 if completed >= target:
                     if return_city is not None:
                         x, y = click_match(device, return_city)
