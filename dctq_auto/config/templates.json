@@ -824,6 +824,13 @@
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
+        "rut_lui": {
+          "description": "Mưu Binh - [Rút lui]",
+          "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
         "hoi_thanh": {
           "description": "Mưu Binh - [Hồi thành]",
           "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
