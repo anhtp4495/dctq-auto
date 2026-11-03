@@ -1012,8 +1012,8 @@
         },
         "mua_the_luc": {
           "description": "[Tranh Bá] - [Hộp thoại mua thể lực KNB]",
-          "rect": { "top": 9, "left": 24, "right": 293, "bottom": 64},
-          "search_rect": { "top": 82, "left": 487, "right": 1436, "bottom": 1002},
+          "rect": { "top": 368, "left": 892, "right": 1179, "bottom": 440},
+          "search_rect": { "top": 187, "left": 413, "right": 1587, "bottom": 887},
           "threshold": 0.85,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"

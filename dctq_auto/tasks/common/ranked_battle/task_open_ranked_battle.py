@@ -25,8 +25,8 @@ from dctq_auto.tasks.common.battle.battle_config import get_battle_config
 
 _MAX_TRIES = 60
 _OPEN_TEMPLATES = (
-    _TEMPLATE_MAIN_QUAN_SU,
     _TEMPLATE_QUAN_SU_TRANH_BA_LOI_VAO,
+    _TEMPLATE_MAIN_QUAN_SU,
     _TEMPLATE_QUAN_SU_TRANH_BA_MUA_THE_LUC,
     _TEMPLATE_QUAN_SU_TRANH_BA_TIM_DOI_THU,
     _TEMPLATE_QUAN_SU_TRANH_BA_XUAT_CHIEN,
@@ -97,9 +97,11 @@ def run(self, account, device, ocr_client, log, current_try=1) -> bool:
 
         if name == _TEMPLATE_MAIN_QUAN_SU:
             x, y = click_match(device, found)
+            time.sleep(1.0)
             log(f"[{account.username}] Click Quân Sự tại ({x}, {y}) để mở Tranh Bá.")
         elif name == _TEMPLATE_QUAN_SU_TRANH_BA_LOI_VAO:
             x, y = click_match(device, found)
+            time.sleep(1.0)
             log(f"[{account.username}] Click Lối vào Tranh Bá tại ({x}, {y}).")
         elif name == _TEMPLATE_QUAN_SU_TRANH_BA_MUA_THE_LUC:
             if (
