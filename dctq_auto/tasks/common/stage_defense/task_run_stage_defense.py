@@ -1,4 +1,4 @@
-"""Run and monitor the Mưu Binh stage-defense sequence."""
+"""Run the simple Mưu Binh auto-deploy/reward loop."""
 
 import time
 
@@ -6,23 +6,14 @@ from dctq_auto.tasks.common.battle.battle_utils import click_match
 from dctq_auto.tasks.common.stage_defense.task_polling_stage_defense import poll
 
 
-_TOTAL_STAGES = 100
-_MAX_SECONDS = _TOTAL_STAGES * 240
-
-
-def detect_current_stage(observation) -> int | None:
-    """Stage detection is intentionally disabled until the grid is calibrated."""
-    # TODO: map the danh_sach_ai template-match center to its 10x10 grid cell.
-    # Keep returning None for now: unknown stage must never advance progress.
-    return None
+_MAX_SECONDS = 100 * 240
 
 
 def run(worker, account, device, log) -> bool:
-    """Poll Mưu Binh and handle stage rewards/return-city."""
-    completed_stage = 0
+    """Repeat Xuất chiến and reward selection until timeout or main screen."""
     deadline = time.monotonic() + _MAX_SECONDS
+    log(f"[{account.username}] Bắt đầu tự động vượt ải Mưu Binh (tối đa {_MAX_SECONDS // 60} phút).")
 
-    log(f"[{account.username}] Bắt đầu theo dõi Mưu Binh: tối đa {_TOTAL_STAGES} ải.")
     while time.monotonic() < deadline:
         if not worker._wait_if_paused():
             log(f"[{account.username}] Đã dừng khi đang vượt ải Mưu Binh.")
@@ -32,44 +23,30 @@ def run(worker, account, device, log) -> bool:
         if observation is None:
             return False
 
-        detected_stage = detect_current_stage(observation)
-        if isinstance(detected_stage, int) and 1 <= detected_stage <= _TOTAL_STAGES:
-            # A detected stage N confirms every preceding stage as complete.
-            if detected_stage > completed_stage:
-                for stage in range(completed_stage + 1, detected_stage + 1):
-                    worker.task_progress_changed.emit(f"Ải {stage}", "done", 1, 1)
-                completed_stage = detected_stage
-                worker.progress_changed.emit(
-                    completed_stage, _TOTAL_STAGES,
-                    f"Đã xác định tiến trình Mưu Binh: Ải {completed_stage}/100",
-                )
-                log(
-                    f"[{account.username}] Xác định được Ải {detected_stage}; "
-                    f"đánh dấu Ải 1–{detected_stage} thành công."
-                )
-        # None/unknown is deliberately a no-op: don't change any progress row.
-
-        if observation["hoi_thanh"] is not None:
-            x, y = click_match(device, observation["hoi_thanh"])
-            log(f"[{account.username}] Phát hiện Hồi thành; click tại ({x}, {y}).")
-            time.sleep(2)
+        # Clear exit condition: stage 100 completed and the game returned home.
+        if observation["quan_su"] is not None:
+            log(f"[{account.username}] Đã hoàn thành Mưu Binh; phát hiện màn hình chính Quân Sự.")
             return True
 
+        # The reward dialog is only actionable when one of its reward choices is visible.
         if observation["hop_thoai_thuong_vuot_ai"] is not None:
             reward = next((
-                observation[name]
+                (name, observation[name])
                 for name in ("thuong_vuot_ai_1", "thuong_vuot_ai_2", "thuong_vuot_ai_3")
                 if observation[name] is not None
             ), None)
             if reward is not None:
-                x, y = click_match(device, reward)
-                log(
-                    f"[{account.username}] Chọn thưởng vượt ải tại ({x}, {y}); "
-                    "chờ chuyển sang ải tiếp theo."
-                )
-                time.sleep(1.5)
+                reward_name, match = reward
+                x, y = click_match(device, match)
+                log(f"[{account.username}] Chọn {reward_name} tại ({x}, {y}).")
+                time.sleep(1)
                 continue
-            log(f"[{account.username}] Đã thấy hộp thoại thưởng vượt ải; chờ nhận diện lựa chọn.")
+            time.sleep(0.5)
+            continue
+
+        if observation["tu_dong_den_ai_tiep_theo"] is not None:
+            x, y = click_match(device, observation["tu_dong_den_ai_tiep_theo"])
+            log(f"[{account.username}] Click Tự động đến ải tiếp theo tại ({x}, {y}).")
             time.sleep(1)
             continue
 
@@ -79,16 +56,7 @@ def run(worker, account, device, log) -> bool:
             time.sleep(1)
             continue
 
-        if observation["chien_dau"] is not None:
-            x, y = click_match(device, observation["chien_dau"])
-            log(f"[{account.username}] Click Chiến đấu để tiếp tục vượt ải tại ({x}, {y}).")
-            time.sleep(1)
-            continue
-
         time.sleep(1)
 
-    log(
-        f"[{account.username}] Vượt Ải Mưu Binh hết thời gian chờ; "
-        f"đã xác nhận tiến trình đến Ải {completed_stage}/100."
-    )
-    return False
+    log(f"[{account.username}] Dừng Mưu Binh vì đã hết thời gian {_MAX_SECONDS // 60} phút.")
+    return True

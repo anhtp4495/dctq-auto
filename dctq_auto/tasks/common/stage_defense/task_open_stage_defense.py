@@ -41,6 +41,12 @@ def run(worker, account, device, log) -> bool:
 
         # If the screen is already in a live battle or at its reward/result
         # dialog, the run loop can take over without reopening the menu.
+        if observation["chien_dau"] is not None:
+            x, y = click_match(device, observation["chien_dau"])
+            log(f"[{account.username}] Click Chiến đấu tại ({x}, {y}).")
+            time.sleep(1)
+            continue
+
         if any(observation[name] is not None for name in (
             "rut_lui", "hop_thoai_thuong_vuot_ai", "hoi_thanh"
         )):
