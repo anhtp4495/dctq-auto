@@ -865,23 +865,52 @@
         },
         "thuong_vuot_ai_1": {
           "description": "[Mưu Binh] - [Thưởng vượt ải]- [Quà 1]",
-          "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
-          "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "rect": { "top": 247, "left": 384, "right": 722, "bottom": 731},
+          "search_rect": { "top": 218, "left": 322, "right": 1540, "bottom": 753},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "thuong_vuot_ai_2": {
           "description": "[Mưu Binh] - [Thưởng vượt ải]- [Quà 2]",
-          "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
-          "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "rect": { "top": 251, "left": 787, "right": 1122, "bottom": 742},
+          "search_rect": { "top": 218, "left": 322, "right": 1540, "bottom": 753},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "thuong_vuot_ai_3": {
           "description": "[Mưu Binh] - [Thưởng vượt ải]- [Quà 3]",
-          "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
-          "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "rect": { "top": 253, "left": 1178, "right": 1522, "bottom": 742},
+          "search_rect": { "top": 218, "left": 322, "right": 1540, "bottom": 753},
           "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
+    "chien_tranh.thuong_vuot_ai": {
+      "source_image": "resources/screens/muu_binh/danh_sach_thuong.png",
+      "templates": {
+        "giet_nhanh": {
+          "description": "[Mưu Binh] - [Thưởng vượt ải] - Giết nhanh 1.5%",
+          "rect": { "top": 113, "left": 62, "right": 273, "bottom": 224},
+          "search_rect": { "top": 218, "left": 322, "right": 1540, "bottom": 753},
+          "threshold": 0.85,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "cuong_cong_6": {
+          "description": "[Mưu Binh] - [Thưởng vượt ải] - Tăng tấn công 6%",
+          "rect": { "top": 136, "left": 776, "right": 1004, "bottom": 218},
+          "search_rect": { "top": 218, "left": 322, "right": 1540, "bottom": 753},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "cuong_cong_4": {
+          "description": "[Mưu Binh] - [Thưởng vượt ải]- Tăng tấn công 4%",
+          "rect": { "top": 138, "left": 1178, "right": 1407, "bottom": 220},
+          "search_rect": { "top": 218, "left": 322, "right": 1540, "bottom": 753},
+          "threshold": 0.95,
+          "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         }
       }
