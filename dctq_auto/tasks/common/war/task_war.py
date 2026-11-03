@@ -1,7 +1,7 @@
 """Điều phối các tác vụ thuộc giao diện Chiến Tranh."""
 
 from dctq_auto.tasks.common.stage_defense import task_stage_defense
-from dctq_auto.tasks.common.war import task_close_war, task_open_war
+from dctq_auto.tasks.common.war import task_close_war
 
 
 def pre_war(steps, log) -> bool:
@@ -10,12 +10,8 @@ def pre_war(steps, log) -> bool:
 
 
 def run(worker, account, steps, device, ocr_client, log, screenshot=None):
-    """Mở Chiến Tranh, chạy Mưu Binh nếu được chọn, rồi đóng giao diện."""
+    """Chạy Mưu Binh (tự mở Chiến Tranh khi cần), rồi đóng giao diện."""
     if not pre_war(steps, log):
-        return steps
-
-    if not task_open_war.run(worker, account, device, log):
-        log(f"[{account.username}] Không mở được Chiến Tranh; bỏ qua Mưu Binh.")
         return steps
 
     try:

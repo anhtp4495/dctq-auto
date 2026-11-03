@@ -81,8 +81,23 @@ def run(self, account, device, ocr_client, log, current_try=1, has_swiped_war_me
         )
 
         if name == _TEMPLATE_MAIN_QUAN_SU:
-            x, y = click_match(device, found)
-            log(f"[{account.username}] Click Quân Sự tại ({x}, {y}) để mở Chiến Tranh.")
+            # Import cục bộ để tránh phụ thuộc vòng giữa các task điều phối.
+            from dctq_auto.tasks.common.war import task_open_war
+
+            if not task_open_war.run(self, account, device, log):
+                log(f"[{account.username}] Không mở được Chiến Tranh; dừng mở Mưu Binh.")
+                return False
+            log(f"[{account.username}] Đã mở Chiến Tranh; tiếp tục nhận diện để mở Mưu Binh.")
+            time.sleep(1)
+            return run(
+                self,
+                account,
+                device,
+                ocr_client,
+                log,
+                current_try=current_try + 1,
+                has_swiped_war_menu=False,
+            )
         elif name == _TEMPLATE_CHIEN_TRANH_MAN_HINH_CHINH:
             if has_swiped_war_menu:
                 try:
