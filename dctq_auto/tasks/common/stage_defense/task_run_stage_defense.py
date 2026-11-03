@@ -2,7 +2,6 @@
 
 import time
 
-from dctq_auto.tasks.common.battle.battle_strategies.pincer_battle import PincerBattle
 from dctq_auto.tasks.common.battle.battle_utils import click_match
 from dctq_auto.tasks.common.stage_defense.task_polling_stage_defense import poll
 
@@ -20,8 +19,6 @@ def detect_current_stage(observation) -> int | None:
 
 def run(worker, account, device, log) -> bool:
     """Poll Mưu Binh, deploy heroes, and handle stage rewards/return-city."""
-    strategy = PincerBattle()
-    hero_deployed = False
     completed_stage = 0
     deadline = time.monotonic() + _MAX_SECONDS
     context = {
@@ -31,8 +28,6 @@ def run(worker, account, device, log) -> bool:
         "config": worker._config,
         "log": log,
         "wait_if_paused": worker._wait_if_paused,
-        "hero_position_group": "quan_su.giao_tranh.danh_sach1",
-        "battle_started_at": None,
     }
 
     log(f"[{account.username}] Bắt đầu theo dõi Mưu Binh: tối đa {_TOTAL_STAGES} ải.")
@@ -81,24 +76,9 @@ def run(worker, account, device, log) -> bool:
                     "chờ chuyển sang ải tiếp theo."
                 )
                 time.sleep(1.5)
-                hero_deployed = False
-                context["battle_started_at"] = None
                 continue
             log(f"[{account.username}] Đã thấy hộp thoại thưởng vượt ải; chờ nhận diện lựa chọn.")
             time.sleep(1)
-            continue
-
-        if observation["rut_lui"] is not None and not hero_deployed:
-            log(
-                f"[{account.username}] Phát hiện Rút lui; "
-                "triển khai đội hình theo chiến thuật gọng kìm."
-            )
-            context["mark_battle_started"] = (
-                lambda: context.__setitem__("battle_started_at", time.monotonic())
-            )
-            if not strategy.deploy(context):
-                return False
-            hero_deployed = True
             continue
 
         if observation["xuat_chien"] is not None:
@@ -111,8 +91,6 @@ def run(worker, account, device, log) -> bool:
             x, y = click_match(device, observation["chien_dau"])
             log(f"[{account.username}] Click Chiến đấu để tiếp tục vượt ải tại ({x}, {y}).")
             time.sleep(1)
-            hero_deployed = False
-            context["battle_started_at"] = None
             continue
 
         time.sleep(1)
