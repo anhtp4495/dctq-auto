@@ -214,6 +214,93 @@ class CloneTab(QWidget):
         self.clone_battle_mode_hint.setText(
             battle_mode_hints[self.clone_battle_mode_group.checkedId()]
         )
+
+        self.clone_quan_su_tranh_ba = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_quan_su_tranh_ba", "Chiến tranh - Tranh Bá"
+            )
+        )
+        war_layout.addWidget(self.clone_quan_su_tranh_ba)
+
+        ranked_battle_count_row = QHBoxLayout()
+        ranked_battle_count_row.addWidget(QLabel("Số trận:"))
+        self.clone_ranked_battle_count = QSpinBox()
+        self.clone_ranked_battle_count.setRange(1, 15)
+        self.clone_ranked_battle_count.setValue(6)
+        self.clone_ranked_battle_count.setKeyboardTracking(False)
+        ranked_battle_count_row.addWidget(self.clone_ranked_battle_count)
+        ranked_battle_count_row.addStretch(1)
+        war_layout.addLayout(ranked_battle_count_row)
+
+        self.clone_ranked_battle_mode_group = QButtonGroup(self)
+        self.clone_ranked_battle_mode_group.setExclusive(True)
+        self.clone_ranked_battle_mode_fast = QCheckBox("Nhanh 1 cờ")
+        self.clone_ranked_battle_mode_normal = QCheckBox("Bình thường 4 cờ")
+        self.clone_ranked_battle_mode_time_limit = QCheckBox("Thời gian tối đa:")
+        self.clone_ranked_battle_mode_group.addButton(
+            self.clone_ranked_battle_mode_fast, 1
+        )
+        self.clone_ranked_battle_mode_group.addButton(
+            self.clone_ranked_battle_mode_normal, 2
+        )
+        self.clone_ranked_battle_mode_group.addButton(
+            self.clone_ranked_battle_mode_time_limit, 3
+        )
+        self.clone_ranked_battle_mode_normal.setChecked(True)
+
+        ranked_battle_time_row = QHBoxLayout()
+        ranked_battle_time_row.addWidget(self.clone_ranked_battle_mode_time_limit)
+        self.clone_ranked_battle_time_limit = QSpinBox()
+        self.clone_ranked_battle_time_limit.setRange(15, 180)
+        self.clone_ranked_battle_time_limit.setValue(15)
+        self.clone_ranked_battle_time_limit.setSuffix(" giây")
+        self.clone_ranked_battle_time_limit.setKeyboardTracking(False)
+        self.clone_ranked_battle_time_limit.setEnabled(False)
+        self.clone_ranked_battle_mode_time_limit.toggled.connect(
+            self.clone_ranked_battle_time_limit.setEnabled
+        )
+        ranked_battle_time_row.addWidget(self.clone_ranked_battle_time_limit)
+        ranked_battle_time_row.addStretch(1)
+        war_layout.addLayout(ranked_battle_time_row)
+
+        ranked_battle_fast_row = QHBoxLayout()
+        ranked_battle_fast_row.addSpacing(47)
+        ranked_battle_fast_row.addWidget(self.clone_ranked_battle_mode_fast)
+        ranked_battle_fast_row.addStretch(1)
+        war_layout.addLayout(ranked_battle_fast_row)
+
+        ranked_battle_normal_row = QHBoxLayout()
+        ranked_battle_normal_row.addSpacing(47)
+        ranked_battle_normal_row.addWidget(self.clone_ranked_battle_mode_normal)
+        ranked_battle_normal_row.addStretch(1)
+        war_layout.addLayout(ranked_battle_normal_row)
+
+        self.clone_ranked_battle_mode_hint = QLabel(
+            "Giao tranh đến khi tiêu diệt hết mục tiêu."
+        )
+        self.clone_ranked_battle_mode_hint.setWordWrap(True)
+        self.clone_ranked_battle_mode_hint.setStyleSheet("color: #777;")
+        war_layout.addWidget(self.clone_ranked_battle_mode_hint)
+
+        ranked_battle_mode_hints = {
+            1: "Chỉ cần thắng trận là kết thúc.",
+            2: "Tranh Bá đến khi tiêu diệt hết mục tiêu.",
+            3: "Giới hạn thời gian trận Tranh Bá.",
+        }
+        for mode_id, hint in ranked_battle_mode_hints.items():
+            self.clone_ranked_battle_mode_group.button(mode_id).toggled.connect(
+                lambda checked, text=hint: (
+                    self.clone_ranked_battle_mode_hint.setText(text)
+                    if checked else None
+                )
+            )
+
+        self.clone_ranked_battle_refill = QCheckBox(
+            "Mua lượt Tranh Bá (KNB)"
+        )
+        self.clone_ranked_battle_refill.setChecked(False)
+        war_layout.addWidget(self.clone_ranked_battle_refill)
+
         layout.addWidget(war_group)
 
         self.clone_quoc_chien = QCheckBox(
@@ -332,6 +419,17 @@ class CloneTab(QWidget):
                 }[self.clone_battle_mode_group.checkedId()],
                 time_limit_seconds=self.clone_battle_time_limit.value(),
                 refill=True,
+            ),
+            "clone_quan_su_tranh_ba": self.clone_quan_su_tranh_ba.isChecked(),
+            "ranked_battle_config": BattleConfig(
+                battle_count=self.clone_ranked_battle_count.value(),
+                mode={
+                    1: "fast",
+                    2: "normal",
+                    3: "time_limit",
+                }[self.clone_ranked_battle_mode_group.checkedId()],
+                time_limit_seconds=self.clone_ranked_battle_time_limit.value(),
+                refill=self.clone_ranked_battle_refill.isChecked(),
             ),
             "clone_quoc_chien": self.clone_quoc_chien.isChecked(),
             "clone_reward_guild": self.clone_reward_guild.isChecked(),
