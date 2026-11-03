@@ -449,7 +449,68 @@ class UtilityTaskRunnerMixin:
                     completed, max(1, total), f"Lỗi: {label}"
                 )
 
-        championship_screen_open_failed = False
+        ranked_battle_keys = (
+            "thuc_hien_tranh_ba",
+            "task_find_championship_opponent",
+            "task_championship_start_battle",
+            "task_championship_xuat_chien",
+            "mua_luot_knb",
+            "tranh_ba_luot_mien_phi",
+            "thoi_gian_tranh_ba",
+            "task_championship_end_battle",
+        )
+        ranked_battle_flow_handled = any(
+            self._config.get(key) for key in ranked_battle_keys
+        )
+        if ranked_battle_flow_handled:
+            from dctq_auto.config.constants import _STEP_QUAN_SU_TRANH_BA
+            from dctq_auto.tasks.common import task_ranked_battle
+
+            ranked_task_labels = (
+                ("thuc_hien_tranh_ba", "Mở màn hình Tranh Bá"),
+                ("task_find_championship_opponent", "Tìm đối thủ Tranh Bá"),
+                ("task_championship_start_battle", "Bắt đầu trận Tranh Bá"),
+                ("task_championship_xuat_chien", "Xuất chiến Tranh Bá"),
+                ("mua_luot_knb", "Mua lượt Tranh Bá bằng KNB"),
+                ("tranh_ba_luot_mien_phi", "Sử dụng lượt Tranh Bá miễn phí"),
+                ("thoi_gian_tranh_ba", "Thời gian tối đa Tranh Bá"),
+                ("task_championship_end_battle", "Kết thúc trận Tranh Bá"),
+            )
+            selected_ranked_tasks = [
+                (key, label) for key, label in ranked_task_labels
+                if self._config.get(key)
+            ]
+            for _key, label in selected_ranked_tasks:
+                self.task_progress_changed.emit(label, "running", 0, 1)
+
+            ranked_account = SimpleNamespace(
+                username=self._config.get("login_username") or self._serial or "Tác vụ"
+            )
+            ranked_steps = [_STEP_QUAN_SU_TRANH_BA]
+            try:
+                task_ranked_battle.run(
+                    self, ranked_account, ranked_steps, device, ocr_client,
+                    lambda message: self.log_message.emit(message),
+                )
+                ranked_ok = bool(getattr(self, "_ranked_battle_success", False))
+            except Exception as exc:
+                ranked_ok = False
+                self.log_message.emit(f"Quy trình Tranh Bá thất bại: {exc}")
+
+            for _key, label in selected_ranked_tasks:
+                self.task_progress_changed.emit(
+                    label, "done" if ranked_ok else "failed",
+                    1 if ranked_ok else 0, 1,
+                )
+            completed += len(selected_ranked_tasks)
+            self.progress_changed.emit(
+                completed, max(1, total),
+                "Hoàn tất Tranh Bá" if ranked_ok
+                else "Quy trình Tranh Bá chưa hoàn tất",
+            )
+
+        # Đã chạy luồng mới thì không chạy tiếp các bước Tranh Bá OCR cũ bên dưới.
+        championship_screen_open_failed = ranked_battle_flow_handled
 
         if self._config.get("thuc_hien_tranh_ba"):
             label = "Mở màn hình Tranh Bá"
@@ -1453,7 +1514,8 @@ class UtilityTaskRunnerMixin:
                 self.task_progress_changed.emit(label, "failed", 0, 1)
                 self.progress_changed.emit(completed, max(1, total), f"Lỗi: {label}")
         if (
-            self._config.get("task_championship_start_battle")
+            not ranked_battle_flow_handled
+            and self._config.get("task_championship_start_battle")
             and self._config.get("thoi_gian_tranh_ba") is not None
         ):
             label = "Thời gian tối đa Tranh Bá"
