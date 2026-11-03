@@ -131,9 +131,9 @@ def run(worker, account, device, log) -> bool:
             time.sleep(1)
             continue
 
-        if observation["xuat_chien"] is not None:
-            x, y = click_match(device, observation["xuat_chien"])
-            log(f"[{account.username}] Click Xuất chiến tại ({x}, {y}).")
+        if observation["chien_dau"] is not None:
+            x, y = click_match(device, observation["chien_dau"])
+            log(f"[{account.username}] Click Chiến đấu tại ({x}, {y}).")
             time.sleep(1)
             continue
 
