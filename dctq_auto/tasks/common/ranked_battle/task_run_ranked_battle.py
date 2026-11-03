@@ -6,12 +6,14 @@ from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.tasks.common.battle.battle_utils import click_match
 from dctq_auto.tasks.common.battle.battle_strategies.pincer_battle import PincerBattle
 from dctq_auto.tasks.common.battle.polling.normal_poller import NormalPoller
+from dctq_auto.tasks.common.battle.battle_config import get_battle_config
 
 
 def run(self, account, device, ocr_client, log) -> bool:
     """Chạy đủ số trận Tranh Bá, dùng polling để nhận diện trạng thái."""
     target = max(1, int(self._config.get("tranh_ba", 1)))
     time_limit = max(1, int(self._config.get("thoi_gian_tranh_ba") or 15))
+    battle_config = get_battle_config(self._config)
     poller = NormalPoller()
     strategy = PincerBattle()
     positions = ButtonPositions()
@@ -54,7 +56,24 @@ def run(self, account, device, ocr_client, log) -> bool:
 
         buy_stamina = observation.get("championship_buy_stamina")
         if buy_stamina is not None:
-            log(f"[{account.username}] Phát hiện hộp thoại mua thể lực trong lúc theo dõi Tranh Bá.")
+            button = (
+                "xac_nhan_mua_the_luc"
+                if battle_config.refill
+                else "huy_mua_the_luc"
+            )
+            x, y = positions.get("quan_su.tranh_ba", button)
+            device.shell(f"input tap {x} {y}")
+            if battle_config.refill:
+                log(
+                    f"[{account.username}] Đã chọn mua lượt Tranh Bá bằng KNB "
+                    f"tại ({x}, {y}); tiếp tục theo dõi."
+                )
+                time.sleep(2)
+                continue
+            log(
+                f"[{account.username}] Không bật refill; đã hủy mua lượt "
+                f"tại ({x}, {y}), kết thúc chiến đấu."
+            )
             return False
 
         next_battle = observation.get("championship_next_battle")
