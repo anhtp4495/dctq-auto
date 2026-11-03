@@ -362,9 +362,6 @@ class MainWindow(QMainWindow):
             self._update_luu_ly_thap_description
         )
         self._update_luu_ly_thap_description()
-        self.thiet_lap_muu_binh = QCheckBox("Thiết lập phòng thủ")
-        self.thiet_lap_muu_binh.setChecked(True)
-        self.vuot_ai_muu_binh = QCheckBox("Vượt Ải")
 
         self.tabs.addTab(self._build_daily_tab(), "Nhiệm vụ hằng ngày")
         self.tabs.addTab(self._build_strategy_tab(), "Mưu Binh")
@@ -889,17 +886,9 @@ class MainWindow(QMainWindow):
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        group = QGroupBox("Tác vụ trong màn hình Mưu Binh")
-        group_layout = QVBoxLayout(group)
-        group_layout.addWidget(self.thiet_lap_muu_binh)
-        group_layout.addWidget(self.vuot_ai_muu_binh)
-        note = QLabel(
-            "Khi chạy tab này: vào màn hình Mưu Binh, thực hiện các chức năng "
-            "được chọn, sau đó thoát màn hình."
-        )
+        note = QLabel("Tự động vượt lần lượt Ải 1 đến Ải 100.")
         note.setWordWrap(True)
-        group_layout.addWidget(note)
-        layout.addWidget(group)
+        layout.addWidget(note)
         layout.addStretch(1)
         return self._make_scrollable_tab(page)
 
@@ -1252,13 +1241,6 @@ class MainWindow(QMainWindow):
         self.task_guild_checkin = QCheckBox("Báo danh quân đoàn")
         self.task_receive_lucky_bag = QCheckBox("Nhận túi phúc")
         self.task_guild_fortune = QCheckBox("Cầu vận quân đoàn (5 lần)")
-        self.task_enter_strategy = QCheckBox("Vào màn hình Mưu Binh")
-        self.task_strategy_defense = QCheckBox("Thiết lập phòng thủ")
-        self.task_detect_strategy_status = QCheckBox("Phát hiện trạng thái Mưu Binh")
-        self.task_strategy_vuot_ai = QCheckBox("Vượt Ải")
-        self.task_receive_strategy_reward = QCheckBox("Nhận thưởng Mưu Binh")
-        self.task_close_strategy = QCheckBox("Thoát màn hình Mưu Binh")
-
         self.task_knb_contribution = QCheckBox("Đóng góp KNB")
         self.task_knb_contribution_count = QSpinBox()
         self.task_knb_contribution_count.setRange(1, 10)
@@ -1439,19 +1421,6 @@ class MainWindow(QMainWindow):
             guild_layout.addWidget(task_checkbox)
         daily_layout.addWidget(guild_group)
 
-        strategy_tasks_group = QGroupBox("Mưu Binh")
-        strategy_tasks_layout = QVBoxLayout(strategy_tasks_group)
-        for task_checkbox in (
-            self.task_enter_strategy,
-            self.task_strategy_defense,
-            self.task_detect_strategy_status,
-            self.task_strategy_vuot_ai,
-            self.task_receive_strategy_reward,
-            self.task_close_strategy,
-        ):
-            strategy_tasks_layout.addWidget(task_checkbox)
-        daily_layout.addWidget(strategy_tasks_group)
-
         knb_contribution_row = QHBoxLayout()
         knb_contribution_row.addWidget(self.task_knb_contribution)
         knb_contribution_row.addWidget(QLabel("Số lần:"))
@@ -1579,11 +1548,6 @@ class MainWindow(QMainWindow):
                 "task_enter_guild": self.task_enter_guild.isChecked(),
                 "task_receive_lucky_bag": self.task_receive_lucky_bag.isChecked(),
                 "task_guild_fortune": self.task_guild_fortune.isChecked(),
-                "task_enter_strategy": self.task_enter_strategy.isChecked(),
-                "task_strategy_defense": self.task_strategy_defense.isChecked(),
-                "task_detect_strategy_status": self.task_detect_strategy_status.isChecked(),
-                "task_strategy_vuot_ai": self.task_strategy_vuot_ai.isChecked(),
-                "task_receive_strategy_reward": self.task_receive_strategy_reward.isChecked(),
                 "reward_weekly_doan_chien": self.reward_weekly_doan_chien.isChecked(),
                 "reward_weekly_quoc_chien": self.reward_weekly_quoc_chien.isChecked(),
                 "reward_weekly_lanh_dia_chien": self.reward_weekly_lanh_dia_chien.isChecked(),
@@ -1596,7 +1560,6 @@ class MainWindow(QMainWindow):
                 "reward_gift_affinity_hearts": self.reward_gift_affinity_hearts.isChecked(),
                 "reward_share_profile": self.reward_share_profile.isChecked(),
                 "reward_daily_missions": self.reward_daily_missions.isChecked(),
-                "task_close_strategy": self.task_close_strategy.isChecked(),
                 "task_switch_account": self.doi_tai_khoan_task.isChecked(),
                 "task_click_coordinates": self.task_click_coordinates.isChecked(),
                 "task_click_x": int(self.task_click_x.text() or 0),
@@ -1667,8 +1630,7 @@ class MainWindow(QMainWindow):
             config = self._game_config()
             config.update({
                 "strategy_mode": True,
-                "thiet_lap_muu_binh": self.thiet_lap_muu_binh.isChecked(),
-                "vuot_ai_muu_binh": self.vuot_ai_muu_binh.isChecked(),
+                "task_stage_defense": True,
             })
             return config
         return self._game_config()
@@ -1815,9 +1777,6 @@ class MainWindow(QMainWindow):
                 "thuc_hien_tranh_ba", "task_find_championship_opponent",
                 "task_championship_xuat_chien", "task_championship_start_battle",
                 "task_championship_end_battle",
-                "task_enter_strategy", "task_strategy_defense",
-                "task_detect_strategy_status", "task_strategy_vuot_ai",
-                "task_receive_strategy_reward", "task_close_strategy",
                 "reward_weekly_doan_chien", "reward_weekly_quoc_chien",
                 "reward_weekly_lanh_dia_chien", "reward_shop_than_binh_nguyen_linh_ngoc",
                 "reward_shop_danh_vong_que_lanh", "reward_daily_tam_quoc_lenh",
@@ -1996,7 +1955,6 @@ class MainWindow(QMainWindow):
                 ("task_championship_start_battle", "Bắt đầu trận Tranh Bá"),
                 ("thoi_gian_tranh_ba", "Thời gian tối đa Tranh Bá"),
                 ("task_championship_end_battle", "Kết thúc trận Tranh Bá"),
-                ("thiet_lap_muu_binh", "Mưu binh"),
                 ("task_close_guild", "Thoát màn hình Quân đoàn"),
                 ("task_switch_account", "Đổi tài khoản"),
                 ("task_click_coordinates", "Click theo tọa độ"),
