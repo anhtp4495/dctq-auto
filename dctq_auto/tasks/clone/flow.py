@@ -792,7 +792,27 @@ def run_clone_flow_optimize_account(
             return remaining_steps
 
         def run_ranked_battle(self, account, steps, device, ocr_client, log):
-            return steps
+            """Chạy Tranh Bá bằng cấu hình riêng của Clone Optimize."""
+            from dctq_auto.tasks.common.ranked_battle.task_ranked_battle import (
+                run as run_ranked_battle_task,
+            )
+            from dctq_auto.tasks.common.ranked_battle.task_ranked_battle import (
+                build_ranked_battle_config,
+            )
+
+            original_config = self._config
+            self._config = {
+                **original_config,
+                "battle_config": build_ranked_battle_config(
+                    original_config.get("ranked_battle_config")
+                ),
+            }
+            try:
+                return run_ranked_battle_task(
+                    self, account, steps, device, ocr_client, log
+                )
+            finally:
+                self._config = original_config
 
         common_tasks = (
             ("Hoạt động", run_activity),
