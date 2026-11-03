@@ -7,14 +7,14 @@ import numpy as np
 
 from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.config.constants import (
-    _TEMPLATE_MAIN_QUAN_SU,
-    _TEMPLATE_CHIEN_TRANH_MAN_HINH_CHINH,
     _TEMPLATE_CHIEN_TRANH_MUU_BINH,
+    _TEMPLATE_CHIEN_TRANH_MAN_HINH_CHINH,
     _TEMPLATE_MUU_BINH_CHIEN_DAU,
-    _TEMPLATE_MUU_BINH_XUAT_CHIEN,
+    _TEMPLATE_MUU_BINH_BAT_DAU,
     _TEMPLATE_MUU_BINH_HOI_THANH,
     _TEMPLATE_MUU_BINH_TU_DONG_DEN_AI_TIEP_THEO,
     _TEMPLATE_MUU_BINH_HOP_THOAI_THUONG_VUOT_AI,
+    _TEMPLATE_MAIN_QUAN_SU,
 )
 from dctq_auto.vision.template_store import get_templates
 from dctq_auto.vision.template_matching import match_template
@@ -24,14 +24,14 @@ from dctq_auto.tasks.common.battle.battle_utils import click_match, swipe
 
 _MAX_TRIES = 60
 _OPEN_TEMPLATES = (
-    _TEMPLATE_MAIN_QUAN_SU,
-    _TEMPLATE_CHIEN_TRANH_MAN_HINH_CHINH,
     _TEMPLATE_CHIEN_TRANH_MUU_BINH,
-    _TEMPLATE_MUU_BINH_CHIEN_DAU,
+    _TEMPLATE_CHIEN_TRANH_MAN_HINH_CHINH,
+    _TEMPLATE_MUU_BINH_BAT_DAU,
     _TEMPLATE_MUU_BINH_TU_DONG_DEN_AI_TIEP_THEO,
-    _TEMPLATE_MUU_BINH_XUAT_CHIEN,
+    _TEMPLATE_MUU_BINH_CHIEN_DAU,
     _TEMPLATE_MUU_BINH_HOI_THANH,
     _TEMPLATE_MUU_BINH_HOP_THOAI_THUONG_VUOT_AI,
+    _TEMPLATE_MAIN_QUAN_SU,
 )
 
 
@@ -107,14 +107,14 @@ def run(self, account, device, ocr_client, log, current_try=1, has_swiped_war_me
         elif name == _TEMPLATE_CHIEN_TRANH_MUU_BINH:
             x, y = click_match(device, found)
             log(f"[{account.username}] Click Mưu Binh tại ({x}, {y}).")
-        elif name == _TEMPLATE_MUU_BINH_CHIEN_DAU:
+        elif name == _TEMPLATE_MUU_BINH_BAT_DAU:
             x, y = click_match(device, found)
-            log(f"[{account.username}] Click Chiến đấu tại ({x}, {y}).")
+            log(f"[{account.username}] Click Bắt đầu tại ({x}, {y}).")
         elif name == _TEMPLATE_MUU_BINH_TU_DONG_DEN_AI_TIEP_THEO:
             x, y = click_match(device, found)
             log(f"[{account.username}] Click Tự động đến ải tiếp theo tại ({x}, {y}).")
         elif name in (
-            _TEMPLATE_MUU_BINH_XUAT_CHIEN,
+            _TEMPLATE_MUU_BINH_CHIEN_DAU,
             _TEMPLATE_MUU_BINH_HOI_THANH,
             _TEMPLATE_MUU_BINH_HOP_THOAI_THUONG_VUOT_AI,
         ):
