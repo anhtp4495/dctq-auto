@@ -37,8 +37,8 @@ _TEMPLATE_CHIEN_TRANH_MUU_BINH = "chien_tranh/muu_binh"
 
 # Template dùng trong quy trình Mưu Binh.
 _TEMPLATE_MUU_BINH_MAN_HINH_CHINH = "chien_tranh.muu_binh/man_hinh_chinh"
+_TEMPLATE_MUU_BINH_BAT_DAU = "chien_tranh.muu_binh/bat_dau"
 _TEMPLATE_MUU_BINH_CHIEN_DAU = "chien_tranh.muu_binh/chien_dau"
-_TEMPLATE_MUU_BINH_XUAT_CHIEN = "chien_tranh.muu_binh/xuat_chien"
 _TEMPLATE_MUU_BINH_TU_DONG_DEN_AI_TIEP_THEO = "chien_tranh.muu_binh/tu_dong_den_ai_tiep_theo"
 _TEMPLATE_MUU_BINH_RUT_LUI = "chien_tranh.muu_binh/rut_lui"
 _TEMPLATE_MUU_BINH_HOI_THANH = "chien_tranh.muu_binh/hoi_thanh"
