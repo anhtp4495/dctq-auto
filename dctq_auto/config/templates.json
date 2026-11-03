@@ -864,6 +864,13 @@
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
+        "xac_nhan_thuong_vuot_ai": {
+          "description": "[Mưu Binh] - [Thưởng vượt ải]- [Xác nhận]",
+          "rect": { "top": 848, "left": 1042, "right": 1426, "bottom": 966},
+          "search_rect":  { "top": 758, "left": 380, "right": 1576, "bottom": 991},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
         "thuong_vuot_ai_1": {
           "description": "[Mưu Binh] - [Thưởng vượt ải]- [Quà 1]",
           "rect": { "top": 247, "left": 384, "right": 722, "bottom": 731},

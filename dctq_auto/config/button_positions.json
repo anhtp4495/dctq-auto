@@ -242,5 +242,23 @@
       "x": 1204,
       "y": 702
     }
+  },
+  "chien_tranh.muu_binh": {
+    "thuong_vuot_ai_1": {
+      "x": 566,
+      "y": 536
+    },
+    "thuong_vuot_ai_2": {
+      "x": 917,
+      "y": 536
+    },
+    "thuong_vuot_ai_3": {
+      "x": 1347,
+      "y": 536
+    },
+    "xac_nhan_thuong_vuot_ai": {
+      "x": 1257,
+      "y": 887
+    }
   }
 }
