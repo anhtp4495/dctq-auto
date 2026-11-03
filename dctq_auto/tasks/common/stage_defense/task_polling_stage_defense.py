@@ -42,7 +42,16 @@ def poll(device, account, log):
         log(f"[{account.username}] Không chụp được màn hình Mưu Binh: {exc}")
         return None
 
-    return {
-        name.rsplit("/", 1)[-1]: match(screen, templates.get(name), account=account, log=log)
+    # Giữ đủ key để task_run_stage_defense có thể truy cập an toàn,
+    # nhưng dừng matching ngay khi tìm thấy template đầu tiên.
+    observation = {
+        name.rsplit("/", 1)[-1]: None
         for name in TEMPLATE_NAMES
     }
+    for name in TEMPLATE_NAMES:
+        found = match(screen, templates.get(name), account=account, log=log)
+        if found is not None:
+            observation[name.rsplit("/", 1)[-1]] = found
+            return observation
+
+    return observation
