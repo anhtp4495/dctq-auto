@@ -118,9 +118,6 @@ def run(self, account, device, ocr_client, log, current_try=1, has_swiped_war_me
         elif name == _TEMPLATE_MUU_BINH_BAT_DAU:
             x, y = click_match(device, found)
             log(f"[{account.username}] Click Bắt đầu tại ({x}, {y}).")
-        elif name == _TEMPLATE_MUU_BINH_TU_DONG_DEN_AI_TIEP_THEO:
-            x, y = click_match(device, found)
-            log(f"[{account.username}] Click Tự động đến ải tiếp theo tại ({x}, {y}).")
         elif name in _MUU_BINH_STATE_TEMPLATES:
             log(f"[{account.username}] Đã ở sẵn trong Mưu Binh; chuyển sang tự động vượt ải.")
             return True
