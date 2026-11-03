@@ -1,11 +1,24 @@
 """Điều phối trọn quy trình Tranh Bá."""
 
+from typing import Any, Mapping
+
 from dctq_auto.config.constants import _STEP_QUAN_SU_TRANH_BA
+from dctq_auto.tasks.common.battle.battle_config import BattleConfig
 from . import (
     task_close_ranked_battle,
     task_open_ranked_battle,
     task_run_ranked_battle,
 )
+
+
+def build_ranked_battle_config(value: Mapping[str, Any] | None = None) -> BattleConfig:
+    """Tạo cấu hình Tranh Bá với các giá trị mặc định riêng."""
+    value = value or {}
+    return BattleConfig(
+        battle_count=int(value.get("battle_count", 6)),
+        mode=value.get("mode", "time_limit"),
+        time_limit_seconds=int(value.get("time_limit_seconds", 45)),
+    )
 
 
 def pre_battle(config, steps, log) -> bool:
