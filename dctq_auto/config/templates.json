@@ -811,74 +811,74 @@
         }
       }
     },
-    "muu_binh": {
+    "chien_tranh.muu_binh": {
       "source_image": "resources/screens/muu_binh/man_hinh_chinh.png",
       "templates": {
-        "loi_vao": {
-          "description": "Mưu Binh - Lối vào [Mưu binh]",
+        "man_hinh_chinh": {
+          "description": "[Mưu Binh] - Màn hình chính",
           "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
           "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "chien_dau": {
-          "description": "Mưu Binh - [Chiến đấu]",
+          "description": "[Mưu Binh] - [Chiến đấu]",
           "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
           "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "xuat_chien": {
-          "description": "Mưu Binh - [Xuất chiến]",
+          "description": "[Mưu Binh] - [Xuất chiến]",
           "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
           "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "rut_lui": {
-          "description": "Mưu Binh - [Rút lui]",
+          "description": "[Mưu Binh] - [Rút lui]",
           "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
           "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "tu_dong_den_ai_tiep_theo": {
-          "description": "Mưu Binh - [Tự động đến ải tiếp theo]",
+          "description": "[Mưu Binh] - [Tự động đến ải tiếp theo]",
           "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
           "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "hoi_thanh": {
-          "description": "Mưu Binh - [Hồi thành]",
+          "description": "[Mưu Binh] - [Hồi thành]",
           "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
           "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "hop_thoai_thuong_vuot_ai": {
-          "description": "Mưu Binh - [Thưởng vượt ải]",
+          "description": "[Mưu Binh] - [Thưởng vượt ải]",
           "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
           "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "thuong_vuot_ai_1": {
-          "description": "Mưu Binh - [Thưởng vượt ải]- [Quà 1]",
+          "description": "[Mưu Binh] - [Thưởng vượt ải]- [Quà 1]",
           "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
           "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "thuong_vuot_ai_2": {
-          "description": "Mưu Binh - [Thưởng vượt ải]- [Quà 2]",
+          "description": "[Mưu Binh] - [Thưởng vượt ải]- [Quà 2]",
           "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
           "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "thuong_vuot_ai_3": {
-          "description": "Mưu Binh - [Thưởng vượt ải]- [Quà 3]",
+          "description": "[Mưu Binh] - [Thưởng vượt ải]- [Quà 3]",
           "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
           "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
           "threshold": 0.85,
@@ -890,7 +890,7 @@
       "source_image": "resources/screens/muu_binh/danh_sach_ai.png",
       "templates": {
         "danh_sach_ai": {
-          "description": "Mưu Binh - vùng danh sách ải; mỗi ô ải có kích thước 100x25 px, thứ tự tăng dần từ trái sang phải.",
+          "description": "[Mưu Binh] - vùng danh sách ải; mỗi ô ải có kích thước 100x25 px, thứ tự tăng dần từ trái sang phải.",
           "rect": { "top": 0, "left": 0, "right": 100, "bottom": 25 },
           "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
           "threshold": 0.85,
