@@ -115,6 +115,20 @@
       "y": 570
     }
   },
+  "chien_tranh": {
+    "dong_man_hinh": {
+      "x": 1637,
+      "y": 219
+    },
+    "item_1": {
+      "x": 525,
+      "y": 550
+    },
+    "item_2": {
+      "x": 1400,
+      "y": 550
+    }
+  },
   "quan_su.giao_tranh": {
     "phat_dong_tan_cong_bo_bai_mien_chien": {
       "x": 1140,
