@@ -18,17 +18,9 @@ def detect_current_stage(observation) -> int | None:
 
 
 def run(worker, account, device, log) -> bool:
-    """Poll Mưu Binh, deploy heroes, and handle stage rewards/return-city."""
+    """Poll Mưu Binh and handle stage rewards/return-city."""
     completed_stage = 0
     deadline = time.monotonic() + _MAX_SECONDS
-    context = {
-        "worker": worker,
-        "account": account,
-        "device": device,
-        "config": worker._config,
-        "log": log,
-        "wait_if_paused": worker._wait_if_paused,
-    }
 
     log(f"[{account.username}] Bắt đầu theo dõi Mưu Binh: tối đa {_TOTAL_STAGES} ải.")
     while time.monotonic() < deadline:
