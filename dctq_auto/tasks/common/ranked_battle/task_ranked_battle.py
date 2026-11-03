@@ -3,7 +3,7 @@
 from typing import Any, Mapping
 
 from dctq_auto.config.constants import _STEP_QUAN_SU_TRANH_BA
-from dctq_auto.tasks.common.battle.battle_config import BattleConfig
+from dctq_auto.tasks.common.battle.battle_config import BattleConfig, get_battle_config
 from . import (
     task_close_ranked_battle,
     task_open_ranked_battle,
@@ -11,8 +11,12 @@ from . import (
 )
 
 
-def build_ranked_battle_config(value: Mapping[str, Any] | None = None) -> BattleConfig:
+def build_ranked_battle_config(
+    value: Mapping[str, Any] | BattleConfig | None = None,
+) -> BattleConfig:
     """Tạo cấu hình Tranh Bá với các giá trị mặc định riêng."""
+    if isinstance(value, BattleConfig):
+        return value
     value = value or {}
     return BattleConfig(
         battle_count=int(value.get("battle_count", 6)),
@@ -28,13 +32,19 @@ def pre_battle(config, steps, log) -> bool:
         log("Không chọn chức năng [Tranh Bá].")
         return False
     try:
-        count = int(config.get("tranh_ba", 1))
-        if count < 1:
-            raise ValueError("Số trận phải lớn hơn 0.")
+        battle = (
+            config.get("battle_config")
+            if isinstance(config.get("battle_config"), BattleConfig)
+            else build_ranked_battle_config(config.get("ranked_battle_config"))
+        )
+        count = battle.battle_count
     except (TypeError, ValueError) as exc:
         log(f"Tranh Bá: cấu hình không hợp lệ: {exc}")
         return False
-    log(f"Tranh Bá: cấu hình hợp lệ — {count} trận.")
+    log(
+        f"Tranh Bá: cấu hình hợp lệ — {count} trận, "
+        f"chế độ {battle.mode}, giới hạn {battle.time_limit_seconds} giây."
+    )
     return True
 
 
@@ -43,9 +53,9 @@ def post_battle(worker, steps, log) -> list[str]:
     if _STEP_QUAN_SU_TRANH_BA not in steps:
         return steps
     try:
-        target = max(1, int(worker._config.get("tranh_ba", 1)))
+        target = get_battle_config(worker._config).battle_count
     except (TypeError, ValueError):
-        target = 1
+        target = 6
     completed = int(getattr(worker, "_ranked_battle_completed_count", 0))
     if completed < target:
         log(f"Tranh Bá chưa đủ số trận: {completed}/{target}.")
@@ -83,7 +93,7 @@ def run(worker, account, steps, device, ocr_client, log) -> list[str]:
         except Exception as exc:
             log(f"[{account.username}] Đóng Tranh Bá phát sinh lỗi: {exc}")
 
-    target = max(1, int(worker._config.get("tranh_ba", 1)))
+    target = get_battle_config(worker._config).battle_count
     completed = int(getattr(worker, "_ranked_battle_completed_count", 0))
     worker._ranked_battle_success = bool(battle_ok and completed >= target)
     return post_battle(worker, steps, log)
