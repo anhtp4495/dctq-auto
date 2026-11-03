@@ -1,5 +1,6 @@
 """Orchestrate opening and the Mưu Binh auto-deploy/reward loop."""
 
+from dctq_auto.config.constants import _STEP_STAGE_DEFENSE
 from dctq_auto.tasks.common.stage_defense import (
     task_open_stage_defense,
     task_run_stage_defense,
@@ -18,3 +19,13 @@ def run(worker, account, device, log) -> bool:
     except Exception as exc:
         log(f"[{account.username}] Quy trình Mưu Binh phát sinh lỗi: {exc}")
         return False
+
+
+def pre_stage_defense(steps, log) -> bool:
+    """Kiểm tra danh sách steps có yêu cầu chạy Mưu Binh hay không."""
+    if _STEP_STAGE_DEFENSE not in steps:
+        log("Mưu Binh: không có step_stage_defense trong danh sách; bỏ qua.")
+        return False
+
+    log("Mưu Binh: tìm thấy step_stage_defense; sẵn sàng thực hiện.")
+    return True

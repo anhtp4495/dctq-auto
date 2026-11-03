@@ -29,6 +29,11 @@ _TEMPLATE_QUAN_SU_TRANH_BA_TRAN_SAU = "quan_su.tranh_ba/tran_sau"
 _TEMPLATE_QUAN_SU_TRANH_BA_HOI_THANH = "quan_su.tranh_ba/hoi_thanh"
 _TEMPLATE_QUAN_SU_TRANH_BA_MUA_THE_LUC = "quan_su.tranh_ba/mua_the_luc"
 
+# Step và template dùng trong quy trình Chiến Tranh.
+_STEP_STAGE_DEFENSE = "step_stage_defense"
+_TEMPLATE_MAIN_CHIEN_TRANH = "main/chien_tranh"
+_TEMPLATE_CHIEN_TRANH_MAN_HINH_CHINH = "chien_tranh/chien_tranh_man_hinh_chinh"
+
 # Template dùng trong quy trình Mưu Binh.
 _TEMPLATE_MUU_BINH_LOI_VAO = "muu_binh/loi_vao"
 _TEMPLATE_MUU_BINH_CHIEN_DAU = "muu_binh/chien_dau"
