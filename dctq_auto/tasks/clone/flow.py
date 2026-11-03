@@ -808,9 +808,12 @@ def run_clone_flow_optimize_account(
                 ),
             }
             try:
-                return run_ranked_battle_task(
+                remaining_steps = run_ranked_battle_task(
                     self, account, steps, device, ocr_client, log
                 )
+                if not getattr(self, "_ranked_battle_success", False):
+                    return steps
+                return remaining_steps
             finally:
                 self._config = original_config
 
