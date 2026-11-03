@@ -801,6 +801,67 @@
       }
     },
     "muu_binh": {
+      "source_image": "resources/screens/muu_binh/man_hinh_chinh.png",
+      "templates": {
+        "loi_vao": {
+          "description": "Mưu Binh - Lối vào [Mưu binh]",
+          "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "chien_dau": {
+          "description": "Mưu Binh - [Chiến đấu]",
+          "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "xuat_chien": {
+          "description": "Mưu Binh - [Xuất chiến]",
+          "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "hoi_thanh": {
+          "description": "Mưu Binh - [Hồi thành]",
+          "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "hop_thoai_thuong_vuot_ai": {
+          "description": "Mưu Binh - [Thưởng vượt ải]",
+          "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "thuong_vuot_ai_1": {
+          "description": "Mưu Binh - [Thưởng vượt ải]- [Quà 1]",
+          "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "thuong_vuot_ai_2": {
+          "description": "Mưu Binh - [Thưởng vượt ải]- [Quà 2]",
+          "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "thuong_vuot_ai_3": {
+          "description": "Mưu Binh - [Thưởng vượt ải]- [Quà 3]",
+          "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
+    "muu_binh.danh_sach_ai": {
       "source_image": "resources/screens/muu_binh/danh_sach_ai.png",
       "templates": {
         "danh_sach_ai": {
