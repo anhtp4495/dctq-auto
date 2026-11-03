@@ -18,6 +18,7 @@ def build_ranked_battle_config(value: Mapping[str, Any] | None = None) -> Battle
         battle_count=int(value.get("battle_count", 6)),
         mode=value.get("mode", "time_limit"),
         time_limit_seconds=int(value.get("time_limit_seconds", 45)),
+        refill=bool(value.get("refill", False)),
     )
 
 
