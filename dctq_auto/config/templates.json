@@ -831,6 +831,13 @@
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
+        "tu_dong_den_ai_tiep_theo": {
+          "description": "Mưu Binh - [Tự động đến ải tiếp theo]",
+          "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "search_rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
         "hoi_thanh": {
           "description": "Mưu Binh - [Hồi thành]",
           "rect": { "top": 0, "left": 0, "right": 0, "bottom": 0 },
