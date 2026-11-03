@@ -1,5 +1,6 @@
 """Run the simple Mưu Binh auto-deploy/reward loop."""
 
+import random
 import time
 
 from dctq_auto.config.button_positions import ButtonPositions
@@ -8,6 +9,9 @@ from dctq_auto.config.constants import (
     _TEMPLATE_CHIEN_TRANH_THUONG_VUOT_AI_CUONG_CONG_6,
     _TEMPLATE_CHIEN_TRANH_THUONG_VUOT_AI_CUONG_CONG_4,
     _TEMPLATE_CHIEN_TRANH_THUONG_VUOT_AI_CUONG_CONG_2,
+    _TEMPLATE_MUU_BINH_THUONG_VUOT_AI_1,
+    _TEMPLATE_MUU_BINH_THUONG_VUOT_AI_2,
+    _TEMPLATE_MUU_BINH_THUONG_VUOT_AI_3,
     _TEMPLATE_MUU_BINH_XAC_NHAN_THUONG_VUOT_AI,
 )
 from dctq_auto.tasks.common.battle.battle_utils import (
@@ -26,6 +30,14 @@ _REWARD_TEMPLATES = (
     _TEMPLATE_CHIEN_TRANH_THUONG_VUOT_AI_CUONG_CONG_6,
     _TEMPLATE_CHIEN_TRANH_THUONG_VUOT_AI_CUONG_CONG_4,
     _TEMPLATE_CHIEN_TRANH_THUONG_VUOT_AI_CUONG_CONG_2,
+    _TEMPLATE_MUU_BINH_THUONG_VUOT_AI_1,
+    _TEMPLATE_MUU_BINH_THUONG_VUOT_AI_2,
+    _TEMPLATE_MUU_BINH_THUONG_VUOT_AI_3,
+)
+_REWARD_FALLBACK_BUTTONS = (
+    "thuong_vuot_ai_1",
+    "thuong_vuot_ai_2",
+    "thuong_vuot_ai_3",
 )
 
 
@@ -45,27 +57,26 @@ def _handle_reward_dialog(device, account, log, templates, positions) -> bool:
             selected = (template_name, found)
             break
 
-    if selected is None:
-        log(f"[{account.username}] Hộp thoại thưởng vượt ải đang mở nhưng chưa nhận diện được lựa chọn thưởng.")
-        return False
+    if selected is not None:
+        reward_name, reward_match = selected
+        x, y = click_match(device, reward_match)
+        log(f"[{account.username}] Chọn thưởng {reward_name.rsplit('/', 1)[-1]} tại ({x}, {y}).")
+    else:
+        fallback_name = random.choice(_REWARD_FALLBACK_BUTTONS)
+        try:
+            point = positions.get("chien_tranh.muu_binh", fallback_name)
+            tap(device, point, account=account, log=log)
+            log(
+                f"[{account.username}] Không match 7 template thưởng; "
+                f"chọn ngẫu nhiên {fallback_name} tại ({point[0]}, {point[1]})."
+            )
+        except (KeyError, ValueError) as exc:
+            log(f"[{account.username}] Không lấy được tọa độ thưởng Mưu Binh {fallback_name}: {exc}")
+            return False
 
-    reward_name, reward_match = selected
-    x, y = click_match(device, reward_match)
-    log(f"[{account.username}] Chọn thưởng {reward_name.rsplit('/', 1)[-1]} tại ({x}, {y}).")
-    time.sleep(0.5)
-
-    try:
-        screen = screen_bgr(device)
-    except Exception as exc:
-        log(f"[{account.username}] Không chụp được màn hình kiểm tra xác nhận thưởng: {exc}")
-        screen = None
-
+    # Dùng lại ảnh đã chụp khi quét 7 lựa chọn, không chụp màn hình lần nữa.
     confirm_template = templates.get(_TEMPLATE_MUU_BINH_XAC_NHAN_THUONG_VUOT_AI)
-    confirm_match = (
-        match(screen, confirm_template, account=account, log=log)
-        if screen is not None
-        else None
-    )
+    confirm_match = match(screen, confirm_template, account=account, log=log)
     if confirm_match is not None:
         x, y = click_match(device, confirm_match)
         log(f"[{account.username}] Click Xác nhận thưởng vượt ải theo template tại ({x}, {y}).")
@@ -103,12 +114,10 @@ def run(worker, account, device, log) -> bool:
         if observation is None:
             return False
 
-        # Clear exit condition: stage 100 completed and the game returned home.
         if observation["quan_su"] is not None:
             log(f"[{account.username}] Đã hoàn thành Mưu Binh; phát hiện màn hình chính Quân Sự.")
             return True
 
-        # Chỉ xử lý hộp thoại thưởng khi đã nhận diện được hộp thoại.
         if observation["hop_thoai_thuong_vuot_ai"] is not None:
             if _handle_reward_dialog(device, account, log, templates, positions):
                 time.sleep(1)
