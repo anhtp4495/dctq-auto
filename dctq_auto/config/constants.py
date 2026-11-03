@@ -29,6 +29,17 @@ _TEMPLATE_QUAN_SU_TRANH_BA_TRAN_SAU = "quan_su.tranh_ba/tran_sau"
 _TEMPLATE_QUAN_SU_TRANH_BA_HOI_THANH = "quan_su.tranh_ba/hoi_thanh"
 _TEMPLATE_QUAN_SU_TRANH_BA_MUA_THE_LUC = "quan_su.tranh_ba/mua_the_luc"
 
+# Template dùng trong quy trình Mưu Binh.
+_TEMPLATE_MUU_BINH_LOI_VAO = "muu_binh/loi_vao"
+_TEMPLATE_MUU_BINH_CHIEN_DAU = "muu_binh/chien_dau"
+_TEMPLATE_MUU_BINH_XUAT_CHIEN = "muu_binh/xuat_chien"
+_TEMPLATE_MUU_BINH_RUT_LUI = "muu_binh/rut_lui"
+_TEMPLATE_MUU_BINH_HOI_THANH = "muu_binh/hoi_thanh"
+_TEMPLATE_MUU_BINH_HOP_THOAI_THUONG_VUOT_AI = "muu_binh/hop_thoai_thuong_vuot_ai"
+_TEMPLATE_MUU_BINH_THUONG_VUOT_AI_1 = "muu_binh/thuong_vuot_ai_1"
+_TEMPLATE_MUU_BINH_THUONG_VUOT_AI_2 = "muu_binh/thuong_vuot_ai_2"
+_TEMPLATE_MUU_BINH_THUONG_VUOT_AI_3 = "muu_binh/thuong_vuot_ai_3"
+
 # Template dùng trong quy trình Giao Tranh.
 _TEMPLATE_MAIN_QUAN_SU = "main/quan_su"
 _TEMPLATE_QUAN_SU_GIAO_TRANH_LOI_VAO = "quan_su.giao_tranh/loi_vao_giao_tranh"

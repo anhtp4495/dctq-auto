@@ -3,6 +3,7 @@
 import shlex
 import time
 from pathlib import Path
+from types import SimpleNamespace
 from threading import Event
 from PySide6.QtCore import QThread, Signal
 
@@ -13,7 +14,6 @@ from dctq_auto.tasks.common.accounts import load_accounts
 from dctq_auto.tasks.common.ocr_worker import OcrWorkerMixin
 from dctq_auto.tasks.activity.worker import ActivityWorkerMixin
 from dctq_auto.tasks.guild.worker import GuildWorkerMixin
-from dctq_auto.tasks.strategy.worker import StrategyWorkerMixin
 from dctq_auto.tasks.runner import UtilityTaskRunnerMixin
 
 
@@ -21,7 +21,6 @@ class BotWorker(
     OcrWorkerMixin,
     ActivityWorkerMixin,
     GuildWorkerMixin,
-    StrategyWorkerMixin,
     UtilityTaskRunnerMixin,
     QThread,
 ):
@@ -136,20 +135,16 @@ class BotWorker(
     def _run_mock(self) -> None:
         """Simulate configured tasks and update progress without connecting to ADB."""
         if self._config.get("strategy_mode"):
-            selected = ["Vào màn hình Mưu Binh"]
-            if self._config.get("thiet_lap_muu_binh"):
-                selected.append("Thiết lập phòng thủ")
-            if self._config.get("vuot_ai_muu_binh"):
-                selected.append("Vượt Ải")
-            selected.append("Thoát màn hình Mưu Binh")
-            self.progress_changed.emit(0, len(selected), "Bắt đầu Mưu Binh")
-            for index, task in enumerate(selected, start=1):
-                self.task_progress_changed.emit(task, "running", 0, 1)
-                if not self._mock_tick(f"[Chạy thử] Thực hiện: {task}"):
-                    self.task_progress_changed.emit(task, "stopped", 0, 1)
+            total_stages = 100
+            self.progress_changed.emit(0, total_stages, "Chạy thử Mưu Binh")
+            for stage in range(1, total_stages + 1):
+                label = f"Ải {stage}"
+                self.task_progress_changed.emit(label, "running", 0, 1)
+                if not self._mock_tick(f"[Chạy thử] Mưu Binh: hoàn thành {label}."):
+                    self.task_progress_changed.emit(label, "stopped", 0, 1)
                     return
-                self.task_progress_changed.emit(task, "done", 1, 1)
-                self.progress_changed.emit(index, len(selected), task)
+                self.task_progress_changed.emit(label, "done", 1, 1)
+                self.progress_changed.emit(stage, total_stages, f"Chạy thử: {label}")
             return
         if self._config.get("utility_tasks_mode"):
             selected = []
@@ -209,34 +204,6 @@ class BotWorker(
                 selected.append("Thời gian tối đa Tranh Bá")
             if self._config.get("task_championship_end_battle"):
                 selected.append("Kết thúc trận Tranh Bá")
-            if self._config.get("task_enter_strategy"):
-                selected.append("Vào màn hình Mưu Binh")
-            if self._config.get("task_strategy_defense"):
-                selected.append("Thiết lập phòng thủ")
-            if self._config.get("task_detect_strategy_status"):
-                selected.append("Phát hiện trạng thái Mưu Binh")
-            if self._config.get("task_strategy_vuot_ai"):
-                selected.append("Vượt Ải")
-            if self._config.get("task_receive_strategy_reward"):
-                selected.append("Nhận thưởng Mưu Binh")
-            reward_tasks = (
-                ("reward_weekly_doan_chien", "Nhận thưởng - Đoàn Chiến"),
-                ("reward_weekly_quoc_chien", "Nhận thưởng - Quốc Chiến"),
-                ("reward_weekly_lanh_dia_chien", "Nhận thưởng - Lãnh Địa Chiến"),
-                ("reward_shop_than_binh_nguyen_linh_ngoc", "Shop - Thần Binh - Đổi Nguyên Linh Ngọc"),
-                ("reward_shop_danh_vong_que_lanh", "Shop - Danh Vọng - Đổi Quẻ Lành"),
-                ("reward_daily_tam_quoc_lenh", "Nhận thưởng - Tam Quốc Lệnh"),
-                ("reward_shop_uu_dai_free", "Shop - Ưu đãi - Nhận miễn phí"),
-                ("reward_shop_tuong_hon_kinh_thu", "Shop - Tướng hồn - Mua Kinh Thư"),
-                ("reward_gift_friend_hearts", "Tặng tim bạn bè"),
-                ("reward_gift_affinity_hearts", "Tặng tim hảo cảm"),
-                ("reward_share_profile", "Chia sẻ trang cá nhân"),
-                ("reward_daily_missions", "Nhận thưởng nhiệm vụ hằng ngày"),
-            )
-            for key, label in reward_tasks:
-                if self._config.get(key):
-                    selected.append(label)
-            if self._config.get("task_close_strategy"):
                 selected.append("Thoát màn hình Mưu Binh")
             if self._config.get("task_close_guild"):
                 selected.append("Thoát màn hình Quân đoàn")
@@ -616,9 +583,24 @@ class BotWorker(
             device = client.connect()
             self.log_message.emit(f"Đã kết nối ADB: {self._serial}")
             if self._config.get("strategy_mode"):
+                if not self._config.get("task_stage_defense", True):
+                    self.log_message.emit("Mưu Binh: chưa bật tác vụ Vượt Ải.")
+                    return
+                from dctq_auto.tasks.common.stage_defense.task_stage_defense import run as run_stage_defense
+
+                account = SimpleNamespace(username="Mưu Binh")
+                self.progress_changed.emit(0, 100, "Bắt đầu vượt Ải 1–100")
+                success = run_stage_defense(
+                    self,
+                    account,
+                    device,
+                    self.log_message.emit,
+                )
                 self.log_message.emit(
-                    "Tab Mưu Binh: giao diện và thứ tự tác vụ đã cấu hình; "
-                    "luồng ADB sẽ được triển khai ở bước sau."
+                    "Mưu Binh: " + (
+                        "đã kết thúc quy trình." if success
+                        else "quy trình chưa hoàn tất; xem log để biết trạng thái."
+                    )
                 )
                 return
             if self._config.get("utility_tasks_mode"):

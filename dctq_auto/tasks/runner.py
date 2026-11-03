@@ -48,11 +48,6 @@ class UtilityTaskRunnerMixin:
             ("task_championship_end_battle", "Kết thúc trận Tranh Bá"),
             ("task_end_battle", "Kết thúc trận Giao Tranh"),
             ("xuat_chien", "Xuất chiến"),
-            ("task_enter_strategy", "Vào màn hình Mưu Binh"),
-            ("task_strategy_defense", "Thiết lập phòng thủ"),
-            ("task_detect_strategy_status", "Phát hiện trạng thái Mưu Binh"),
-            ("task_strategy_vuot_ai", "Vượt Ải"),
-            ("task_receive_strategy_reward", "Nhận thưởng Mưu Binh"),
             ("reward_weekly_doan_chien", "Nhận thưởng - Đoàn Chiến"),
             ("reward_weekly_quoc_chien", "Nhận thưởng - Quốc Chiến"),
             ("reward_weekly_lanh_dia_chien", "Nhận thưởng - Lãnh Địa Chiến"),
@@ -65,7 +60,6 @@ class UtilityTaskRunnerMixin:
             ("reward_gift_affinity_hearts", "Tặng tim hảo cảm"),
             ("reward_share_profile", "Chia sẻ trang cá nhân"),
             ("reward_daily_missions", "Nhận thưởng nhiệm vụ hằng ngày"),
-            ("task_close_strategy", "Thoát màn hình Mưu Binh"),
             ("task_close_guild", "Thoát màn hình Quân đoàn"),
             ("task_switch_account", "Đổi tài khoản"),
             ("task_click_coordinates", "Click theo tọa độ"),
@@ -88,8 +82,7 @@ class UtilityTaskRunnerMixin:
             "task_login", "task_open_activity", "task_select_phuc_loi", "task_close_activity",
             "nhan_le_bao_quoc_van", "diem_danh", "task_enter_guild",
             "bao_danh_quan_doan", "task_receive_lucky_bag", "task_guild_fortune",
-            "task_detect_strategy_status", "task_strategy_vuot_ai",
-            "task_receive_strategy_reward", "reward_weekly_doan_chien",
+            "reward_weekly_doan_chien",
             "task_close_guild", "task_switch_account", "task_click_coordinates",
             "task_open_battle", "thuc_hien_tranh_ba", "task_find_battle_opponent", "task_find_championship_opponent", "task_start_battle", "task_championship_start_battle", "task_championship_xuat_chien", "task_end_battle", "xuat_chien", "task_use_bazhen",
             "thoi_gian_tranh_ba", "task_championship_end_battle",
@@ -1923,56 +1916,6 @@ class UtilityTaskRunnerMixin:
                 self.progress_changed.emit(
                     completed, max(1, total), f"Lỗi: {label}"
                 )
-        if self._config.get("task_detect_strategy_status"):
-            label = "Phát hiện trạng thái Mưu Binh"
-            self.task_progress_changed.emit(label, "running", 0, 1)
-            try:
-                _regions_path, elements = self._strategy_regions()
-                status, stage = self._detect_strategy_status(device, elements)
-                if status == "khong_xac_dinh":
-                    raise RuntimeError("OCR chưa xác định được trạng thái Mưu Binh.")
-                completed += 1
-                self.task_progress_changed.emit(label, "done", 1, 1)
-                self.progress_changed.emit(
-                    completed, max(1, total), f"Trạng thái Mưu Binh: {status}"
-                )
-            except Exception as exc:
-                completed += 1
-                self.log_message.emit(f"{label} thất bại: {exc}")
-                self.task_progress_changed.emit(label, "failed", 0, 1)
-                self.progress_changed.emit(
-                    completed, max(1, total), f"Lỗi: {label}"
-                )
-
-        if self._config.get("task_strategy_vuot_ai"):
-            label = "Vượt Ải"
-            self.task_progress_changed.emit(label, "running", 0, 1)
-            if self._run_strategy_vuot_ai(device):
-                completed += 1
-                self.task_progress_changed.emit(label, "done", 1, 1)
-                self.progress_changed.emit(completed, max(1, total), "Hoàn tất Vượt Ải")
-            else:
-                completed += 1
-                self.task_progress_changed.emit(label, "failed", 0, 1)
-                self.progress_changed.emit(completed, max(1, total), "Lỗi: Vượt Ải")
-
-        if self._config.get("task_receive_strategy_reward"):
-            label = "Nhận thưởng Mưu Binh"
-            self.task_progress_changed.emit(label, "running", 0, 1)
-            try:
-                _regions_path, elements = self._strategy_regions()
-                reward_ok = self._run_strategy_reward(device, elements)
-            except Exception as exc:
-                self.log_message.emit(f"{label} thất bại: {exc}")
-                reward_ok = False
-            completed += 1
-            if reward_ok:
-                self.task_progress_changed.emit(label, "done", 1, 1)
-                self.progress_changed.emit(completed, max(1, total), "Đã nhận thưởng Mưu Binh")
-            else:
-                self.task_progress_changed.emit(label, "failed", 0, 1)
-                self.progress_changed.emit(completed, max(1, total), f"Lỗi: {label}")
-
         if self._config.get("task_close_guild"):
             if not self._wait_if_paused():
                 self.log_message.emit("Đã dừng trước khi thoát màn hình Quân đoàn.")

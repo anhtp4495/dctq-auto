@@ -1927,6 +1927,8 @@ class MainWindow(QMainWindow):
     @staticmethod
     def _task_specs(config: dict) -> list[tuple[str, int]]:
         """Return progress rows using the exact labels emitted by the worker."""
+        if config.get("strategy_mode"):
+            return [(f"Ải {stage}", 1) for stage in range(1, 101)]
         if config.get("utility_tasks_mode"):
             task_labels = (
                 ("task_login", "Đăng nhập"),
