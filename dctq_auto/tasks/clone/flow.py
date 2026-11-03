@@ -776,7 +776,10 @@ def run_clone_flow_optimize_account(
             )
 
             original_config = self._config
-            self._config = build_clone_battle_config(original_config)
+            self._config = {
+                **original_config,
+                "battle_config": build_clone_battle_config(original_config),
+            }
             try:
                 # task_battle.run() tự cập nhật steps và trả về danh sách còn lại;
                 # không còn trả về failed_tasks.
