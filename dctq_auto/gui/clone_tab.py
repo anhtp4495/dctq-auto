@@ -331,6 +331,7 @@ class CloneTab(QWidget):
                     3: "time_limit",
                 }[self.clone_battle_mode_group.checkedId()],
                 time_limit_seconds=self.clone_battle_time_limit.value(),
+                refill=True,
             ),
             "clone_quoc_chien": self.clone_quoc_chien.isChecked(),
             "clone_reward_guild": self.clone_reward_guild.isChecked(),
