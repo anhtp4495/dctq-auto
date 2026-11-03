@@ -43,11 +43,11 @@ def post_battle(worker, steps, log) -> list[str]:
 
 def run(worker, account, steps, device, ocr_client, log) -> list[str]:
     """Mở Tranh Bá, chạy các trận, luôn thử đóng giao diện và hậu kiểm."""
+    worker._ranked_battle_completed_count = 0
+    worker._ranked_battle_success = False
     if not pre_battle(worker._config, steps, log):
         return post_battle(worker, steps, log)
 
-    worker._ranked_battle_completed_count = 0
-    worker._ranked_battle_success = False
     battle_ok = False
     try:
         opened = task_open_ranked_battle.run(worker, account, device, ocr_client, log)
