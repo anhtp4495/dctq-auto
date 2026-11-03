@@ -30,7 +30,7 @@ _TEMPLATE_QUAN_SU_TRANH_BA_HOI_THANH = "quan_su.tranh_ba/hoi_thanh"
 _TEMPLATE_QUAN_SU_TRANH_BA_MUA_THE_LUC = "quan_su.tranh_ba/mua_the_luc"
 
 # Step và template dùng trong quy trình Chiến Tranh.
-_STEP_STAGE_DEFENSE = "step_stage_defense"
+_STEP_CHIEN_TRANH_MUU_BINH = "chien_tranh_muu_binh"
 _TEMPLATE_MAIN_CHIEN_TRANH = "main/chien_tranh"
 _TEMPLATE_CHIEN_TRANH_MAN_HINH_CHINH = "chien_tranh/chien_tranh_man_hinh_chinh"
 

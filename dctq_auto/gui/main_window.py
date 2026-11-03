@@ -1630,7 +1630,7 @@ class MainWindow(QMainWindow):
             config = self._game_config()
             config.update({
                 "strategy_mode": True,
-                "task_stage_defense": True,
+                "chien_tranh_muu_binh": True,
             })
             return config
         return self._game_config()

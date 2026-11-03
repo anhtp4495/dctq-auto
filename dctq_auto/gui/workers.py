@@ -599,25 +599,21 @@ class BotWorker(
             device = client.connect()
             self.log_message.emit(f"Đã kết nối ADB: {self._serial}")
             if self._config.get("strategy_mode"):
-                if not self._config.get("task_stage_defense", True):
-                    self.log_message.emit("Mưu Binh: chưa bật tác vụ Vượt Ải.")
-                    return
-                from dctq_auto.tasks.common.stage_defense.task_stage_defense import run as run_stage_defense
+                from dctq_auto.config.step_registry import get_clone_step_registry
+                from dctq_auto.tasks.common.war import task_war
 
                 account = SimpleNamespace(username="Mưu Binh")
-                self.progress_changed.emit(0, 100, "Bắt đầu vượt Ải 1–100")
-                success = run_stage_defense(
+                steps = get_clone_step_registry().get_enabled_steps(self._config)
+                self.progress_changed.emit(0, 100, "Bắt đầu quy trình Chiến Tranh — Mưu Binh")
+                task_war.run(
                     self,
                     account,
+                    steps,
                     device,
+                    None,
                     self.log_message.emit,
                 )
-                self.log_message.emit(
-                    "Mưu Binh: " + (
-                        "đã kết thúc quy trình." if success
-                        else "quy trình chưa hoàn tất; xem log để biết trạng thái."
-                    )
-                )
+                self.log_message.emit("Mưu Binh: đã kết thúc quy trình Chiến Tranh.")
                 return
             if self._config.get("utility_tasks_mode"):
                 self._run_utility_tasks(device)
