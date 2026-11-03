@@ -235,8 +235,8 @@ class CloneTab(QWidget):
         self.clone_ranked_battle_mode_group = QButtonGroup(self)
         self.clone_ranked_battle_mode_group.setExclusive(True)
         self.clone_ranked_battle_mode_fast = QCheckBox("Nhanh 1 cờ")
-        self.clone_ranked_battle_mode_normal = QCheckBox("Bình thường 4 cờ")
-        self.clone_ranked_battle_mode_time_limit = QCheckBox("Thời gian tối đa:")
+        self.clone_ranked_battle_mode_normal = QCheckBox("Bình thường")
+        self.clone_ranked_battle_mode_time_limit = QCheckBox("Thời gian tối đa")
         self.clone_ranked_battle_mode_group.addButton(
             self.clone_ranked_battle_mode_fast, 1
         )
