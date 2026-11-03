@@ -14,6 +14,7 @@ class BattleConfig:
     battle_count: int = 15
     mode: BattleMode = "time_limit"
     time_limit_seconds: int = 45
+    refill: bool = False
 
     def __post_init__(self) -> None:
         if self.battle_count < 1:
@@ -34,5 +35,6 @@ def get_battle_config(config: Mapping[str, Any]) -> BattleConfig:
             battle_count=int(value.get("battle_count", 15)),
             mode=value.get("mode", "time_limit"),
             time_limit_seconds=int(value.get("time_limit_seconds", 45)),
+            refill=bool(value.get("refill", False)),
         )
     return BattleConfig()
