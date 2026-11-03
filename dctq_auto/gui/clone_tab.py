@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
 )
 
 from dctq_auto.tasks.common.accounts import load_accounts
-from dctq_auto.tasks.clone.step_registry import get_clone_step_registry
+from dctq_auto.config.step_registry import get_clone_step_registry
 from dctq_auto.tasks.common.battle.battle_config import BattleConfig
 
 
