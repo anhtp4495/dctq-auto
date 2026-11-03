@@ -15,6 +15,20 @@ _STEP_QUOC_VAN = "hoat_dong_phuc_loi_le_bao_quoc_van"
 _STEP_DIEM_DANH = "hoat_dong_phuc_loi_diem_danh"
 _STEP_QUAN_SU_GIAO_TRANH = "quan_su_giao_tranh"
 
+
+# Step và template dùng trong quy trình Tranh Bá.
+_STEP_QUAN_SU_TRANH_BA = "quan_su_tranh_ba"
+_TEMPLATE_QUAN_SU_TRANH_BA_LOI_VAO = "quan_su.tranh_ba/loi_vao_tranh_ba"
+_TEMPLATE_QUAN_SU_TRANH_BA_TIM_DOI_THU = "quan_su.tranh_ba/tim_doi_thu"
+_TEMPLATE_QUAN_SU_TRANH_BA_XUAT_CHIEN = "quan_su.tranh_ba/xuat_chien"
+_TEMPLATE_QUAN_SU_TRANH_BA_CHUA_CO_CHIEN_THUAT = "quan_su.tranh_ba/chua_co_chien_thuat"
+_TEMPLATE_QUAN_SU_TRANH_BA_RUT_LUI = "quan_su.tranh_ba/rut_lui"
+_TEMPLATE_QUAN_SU_TRANH_BA_THU_QUAN = "quan_su.tranh_ba/thu_quan"
+_TEMPLATE_QUAN_SU_TRANH_BA_HOP_THOAI_THU_QUAN = "quan_su.tranh_ba/hop_thoai_thu_quan"
+_TEMPLATE_QUAN_SU_TRANH_BA_TRAN_SAU = "quan_su.tranh_ba/tran_sau"
+_TEMPLATE_QUAN_SU_TRANH_BA_HOI_THANH = "quan_su.tranh_ba/hoi_thanh"
+_TEMPLATE_QUAN_SU_TRANH_BA_MUA_THE_LUC = "quan_su.tranh_ba/mua_the_luc"
+
 # Template dùng trong quy trình Giao Tranh.
 _TEMPLATE_MAIN_QUAN_SU = "main/quan_su"
 _TEMPLATE_QUAN_SU_GIAO_TRANH_LOI_VAO = "quan_su.giao_tranh/loi_vao_giao_tranh"
