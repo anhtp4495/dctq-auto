@@ -20,7 +20,7 @@ from dctq_auto.tasks.common.battle import (
 )
 
 
-def build_clone_battle_config(config: Mapping[str, Any]) -> dict:
+def build_clone_battle_config(config: Mapping[str, Any]) -> BattleConfig:
     """Chuẩn hóa cấu hình Giao Tranh riêng cho Clone Optimize."""
     value = config.get("battle_config", {})
     if isinstance(value, BattleConfig):
@@ -35,10 +35,7 @@ def build_clone_battle_config(config: Mapping[str, Any]) -> dict:
             refill=bool(value.get("refill", True)),
         )
 
-    return {
-        **config,
-        "battle_config": battle,
-    }
+    return battle
 
 
 def pre_battle(config, steps, log) -> bool:
