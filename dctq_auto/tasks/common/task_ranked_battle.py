@@ -28,7 +28,10 @@ def post_battle(worker, steps, log) -> list[str]:
     """Hậu kiểm số trận và loại step Tranh Bá khỏi danh sách."""
     if _STEP_QUAN_SU_TRANH_BA not in steps:
         return steps
-    target = max(1, int(worker._config.get("tranh_ba", 1)))
+    try:
+        target = max(1, int(worker._config.get("tranh_ba", 1)))
+    except (TypeError, ValueError):
+        target = 1
     completed = int(getattr(worker, "_ranked_battle_completed_count", 0))
     if completed < target:
         log(f"Tranh Bá chưa đủ số trận: {completed}/{target}.")
@@ -43,6 +46,7 @@ def run(worker, account, steps, device, ocr_client, log) -> list[str]:
     if not pre_battle(worker._config, steps, log):
         return post_battle(worker, steps, log)
 
+    worker._ranked_battle_completed_count = 0
     worker._ranked_battle_success = False
     battle_ok = False
     try:
