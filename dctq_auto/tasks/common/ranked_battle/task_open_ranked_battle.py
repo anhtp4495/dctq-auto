@@ -21,6 +21,7 @@ from dctq_auto.vision.template_store import get_templates
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.tasks.common.battle.battle_utils import click_match
+from dctq_auto.tasks.common.battle.battle_config import get_battle_config
 
 _MAX_TRIES = 60
 _OPEN_TEMPLATES = (
@@ -101,7 +102,11 @@ def run(self, account, device, ocr_client, log, current_try=1) -> bool:
             x, y = click_match(device, found)
             log(f"[{account.username}] Click Lối vào Tranh Bá tại ({x}, {y}).")
         elif name == _TEMPLATE_QUAN_SU_TRANH_BA_MUA_THE_LUC:
-            if self._config.get("task_championship_knb") or self._config.get("mua_luot_knb"):
+            if (
+                get_battle_config(self._config).refill
+                or self._config.get("task_championship_knb")
+                or self._config.get("mua_luot_knb")
+            ):
                 x, y = positions.get("quan_su.tranh_ba", "xac_nhan_mua_the_luc")
                 action = "xác nhận mua thể lực bằng KNB"
             else:
