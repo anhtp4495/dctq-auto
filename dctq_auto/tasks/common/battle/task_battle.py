@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from typing import Any, Mapping
+
+from dctq_auto.tasks.common.battle.battle_config import BattleConfig
+
 from dctq_auto.config.constants import (
     _STEP_QUAN_SU_GIAO_TRANH,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_HOI_THANH,
@@ -16,13 +20,24 @@ from dctq_auto.tasks.common.battle import (
 )
 
 
-def build_clone_battle_config(config) -> dict:
-    """Chuyển BattleConfig của Clone Optimize sang cấu hình task Giao Tranh."""
-    from dctq_auto.tasks.common.battle.battle_config import get_battle_config
+def build_clone_battle_config(config: Mapping[str, Any]) -> dict:
+    """Chuẩn hóa cấu hình Giao Tranh riêng cho Clone Optimize."""
+    value = config.get("battle_config", {})
+    if isinstance(value, BattleConfig):
+        battle = value
+    else:
+        if not isinstance(value, Mapping):
+            value = {}
+        battle = BattleConfig(
+            battle_count=int(value.get("battle_count", 15)),
+            mode=value.get("mode", "time_limit"),
+            time_limit_seconds=int(value.get("time_limit_seconds", 45)),
+            refill=bool(value.get("refill", True)),
+        )
 
     return {
         **config,
-        "battle_config": get_battle_config(config),
+        "battle_config": battle,
     }
 
 
