@@ -18,7 +18,7 @@ from dctq_auto.tasks.common.battle import (
 
 def build_clone_battle_config(config) -> dict:
     """Chuyển BattleConfig của Clone Optimize sang cấu hình task Giao Tranh."""
-    from dctq_auto.tasks.task_battle import get_battle_config
+    from dctq_auto.tasks.common.battle.battle_config import get_battle_config
 
     return {
         **config,
@@ -32,7 +32,7 @@ def pre_battle(config, steps, log) -> bool:
         log("Không chọn chức năng [Giao Tranh].")
         return False
 
-    from dctq_auto.tasks.task_battle import get_battle_config
+    from dctq_auto.tasks.common.battle.battle_config import get_battle_config
 
     try:
         battle = get_battle_config(config)
@@ -56,7 +56,7 @@ def post_battle(worker, account, steps, device, log) -> list[str]:
     if _STEP_QUAN_SU_GIAO_TRANH not in steps:
         return steps
 
-    from dctq_auto.tasks.task_battle import get_battle_config
+    from dctq_auto.tasks.common.battle.battle_config import get_battle_config
 
     target_battles = get_battle_config(worker._config).battle_count
     completed_battles = int(getattr(worker, "_battle_completed_count", 0))
