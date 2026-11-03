@@ -804,8 +804,8 @@
       "source_image": "resources/screens/muu_binh/danh_sach_ai.png",
       "templates": {
         "danh_sach_ai": {
-          "description": "Mưu Binh - vùng danh sách ải; mỗi ô ải có kích thước 19x10 px, thứ tự tăng dần từ trái sang phải.",
-          "rect": { "top": 0, "left": 0, "right": 19, "bottom": 10 },
+          "description": "Mưu Binh - vùng danh sách ải; mỗi ô ải có kích thước 100x25 px, thứ tự tăng dần từ trái sang phải.",
+          "rect": { "top": 0, "left": 0, "right": 100, "bottom": 25 },
           "search_rect": { "top": 0, "left": 0, "right": 1920, "bottom": 1080 },
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
