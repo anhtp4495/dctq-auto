@@ -7,11 +7,11 @@ from dctq_auto.tasks.common.stage_defense import (
 )
 
 
-def run(worker, account, device, log) -> bool:
+def run(worker, account, device, ocr_client, log) -> bool:
     """Open Mưu Binh, then run until timeout or return to the main screen."""
     log(f"[{account.username}] Bắt đầu quy trình Mưu Binh.")
     try:
-        opened = task_open_stage_defense.run(worker, account, device, log)
+        opened = task_open_stage_defense.run(worker, account, device, ocr_client, log)
         if not opened:
             log(f"[{account.username}] Không mở được Mưu Binh; dừng tác vụ.")
             return False

@@ -19,7 +19,7 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None):
         return steps
 
     try:
-        task_stage_defense.run(worker, account, device, log)
+        task_stage_defense.run(worker, account, device, ocr_client, log)
     finally:
         if not task_close_war.run(worker, account, device, log):
             log(f"[{account.username}] Cảnh báo: chưa xác nhận đóng được màn hình Chiến Tranh.")
