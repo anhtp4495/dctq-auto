@@ -512,7 +512,7 @@ class UtilityTaskRunnerMixin:
         # Đã chạy luồng mới thì không chạy tiếp các bước Tranh Bá OCR cũ bên dưới.
         championship_screen_open_failed = ranked_battle_flow_handled
 
-        if self._config.get("thuc_hien_tranh_ba"):
+        if self._config.get("thuc_hien_tranh_ba") and not ranked_battle_flow_handled:
             label = "Mở màn hình Tranh Bá"
             self.task_progress_changed.emit(label, "running", 0, 1)
             try:
