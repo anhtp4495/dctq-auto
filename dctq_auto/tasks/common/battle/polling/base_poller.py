@@ -54,34 +54,46 @@ class BasePoller:
             return None
 
         is_championship = context.get("battle_type") == "championship"
-        template_names = self.templates + self.championship_templates if is_championship else self.templates
+        template_names = self.championship_templates if is_championship else self.templates
         templates = get_templates(template_names)
-        observation = {
-            "screen": screen,
-            "templates": templates,
-            "ration": match(
-                screen, templates.get(_TEMPLATE_QUAN_SU_GIAO_TRANH_DUNG_LUONG_THAO),
-                account=account, log=context["log"],
-            ),
-            "retreat": match(
-                screen, templates.get(_TEMPLATE_QUAN_SU_GIAO_TRANH_RUT_LUI),
-                account=account, log=context["log"],
-            ),
-            "collect": match(
-                screen, templates.get(_TEMPLATE_QUAN_SU_GIAO_TRANH_THU_QUAN),
-                account=account, log=context["log"],
-            ),
-            "withdraw_confirmation": match(
-                screen,
-                templates.get(_TEMPLATE_QUAN_SU_GIAO_TRANH_HOP_THOAI_THU_QUAN),
-                account=account, log=context["log"],
-            ),
-            "next_battle": match(
-                screen, templates.get(_TEMPLATE_QUAN_SU_GIAO_TRANH_TRAN_SAU),
-                account=account, log=context["log"],
-            ),
-            "should_end": False,
-        }
+        if is_championship:
+            observation = {
+                "screen": screen,
+                "templates": templates,
+                "ration": None,
+                "retreat": None,
+                "collect": None,
+                "withdraw_confirmation": None,
+                "next_battle": None,
+                "should_end": False,
+            }
+        else:
+            observation = {
+                "screen": screen,
+                "templates": templates,
+                "ration": match(
+                    screen, templates.get(_TEMPLATE_QUAN_SU_GIAO_TRANH_DUNG_LUONG_THAO),
+                    account=account, log=context["log"],
+                ),
+                "retreat": match(
+                    screen, templates.get(_TEMPLATE_QUAN_SU_GIAO_TRANH_RUT_LUI),
+                    account=account, log=context["log"],
+                ),
+                "collect": match(
+                    screen, templates.get(_TEMPLATE_QUAN_SU_GIAO_TRANH_THU_QUAN),
+                    account=account, log=context["log"],
+                ),
+                "withdraw_confirmation": match(
+                    screen,
+                    templates.get(_TEMPLATE_QUAN_SU_GIAO_TRANH_HOP_THOAI_THU_QUAN),
+                    account=account, log=context["log"],
+                ),
+                "next_battle": match(
+                    screen, templates.get(_TEMPLATE_QUAN_SU_GIAO_TRANH_TRAN_SAU),
+                    account=account, log=context["log"],
+                ),
+                "should_end": False,
+            }
 
         # Chỉ nạp và phát event Tranh Bá trong luồng Tranh Bá; không làm
         # thay đổi payload hoặc hành vi polling của Giao Tranh.
