@@ -465,7 +465,7 @@ class UtilityTaskRunnerMixin:
         )
         if ranked_battle_flow_handled:
             from dctq_auto.config.constants import _STEP_QUAN_SU_TRANH_BA
-            from dctq_auto.tasks.common import task_ranked_battle
+            from dctq_auto.tasks.common.ranked_battle import task_ranked_battle
 
             ranked_task_labels = (
                 ("thuc_hien_tranh_ba", "Mở màn hình Tranh Bá"),
