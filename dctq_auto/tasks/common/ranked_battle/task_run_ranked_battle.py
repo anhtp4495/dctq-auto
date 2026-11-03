@@ -11,9 +11,9 @@ from dctq_auto.tasks.common.battle.battle_config import get_battle_config
 
 def run(self, account, device, ocr_client, log) -> bool:
     """Chạy đủ số trận Tranh Bá, dùng polling để nhận diện trạng thái."""
-    target = max(1, int(self._config.get("tranh_ba", 1)))
-    time_limit = max(1, int(self._config.get("thoi_gian_tranh_ba") or 15))
     battle_config = get_battle_config(self._config)
+    target = battle_config.battle_count
+    time_limit = battle_config.time_limit_seconds
     poller = NormalPoller()
     strategy = PincerBattle()
     positions = ButtonPositions()
@@ -22,6 +22,7 @@ def run(self, account, device, ocr_client, log) -> bool:
         "account": account,
         "device": device,
         "config": self._config,
+        "battle_config": battle_config,
         "log": log,
         "wait_if_paused": self._wait_if_paused,
         "battle_type": "championship",
@@ -42,7 +43,8 @@ def run(self, account, device, ocr_client, log) -> bool:
 
     log(
         f"[{account.username}] Bắt đầu theo dõi Tranh Bá: "
-        f"{target} trận, giới hạn mỗi trận {time_limit} giây."
+        f"{target} trận, chế độ {battle_config.mode}, "
+        f"giới hạn mỗi trận {time_limit} giây."
     )
 
     while time.monotonic() < deadline:
@@ -135,13 +137,25 @@ def run(self, account, device, ocr_client, log) -> bool:
             continue
 
         started_at = context.get("battle_started_at")
-        if collect is not None and started_at is not None:
+        if collect is not None and started_at is not None and not withdraw_requested:
             elapsed = time.monotonic() - started_at
-            if elapsed >= time_limit and not withdraw_requested:
+            should_withdraw = (
+                battle_config.mode == "fast"
+                or (
+                    battle_config.mode == "time_limit"
+                    and elapsed >= time_limit
+                )
+            )
+            if should_withdraw:
                 x, y = click_match(device, collect)
                 withdraw_requested = True
+                reason = (
+                    "chế độ nhanh"
+                    if battle_config.mode == "fast"
+                    else f"đã đủ {time_limit} giây"
+                )
                 log(
-                    f"[{account.username}] Đã đủ {time_limit} giây; "
+                    f"[{account.username}] {reason}; "
                     f"click Thu quân tại ({x}, {y})."
                 )
                 time.sleep(1)
