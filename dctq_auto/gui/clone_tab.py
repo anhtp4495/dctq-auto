@@ -305,26 +305,6 @@ class CloneTab(QWidget):
             ranked_battle_mode_hints[self.clone_ranked_battle_mode_group.checkedId()]
         )
 
-        ranked_battle_controls = (
-            ranked_battle_count_label,
-            self.clone_ranked_battle_count,
-            self.clone_ranked_battle_refill,
-            ranked_battle_mode_label,
-            self.clone_ranked_battle_mode_time_limit,
-            self.clone_ranked_battle_time_limit,
-            self.clone_ranked_battle_mode_fast,
-            self.clone_ranked_battle_mode_normal,
-            self.clone_ranked_battle_mode_hint,
-        )
-
-        def set_ranked_battle_controls_visible(visible: bool) -> None:
-            for control in ranked_battle_controls:
-                control.setVisible(visible)
-
-        self.clone_quan_su_tranh_ba.toggled.connect(
-            set_ranked_battle_controls_visible
-        )
-        set_ranked_battle_controls_visible(self.clone_quan_su_tranh_ba.isChecked())
 
         layout.addWidget(war_group)
 
