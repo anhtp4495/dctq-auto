@@ -93,6 +93,7 @@ class UtilityTaskRunnerMixin:
             "task_close_guild", "task_switch_account", "task_click_coordinates",
             "task_open_battle", "thuc_hien_tranh_ba", "task_find_battle_opponent", "task_find_championship_opponent", "task_start_battle", "task_championship_start_battle", "task_championship_xuat_chien", "task_end_battle", "xuat_chien", "task_use_bazhen",
             "thoi_gian_tranh_ba", "task_championship_end_battle",
+            "mua_luot_knb", "tranh_ba_luot_mien_phi",
         }
         for key, label in selected:
             if key in implemented:
