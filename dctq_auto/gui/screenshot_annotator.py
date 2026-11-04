@@ -190,11 +190,17 @@ class ClickableImage(QWidget):
 
         if self._drag_start is not None and self._drag_current is not None:
             pen = QPen(Qt.GlobalColor.yellow)
-            pen.setWidth(2)
-            pen.setStyle(Qt.PenStyle.DashLine)
+            pen.setWidth(3)
             painter.setPen(pen)
-            from PySide6.QtCore import QRect
-            painter.drawRect(QRect(self._drag_start, self._drag_current).normalized())
+            if self._is_swipe_capture():
+                painter.drawLine(self._drag_start, self._drag_current)
+                painter.drawEllipse(self._drag_start, 5, 5)
+                painter.drawEllipse(self._drag_current, 5, 5)
+            else:
+                pen.setStyle(Qt.PenStyle.DashLine)
+                painter.setPen(pen)
+                from PySide6.QtCore import QRect
+                painter.drawRect(QRect(self._drag_start, self._drag_current).normalized())
 
     def mousePressEvent(self, event) -> None:
         point = event.position().toPoint()
