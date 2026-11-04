@@ -2008,24 +2008,19 @@ class MainWindow(QMainWindow):
     def _task_specs(config: dict) -> list[tuple[str, int]]:
         """Return progress rows using the exact labels emitted by the worker."""
         if config.get("state_war_mode"):
-            from dctq_auto.tasks.common.state_war.task_run_state_war import (
-                get_battle_step_progress_label,
-                load_battle_strategy,
-            )
+            from dctq_auto.config.constants import _STEP_CHIEN_TRANH_QUOC_CHIEN
+            from dctq_auto.tasks.common.state_war.task_state_war import pre_state_war
 
-            strategy_path = config.get("state_war_strategy_path", "")
-            try:
-                _data, strategy_steps = load_battle_strategy(strategy_path)
-            except (OSError, ValueError) as exc:
-                logging.getLogger(__name__).warning(
-                    "Không thể nạp danh sách bước tiến trình Quốc chiến: %s", exc
-                )
+            progress_items: list[str] = []
+            is_valid = pre_state_war(
+                [_STEP_CHIEN_TRANH_QUOC_CHIEN],
+                config.get("state_war_strategy_path", ""),
+                lambda _message: None,
+                progress_items=progress_items,
+            )
+            if not is_valid:
                 return [("Triển khai chiến thuật Quốc chiến", 1)]
-            return [
-                ("Bắt đầu", 1),
-                *((get_battle_step_progress_label(step), 1) for step in strategy_steps),
-                ("Kết thúc", 1),
-            ]
+            return [(label, 1) for label in progress_items]
         if config.get("strategy_mode"):
             return [(f"Ải {stage}", 1) for stage in range(1, 101)]
         if config.get("utility_tasks_mode"):
