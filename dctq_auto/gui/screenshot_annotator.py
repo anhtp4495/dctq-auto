@@ -661,14 +661,10 @@ class ScreenshotAnnotator(QDialog):
         )
         actions.addWidget(self.strategy_capture_swipe_button)
         path_actions = QHBoxLayout()
-        self.strategy_capture_path_button = QPushButton("Vẽ đường đa giác")
-        self.strategy_capture_path_button.clicked.connect(
-            lambda: self._begin_strategy_capture("swipe_path")
-        )
+        self.strategy_capture_path_button = QPushButton("Vẽ Swipe Path")
+        self.strategy_capture_path_button.setCheckable(True)
+        self.strategy_capture_path_button.clicked.connect(self._toggle_strategy_path_capture)
         path_actions.addWidget(self.strategy_capture_path_button)
-        self.strategy_finish_path_button = QPushButton("Hoàn tất đường")
-        self.strategy_finish_path_button.clicked.connect(self._finish_strategy_path_capture)
-        path_actions.addWidget(self.strategy_finish_path_button)
         self.strategy_clear_path_button = QPushButton("Xóa điểm đường")
         self.strategy_clear_path_button.clicked.connect(self._clear_strategy_path_points)
         path_actions.addWidget(self.strategy_clear_path_button)
@@ -894,6 +890,7 @@ class ScreenshotAnnotator(QDialog):
         )
         self._strategy_editing_index = index
         self._update_strategy_field_visibility()
+        self._refresh_strategy_overlay()
 
     def _update_strategy_field_visibility(self, *_args) -> None:
         action = self.strategy_type_combo.currentData()
@@ -915,7 +912,15 @@ class ScreenshotAnnotator(QDialog):
         self.strategy_capture_to_button.setEnabled(is_swipe)
         self.strategy_capture_swipe_button.setEnabled(is_swipe)
         self.strategy_capture_path_button.setEnabled(is_path)
-        self.strategy_finish_path_button.setEnabled(is_path and bool(self._strategy_path_points))
+        is_capturing_path = self._strategy_capture_target == "swipe_path"
+        self.strategy_capture_path_button.setEnabled(is_path)
+        self.strategy_capture_path_button.blockSignals(True)
+        self.strategy_capture_path_button.setChecked(is_capturing_path)
+        self.strategy_capture_path_button.setText(
+            f"Kết thúc vẽ ({len(self._strategy_path_points)} điểm)"
+            if is_capturing_path else "Vẽ Swipe Path"
+        )
+        self.strategy_capture_path_button.blockSignals(False)
         self.strategy_clear_path_button.setEnabled(is_path and bool(self._strategy_path_points))
 
     def _begin_strategy_capture(self, target: str) -> None:
@@ -935,7 +940,7 @@ class ScreenshotAnnotator(QDialog):
         if target == "swipe_path":
             self._strategy_path_points = []
             self.strategy_path_points_label.setText("0 điểm")
-            instruction = "Nhấp lần lượt các đỉnh trên ảnh, sau đó nhấn Hoàn tất đường."
+            instruction = "Nhấp lần lượt các đỉnh trên ảnh; nhấn nút Vẽ Swipe Path lần nữa để kết thúc."
         else:
             instruction = (
                 "Kéo chuột từ điểm đầu đến điểm cuối ngay trên ảnh."
@@ -946,10 +951,20 @@ class ScreenshotAnnotator(QDialog):
         self._refresh_strategy_overlay(include_form=True)
         self.strategy_editor_status.setText(f"Đang chờ chọn {labels[target]}: {instruction}")
 
+    def _toggle_strategy_path_capture(self, checked: bool) -> None:
+        if checked:
+            self._begin_strategy_capture("swipe_path")
+            return
+        self._finish_strategy_path_capture()
+
     def _finish_strategy_path_capture(self) -> None:
         if self._strategy_capture_target != "swipe_path":
             return
         if len(self._strategy_path_points) < 2:
+            # Keep capture active so the user can add the required second point.
+            self.strategy_capture_path_button.blockSignals(True)
+            self.strategy_capture_path_button.setChecked(True)
+            self.strategy_capture_path_button.blockSignals(False)
             QMessageBox.information(
                 self, "Chưa đủ điểm", "Đường vuốt cần ít nhất 2 điểm. Hãy chọn thêm đỉnh."
             )
@@ -959,15 +974,17 @@ class ScreenshotAnnotator(QDialog):
         self._refresh_strategy_overlay(include_form=True)
         self.strategy_editor_status.setText(
             f"Đã hoàn tất đường vuốt gồm {len(self._strategy_path_points)} điểm, "
-            f"{len(self._strategy_path_points) - 1} cạnh. Nhấn Thêm bước hoặc Cập nhật."
+            f"{len(self._strategy_path_points) - 1} cạnh. Nhấn Cập nhật để lưu thay đổi "
+            "vào bước đang chọn hoặc Thêm bước để tạo bước mới."
         )
 
     def _clear_strategy_path_points(self) -> None:
         self._strategy_path_points = []
         self.strategy_path_points_label.setText("0 điểm")
         if self._strategy_capture_target == "swipe_path":
-            self.strategy_capture_path_button.setEnabled(True)
+            self._strategy_capture_target = None
         self._update_strategy_field_visibility()
+        self._refresh_strategy_overlay(include_form=True)
         self._refresh_strategy_overlay(include_form=True)
         self.strategy_editor_status.setText("Đã xóa các điểm của đường vuốt.")
 
@@ -996,9 +1013,12 @@ class ScreenshotAnnotator(QDialog):
                 f"{len(self._strategy_path_points)} điểm"
             )
             self._update_strategy_field_visibility()
+            self.strategy_capture_path_button.setText(
+                f"Kết thúc vẽ ({len(self._strategy_path_points)} điểm)"
+            )
             self.strategy_editor_status.setText(
                 f"Đã thêm điểm {len(self._strategy_path_points)}: ({x}, {y}). "
-                "Nhấp tiếp để thêm đỉnh; nhấn Hoàn tất đường khi xong."
+                "Nhấp tiếp để thêm đỉnh; nhấn nút Vẽ Swipe Path lần nữa để kết thúc."
             )
             self._refresh_strategy_overlay(include_form=True)
             return True
