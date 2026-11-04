@@ -31,6 +31,7 @@ _TEMPLATE_QUAN_SU_TRANH_BA_MUA_THE_LUC = "quan_su.tranh_ba/mua_the_luc"
 
 # Step và template dùng trong quy trình Chiến Tranh.
 _STEP_CHIEN_TRANH_MUU_BINH = "chien_tranh_muu_binh"
+_STEP_CHIEN_TRANH_QUOC_CHIEN = "chien_tranh_quoc_chien"
 _TEMPLATE_MAIN_CHIEN_TRANH = "main/chien_tranh"
 _TEMPLATE_CHIEN_TRANH_MAN_HINH_CHINH = "chien_tranh/man_hinh_chinh"
 _TEMPLATE_CHIEN_TRANH_MUU_BINH = "chien_tranh/muu_binh"
