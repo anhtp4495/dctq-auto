@@ -23,6 +23,18 @@
     "hoat_dong_phuc_loi_item2": {
       "x": 350,
       "y": 750
+    },
+    "qua_diem_danh_10_ngay": {
+      "x": 1136,
+      "y": 310
+    },
+    "qua_diem_danh_20_ngay": {
+      "x": 1410,
+      "y": 310
+    },
+    "qua_diem_danh_30_ngay": {
+      "x": 1689,
+      "y": 310
     }
   },
   "quan_doan": {
