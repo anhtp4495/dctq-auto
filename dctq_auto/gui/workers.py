@@ -135,7 +135,7 @@ class BotWorker(
     def _run_mock(self) -> None:
         """Simulate configured tasks and update progress without connecting to ADB."""
         if self._config.get("state_war_mode"):
-            from dctq_auto.tasks.common.tasks.state_war.task_run_state_war import (
+            from dctq_auto.tasks.common.state_war.task_run_state_war import (
                 load_battle_strategy,
             )
             strategy_path = self._config.get("state_war_strategy_path", "")
@@ -636,7 +636,7 @@ class BotWorker(
             device = client.connect()
             self.log_message.emit(f"Đã kết nối ADB: {self._serial}")
             if self._config.get("state_war_mode"):
-                from dctq_auto.tasks.common.tasks.state_war.task_state_war import (
+                from dctq_auto.tasks.common.state_war.task_state_war import (
                     run_state_war,
                 )
                 run_state_war(
