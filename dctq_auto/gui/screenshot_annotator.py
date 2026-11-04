@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import json
 import re
+import time
 import unicodedata
 from datetime import datetime
 from pathlib import Path
@@ -14,7 +15,7 @@ import numpy as np
 import cv2
 import pytesseract
 
-from PySide6.QtCore import QPoint, Qt, QSettings
+from PySide6.QtCore import QPoint, Qt, QSettings, QThread, Signal
 from PySide6.QtGui import QGuiApplication, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QDialog,
@@ -51,6 +52,37 @@ REGIONS_PATH = Path("dctq_auto/tasks/common/regions.json")
 SCREENSHOT_DIR = Path("artifacts/screenshots")
 
 
+class _StrategyTestThread(QThread):
+    """Run the current in-memory strategy against the selected ADB device."""
+
+    succeeded = Signal(str)
+    failed = Signal(str)
+
+    def __init__(self, serial: str, steps: list[dict], parent=None) -> None:
+        super().__init__(parent)
+        self.serial = serial
+        self.steps = [dict(step) for step in steps]
+
+    def run(self) -> None:
+        try:
+            device = AdbClient(self.serial).connect()
+            for index, step in enumerate(self.steps, start=1):
+                if step["type"] == "click":
+                    device.shell(f"input tap {step['x']} {step['y']}")
+                else:
+                    x1, y1 = step["from"]
+                    x2, y2 = step["to"]
+                    device.shell(
+                        f"input swipe {x1} {y1} {x2} {y2} {step['duration']}"
+                    )
+                delay = int(step.get("delay", 0))
+                if delay:
+                    time.sleep(delay / 1000)
+            self.succeeded.emit(f"Đã chạy thử thành công {len(self.steps)} bước.")
+        except Exception as exc:
+            self.failed.emit(f"{type(exc).__name__}: {exc}")
+
+
 class ClickableImage(QWidget):
     """Show a screenshot and support point clicks or drag-to-select rectangles."""
 
@@ -74,6 +106,7 @@ class ClickableImage(QWidget):
         self._is_swipe_capture = is_swipe_capture or (lambda: False)
         self._on_image_swipe = on_image_swipe or (lambda *_args: None)
         self._points: list[tuple[int, int, str]] = []
+        self._strategy_steps: list[dict] = []
         self._ocr_boxes: list[dict] = []
         self._selected_region: tuple[int, int, int, int] | None = None
         self._drag_start: QPoint | None = None
@@ -106,6 +139,10 @@ class ClickableImage(QWidget):
 
     def set_points(self, points: list[tuple[int, int, str]]) -> None:
         self._points = list(points)
+        self.update()
+
+    def set_strategy_steps(self, steps: list[dict]) -> None:
+        self._strategy_steps = [dict(step) for step in steps]
         self.update()
 
     def set_ocr_boxes(self, boxes: list[dict]) -> None:
@@ -170,6 +207,34 @@ class ClickableImage(QWidget):
                 painter.setPen(pen)
                 painter.drawRect(QRect(QPoint(x1, y1), QPoint(x2, y2)).normalized())
 
+            if self._strategy_steps:
+                from PySide6.QtCore import QPointF
+                pen = QPen(Qt.GlobalColor.cyan)
+                pen.setWidth(3)
+                painter.setPen(pen)
+                for index, step in enumerate(self._strategy_steps, start=1):
+                    if step.get("type") == "click":
+                        px = target.x() + round(int(step.get("x", 0)) * scale_x)
+                        py = target.y() + round(int(step.get("y", 0)) * scale_y)
+                        painter.drawEllipse(QPoint(px, py), 7, 7)
+                        painter.drawText(px + 9, py - 8, f"C{index}")
+                    elif step.get("type") == "swipe":
+                        source = step.get("from", [0, 0])
+                        destination = step.get("to", [0, 0])
+                        if len(source) != 2 or len(destination) != 2:
+                            continue
+                        start = QPoint(
+                            target.x() + round(int(source[0]) * scale_x),
+                            target.y() + round(int(source[1]) * scale_y),
+                        )
+                        end = QPoint(
+                            target.x() + round(int(destination[0]) * scale_x),
+                            target.y() + round(int(destination[1]) * scale_y),
+                        )
+                        painter.drawLine(start, end)
+                        painter.drawEllipse(start, 6, 6)
+                        painter.drawEllipse(end, 6, 6)
+                        painter.drawText(start.x() + 8, start.y() - 8, f"S{index}")
             if self._points:
                 pen = QPen(Qt.GlobalColor.green)
                 pen.setWidth(2)
@@ -347,6 +412,7 @@ class ScreenshotAnnotator(QDialog):
         self._strategy_path: Path | None = None
         self._strategy_steps: list[dict] = []
         self._strategy_capture_target: str | None = None
+        self._strategy_test_thread: _StrategyTestThread | None = None
         self._build_strategy_editor(root)
 
         toolbar = QHBoxLayout()
@@ -574,6 +640,12 @@ class ScreenshotAnnotator(QDialog):
         down_button.setFixedWidth(32)
         down_button.clicked.connect(lambda: self._move_strategy_step(1))
         actions.addWidget(down_button)
+        self.strategy_test_button = QPushButton("▶ Chạy thử steps")
+        self.strategy_test_button.setToolTip(
+            "Thực thi lần lượt tất cả steps hiện có trên thiết bị ADB đang chọn."
+        )
+        self.strategy_test_button.clicked.connect(self._test_strategy_steps)
+        actions.addWidget(self.strategy_test_button)
         layout.addLayout(actions)
 
         self.strategy_editor_status = QLabel(
@@ -685,6 +757,7 @@ class ScreenshotAnnotator(QDialog):
             self.strategy_step_list.setCurrentRow(0)
         else:
             self._clear_strategy_step_fields()
+        self._refresh_strategy_overlay()
 
     def _clear_strategy_step_fields(self) -> None:
         self.strategy_type_combo.setCurrentIndex(0)
@@ -763,6 +836,7 @@ class ScreenshotAnnotator(QDialog):
             f"Đã lấy swipe: ({from_x}, {from_y}) → ({to_x}, {to_y}). "
             "Nhấn Cập nhật để áp dụng vào bước đang chọn hoặc Thêm bước để tạo bước mới."
         )
+        self._refresh_strategy_overlay(include_form=True)
 
     def _capture_strategy_coordinate(self, x: int, y: int) -> bool:
         target = self._strategy_capture_target
@@ -781,7 +855,68 @@ class ScreenshotAnnotator(QDialog):
         self.strategy_editor_status.setText(
             f"Đã lấy tọa độ ảnh gốc: ({x}, {y}). Nhấn Thêm bước hoặc Cập nhật."
         )
+        self._refresh_strategy_overlay(include_form=True)
         return True
+
+    def _refresh_strategy_overlay(self, include_form: bool = False) -> None:
+        """Show saved-in-editor steps and the currently edited draft on the screenshot."""
+        overlay = [dict(step) for step in self._strategy_steps]
+        if include_form and self.strategy_step_description.text().strip():
+            try:
+                draft = self._strategy_step_from_fields()
+                selected = self.strategy_step_list.currentRow()
+                if 0 <= selected < len(overlay):
+                    overlay[selected] = draft
+                else:
+                    overlay.append(draft)
+            except ValueError:
+                pass
+        self.image_view.set_strategy_steps(overlay)
+
+    def _test_strategy_steps(self) -> None:
+        if not self.serial:
+            QMessageBox.warning(
+                self, "Chưa chọn thiết bị",
+                "Chạy thử steps cần một thiết bị ADB/LDPlayer đang được chọn.",
+            )
+            return
+        if not self._strategy_steps:
+            QMessageBox.information(self, "Chưa có steps", "Hãy thêm ít nhất một bước trước.")
+            return
+        if self._strategy_test_thread is not None and self._strategy_test_thread.isRunning():
+            return
+        answer = QMessageBox.question(
+            self,
+            "Xác nhận chạy thử",
+            f"Sẽ thực thi tuần tự {len(self._strategy_steps)} bước trên thiết bị đang chọn. "
+            "Các thao tác click/swipe sẽ tác động trực tiếp lên game. Tiếp tục?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        self.strategy_test_button.setEnabled(False)
+        self.strategy_editor_status.setText(
+            f"Đang chạy thử {len(self._strategy_steps)} steps trên thiết bị {self.serial}..."
+        )
+        thread = _StrategyTestThread(self.serial, self._strategy_steps, self)
+        self._strategy_test_thread = thread
+        thread.succeeded.connect(self._on_strategy_test_succeeded)
+        thread.failed.connect(self._on_strategy_test_failed)
+        thread.finished.connect(self._on_strategy_test_finished)
+        thread.start()
+
+    def _on_strategy_test_succeeded(self, message: str) -> None:
+        self.strategy_editor_status.setText(message)
+        QMessageBox.information(self, "Chạy thử hoàn tất", message)
+
+    def _on_strategy_test_failed(self, message: str) -> None:
+        self.strategy_editor_status.setText(f"Chạy thử thất bại: {message}")
+        QMessageBox.critical(self, "Lỗi chạy thử", message)
+
+    def _on_strategy_test_finished(self) -> None:
+        self.strategy_test_button.setEnabled(True)
+        self._strategy_test_thread = None
 
     def _strategy_step_from_fields(self) -> dict:
         description = self.strategy_step_description.text().strip()
