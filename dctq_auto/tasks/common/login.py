@@ -128,7 +128,7 @@ def handle_post_login(
                 f"[{account.username}] Phát hiện Địch Quân Tập Kích; đang đóng cửa sổ."
             )
             tap_x, tap_y = ButtonPositions().get("main.dich_quan_tap_kich", "dong_man_hinh")
-            log(
+            worker.log_message.emit(
                 f"[{account.username}] Đóng màn hình Địch Quân Tập Kích "
                 f"theo ButtonPositions tại ({tap_x}, {tap_y})."
             )
@@ -304,7 +304,7 @@ def prepare_login(
             f"[{account.username}] Phát hiện Địch Quân Tập Kích; đang đóng cửa sổ."
         )
         tap_x, tap_y = ButtonPositions().get("main.dich_quan_tap_kich", "dong_man_hinh")
-        log(
+        worker.log_message.emit(
             f"[{account.username}] Đóng màn hình Địch Quân Tập Kích "
             f"theo ButtonPositions tại ({tap_x}, {tap_y})."
         )
