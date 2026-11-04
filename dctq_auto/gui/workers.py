@@ -29,6 +29,7 @@ class BotWorker(
     log_message = Signal(str)
     progress_changed = Signal(int, int, str)
     task_progress_changed = Signal(str, str, int, int)
+    task_progress_item_added = Signal(str, int)
     clone_account_result = Signal(str, bool)
     clone_account_status = Signal(str, str)
 
@@ -143,7 +144,12 @@ class BotWorker(
             )
             strategy_path = self._config.get("state_war_strategy_path", "")
             selected_steps = [_STEP_CHIEN_TRANH_QUOC_CHIEN]
-            if not pre_state_war(selected_steps, strategy_path, self.log_message.emit):
+            if not pre_state_war(
+                selected_steps,
+                strategy_path,
+                self.log_message.emit,
+                add_progress_item=self.task_progress_item_added.emit,
+            ):
                 self.task_progress_changed.emit(
                     "Triển khai chiến thuật Quốc chiến", "ignored", 0, 1
                 )
