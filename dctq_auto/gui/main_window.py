@@ -2022,8 +2022,9 @@ class MainWindow(QMainWindow):
                 )
                 return [("Triển khai chiến thuật Quốc chiến", 1)]
             return [
-                (get_battle_step_progress_label(step, index), 1)
-                for index, step in enumerate(strategy_steps, start=1)
+                ("Bắt đầu", 1),
+                *((get_battle_step_progress_label(step), 1) for step in strategy_steps),
+                ("Kết thúc", 1),
             ]
         if config.get("strategy_mode"):
             return [(f"Ải {stage}", 1) for stage in range(1, 101)]
