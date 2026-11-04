@@ -945,7 +945,7 @@ class ScreenshotAnnotator(QDialog):
             f"{description} — {coordinate}"
         )
         # Keep each step visible long enough to inspect. Respect longer configured delays.
-        interval = max(650, int(step.get("delay", 0)))
+        interval = min(650, int(step.get("delay", 0)))
         self._strategy_preview_timer.start(interval)
 
     def _advance_strategy_preview(self) -> None:

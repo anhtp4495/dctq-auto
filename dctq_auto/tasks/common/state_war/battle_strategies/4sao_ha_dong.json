@@ -4,31 +4,122 @@
   "steps": [
     {
       "type": "click",
-      "x": 0,
-      "y": 0,
-      "delay": 500,
-      "description": "MẪU 1: Mở bản đồ Quốc chiến - cập nhật tọa độ"
+      "x": 100,
+      "y": 100,
+      "delay": 100,
+      "description": "[Võ Tướng 1] - Chọn"
     },
     {
       "type": "click",
-      "x": 0,
-      "y": 0,
-      "delay": 500,
-      "description": "MẪU 2: Chọn mục tiêu Hà Đông - cập nhật tọa độ"
+      "x": 100,
+      "y": 500,
+      "delay": 100,
+      "description": "[Võ Tướng 1] - Chiến đấu"
     },
     {
       "type": "click",
-      "x": 0,
-      "y": 0,
-      "delay": 500,
-      "description": "MẪU 3: Chọn phương án trung lập - cập nhật tọa độ"
+      "x": 200,
+      "y": 100,
+      "delay": 100,
+      "description": "[Võ Tướng 2] - Chọn"
     },
     {
       "type": "click",
-      "x": 0,
-      "y": 0,
-      "delay": 500,
-      "description": "MẪU 4: Xác nhận triển khai - cập nhật tọa độ"
+      "x": 200,
+      "y": 500,
+      "delay": 100,
+      "description": "[Võ Tướng 2] - Chiến đấu"
+    },
+    {
+      "type": "click",
+      "x": 300,
+      "y": 100,
+      "delay": 100,
+      "description": "[Võ Tướng 3] - Chọn"
+    },
+    {
+      "type": "click",
+      "x": 300,
+      "y": 500,
+      "delay": 100,
+      "description": "[Võ Tướng 3] - Chiến đấu"
+    },
+    {
+      "type": "click",
+      "x": 400,
+      "y": 100,
+      "delay": 100,
+      "description": "[Võ Tướng 4] - Chọn"
+    },
+    {
+      "type": "click",
+      "x": 400,
+      "y": 500,
+      "delay": 100,
+      "description": "[Võ Tướng 4] - Chiến đấu"
+    },
+    {
+      "type": "click",
+      "x": 500,
+      "y": 100,
+      "delay": 100,
+      "description": "[Võ Tướng 5] - Chọn"
+    },
+    {
+      "type": "click",
+      "x": 500,
+      "y": 500,
+      "delay": 100,
+      "description": "[Võ Tướng 5] - Chiến đấu"
+    },
+    {
+      "type": "click",
+      "x": 600,
+      "y": 100,
+      "delay": 100,
+      "description": "[Binh Lính] - Chọn"
+    },
+    {
+      "type": "click",
+      "x": 700,
+      "y": 100,
+      "delay": 100,
+      "description": "[Cẩm Nang] - Chọn"
+    },
+    {
+      "type": "click",
+      "x": 800,
+      "y": 500,
+      "delay": 100,
+      "description": "[Cẩm Nang] - Sử dụng đốt nhà chính"
+    },
+    {
+      "type": "swipe",
+      "from": [
+        507,
+        364
+      ],
+      "to": [
+        780,
+        87
+      ],
+      "duration": 300,
+      "delay": 1500,
+      "description": "[Binh Lính] - Thả lính cửa trên"
+    },
+    {
+      "type": "swipe",
+      "from": [
+        1431,
+        56
+      ],
+      "to": [
+        1782,
+        449
+      ],
+      "duration": 300,
+      "delay": 1500,
+      "description": "[Binh Lính] - Thả lính cửa dưới"
     }
   ]
 }
