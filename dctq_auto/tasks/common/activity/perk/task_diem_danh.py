@@ -7,6 +7,7 @@ import numpy as np
 
 from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.config.constants import (
+    _TEMPLATE_CHUA_CHON_DIEM_DANH,
     _TEMPLATE_DANG_CHON_DIEM_DANH,
     _TEMPLATE_XAC_NHAN_DIEM_DANH_BU,
 )
@@ -156,8 +157,8 @@ def _tap_all_days(
     return True
 
 
-def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> bool:
-    """Xử lý điểm danh bằng template matching và đệ quy sau mỗi lần click."""
+def _run_diem_danh(worker, account, steps, device, ocr_client, log, screenshot=None) -> bool:
+    """Xử lý điểm danh sau khi đã mở đúng mục."""
     templates = get_templates(_TEMPLATE_NAMES)
 
     if not worker._wait_if_paused():
@@ -216,7 +217,102 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> boo
         log(f"[{account.username}] Không click được template {template_name}: {exc}")
         return False
 
-    return run(
+    return _run_diem_danh(
         worker, account, steps, device, ocr_client, log,
         screenshot=None,
+    )
+
+
+def open_diem_danh(worker, account, device, ocr_client, log, screenshot=None) -> bool:
+    """Mở mục Điểm danh; nếu chưa thấy thì vuốt danh sách lên tối đa hai lần."""
+    template_names = (
+        _TEMPLATE_DANG_CHON_DIEM_DANH,
+        _TEMPLATE_CHUA_CHON_DIEM_DANH,
+    )
+    templates = get_templates(template_names)
+    positions = ButtonPositions()
+
+    for attempt in range(3):
+        if not worker._wait_if_paused():
+            log(f"[{account.username}] Mở Điểm danh đã dừng theo yêu cầu.")
+            return False
+
+        try:
+            current_screenshot = (
+                screenshot if attempt == 0 and screenshot is not None
+                else device.screenshot()
+            )
+            screen_bgr = cv2.cvtColor(
+                np.asarray(current_screenshot), cv2.COLOR_RGB2BGR
+            )
+        except Exception as exc:
+            log(f"[{account.username}] Không chụp được màn hình khi mở Điểm danh: {exc}")
+            return False
+
+        for template_name in template_names:
+            template = templates.get(template_name)
+            if template is None:
+                log(f"[{account.username}] Không tải được template {template_name}; bỏ qua.")
+                continue
+            try:
+                match = match_template(
+                    screen_bgr,
+                    template.image,
+                    threshold=template.threshold,
+                    method=template.method,
+                    search_rect=template.search_rect,
+                    grayscale=template.grayscale,
+                )
+            except (ValueError, cv2.error) as exc:
+                log(f"[{account.username}] Lỗi nhận diện {template_name}: {exc}")
+                continue
+            if match is None:
+                continue
+
+            report_template_match(
+                log, context=f"[{account.username}]", template=template, match=match
+            )
+            if template_name == _TEMPLATE_DANG_CHON_DIEM_DANH:
+                log(f"[{account.username}] Đã ở sẵn mục Điểm danh.")
+                return True
+
+            log(f"[{account.username}] Phát hiện Điểm danh chưa được chọn.")
+            _tap_match_center(device, match, account, log)
+            return True
+
+        if attempt == 2:
+            break
+
+        try:
+            x1, y1 = positions.get("hoat_dong", "hoat_dong_phuc_loi_item2")
+            x2, y2 = positions.get("hoat_dong", "hoat_dong_phuc_loi_item1")
+            log(
+                f"[{account.username}] Chưa thấy Điểm danh; vuốt từ dưới lên "
+                f"lần {attempt + 1}/2: ({x1}, {y1}) -> ({x2}, {y2})."
+            )
+            device.shell(f"input swipe {x1} {y1} {x2} {y2} 400")
+            time.sleep(0.7)
+        except Exception as exc:
+            log(f"[{account.username}] Không vuốt được danh sách để tìm Điểm danh: {exc}")
+            return False
+
+    log(f"[{account.username}] Không tìm thấy mục Điểm danh sau tối đa 2 lần vuốt.")
+    return False
+
+
+def run_diem_danh(worker, account, steps, device, ocr_client, log, screenshot=None) -> bool:
+    """Mở mục Điểm danh trước, sau đó thực hiện quy trình điểm danh."""
+    if not open_diem_danh(
+        worker, account, device, ocr_client, log, screenshot=screenshot
+    ):
+        return False
+    return _run_diem_danh(
+        worker, account, steps, device, ocr_client, log, screenshot=None
+    )
+
+
+def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> bool:
+    """Entry point tương thích với bộ điều phối task."""
+    return run_diem_danh(
+        worker, account, steps, device, ocr_client, log, screenshot=screenshot
     )
