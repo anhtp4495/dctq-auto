@@ -159,6 +159,8 @@ class BotWorker(
             name = str(data.get("name") or "Chiến thuật")
             total = len(steps)
             self.progress_changed.emit(0, total, f"Chạy thử Quốc chiến: {name}")
+            self.task_progress_changed.emit("Bắt đầu", "running", 0, 1)
+            self.task_progress_changed.emit("Bắt đầu", "done", 1, 1)
             for index, step in enumerate(steps, start=1):
                 progress_label = get_battle_step_progress_label(step, index)
                 self.task_progress_changed.emit(
@@ -177,6 +179,8 @@ class BotWorker(
                 self.progress_changed.emit(
                     index, total, f"Chạy thử Quốc chiến: {index}/{total}"
                 )
+            self.task_progress_changed.emit("Kết thúc", "running", 0, 1)
+            self.task_progress_changed.emit("Kết thúc", "done", 1, 1)
             self.log_message.emit(
                 f"[Chạy thử] Hoàn tất mô phỏng chiến thuật Quốc chiến '{name}'. Không gửi lệnh ADB."
             )
