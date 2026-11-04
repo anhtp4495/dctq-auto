@@ -84,6 +84,12 @@
     "priority": 10801
   },
   {
+    "id": "chien_tranh_quoc_chien",
+    "config_key": "chien_tranh_quoc_chien",
+    "display_name": "Mưu Binh",
+    "priority": 14001
+  },
+  {
     "id": "chien_tranh_muu_binh",
     "config_key": "chien_tranh_muu_binh",
     "display_name": "Mưu Binh",
