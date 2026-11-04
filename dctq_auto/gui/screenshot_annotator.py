@@ -5,7 +5,6 @@ from __future__ import annotations
 import csv
 import json
 import re
-import time
 import unicodedata
 from datetime import datetime
 from pathlib import Path
@@ -15,7 +14,7 @@ import numpy as np
 import cv2
 import pytesseract
 
-from PySide6.QtCore import QPoint, Qt, QSettings, QThread, Signal
+from PySide6.QtCore import QPoint, Qt, QSettings, QTimer
 from PySide6.QtGui import QGuiApplication, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QDialog,
@@ -52,37 +51,6 @@ REGIONS_PATH = Path("dctq_auto/tasks/common/regions.json")
 SCREENSHOT_DIR = Path("artifacts/screenshots")
 
 
-class _StrategyTestThread(QThread):
-    """Run the current in-memory strategy against the selected ADB device."""
-
-    succeeded = Signal(str)
-    failed = Signal(str)
-
-    def __init__(self, serial: str, steps: list[dict], parent=None) -> None:
-        super().__init__(parent)
-        self.serial = serial
-        self.steps = [dict(step) for step in steps]
-
-    def run(self) -> None:
-        try:
-            device = AdbClient(self.serial).connect()
-            for step in self.steps:
-                if step["type"] == "click":
-                    device.shell(f"input tap {step['x']} {step['y']}")
-                else:
-                    x1, y1 = step["from"]
-                    x2, y2 = step["to"]
-                    device.shell(
-                        f"input swipe {x1} {y1} {x2} {y2} {step['duration']}"
-                    )
-                delay = int(step.get("delay", 0))
-                if delay:
-                    time.sleep(delay / 1000)
-            self.succeeded.emit(f"Đã chạy thử thành công {len(self.steps)} bước.")
-        except Exception as exc:
-            self.failed.emit(f"{type(exc).__name__}: {exc}")
-
-
 class ClickableImage(QWidget):
     """Show a screenshot and support point clicks or drag-to-select rectangles."""
 
@@ -107,6 +75,7 @@ class ClickableImage(QWidget):
         self._on_image_swipe = on_image_swipe or (lambda *_args: None)
         self._points: list[tuple[int, int, str]] = []
         self._strategy_steps: list[dict] = []
+        self._strategy_active_step: int | None = None
         self._ocr_boxes: list[dict] = []
         self._selected_region: tuple[int, int, int, int] | None = None
         self._drag_start: QPoint | None = None
@@ -143,6 +112,10 @@ class ClickableImage(QWidget):
 
     def set_strategy_steps(self, steps: list[dict]) -> None:
         self._strategy_steps = [dict(step) for step in steps]
+        self.update()
+
+    def set_strategy_active_step(self, index: int | None) -> None:
+        self._strategy_active_step = index
         self.update()
 
     def set_ocr_boxes(self, boxes: list[dict]) -> None:
@@ -208,10 +181,13 @@ class ClickableImage(QWidget):
                 painter.drawRect(QRect(QPoint(x1, y1), QPoint(x2, y2)).normalized())
 
             if self._strategy_steps:
-                pen = QPen(Qt.GlobalColor.cyan)
-                pen.setWidth(3)
-                painter.setPen(pen)
                 for index, step in enumerate(self._strategy_steps, start=1):
+                    is_active = self._strategy_active_step == index - 1
+                    pen = QPen(
+                        Qt.GlobalColor.yellow if is_active else Qt.GlobalColor.cyan
+                    )
+                    pen.setWidth(5 if is_active else 3)
+                    painter.setPen(pen)
                     if step.get("type") == "click":
                         px = target.x() + round(int(step.get("x", 0)) * scale_x)
                         py = target.y() + round(int(step.get("y", 0)) * scale_y)
@@ -411,7 +387,10 @@ class ScreenshotAnnotator(QDialog):
         self._strategy_path: Path | None = None
         self._strategy_steps: list[dict] = []
         self._strategy_capture_target: str | None = None
-        self._strategy_test_thread: _StrategyTestThread | None = None
+        self._strategy_preview_index = -1
+        self._strategy_preview_timer = QTimer(self)
+        self._strategy_preview_timer.setSingleShot(True)
+        self._strategy_preview_timer.timeout.connect(self._advance_strategy_preview)
         self._build_strategy_editor(root)
 
         toolbar = QHBoxLayout()
@@ -640,11 +619,12 @@ class ScreenshotAnnotator(QDialog):
         down_button.setFixedWidth(32)
         down_button.clicked.connect(lambda: self._move_strategy_step(1))
         actions.addWidget(down_button)
-        self.strategy_test_button = QPushButton("▶ Chạy thử steps")
+        self.strategy_test_button = QPushButton("▶ Xem trước steps")
         self.strategy_test_button.setToolTip(
-            "Thực thi lần lượt tất cả steps hiện có trên thiết bị ADB đang chọn."
+            "Lần lượt làm nổi bật các tọa độ click/swipe ngay trên ảnh hiện tại; "
+            "không gửi thao tác đến LDPlayer và không sử dụng ADB."
         )
-        self.strategy_test_button.clicked.connect(self._test_strategy_steps)
+        self.strategy_test_button.clicked.connect(self._preview_strategy_steps)
         actions.addWidget(self.strategy_test_button)
         layout.addLayout(actions)
 
@@ -881,50 +861,56 @@ class ScreenshotAnnotator(QDialog):
         if hasattr(self, "image_view"):
             self.image_view.set_strategy_steps(overlay)
 
-    def _test_strategy_steps(self) -> None:
-        if not self.serial:
-            QMessageBox.warning(
-                self, "Chưa chọn thiết bị",
-                "Chạy thử steps cần một thiết bị ADB/LDPlayer đang được chọn.",
-            )
-            return
+    def _preview_strategy_steps(self) -> None:
+        """Preview strategy steps by highlighting coordinates on the loaded screenshot only."""
         if not self._strategy_steps:
             QMessageBox.information(self, "Chưa có steps", "Hãy thêm ít nhất một bước trước.")
             return
-        if self._strategy_test_thread is not None and self._strategy_test_thread.isRunning():
+        if self._strategy_preview_timer.isActive():
+            self._strategy_preview_timer.stop()
+            self._strategy_preview_index = -1
+            self.image_view.set_strategy_active_step(None)
+            self.strategy_test_button.setText("▶ Xem trước steps")
+            self.strategy_test_button.setEnabled(True)
+            self.strategy_editor_status.setText("Đã dừng xem trước chiến thuật.")
             return
-        answer = QMessageBox.question(
-            self,
-            "Xác nhận chạy thử",
-            f"Sẽ thực thi tuần tự {len(self._strategy_steps)} bước trên thiết bị đang chọn. "
-            "Các thao tác click/swipe sẽ tác động trực tiếp lên game. Tiếp tục?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,
-        )
-        if answer != QMessageBox.StandardButton.Yes:
-            return
-        self.strategy_test_button.setEnabled(False)
-        self.strategy_editor_status.setText(
-            f"Đang chạy thử {len(self._strategy_steps)} steps trên thiết bị {self.serial}..."
-        )
-        thread = _StrategyTestThread(self.serial, self._strategy_steps, self)
-        self._strategy_test_thread = thread
-        thread.succeeded.connect(self._on_strategy_test_succeeded)
-        thread.failed.connect(self._on_strategy_test_failed)
-        thread.finished.connect(self._on_strategy_test_finished)
-        thread.start()
 
-    def _on_strategy_test_succeeded(self, message: str) -> None:
-        self.strategy_editor_status.setText(message)
-        QMessageBox.information(self, "Chạy thử hoàn tất", message)
-
-    def _on_strategy_test_failed(self, message: str) -> None:
-        self.strategy_editor_status.setText(f"Chạy thử thất bại: {message}")
-        QMessageBox.critical(self, "Lỗi chạy thử", message)
-
-    def _on_strategy_test_finished(self) -> None:
+        self._strategy_preview_index = 0
+        self.strategy_test_button.setText("■ Dừng xem trước")
         self.strategy_test_button.setEnabled(True)
-        self._strategy_test_thread = None
+        self._show_strategy_preview_step()
+
+    def _show_strategy_preview_step(self) -> None:
+        index = self._strategy_preview_index
+        if not (0 <= index < len(self._strategy_steps)):
+            self._strategy_preview_timer.stop()
+            self._strategy_preview_index = -1
+            self.image_view.set_strategy_active_step(None)
+            self.strategy_test_button.setText("▶ Xem trước steps")
+            self.strategy_editor_status.setText(
+                f"Đã xem trước hoàn tất {len(self._strategy_steps)} bước. "
+                "Không có thao tác nào được gửi đến LDPlayer."
+            )
+            return
+
+        step = self._strategy_steps[index]
+        self.image_view.set_strategy_active_step(index)
+        description = str(step.get("description") or f"Bước {index + 1}")
+        if step.get("type") == "click":
+            coordinate = f"click ({step.get('x', 0)}, {step.get('y', 0)})"
+        else:
+            coordinate = f"swipe {step.get('from', [])} → {step.get('to', [])}"
+        self.strategy_editor_status.setText(
+            f"Xem trước bước {index + 1}/{len(self._strategy_steps)}: "
+            f"{description} — {coordinate}"
+        )
+        # Keep each step visible long enough to inspect. Respect longer configured delays.
+        interval = max(650, int(step.get("delay", 0)))
+        self._strategy_preview_timer.start(interval)
+
+    def _advance_strategy_preview(self) -> None:
+        self._strategy_preview_index += 1
+        self._show_strategy_preview_step()
 
     def _strategy_step_from_fields(self) -> dict:
         description = self.strategy_step_description.text().strip()
