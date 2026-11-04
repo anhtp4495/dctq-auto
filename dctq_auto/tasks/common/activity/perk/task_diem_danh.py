@@ -119,7 +119,7 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> boo
         log(f"[{account.username}] Không nhận diện được template Điểm danh; có thể đã chuyển sang màn hình khác.")
         return False
 
-    if template_name == _TEMPLATE_NGAY_CAN_DIEM_DANH:
+    if template_name == _TEMPLATE_DANG_CHON_DIEM_DANH:
         try:
             screen_height, screen_width = screen_bgr.shape[:2]
             if not _tap_all_days(
@@ -127,28 +127,10 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> boo
             ):
                 return False
 
-            # Đóng màn hình lịch điểm danh giống flow cũ.
-            close_x = round(0.972396 * screen_width)
-            close_y = round(0.119444 * screen_height)
-            if not worker._wait_if_paused():
-                log(f"[{account.username}] Điểm danh đã dừng trước khi đóng lịch.")
-                return False
-            log(
-                f"[{account.username}] Đóng màn hình lịch điểm danh "
-                f"tại ({close_x}, {close_y})."
-            )
-            device.shell(f"input tap {close_x} {close_y}")
-            time.sleep(0.5)
         except Exception as exc:
             log(f"[{account.username}] Không hoàn tất được 31 ô điểm danh: {exc}")
             return False
 
-        return run(
-            worker, account, steps, device, ocr_client, log,
-            screenshot=None,
-        )
-
-    if template_name == _TEMPLATE_DANG_CHON_DIEM_DANH:
         positions = ButtonPositions()
         for qua_diem_danh_count, button_name in enumerate((
             "qua_diem_danh_10_ngay",
