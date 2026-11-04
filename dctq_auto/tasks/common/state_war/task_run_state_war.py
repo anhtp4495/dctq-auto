@@ -174,6 +174,10 @@ def run_battle_strategy(worker, device, strategy_path: str | Path) -> bool:
                     f"Quốc chiến [{index}/{total}]: click ({x}, {y}) — {description}."
                 )
                 device.shell(f"input tap {x} {y}")
+                if step["delay"] and not _wait(worker, step["delay"] / 1000):
+                    worker.log_message.emit("Quốc chiến: đã dừng theo yêu cầu.")
+                    worker.task_progress_changed.emit(progress_label, "stopped", 0, 1)
+                    return False
             elif step["type"] == "swipe":
                 x1, y1 = step["from"]
                 x2, y2 = step["to"]
