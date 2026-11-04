@@ -1920,6 +1920,7 @@ class MainWindow(QMainWindow):
         self._worker.log_message.connect(self._log)
         self._worker.progress_changed.connect(self._update_progress)
         self._worker.task_progress_changed.connect(self._update_task_progress)
+        self._worker.task_progress_item_added.connect(self._add_task_progress_item)
         self._worker.clone_account_result.connect(self._update_clone_account_result)
         self._worker.clone_account_status.connect(self._update_clone_account_status)
         self._init_task_progress(config)
@@ -2008,19 +2009,7 @@ class MainWindow(QMainWindow):
     def _task_specs(config: dict) -> list[tuple[str, int]]:
         """Return progress rows using the exact labels emitted by the worker."""
         if config.get("state_war_mode"):
-            from dctq_auto.config.constants import _STEP_CHIEN_TRANH_QUOC_CHIEN
-            from dctq_auto.tasks.common.state_war.task_state_war import pre_state_war
-
-            progress_items: list[str] = []
-            is_valid = pre_state_war(
-                [_STEP_CHIEN_TRANH_QUOC_CHIEN],
-                config.get("state_war_strategy_path", ""),
-                lambda _message: None,
-                progress_items=progress_items,
-            )
-            if not is_valid:
-                return [("Triển khai chiến thuật Quốc chiến", 1)]
-            return [(label, 1) for label in progress_items]
+            return []
         if config.get("strategy_mode"):
             return [(f"Ải {stage}", 1) for stage in range(1, 101)]
         if config.get("utility_tasks_mode"):
@@ -2066,6 +2055,15 @@ class MainWindow(QMainWindow):
             ]
         from dctq_auto.tasks.registry import get_enabled_tasks
         return [(spec.label, count) for spec, count in get_enabled_tasks(config)]
+
+    def _add_task_progress_item(self, name: str, count: int = 1) -> None:
+        """Append one progress row requested by a running worker."""
+        if name in self.task_progress_labels:
+            return
+        item = QListWidgetItem()
+        self.task_progress_list.addItem(item)
+        self.task_progress_labels[name] = item
+        self._render_task_progress(name, "pending", 0, count)
 
     def _init_task_progress(self, config: dict) -> None:
         self.task_progress_list.clear()
