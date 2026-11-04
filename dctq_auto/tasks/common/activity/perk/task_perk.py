@@ -25,6 +25,9 @@ from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
 
 
+_MAX_TRIES = 6
+
+
 def get_template_names(steps) -> list[str]:
     """Lấy danh sách template cần nhận diện theo các step được chọn."""
     template_names = []
@@ -129,23 +132,49 @@ def run(
     template_names = get_template_names(steps)
     templates = get_templates(template_names)
     # Tiếp tục nhận diện bằng đệ quy sau mỗi thao tác thay đổi màn hình.
-    if not worker._wait_if_paused():
-        log(f"[{account.username}] Phúc lợi đã dừng theo yêu cầu.")
-        return steps
+    template_name = template = match = None
+    for attempt in range(1, _MAX_TRIES + 1):
+        if not worker._wait_if_paused():
+            log(f"[{account.username}] Phúc lợi đã dừng theo yêu cầu.")
+            return steps
 
-    try:
-        if screenshot is None:
-            screenshot = device.screenshot()
-        screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
-    except Exception as exc:
-        log(f"[{account.username}] Không chụp được màn hình để nhận diện Phúc lợi: {exc}")
-        return steps
+        try:
+            current_screenshot = (
+                screenshot
+                if attempt == 1 and screenshot is not None
+                else device.screenshot()
+            )
+            screen_bgr = cv2.cvtColor(
+                np.asarray(current_screenshot), cv2.COLOR_RGB2BGR
+            )
+        except Exception as exc:
+            log(
+                f"[{account.username}] Không chụp được màn hình để nhận diện "
+                f"Phúc lợi (lần thử {attempt}/{_MAX_TRIES}): {exc}"
+            )
+            if attempt < _MAX_TRIES:
+                time.sleep(1.0)
+                continue
+            return steps
 
-    template_name, template, match = _find_template(
-        screen_bgr, templates, template_names, account, log
-    )
+        template_name, template, match = _find_template(
+            screen_bgr, templates, template_names, account, log
+        )
+        if template_name is not None:
+            break
+
+        if attempt < _MAX_TRIES:
+            log(
+                f"[{account.username}] Chưa nhận diện được trạng thái Phúc lợi; "
+                f"thử lại ({attempt + 1}/{_MAX_TRIES})."
+            )
+            time.sleep(1.0)
+
     if template_name is None:
-        log(f"[{account.username}] Không nhận diện được trạng thái Phúc lợi; giữ lại step chưa chạy.")
+        log(
+            f"[{account.username}] Không nhận diện được trạng thái Phúc lợi "
+            f"sau {_MAX_TRIES} lần thử; giữ lại step chưa chạy."
+        )
         return steps
 
     if template_name == _TEMPLATE_CHUA_CHON_PHUC_LOI:
