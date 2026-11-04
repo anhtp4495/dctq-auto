@@ -983,21 +983,31 @@ class ScreenshotAnnotator(QDialog):
         if not name:
             QMessageBox.warning(self, "Thiếu tên", "Hãy nhập tên hiển thị chiến thuật.")
             return
+
+        # Save the values currently shown in the editor, even if the user did not
+        # press "Cập nhật" first. This prevents the last edited step being lost.
+        selected_index = self.strategy_step_list.currentRow()
+        if 0 <= selected_index < len(self._strategy_steps):
+            try:
+                self._strategy_steps[selected_index] = self._strategy_step_from_fields()
+            except ValueError as exc:
+                QMessageBox.warning(self, "Bước chưa hợp lệ", str(exc))
+                return
+
         if not self._strategy_steps:
             QMessageBox.warning(self, "Chưa có bước", "Chiến thuật cần ít nhất một bước.")
             return
+
         # Validate the same click/swipe schema used by the runtime executor.
         try:
             from dctq_auto.tasks.common.state_war.task_run_state_war import _validate_step
             steps = [_validate_step(step, index) for index, step in enumerate(self._strategy_steps, 1)]
-        except (ImportError, ValueError) as exc:
+        except (ImportError, ValueError, TypeError) as exc:
             QMessageBox.warning(self, "Chiến thuật không hợp lệ", str(exc))
             return
         path = self._strategy_path.resolve()
         try:
             path.relative_to(self._strategy_dir.resolve())
-            if path.exists() and path != self._strategy_path.resolve():
-                raise ValueError("Không được ghi đè file chiến thuật khác.")
             data = {
                 "display_name": name,
                 "description": self.strategy_description_input.text().strip(),
