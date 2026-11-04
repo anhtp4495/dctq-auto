@@ -18,7 +18,7 @@ def list_battle_strategies() -> list[dict[str, str]]:
             data = json.loads(path.read_text(encoding="utf-8"))
             if not isinstance(data, dict):
                 continue
-            name = str(data.get("name") or path.stem).strip()
+            name = str(data.get("display_name") or data.get("name") or path.stem).strip()
             description = str(data.get("description") or "").strip()
             steps = data.get("steps")
             if not isinstance(steps, list):
