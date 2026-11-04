@@ -386,6 +386,7 @@ class ScreenshotAnnotator(QDialog):
         )
         self._strategy_path: Path | None = None
         self._strategy_steps: list[dict] = []
+        self._strategy_editing_index = -1
         self._strategy_capture_target: str | None = None
         self._strategy_preview_index = -1
         self._strategy_preview_timer = QTimer(self)
@@ -720,21 +721,32 @@ class ScreenshotAnnotator(QDialog):
             f"Đang tạo {path.name}. Thêm ít nhất một bước rồi lưu chiến thuật."
         )
 
+    @staticmethod
+    def _strategy_step_label(index: int, step: dict) -> str:
+        description = str(step.get("description") or "").strip()
+        action = str(step.get("type") or "?").upper()
+        if step.get("type") == "click":
+            coordinate = f"({step.get('x', 0)}, {step.get('y', 0)})"
+        elif step.get("type") == "swipe":
+            coordinate = f"{step.get('from', [])} → {step.get('to', [])}"
+        else:
+            coordinate = ""
+        return f"{index}. [{action}] {description or 'Chưa mô tả'} {coordinate}"
+
     def _render_strategy_steps(self) -> None:
+        # Rebuild the list without firing selection handlers halfway through.
+        self.strategy_step_list.blockSignals(True)
         self.strategy_step_list.clear()
         for index, step in enumerate(self._strategy_steps, start=1):
-            description = str(step.get("description") or "").strip()
-            action = str(step.get("type") or "?").upper()
-            if step.get("type") == "click":
-                coordinate = f"({step.get('x', 0)}, {step.get('y', 0)})"
-            elif step.get("type") == "swipe":
-                coordinate = f"{step.get('from', [])} → {step.get('to', [])}"
-            else:
-                coordinate = ""
-            label = f"{index}. [{action}] {description or 'Chưa mô tả'} {coordinate}"
-            self.strategy_step_list.addItem(QListWidgetItem(label))
+            self.strategy_step_list.addItem(
+                QListWidgetItem(self._strategy_step_label(index, step))
+            )
         if self._strategy_steps:
             self.strategy_step_list.setCurrentRow(0)
+        self.strategy_step_list.blockSignals(False)
+        self._strategy_editing_index = -1
+        if self._strategy_steps:
+            self._load_selected_strategy_step(self.strategy_step_list.currentRow())
         else:
             self._clear_strategy_step_fields()
         self._refresh_strategy_overlay()
@@ -749,9 +761,36 @@ class ScreenshotAnnotator(QDialog):
             spin.setValue(0)
         self.strategy_duration.setValue(300)
 
-    def _load_selected_strategy_step(self, index: int) -> None:
+    def _store_strategy_step_from_fields(self, index: int) -> None:
         if not (0 <= index < len(self._strategy_steps)):
             return
+        updated = self._strategy_step_from_fields()
+        self._strategy_steps[index] = updated
+        item = self.strategy_step_list.item(index)
+        if item is not None:
+            item.setText(self._strategy_step_label(index + 1, updated))
+        self._refresh_strategy_overlay()
+
+    def _load_selected_strategy_step(self, index: int) -> None:
+        previous_index = getattr(self, "_strategy_editing_index", -1)
+        if previous_index == index:
+            return
+
+        # Commit the step being edited before loading another one.
+        if 0 <= previous_index < len(self._strategy_steps):
+            try:
+                self._store_strategy_step_from_fields(previous_index)
+            except ValueError as exc:
+                self.strategy_step_list.blockSignals(True)
+                self.strategy_step_list.setCurrentRow(previous_index)
+                self.strategy_step_list.blockSignals(False)
+                QMessageBox.warning(self, "Bước chưa hợp lệ", str(exc))
+                return
+
+        if not (0 <= index < len(self._strategy_steps)):
+            self._strategy_editing_index = -1
+            return
+
         step = self._strategy_steps[index]
         self.strategy_type_combo.setCurrentIndex(
             max(0, self.strategy_type_combo.findData(step.get("type", "click")))
@@ -767,6 +806,7 @@ class ScreenshotAnnotator(QDialog):
         self.strategy_from_y.setValue(int(source[1]) if len(source) == 2 else 0)
         self.strategy_to_x.setValue(int(target[0]) if len(target) == 2 else 0)
         self.strategy_to_y.setValue(int(target[1]) if len(target) == 2 else 0)
+        self._strategy_editing_index = index
         self._update_strategy_field_visibility()
 
     def _update_strategy_field_visibility(self, *_args) -> None:
