@@ -135,6 +135,40 @@ class BotWorker(
 
     def _run_mock(self) -> None:
         """Simulate configured tasks and update progress without connecting to ADB."""
+        if self._config.get("state_war_mode"):
+            from dctq_auto.tasks.common.tasks.state_war.task_run_state_war import (
+                load_battle_strategy,
+            )
+            strategy_path = self._config.get("state_war_strategy_path", "")
+            try:
+                data, steps = load_battle_strategy(strategy_path)
+            except Exception as exc:
+                self.log_message.emit(f"[Chạy thử] Quốc chiến: chiến thuật không hợp lệ: {exc}")
+                self.task_progress_changed.emit(
+                    "Triển khai chiến thuật Quốc chiến", "failed", 0, 1
+                )
+                return
+            name = str(data.get("name") or "Chiến thuật")
+            self.progress_changed.emit(0, len(steps), f"Chạy thử Quốc chiến: {name}")
+            for index, step in enumerate(steps, start=1):
+                if not self._mock_tick(
+                    f"[Chạy thử] Quốc chiến {name}: {step['type']} ({index}/{len(steps)})."
+                ):
+                    self.task_progress_changed.emit(
+                        "Triển khai chiến thuật Quốc chiến", "stopped", index - 1, len(steps)
+                    )
+                    return
+                self.task_progress_changed.emit(
+                    "Triển khai chiến thuật Quốc chiến", "running", index, len(steps)
+                )
+                self.progress_changed.emit(index, len(steps), f"Chạy thử Quốc chiến: {index}/{len(steps)}")
+            self.task_progress_changed.emit(
+                "Triển khai chiến thuật Quốc chiến", "done", len(steps), len(steps)
+            )
+            self.log_message.emit(
+                f"[Chạy thử] Hoàn tất mô phỏng chiến thuật Quốc chiến '{name}'. Không gửi lệnh ADB."
+            )
+            return
         if self._config.get("strategy_mode"):
             selected = ["Vào màn hình Mưu Binh"]
             if self._config.get("thiet_lap_muu_binh"):
@@ -615,6 +649,16 @@ class BotWorker(
             client = AdbClient(serial=self._serial)
             device = client.connect()
             self.log_message.emit(f"Đã kết nối ADB: {self._serial}")
+            if self._config.get("state_war_mode"):
+                from dctq_auto.tasks.common.tasks.state_war.task_state_war import (
+                    run_state_war,
+                )
+                run_state_war(
+                    self,
+                    device,
+                    self._config.get("state_war_strategy_path", ""),
+                )
+                return
             if self._config.get("strategy_mode"):
                 self.log_message.emit(
                     "Tab Mưu Binh: giao diện và thứ tự tác vụ đã cấu hình; "
