@@ -39,7 +39,7 @@ from dctq_auto.config.settings import Settings
 from dctq_auto.gui.clone_tab import CloneTab
 from dctq_auto.gui.screenshot_annotator import ScreenshotAnnotator
 from dctq_auto.tasks.clone.accounts import load_accounts
-from dctq_auto.tasks.common.tasks.state_war.task_run_state_war import list_battle_strategies
+from dctq_auto.tasks.common.state_war.task_run_state_war import list_battle_strategies
 
 
 SCREENSHOT_DIR = "artifacts/screenshots"
