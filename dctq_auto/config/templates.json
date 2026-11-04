@@ -368,6 +368,19 @@
         }
       }
     },
+    "hoat_dong.phuc_loi.diem_danh": {
+      "source_image": "resources/screens/hoat_dong/phuc_loi/diem_danh.png",
+      "templates": {
+        "xac_nhan_diem_danh_bu": {
+          "description": "Màn hình [Hoạt động] - [Phúc lợi] - [Điểm danh] - Xác nhận bù",
+          "rect": { "top": 650, "left": 1075, "right": 1279, "bottom": 721},
+          "search_rect": { "top": 208, "left": 469, "right": 1829, "bottom": 901},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
     "quan_doan": {
       "source_image": "resources/screens/quan_doan/man_hinh_chinh.png",
       "templates": {

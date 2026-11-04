@@ -145,7 +145,6 @@ _TEMPLATE_DANG_CHON_HOAT_DONG = "hoat_dong/dang_chon_hoat_dong"
 _TEMPLATE_CHUA_CHON_HOAT_DONG = "hoat_dong/chua_chon_hoat_dong"
 
 # Template dùng bên trong tác vụ Điểm danh.
-_TEMPLATE_NGAY_CAN_DIEM_DANH = "hoat_dong/ngay_can_diem_danh"
 _TEMPLATE_XAC_NHAN_DIEM_DANH_BU = "hoat_dong/xac_nhan_diem_danh_bu"
 
 # Template dùng bên trong tác vụ nhận lễ bao Quốc Vận.

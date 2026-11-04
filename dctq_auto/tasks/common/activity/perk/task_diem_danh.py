@@ -8,7 +8,6 @@ import numpy as np
 from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.config.constants import (
     _TEMPLATE_DANG_CHON_DIEM_DANH,
-    _TEMPLATE_NGAY_CAN_DIEM_DANH,
     _TEMPLATE_XAC_NHAN_DIEM_DANH_BU,
 )
 from dctq_auto.vision.template_matching import match_template
@@ -17,7 +16,6 @@ from dctq_auto.vision.template_store import get_templates
 
 
 _TEMPLATE_NAMES = (
-    _TEMPLATE_NGAY_CAN_DIEM_DANH,
     _TEMPLATE_XAC_NHAN_DIEM_DANH_BU,
     _TEMPLATE_DANG_CHON_DIEM_DANH,
 )
