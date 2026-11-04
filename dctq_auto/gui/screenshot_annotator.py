@@ -861,17 +861,25 @@ class ScreenshotAnnotator(QDialog):
     def _refresh_strategy_overlay(self, include_form: bool = False) -> None:
         """Show saved-in-editor steps and the currently edited draft on the screenshot."""
         overlay = [dict(step) for step in self._strategy_steps]
-        if include_form and self.strategy_step_description.text().strip():
-            try:
-                draft = self._strategy_step_from_fields()
-                selected = self.strategy_step_list.currentRow()
-                if 0 <= selected < len(overlay):
-                    overlay[selected] = draft
-                else:
-                    overlay.append(draft)
-            except ValueError:
-                pass
-        self.image_view.set_strategy_steps(overlay)
+        if include_form:
+            draft = {
+                "type": self.strategy_type_combo.currentData(),
+                "description": self.strategy_step_description.text().strip() or "Bản nháp",
+            }
+            if draft["type"] == "click":
+                draft.update({"x": self.strategy_x.value(), "y": self.strategy_y.value()})
+            else:
+                draft.update({
+                    "from": [self.strategy_from_x.value(), self.strategy_from_y.value()],
+                    "to": [self.strategy_to_x.value(), self.strategy_to_y.value()],
+                })
+            selected = self.strategy_step_list.currentRow()
+            if 0 <= selected < len(overlay):
+                overlay[selected] = draft
+            else:
+                overlay.append(draft)
+        if hasattr(self, "image_view"):
+            self.image_view.set_strategy_steps(overlay)
 
     def _test_strategy_steps(self) -> None:
         if not self.serial:
