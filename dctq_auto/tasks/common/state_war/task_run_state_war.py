@@ -108,17 +108,9 @@ def load_battle_strategy(strategy_path: str | Path) -> tuple[dict, list[dict]]:
     return data, steps
 
 
-def get_battle_step_progress_label(step: dict, index: int) -> str:
-    """Tạo nhãn ổn định để hiển thị từng thao tác trong danh sách tiến trình."""
-    description = step.get("description")
-    if not description:
-        if step["type"] == "click":
-            description = f"Click ({step['x']}, {step['y']})"
-        else:
-            x1, y1 = step["from"]
-            x2, y2 = step["to"]
-            description = f"Swipe ({x1}, {y1}) -> ({x2}, {y2})"
-    return f"Quốc chiến — Bước {index}: {description}"
+def get_battle_step_progress_label(step: dict, index: int | None = None) -> str:
+    """Dùng nguyên mô tả trong JSON làm nhãn tiến trình."""
+    return str(step.get("description") or "")
 
 
 def _wait(worker, seconds: float) -> bool:
@@ -139,6 +131,8 @@ def run_battle_strategy(worker, device, strategy_path: str | Path) -> bool:
         f"Quốc chiến: chạy chiến thuật '{strategy_name}' ({total} thao tác)."
     )
     worker.progress_changed.emit(0, total, f"Chiến thuật: {strategy_name}")
+    worker.task_progress_changed.emit("Bắt đầu", "running", 0, 1)
+    worker.task_progress_changed.emit("Bắt đầu", "done", 1, 1)
 
     for index, step in enumerate(steps, start=1):
         progress_label = get_battle_step_progress_label(step, index)
@@ -182,4 +176,6 @@ def run_battle_strategy(worker, device, strategy_path: str | Path) -> bool:
         worker.progress_changed.emit(index, total, f"Quốc chiến: {index}/{total}")
 
     worker.log_message.emit(f"Quốc chiến: hoàn tất chiến thuật '{strategy_name}'.")
+    worker.task_progress_changed.emit("Kết thúc", "running", 0, 1)
+    worker.task_progress_changed.emit("Kết thúc", "done", 1, 1)
     return True
