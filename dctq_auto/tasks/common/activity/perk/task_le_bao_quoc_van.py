@@ -67,7 +67,7 @@ def _tap_match_center(device, match, account, log):
     time.sleep(0.7)
 
 
-def _run_le_bao_quoc_van(worker, account, steps, device, ocr_client, log, screenshot=None) -> bool:
+def run_le_bao_quoc_van(worker, account, steps, device, ocr_client, log, screenshot=None) -> bool:
     """Nhận lễ bao Quốc Vận sau khi đã mở đúng mục."""
     templates = get_templates(_TEMPLATE_NAMES)
 
@@ -101,7 +101,7 @@ def _run_le_bao_quoc_van(worker, account, steps, device, ocr_client, log, screen
         log(f"[{account.username}] Không click được template {template_name}: {exc}")
         return False
 
-    return _run_le_bao_quoc_van(
+    return run_le_bao_quoc_van(
         worker, account, steps, device, ocr_client, log,
         screenshot=None,
     )
@@ -193,21 +193,12 @@ def open_le_bao_quoc_van(worker, account, device, ocr_client, log, screenshot=No
     return False
 
 
-def run_le_bao_quoc_van(
-    worker, account, steps, device, ocr_client, log, screenshot=None
-) -> bool:
-    """Mở mục Lễ bao Quốc Vận trước, sau đó thực hiện quy trình nhận lễ bao."""
+def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> bool:
+    """Mở mục Lễ bao Quốc Vận trước, sau đó chạy quy trình nhận lễ bao."""
     if not open_le_bao_quoc_van(
         worker, account, device, ocr_client, log, screenshot=screenshot
     ):
         return False
-    return _run_le_bao_quoc_van(
-        worker, account, steps, device, ocr_client, log, screenshot=None
-    )
-
-
-def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> bool:
-    """Entry point tương thích với bộ điều phối task."""
     return run_le_bao_quoc_van(
-        worker, account, steps, device, ocr_client, log, screenshot=screenshot
+        worker, account, steps, device, ocr_client, log, screenshot=None
     )
