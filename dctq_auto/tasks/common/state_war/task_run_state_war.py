@@ -79,8 +79,30 @@ def _validate_step(step: Any, index: int) -> dict:
             "delay": delay,
             "description": description,
         }
+    if action == "swipe_path":
+        points = step.get("points")
+        if not isinstance(points, list) or len(points) < 2:
+            raise ValueError(f"Bước {index}: swipe_path cần ít nhất 2 điểm.")
+        validated_points = []
+        for point_index, point in enumerate(points, start=1):
+            if not isinstance(point, list) or len(point) != 2:
+                raise ValueError(
+                    f"Bước {index}.points[{point_index}]: tọa độ phải có dạng [x, y]."
+                )
+            validated_points.append([
+                _integer(point[0], f"Bước {index}.points[{point_index}][0]"),
+                _integer(point[1], f"Bước {index}.points[{point_index}][1]"),
+            ])
+        return {
+            "type": "swipe_path",
+            "points": validated_points,
+            "repeat": _integer(step.get("repeat", 1), f"Bước {index}.repeat", minimum=1),
+            "duration": _integer(step.get("duration"), f"Bước {index}.duration", minimum=1),
+            "delay": delay,
+            "description": description,
+        }
     raise ValueError(
-        f"Bước {index}: type không hỗ trợ {action!r}; chỉ nhận click hoặc swipe."
+        f"Bước {index}: type không hỗ trợ {action!r}; nhận click, swipe hoặc swipe_path."
     )
 
 
@@ -152,7 +174,11 @@ def run_battle_strategy(worker, device, strategy_path: str | Path) -> bool:
                     f"Quốc chiến [{index}/{total}]: click ({x}, {y}) — {description}."
                 )
                 device.shell(f"input tap {x} {y}")
-            else:
+                if step["delay"] and not _wait(worker, step["delay"] / 1000):
+                    worker.log_message.emit("Quốc chiến: đã dừng theo yêu cầu.")
+                    worker.task_progress_changed.emit(progress_label, "stopped", 0, 1)
+                    return False
+            elif step["type"] == "swipe":
                 x1, y1 = step["from"]
                 x2, y2 = step["to"]
                 duration = step["duration"]
@@ -161,13 +187,35 @@ def run_battle_strategy(worker, device, strategy_path: str | Path) -> bool:
                     f"({x2}, {y2}) trong {duration} ms — {description}."
                 )
                 device.shell(f"input swipe {x1} {y1} {x2} {y2} {duration}")
-
-            if step["delay"] and not _wait(worker, step["delay"] / 1000):
-                worker.log_message.emit("Quốc chiến: đã dừng theo yêu cầu.")
-                worker.task_progress_changed.emit(
-                    progress_label, "stopped", 0, 1
-                )
-                return False
+                if step["delay"] and not _wait(worker, step["delay"] / 1000):
+                    worker.log_message.emit("Quốc chiến: đã dừng theo yêu cầu.")
+                    worker.task_progress_changed.emit(progress_label, "stopped", 0, 1)
+                    return False
+            else:
+                points = step["points"]
+                duration = step["duration"]
+                repeat = step["repeat"]
+                segment_total = (len(points) - 1) * repeat
+                segment_index = 0
+                for repeat_index in range(1, repeat + 1):
+                    for point_index in range(len(points) - 1):
+                        if not worker._wait_if_paused():
+                            worker.log_message.emit("Quốc chiến: đã dừng theo yêu cầu.")
+                            worker.task_progress_changed.emit(progress_label, "stopped", 0, 1)
+                            return False
+                        x1, y1 = points[point_index]
+                        x2, y2 = points[point_index + 1]
+                        segment_index += 1
+                        worker.log_message.emit(
+                            f"Quốc chiến [{index}/{total}]: swipe path "
+                            f"{segment_index}/{segment_total} (lượt {repeat_index}/{repeat}): "
+                            f"({x1}, {y1}) -> ({x2}, {y2}) trong {duration} ms — {description}."
+                        )
+                        device.shell(f"input swipe {x1} {y1} {x2} {y2} {duration}")
+                        if step["delay"] and not _wait(worker, step["delay"] / 1000):
+                            worker.log_message.emit("Quốc chiến: đã dừng theo yêu cầu.")
+                            worker.task_progress_changed.emit(progress_label, "stopped", 0, 1)
+                            return False
         except Exception:
             worker.task_progress_changed.emit(progress_label, "failed", 0, 1)
             raise

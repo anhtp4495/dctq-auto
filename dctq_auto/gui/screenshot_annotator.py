@@ -76,6 +76,7 @@ class ClickableImage(QWidget):
         self._points: list[tuple[int, int, str]] = []
         self._strategy_steps: list[dict] = []
         self._strategy_active_step: int | None = None
+        self._strategy_active_segment: int | None = None
         self._ocr_boxes: list[dict] = []
         self._selected_region: tuple[int, int, int, int] | None = None
         self._drag_start: QPoint | None = None
@@ -116,6 +117,12 @@ class ClickableImage(QWidget):
 
     def set_strategy_active_step(self, index: int | None) -> None:
         self._strategy_active_step = index
+        self._strategy_active_segment = None
+        self.update()
+
+    def set_strategy_active_segment(self, index: int | None, segment: int | None) -> None:
+        self._strategy_active_step = index
+        self._strategy_active_segment = segment
         self.update()
 
     def set_ocr_boxes(self, boxes: list[dict]) -> None:
@@ -210,6 +217,46 @@ class ClickableImage(QWidget):
                         painter.drawEllipse(start, 6, 6)
                         painter.drawEllipse(end, 6, 6)
                         painter.drawText(start.x() + 8, start.y() - 8, f"S{index}")
+                    elif step.get("type") == "swipe_path":
+                        points = step.get("points", [])
+                        for segment_index in range(max(0, len(points) - 1)):
+                            source = points[segment_index]
+                            destination = points[segment_index + 1]
+                            if len(source) != 2 or len(destination) != 2:
+                                continue
+                            start = QPoint(
+                                target.x() + round(int(source[0]) * scale_x),
+                                target.y() + round(int(source[1]) * scale_y),
+                            )
+                            end = QPoint(
+                                target.x() + round(int(destination[0]) * scale_x),
+                                target.y() + round(int(destination[1]) * scale_y),
+                            )
+                            is_active_segment = (
+                                is_active and self._strategy_active_segment == segment_index
+                            )
+                            segment_pen = QPen(
+                                Qt.GlobalColor.yellow if is_active_segment else Qt.GlobalColor.cyan
+                            )
+                            segment_pen.setWidth(6 if is_active_segment else 3)
+                            painter.setPen(segment_pen)
+                            painter.drawLine(start, end)
+                        painter.setPen(pen)
+                        for point_index, point in enumerate(points, start=1):
+                            if len(point) != 2:
+                                continue
+                            vertex = QPoint(
+                                target.x() + round(int(point[0]) * scale_x),
+                                target.y() + round(int(point[1]) * scale_y),
+                            )
+                            painter.drawEllipse(vertex, 6, 6)
+                            painter.drawText(vertex.x() + 8, vertex.y() - 8, str(point_index))
+                        if points and len(points[0]) == 2:
+                            first = QPoint(
+                                target.x() + round(int(points[0][0]) * scale_x),
+                                target.y() + round(int(points[0][1]) * scale_y),
+                            )
+                            painter.drawText(first.x() + 9, first.y() + 18, f"P{index}")
             if self._points:
                 pen = QPen(Qt.GlobalColor.green)
                 pen.setWidth(2)
@@ -386,9 +433,12 @@ class ScreenshotAnnotator(QDialog):
         )
         self._strategy_path: Path | None = None
         self._strategy_steps: list[dict] = []
+        self._strategy_path_points: list[list[int]] = []
         self._strategy_editing_index = -1
         self._strategy_capture_target: str | None = None
         self._strategy_preview_index = -1
+        self._strategy_preview_segment = 0
+        self._strategy_preview_repeat = 1
         self._strategy_preview_timer = QTimer(self)
         self._strategy_preview_timer.setSingleShot(True)
         self._strategy_preview_timer.timeout.connect(self._advance_strategy_preview)
@@ -550,6 +600,7 @@ class ScreenshotAnnotator(QDialog):
         self.strategy_type_combo = QComboBox()
         self.strategy_type_combo.addItem("Click", "click")
         self.strategy_type_combo.addItem("Swipe", "swipe")
+        self.strategy_type_combo.addItem("Swipe Path", "swipe_path")
         self.strategy_type_combo.currentIndexChanged.connect(self._update_strategy_field_visibility)
         self.strategy_step_description = QLineEdit()
         self.strategy_step_description.setPlaceholderText("Mô tả thao tác")
@@ -561,6 +612,8 @@ class ScreenshotAnnotator(QDialog):
         self.strategy_to_y = self._strategy_spin()
         self.strategy_delay = self._strategy_spin(maximum=600000)
         self.strategy_duration = self._strategy_spin(minimum=1, maximum=60000)
+        self.strategy_repeat = self._strategy_spin(minimum=1, maximum=1000)
+        self.strategy_path_points_label = QLabel("Chưa có điểm")
         fields.addWidget(QLabel("Loại"), 0, 0)
         fields.addWidget(self.strategy_type_combo, 0, 1, 1, 3)
         fields.addWidget(QLabel("Mô tả"), 1, 0)
@@ -578,6 +631,10 @@ class ScreenshotAnnotator(QDialog):
         fields.addWidget(self.strategy_delay, 5, 1)
         fields.addWidget(QLabel("Duration (ms)"), 5, 2)
         fields.addWidget(self.strategy_duration, 5, 3)
+        fields.addWidget(QLabel("Số vòng"), 6, 0)
+        fields.addWidget(self.strategy_repeat, 6, 1)
+        fields.addWidget(QLabel("Điểm đường"), 6, 2)
+        fields.addWidget(self.strategy_path_points_label, 6, 3)
         self._strategy_fields_grid = fields
         editor_row.addLayout(fields, 4)
         layout.addLayout(editor_row)
@@ -603,6 +660,20 @@ class ScreenshotAnnotator(QDialog):
             lambda: self._begin_strategy_capture("swipe")
         )
         actions.addWidget(self.strategy_capture_swipe_button)
+        path_actions = QHBoxLayout()
+        self.strategy_capture_path_button = QPushButton("Vẽ đường đa giác")
+        self.strategy_capture_path_button.clicked.connect(
+            lambda: self._begin_strategy_capture("swipe_path")
+        )
+        path_actions.addWidget(self.strategy_capture_path_button)
+        self.strategy_finish_path_button = QPushButton("Hoàn tất đường")
+        self.strategy_finish_path_button.clicked.connect(self._finish_strategy_path_capture)
+        path_actions.addWidget(self.strategy_finish_path_button)
+        self.strategy_clear_path_button = QPushButton("Xóa điểm đường")
+        self.strategy_clear_path_button.clicked.connect(self._clear_strategy_path_points)
+        path_actions.addWidget(self.strategy_clear_path_button)
+        path_actions.addStretch(1)
+        layout.addLayout(path_actions)
         add_button = QPushButton("Thêm bước")
         add_button.clicked.connect(self._add_strategy_step)
         actions.addWidget(add_button)
@@ -622,7 +693,7 @@ class ScreenshotAnnotator(QDialog):
         actions.addWidget(down_button)
         self.strategy_test_button = QPushButton("▶ Xem trước steps")
         self.strategy_test_button.setToolTip(
-            "Lần lượt làm nổi bật các tọa độ click/swipe ngay trên ảnh hiện tại; "
+            "Lần lượt làm nổi bật click, swipe và từng cạnh của swipe path ngay trên ảnh; "
             "không gửi thao tác đến LDPlayer và không sử dụng ADB."
         )
         self.strategy_test_button.clicked.connect(self._preview_strategy_steps)
@@ -729,6 +800,8 @@ class ScreenshotAnnotator(QDialog):
             coordinate = f"({step.get('x', 0)}, {step.get('y', 0)})"
         elif step.get("type") == "swipe":
             coordinate = f"{step.get('from', [])} → {step.get('to', [])}"
+        elif step.get("type") == "swipe_path":
+            coordinate = f"{len(step.get('points', []))} điểm, lặp {step.get('repeat', 1)} vòng"
         else:
             coordinate = ""
         return f"{index}. [{action}] {description or 'Chưa mô tả'} {coordinate}"
@@ -754,12 +827,16 @@ class ScreenshotAnnotator(QDialog):
     def _clear_strategy_step_fields(self) -> None:
         self.strategy_type_combo.setCurrentIndex(0)
         self.strategy_step_description.clear()
+        self._strategy_path_points = []
+        self.strategy_path_points_label.setText("0 điểm")
+        self.strategy_repeat.setValue(1)
         for spin in (
             self.strategy_x, self.strategy_y, self.strategy_from_x, self.strategy_from_y,
             self.strategy_to_x, self.strategy_to_y, self.strategy_delay,
         ):
             spin.setValue(0)
         self.strategy_duration.setValue(300)
+        self._update_strategy_field_visibility()
 
     def _store_strategy_step_from_fields(self, index: int) -> None:
         if not (0 <= index < len(self._strategy_steps)):
@@ -806,22 +883,40 @@ class ScreenshotAnnotator(QDialog):
         self.strategy_from_y.setValue(int(source[1]) if len(source) == 2 else 0)
         self.strategy_to_x.setValue(int(target[0]) if len(target) == 2 else 0)
         self.strategy_to_y.setValue(int(target[1]) if len(target) == 2 else 0)
+        self._strategy_path_points = [
+            [int(point[0]), int(point[1])]
+            for point in step.get("points", [])
+            if isinstance(point, list) and len(point) == 2
+        ]
+        self.strategy_repeat.setValue(int(step.get("repeat", 1)))
+        self.strategy_path_points_label.setText(
+            f"{len(self._strategy_path_points)} điểm"
+        )
         self._strategy_editing_index = index
         self._update_strategy_field_visibility()
 
     def _update_strategy_field_visibility(self, *_args) -> None:
-        is_click = self.strategy_type_combo.currentData() == "click"
+        action = self.strategy_type_combo.currentData()
+        is_click = action == "click"
+        is_swipe = action == "swipe"
+        is_path = action == "swipe_path"
         for widget in (self.strategy_x, self.strategy_y):
             widget.setEnabled(is_click)
         for widget in (
             self.strategy_from_x, self.strategy_from_y,
-            self.strategy_to_x, self.strategy_to_y, self.strategy_duration,
+            self.strategy_to_x, self.strategy_to_y,
         ):
-            widget.setEnabled(not is_click)
+            widget.setEnabled(is_swipe)
+        self.strategy_duration.setEnabled(is_swipe or is_path)
+        self.strategy_repeat.setEnabled(is_path)
+        self.strategy_path_points_label.setEnabled(is_path)
         self.strategy_capture_click_button.setEnabled(is_click)
-        self.strategy_capture_from_button.setEnabled(not is_click)
-        self.strategy_capture_to_button.setEnabled(not is_click)
-        self.strategy_capture_swipe_button.setEnabled(not is_click)
+        self.strategy_capture_from_button.setEnabled(is_swipe)
+        self.strategy_capture_to_button.setEnabled(is_swipe)
+        self.strategy_capture_swipe_button.setEnabled(is_swipe)
+        self.strategy_capture_path_button.setEnabled(is_path)
+        self.strategy_finish_path_button.setEnabled(is_path and bool(self._strategy_path_points))
+        self.strategy_clear_path_button.setEnabled(is_path and bool(self._strategy_path_points))
 
     def _begin_strategy_capture(self, target: str) -> None:
         if self._pixmap.isNull():
@@ -835,13 +930,46 @@ class ScreenshotAnnotator(QDialog):
             "from": "điểm đầu swipe",
             "to": "điểm cuối swipe",
             "swipe": "đường swipe",
+            "swipe_path": "đường vuốt đa giác",
         }
-        instruction = (
-            "Kéo chuột từ điểm đầu đến điểm cuối ngay trên ảnh."
-            if target == "swipe"
-            else "Nhấp vào vị trí tương ứng trên ảnh."
-        )
+        if target == "swipe_path":
+            self._strategy_path_points = []
+            self.strategy_path_points_label.setText("0 điểm")
+            instruction = "Nhấp lần lượt các đỉnh trên ảnh, sau đó nhấn Hoàn tất đường."
+        else:
+            instruction = (
+                "Kéo chuột từ điểm đầu đến điểm cuối ngay trên ảnh."
+                if target == "swipe"
+                else "Nhấp vào vị trí tương ứng trên ảnh."
+            )
+        self._update_strategy_field_visibility()
+        self._refresh_strategy_overlay(include_form=True)
         self.strategy_editor_status.setText(f"Đang chờ chọn {labels[target]}: {instruction}")
+
+    def _finish_strategy_path_capture(self) -> None:
+        if self._strategy_capture_target != "swipe_path":
+            return
+        if len(self._strategy_path_points) < 2:
+            QMessageBox.information(
+                self, "Chưa đủ điểm", "Đường vuốt cần ít nhất 2 điểm. Hãy chọn thêm đỉnh."
+            )
+            return
+        self._strategy_capture_target = None
+        self._update_strategy_field_visibility()
+        self._refresh_strategy_overlay(include_form=True)
+        self.strategy_editor_status.setText(
+            f"Đã hoàn tất đường vuốt gồm {len(self._strategy_path_points)} điểm, "
+            f"{len(self._strategy_path_points) - 1} cạnh. Nhấn Thêm bước hoặc Cập nhật."
+        )
+
+    def _clear_strategy_path_points(self) -> None:
+        self._strategy_path_points = []
+        self.strategy_path_points_label.setText("0 điểm")
+        if self._strategy_capture_target == "swipe_path":
+            self.strategy_capture_path_button.setEnabled(True)
+        self._update_strategy_field_visibility()
+        self._refresh_strategy_overlay(include_form=True)
+        self.strategy_editor_status.setText("Đã xóa các điểm của đường vuốt.")
 
     def _on_image_swipe_selected(self, from_x: int, from_y: int, to_x: int, to_y: int) -> None:
         """Fill both swipe endpoints from a drag gesture on the screenshot."""
@@ -862,6 +990,18 @@ class ScreenshotAnnotator(QDialog):
         target = self._strategy_capture_target
         if target is None:
             return False
+        if target == "swipe_path":
+            self._strategy_path_points.append([x, y])
+            self.strategy_path_points_label.setText(
+                f"{len(self._strategy_path_points)} điểm"
+            )
+            self._update_strategy_field_visibility()
+            self.strategy_editor_status.setText(
+                f"Đã thêm điểm {len(self._strategy_path_points)}: ({x}, {y}). "
+                "Nhấp tiếp để thêm đỉnh; nhấn Hoàn tất đường khi xong."
+            )
+            self._refresh_strategy_overlay(include_form=True)
+            return True
         self._strategy_capture_target = None
         if target == "click":
             self.strategy_x.setValue(x)
@@ -888,10 +1028,15 @@ class ScreenshotAnnotator(QDialog):
             }
             if draft["type"] == "click":
                 draft.update({"x": self.strategy_x.value(), "y": self.strategy_y.value()})
-            else:
+            elif draft["type"] == "swipe":
                 draft.update({
                     "from": [self.strategy_from_x.value(), self.strategy_from_y.value()],
                     "to": [self.strategy_to_x.value(), self.strategy_to_y.value()],
+                })
+            else:
+                draft.update({
+                    "points": [list(point) for point in self._strategy_path_points],
+                    "repeat": self.strategy_repeat.value(),
                 })
             selected = self.strategy_step_list.currentRow()
             if 0 <= selected < len(overlay):
@@ -916,6 +1061,8 @@ class ScreenshotAnnotator(QDialog):
             return
 
         self._strategy_preview_index = 0
+        self._strategy_preview_segment = 0
+        self._strategy_preview_repeat = 1
         self.strategy_test_button.setText("■ Dừng xem trước")
         self.strategy_test_button.setEnabled(True)
         self._show_strategy_preview_step()
@@ -934,22 +1081,59 @@ class ScreenshotAnnotator(QDialog):
             return
 
         step = self._strategy_steps[index]
-        self.image_view.set_strategy_active_step(index)
         description = str(step.get("description") or f"Bước {index + 1}")
         if step.get("type") == "click":
+            self.image_view.set_strategy_active_step(index)
             coordinate = f"click ({step.get('x', 0)}, {step.get('y', 0)})"
-        else:
+            interval = max(0, int(step.get("delay", 0)))
+            self.strategy_editor_status.setText(
+                f"Xem trước bước {index + 1}/{len(self._strategy_steps)}: "
+                f"{description} — {coordinate}"
+            )
+        elif step.get("type") == "swipe":
+            self.image_view.set_strategy_active_step(index)
             coordinate = f"swipe {step.get('from', [])} → {step.get('to', [])}"
-        self.strategy_editor_status.setText(
-            f"Xem trước bước {index + 1}/{len(self._strategy_steps)}: "
-            f"{description} — {coordinate}"
-        )
-        # Keep each step visible long enough to inspect. Respect longer configured delays.
-        interval = min(650, int(step.get("delay", 0)))
+            interval = max(0, int(step.get("duration", 300)) + int(step.get("delay", 0)))
+            self.strategy_editor_status.setText(
+                f"Xem trước bước {index + 1}/{len(self._strategy_steps)}: "
+                f"{description} — {coordinate}"
+            )
+        else:
+            points = step.get("points", [])
+            segment_count = len(points) - 1
+            repeat = int(step.get("repeat", 1))
+            segment_index = self._strategy_preview_segment
+            if segment_index >= segment_count:
+                self._strategy_preview_segment = 0
+                self._strategy_preview_repeat += 1
+                if self._strategy_preview_repeat > repeat:
+                    self._strategy_preview_index += 1
+                    self._strategy_preview_repeat = 1
+                    self._show_strategy_preview_step()
+                    return
+                segment_index = 0
+            self.image_view.set_strategy_active_segment(index, segment_index)
+            start = points[segment_index]
+            end = points[segment_index + 1]
+            self.strategy_editor_status.setText(
+                f"Xem trước bước {index + 1}/{len(self._strategy_steps)}: {description} — "
+                f"cạnh {segment_index + 1}/{segment_count}, "
+                f"vòng {self._strategy_preview_repeat}/{repeat}: {start} → {end}"
+            )
+            interval = max(650, int(step.get("duration", 300)) + int(step.get("delay", 0)))
+        # Match the JSON timing: click delay, or swipe duration plus delay.
         self._strategy_preview_timer.start(interval)
 
     def _advance_strategy_preview(self) -> None:
-        self._strategy_preview_index += 1
+        step = (
+            self._strategy_steps[self._strategy_preview_index]
+            if 0 <= self._strategy_preview_index < len(self._strategy_steps)
+            else None
+        )
+        if step is not None and step.get("type") == "swipe_path":
+            self._strategy_preview_segment += 1
+        else:
+            self._strategy_preview_index += 1
         self._show_strategy_preview_step()
 
     def _strategy_step_from_fields(self) -> dict:
@@ -963,10 +1147,18 @@ class ScreenshotAnnotator(QDialog):
         }
         if step["type"] == "click":
             step.update({"x": self.strategy_x.value(), "y": self.strategy_y.value()})
-        else:
+        elif step["type"] == "swipe":
             step.update({
                 "from": [self.strategy_from_x.value(), self.strategy_from_y.value()],
                 "to": [self.strategy_to_x.value(), self.strategy_to_y.value()],
+                "duration": self.strategy_duration.value(),
+            })
+        else:
+            if len(self._strategy_path_points) < 2:
+                raise ValueError("Swipe Path cần ít nhất 2 điểm. Hãy vẽ đường trên ảnh.")
+            step.update({
+                "points": [list(point) for point in self._strategy_path_points],
+                "repeat": self.strategy_repeat.value(),
                 "duration": self.strategy_duration.value(),
             })
         return step
