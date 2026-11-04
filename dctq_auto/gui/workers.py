@@ -135,10 +135,18 @@ class BotWorker(
     def _run_mock(self) -> None:
         """Simulate configured tasks and update progress without connecting to ADB."""
         if self._config.get("state_war_mode"):
+            from dctq_auto.config.constants import _STEP_CHIEN_TRANH_QUOC_CHIEN
+            from dctq_auto.tasks.common.state_war.task_state_war import pre_state_war
             from dctq_auto.tasks.common.state_war.task_run_state_war import (
                 load_battle_strategy,
             )
             strategy_path = self._config.get("state_war_strategy_path", "")
+            selected_steps = [_STEP_CHIEN_TRANH_QUOC_CHIEN]
+            if not pre_state_war(selected_steps, strategy_path, self.log_message.emit):
+                self.task_progress_changed.emit(
+                    "Triển khai chiến thuật Quốc chiến", "ignored", 0, 1
+                )
+                return
             try:
                 data, steps = load_battle_strategy(strategy_path)
             except Exception as exc:
@@ -636,13 +644,19 @@ class BotWorker(
             device = client.connect()
             self.log_message.emit(f"Đã kết nối ADB: {self._serial}")
             if self._config.get("state_war_mode"):
+                from dctq_auto.config.constants import _STEP_CHIEN_TRANH_QUOC_CHIEN
                 from dctq_auto.tasks.common.state_war.task_state_war import (
                     run_state_war,
                 )
+                account = SimpleNamespace(username="Quốc chiến")
+                steps = [_STEP_CHIEN_TRANH_QUOC_CHIEN]
                 run_state_war(
                     self,
+                    account,
+                    steps,
                     device,
                     self._config.get("state_war_strategy_path", ""),
+                    self.log_message.emit,
                 )
                 return
             if self._config.get("strategy_mode"):
