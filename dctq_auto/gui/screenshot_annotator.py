@@ -991,6 +991,7 @@ class ScreenshotAnnotator(QDialog):
             self.strategy_path_points_label.setText(
                 f"{len(self._strategy_path_points)} điểm"
             )
+            self._update_strategy_field_visibility()
             self.strategy_editor_status.setText(
                 f"Đã thêm điểm {len(self._strategy_path_points)}: ({x}, {y}). "
                 "Nhấp tiếp để thêm đỉnh; nhấn Hoàn tất đường khi xong."
