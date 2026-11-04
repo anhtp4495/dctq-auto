@@ -138,6 +138,7 @@ class BotWorker(
             from dctq_auto.config.constants import _STEP_CHIEN_TRANH_QUOC_CHIEN
             from dctq_auto.tasks.common.state_war.task_state_war import pre_state_war
             from dctq_auto.tasks.common.state_war.task_run_state_war import (
+                get_battle_step_progress_label,
                 load_battle_strategy,
             )
             strategy_path = self._config.get("state_war_strategy_path", "")
@@ -159,22 +160,23 @@ class BotWorker(
             total = len(steps)
             self.progress_changed.emit(0, total, f"Chạy thử Quốc chiến: {name}")
             for index, step in enumerate(steps, start=1):
+                progress_label = get_battle_step_progress_label(step, index)
+                self.task_progress_changed.emit(
+                    progress_label, "running", 0, 1
+                )
                 if not self._mock_tick(
                     f"[Chạy thử] Quốc chiến {name}: {step['type']} ({index}/{total})."
                 ):
                     self.task_progress_changed.emit(
-                        "Triển khai chiến thuật Quốc chiến", "stopped", index - 1, total
+                        progress_label, "stopped", 0, 1
                     )
                     return
                 self.task_progress_changed.emit(
-                    "Triển khai chiến thuật Quốc chiến", "running", index, total
+                    progress_label, "done", 1, 1
                 )
                 self.progress_changed.emit(
                     index, total, f"Chạy thử Quốc chiến: {index}/{total}"
                 )
-            self.task_progress_changed.emit(
-                "Triển khai chiến thuật Quốc chiến", "done", total, total
-            )
             self.log_message.emit(
                 f"[Chạy thử] Hoàn tất mô phỏng chiến thuật Quốc chiến '{name}'. Không gửi lệnh ADB."
             )
