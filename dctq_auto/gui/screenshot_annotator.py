@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QCheckBox,
+    QComboBox,
     QDoubleSpinBox,
     QGridLayout,
     QFileDialog,
@@ -30,11 +31,14 @@ from PySide6.QtWidgets import (
     QInputDialog,
     QLabel,
     QLineEdit,
+    QListWidget,
+    QListWidgetItem,
     QMessageBox,
     QPushButton,
     QProgressDialog,
     QScrollArea,
     QSlider,
+    QSpinBox,
     QVBoxLayout,
     QWidget,
 )
@@ -314,6 +318,14 @@ class ScreenshotAnnotator(QDialog):
         )
 
         root = QVBoxLayout(self)
+        self._strategy_dir = (
+            Path(__file__).resolve().parents[1]
+            / "tasks" / "common" / "state_war" / "battle_strategies"
+        )
+        self._strategy_path: Path | None = None
+        self._strategy_steps: list[dict] = []
+        self._strategy_capture_target: str | None = None
+        self._build_strategy_editor(root)
 
         toolbar = QHBoxLayout()
         self.image_info = QLabel("Chưa có ảnh.")
@@ -427,6 +439,413 @@ class ScreenshotAnnotator(QDialog):
 
         if initial_image is not None and initial_image.is_file():
             self._load_screenshot(initial_image)
+
+    def _build_strategy_editor(self, root: QVBoxLayout) -> None:
+        """Add a compact strategy JSON editor above the existing image analyzer."""
+        group = QGroupBox("Biên tập chiến thuật Quốc chiến")
+        layout = QVBoxLayout(group)
+
+        file_row = QHBoxLayout()
+        self.strategy_combo = QComboBox()
+        self.strategy_combo.setMinimumWidth(180)
+        self.strategy_combo.currentIndexChanged.connect(self._on_strategy_selected)
+        file_row.addWidget(self.strategy_combo, 1)
+        new_button = QPushButton("Mới")
+        new_button.clicked.connect(self._new_strategy)
+        file_row.addWidget(new_button)
+        save_button = QPushButton("Lưu chiến thuật")
+        save_button.clicked.connect(self._save_strategy)
+        file_row.addWidget(save_button)
+        delete_button = QPushButton("Xóa file")
+        delete_button.clicked.connect(self._delete_strategy)
+        file_row.addWidget(delete_button)
+        layout.addLayout(file_row)
+
+        meta_row = QHBoxLayout()
+        self.strategy_name_input = QLineEdit()
+        self.strategy_name_input.setPlaceholderText("Tên hiển thị chiến thuật")
+        self.strategy_description_input = QLineEdit()
+        self.strategy_description_input.setPlaceholderText("Mô tả chiến thuật")
+        meta_row.addWidget(self.strategy_name_input, 1)
+        meta_row.addWidget(self.strategy_description_input, 2)
+        layout.addLayout(meta_row)
+
+        editor_row = QHBoxLayout()
+        self.strategy_step_list = QListWidget()
+        self.strategy_step_list.setMaximumHeight(116)
+        self.strategy_step_list.currentRowChanged.connect(self._load_selected_strategy_step)
+        editor_row.addWidget(self.strategy_step_list, 2)
+
+        fields = QGridLayout()
+        self.strategy_type_combo = QComboBox()
+        self.strategy_type_combo.addItem("Click", "click")
+        self.strategy_type_combo.addItem("Swipe", "swipe")
+        self.strategy_type_combo.currentIndexChanged.connect(self._update_strategy_field_visibility)
+        self.strategy_step_description = QLineEdit()
+        self.strategy_step_description.setPlaceholderText("Mô tả thao tác")
+        self.strategy_x = self._strategy_spin()
+        self.strategy_y = self._strategy_spin()
+        self.strategy_from_x = self._strategy_spin()
+        self.strategy_from_y = self._strategy_spin()
+        self.strategy_to_x = self._strategy_spin()
+        self.strategy_to_y = self._strategy_spin()
+        self.strategy_delay = self._strategy_spin(maximum=600000)
+        self.strategy_duration = self._strategy_spin(minimum=1, maximum=60000)
+        fields.addWidget(QLabel("Loại"), 0, 0)
+        fields.addWidget(self.strategy_type_combo, 0, 1, 1, 3)
+        fields.addWidget(QLabel("Mô tả"), 1, 0)
+        fields.addWidget(self.strategy_step_description, 1, 1, 1, 3)
+        fields.addWidget(QLabel("X / Y"), 2, 0)
+        fields.addWidget(self.strategy_x, 2, 1)
+        fields.addWidget(self.strategy_y, 2, 2)
+        fields.addWidget(QLabel("Từ"), 3, 0)
+        fields.addWidget(self.strategy_from_x, 3, 1)
+        fields.addWidget(self.strategy_from_y, 3, 2)
+        fields.addWidget(QLabel("Đến"), 4, 0)
+        fields.addWidget(self.strategy_to_x, 4, 1)
+        fields.addWidget(self.strategy_to_y, 4, 2)
+        fields.addWidget(QLabel("Delay (ms)"), 5, 0)
+        fields.addWidget(self.strategy_delay, 5, 1)
+        fields.addWidget(QLabel("Duration (ms)"), 5, 2)
+        fields.addWidget(self.strategy_duration, 5, 3)
+        self._strategy_fields_grid = fields
+        editor_row.addLayout(fields, 4)
+        layout.addLayout(editor_row)
+
+        actions = QHBoxLayout()
+        self.strategy_capture_click_button = QPushButton("Lấy điểm click")
+        self.strategy_capture_click_button.clicked.connect(
+            lambda: self._begin_strategy_capture("click")
+        )
+        actions.addWidget(self.strategy_capture_click_button)
+        self.strategy_capture_from_button = QPushButton("Lấy điểm đầu")
+        self.strategy_capture_from_button.clicked.connect(
+            lambda: self._begin_strategy_capture("from")
+        )
+        actions.addWidget(self.strategy_capture_from_button)
+        self.strategy_capture_to_button = QPushButton("Lấy điểm cuối")
+        self.strategy_capture_to_button.clicked.connect(
+            lambda: self._begin_strategy_capture("to")
+        )
+        actions.addWidget(self.strategy_capture_to_button)
+        add_button = QPushButton("Thêm bước")
+        add_button.clicked.connect(self._add_strategy_step)
+        actions.addWidget(add_button)
+        update_button = QPushButton("Cập nhật")
+        update_button.clicked.connect(self._update_strategy_step)
+        actions.addWidget(update_button)
+        remove_button = QPushButton("Xóa bước")
+        remove_button.clicked.connect(self._remove_strategy_step)
+        actions.addWidget(remove_button)
+        up_button = QPushButton("↑")
+        up_button.setFixedWidth(32)
+        up_button.clicked.connect(lambda: self._move_strategy_step(-1))
+        actions.addWidget(up_button)
+        down_button = QPushButton("↓")
+        down_button.setFixedWidth(32)
+        down_button.clicked.connect(lambda: self._move_strategy_step(1))
+        actions.addWidget(down_button)
+        layout.addLayout(actions)
+
+        self.strategy_editor_status = QLabel(
+            "Chọn chiến thuật hoặc nhấn Mới. Nhấn Lấy điểm rồi nhấp trực tiếp lên ảnh."
+        )
+        self.strategy_editor_status.setWordWrap(True)
+        layout.addWidget(self.strategy_editor_status)
+        root.addWidget(group)
+        self._update_strategy_field_visibility()
+        self._refresh_strategy_files()
+
+    @staticmethod
+    def _strategy_spin(minimum: int = 0, maximum: int = 100000) -> QSpinBox:
+        spin = QSpinBox()
+        spin.setRange(minimum, maximum)
+        spin.setKeyboardTracking(False)
+        return spin
+
+    def _refresh_strategy_files(self, select_path: Path | None = None) -> None:
+        self._strategy_dir.mkdir(parents=True, exist_ok=True)
+        self.strategy_combo.blockSignals(True)
+        self.strategy_combo.clear()
+        for path in sorted(self._strategy_dir.glob("*.json"), key=lambda p: p.name.casefold()):
+            self.strategy_combo.addItem(path.stem, str(path.resolve()))
+        self.strategy_combo.blockSignals(False)
+        selected = -1
+        if select_path is not None:
+            target = select_path.resolve()
+            for index in range(self.strategy_combo.count()):
+                if Path(self.strategy_combo.itemData(index)).resolve() == target:
+                    selected = index
+                    break
+        if selected < 0 and self.strategy_combo.count():
+            selected = 0
+        if selected >= 0:
+            self.strategy_combo.setCurrentIndex(selected)
+            self._load_strategy_file(Path(self.strategy_combo.itemData(selected)))
+        else:
+            self._strategy_path = None
+            self._strategy_steps = []
+            self._render_strategy_steps()
+
+    def _on_strategy_selected(self, index: int) -> None:
+        if index < 0:
+            return
+        raw_path = self.strategy_combo.itemData(index)
+        if raw_path:
+            self._load_strategy_file(Path(raw_path))
+
+    def _load_strategy_file(self, path: Path) -> None:
+        try:
+            resolved = path.resolve()
+            resolved.relative_to(self._strategy_dir.resolve())
+            data = json.loads(resolved.read_text(encoding="utf-8"))
+            if not isinstance(data, dict) or not isinstance(data.get("steps"), list):
+                raise ValueError("JSON phải là object và có danh sách steps.")
+            self._strategy_steps = [dict(step) for step in data["steps"]]
+            self._strategy_path = resolved
+            self.strategy_name_input.setText(
+                str(data.get("display_name") or data.get("name") or resolved.stem)
+            )
+            self.strategy_description_input.setText(str(data.get("description") or ""))
+            self._render_strategy_steps()
+            self.strategy_editor_status.setText(
+                f"Đã tải {resolved.name}: {len(self._strategy_steps)} bước."
+            )
+        except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
+            QMessageBox.warning(self, "Không đọc được chiến thuật", str(exc))
+
+    def _new_strategy(self) -> None:
+        name, accepted = QInputDialog.getText(
+            self, "Chiến thuật mới", "Tên file (không dấu, không khoảng trắng):"
+        )
+        if not accepted:
+            return
+        slug = re.sub(r"[^a-zA-Z0-9_-]+", "_", name.strip()).strip("_-").lower()
+        if not slug:
+            QMessageBox.warning(self, "Tên không hợp lệ", "Hãy nhập tên file hợp lệ.")
+            return
+        path = self._strategy_dir / f"{slug}.json"
+        if path.exists():
+            QMessageBox.warning(self, "File đã tồn tại", f"{path.name} đã tồn tại.")
+            return
+        self._strategy_path = path
+        self._strategy_steps = []
+        self.strategy_name_input.setText(name.strip())
+        self.strategy_description_input.clear()
+        self._render_strategy_steps()
+        self.strategy_editor_status.setText(
+            f"Đang tạo {path.name}. Thêm ít nhất một bước rồi lưu chiến thuật."
+        )
+
+    def _render_strategy_steps(self) -> None:
+        self.strategy_step_list.clear()
+        for index, step in enumerate(self._strategy_steps, start=1):
+            description = str(step.get("description") or "").strip()
+            action = str(step.get("type") or "?").upper()
+            if step.get("type") == "click":
+                coordinate = f"({step.get('x', 0)}, {step.get('y', 0)})"
+            elif step.get("type") == "swipe":
+                coordinate = f"{step.get('from', [])} → {step.get('to', [])}"
+            else:
+                coordinate = ""
+            label = f"{index}. [{action}] {description or 'Chưa mô tả'} {coordinate}"
+            self.strategy_step_list.addItem(QListWidgetItem(label))
+        if self._strategy_steps:
+            self.strategy_step_list.setCurrentRow(0)
+        else:
+            self._clear_strategy_step_fields()
+
+    def _clear_strategy_step_fields(self) -> None:
+        self.strategy_type_combo.setCurrentIndex(0)
+        self.strategy_step_description.clear()
+        for spin in (
+            self.strategy_x, self.strategy_y, self.strategy_from_x, self.strategy_from_y,
+            self.strategy_to_x, self.strategy_to_y, self.strategy_delay,
+        ):
+            spin.setValue(0)
+        self.strategy_duration.setValue(300)
+
+    def _load_selected_strategy_step(self, index: int) -> None:
+        if not (0 <= index < len(self._strategy_steps)):
+            return
+        step = self._strategy_steps[index]
+        self.strategy_type_combo.setCurrentIndex(
+            max(0, self.strategy_type_combo.findData(step.get("type", "click")))
+        )
+        self.strategy_step_description.setText(str(step.get("description") or ""))
+        self.strategy_delay.setValue(int(step.get("delay", 0)))
+        self.strategy_duration.setValue(int(step.get("duration", 300)))
+        self.strategy_x.setValue(int(step.get("x", 0)))
+        self.strategy_y.setValue(int(step.get("y", 0)))
+        source = step.get("from", [0, 0])
+        target = step.get("to", [0, 0])
+        self.strategy_from_x.setValue(int(source[0]) if len(source) == 2 else 0)
+        self.strategy_from_y.setValue(int(source[1]) if len(source) == 2 else 0)
+        self.strategy_to_x.setValue(int(target[0]) if len(target) == 2 else 0)
+        self.strategy_to_y.setValue(int(target[1]) if len(target) == 2 else 0)
+        self._update_strategy_field_visibility()
+
+    def _update_strategy_field_visibility(self, *_args) -> None:
+        is_click = self.strategy_type_combo.currentData() == "click"
+        for widget in (self.strategy_x, self.strategy_y):
+            widget.setEnabled(is_click)
+        for widget in (
+            self.strategy_from_x, self.strategy_from_y,
+            self.strategy_to_x, self.strategy_to_y, self.strategy_duration,
+        ):
+            widget.setEnabled(not is_click)
+        self.strategy_capture_click_button.setEnabled(is_click)
+        self.strategy_capture_from_button.setEnabled(not is_click)
+        self.strategy_capture_to_button.setEnabled(not is_click)
+
+    def _begin_strategy_capture(self, target: str) -> None:
+        if self._pixmap.isNull():
+            QMessageBox.information(self, "Chưa có ảnh", "Hãy mở ảnh trước khi lấy tọa độ.")
+            return
+        self._strategy_capture_target = target
+        self.point_mode_button.setChecked(True)
+        self._on_mode_changed("Từng điểm")
+        labels = {"click": "tọa độ click", "from": "điểm đầu swipe", "to": "điểm cuối swipe"}
+        self.strategy_editor_status.setText(
+            f"Đang chờ chọn {labels[target]}: nhấp vào vị trí tương ứng trên ảnh."
+        )
+
+    def _capture_strategy_coordinate(self, x: int, y: int) -> bool:
+        target = self._strategy_capture_target
+        if target is None:
+            return False
+        self._strategy_capture_target = None
+        if target == "click":
+            self.strategy_x.setValue(x)
+            self.strategy_y.setValue(y)
+        elif target == "from":
+            self.strategy_from_x.setValue(x)
+            self.strategy_from_y.setValue(y)
+        elif target == "to":
+            self.strategy_to_x.setValue(x)
+            self.strategy_to_y.setValue(y)
+        self.strategy_editor_status.setText(
+            f"Đã lấy tọa độ ảnh gốc: ({x}, {y}). Nhấn Thêm bước hoặc Cập nhật."
+        )
+        return True
+
+    def _strategy_step_from_fields(self) -> dict:
+        description = self.strategy_step_description.text().strip()
+        if not description:
+            raise ValueError("Mô tả bước không được để trống.")
+        step = {
+            "type": self.strategy_type_combo.currentData(),
+            "delay": self.strategy_delay.value(),
+            "description": description,
+        }
+        if step["type"] == "click":
+            step.update({"x": self.strategy_x.value(), "y": self.strategy_y.value()})
+        else:
+            step.update({
+                "from": [self.strategy_from_x.value(), self.strategy_from_y.value()],
+                "to": [self.strategy_to_x.value(), self.strategy_to_y.value()],
+                "duration": self.strategy_duration.value(),
+            })
+        return step
+
+    def _add_strategy_step(self) -> None:
+        try:
+            self._strategy_steps.append(self._strategy_step_from_fields())
+            self._render_strategy_steps()
+            self.strategy_step_list.setCurrentRow(len(self._strategy_steps) - 1)
+            self.strategy_editor_status.setText("Đã thêm bước. Nhớ lưu chiến thuật.")
+        except ValueError as exc:
+            QMessageBox.warning(self, "Thiếu thông tin", str(exc))
+
+    def _update_strategy_step(self) -> None:
+        index = self.strategy_step_list.currentRow()
+        if not (0 <= index < len(self._strategy_steps)):
+            QMessageBox.information(self, "Chưa chọn bước", "Hãy chọn bước cần cập nhật.")
+            return
+        try:
+            self._strategy_steps[index] = self._strategy_step_from_fields()
+            self._render_strategy_steps()
+            self.strategy_step_list.setCurrentRow(index)
+            self.strategy_editor_status.setText("Đã cập nhật bước. Nhớ lưu chiến thuật.")
+        except ValueError as exc:
+            QMessageBox.warning(self, "Thiếu thông tin", str(exc))
+
+    def _remove_strategy_step(self) -> None:
+        index = self.strategy_step_list.currentRow()
+        if not (0 <= index < len(self._strategy_steps)):
+            return
+        self._strategy_steps.pop(index)
+        self._render_strategy_steps()
+        self.strategy_step_list.setCurrentRow(min(index, len(self._strategy_steps) - 1))
+        self.strategy_editor_status.setText("Đã xóa bước. Nhớ lưu chiến thuật.")
+
+    def _move_strategy_step(self, offset: int) -> None:
+        index = self.strategy_step_list.currentRow()
+        target = index + offset
+        if not (0 <= index < len(self._strategy_steps) and 0 <= target < len(self._strategy_steps)):
+            return
+        self._strategy_steps[index], self._strategy_steps[target] = (
+            self._strategy_steps[target], self._strategy_steps[index]
+        )
+        self._render_strategy_steps()
+        self.strategy_step_list.setCurrentRow(target)
+        self.strategy_editor_status.setText("Đã đổi thứ tự bước. Nhớ lưu chiến thuật.")
+
+    def _save_strategy(self) -> None:
+        if self._strategy_path is None:
+            self._new_strategy()
+            if self._strategy_path is None:
+                return
+        name = self.strategy_name_input.text().strip()
+        if not name:
+            QMessageBox.warning(self, "Thiếu tên", "Hãy nhập tên hiển thị chiến thuật.")
+            return
+        if not self._strategy_steps:
+            QMessageBox.warning(self, "Chưa có bước", "Chiến thuật cần ít nhất một bước.")
+            return
+        # Validate the same click/swipe schema used by the runtime executor.
+        try:
+            from dctq_auto.tasks.common.state_war.task_run_state_war import _validate_step
+            steps = [_validate_step(step, index) for index, step in enumerate(self._strategy_steps, 1)]
+        except (ImportError, ValueError) as exc:
+            QMessageBox.warning(self, "Chiến thuật không hợp lệ", str(exc))
+            return
+        path = self._strategy_path.resolve()
+        try:
+            path.relative_to(self._strategy_dir.resolve())
+            if path.exists() and path != self._strategy_path.resolve():
+                raise ValueError("Không được ghi đè file chiến thuật khác.")
+            data = {
+                "display_name": name,
+                "description": self.strategy_description_input.text().strip(),
+                "steps": steps,
+            }
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            self._strategy_path = path
+            self._refresh_strategy_files(select_path=path)
+            self.strategy_editor_status.setText(f"Đã lưu {path.name} ({len(steps)} bước).")
+            QMessageBox.information(self, "Đã lưu", f"Đã lưu chiến thuật vào:\n{path}")
+        except (OSError, ValueError) as exc:
+            QMessageBox.critical(self, "Không lưu được", str(exc))
+
+    def _delete_strategy(self) -> None:
+        if self._strategy_path is None or not self._strategy_path.is_file():
+            return
+        answer = QMessageBox.question(
+            self, "Xóa chiến thuật",
+            f"Bạn chắc chắn muốn xóa {self._strategy_path.name}?",
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        try:
+            self._strategy_path.unlink()
+            self._strategy_path = None
+            self._strategy_steps = []
+            self._refresh_strategy_files()
+            self.strategy_editor_status.setText("Đã xóa file chiến thuật.")
+        except OSError as exc:
+            QMessageBox.critical(self, "Không xóa được", str(exc))
 
     def showEvent(self, event) -> None:
         """Dock the annotator to the primary screen's left edge and fill its height."""
@@ -683,6 +1102,8 @@ class ScreenshotAnnotator(QDialog):
 
     def _on_image_click(self, x: int, y: int) -> None:
         if self._pixmap.isNull():
+            return
+        if self._capture_strategy_coordinate(x, y):
             return
         text, accepted = QInputDialog.getText(
             self, "Đặt tên tọa độ", "Nhập text/nút tại vị trí này (ví dụ: Đăng nhập):",
