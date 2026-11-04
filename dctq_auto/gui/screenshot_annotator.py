@@ -897,6 +897,8 @@ class ScreenshotAnnotator(QDialog):
         is_click = action == "click"
         is_swipe = action == "swipe"
         is_path = action == "swipe_path"
+        if not is_path and self._strategy_capture_target == "swipe_path":
+            self._strategy_capture_target = None
         for widget in (self.strategy_x, self.strategy_y):
             widget.setEnabled(is_click)
         for widget in (
@@ -953,6 +955,14 @@ class ScreenshotAnnotator(QDialog):
 
     def _toggle_strategy_path_capture(self, checked: bool) -> None:
         if checked:
+            if self._pixmap.isNull():
+                self.strategy_capture_path_button.blockSignals(True)
+                self.strategy_capture_path_button.setChecked(False)
+                self.strategy_capture_path_button.blockSignals(False)
+                QMessageBox.information(
+                    self, "Chưa có ảnh", "Hãy mở ảnh trước khi vẽ Swipe Path."
+                )
+                return
             self._begin_strategy_capture("swipe_path")
             return
         self._finish_strategy_path_capture()
@@ -984,7 +994,6 @@ class ScreenshotAnnotator(QDialog):
         if self._strategy_capture_target == "swipe_path":
             self._strategy_capture_target = None
         self._update_strategy_field_visibility()
-        self._refresh_strategy_overlay(include_form=True)
         self._refresh_strategy_overlay(include_form=True)
         self.strategy_editor_status.setText("Đã xóa các điểm của đường vuốt.")
 
