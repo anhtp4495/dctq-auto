@@ -14,7 +14,7 @@ def pre_state_war(
     steps,
     strategy_path: str,
     log,
-    progress_items: list[str] | None = None,
+    add_progress_item=None,
 ) -> bool:
     """Kiểm tra chiến thuật và tạo danh sách tiến trình Quốc chiến."""
     if _STEP_CHIEN_TRANH_QUOC_CHIEN not in steps:
@@ -31,14 +31,14 @@ def pre_state_war(
         log(f"Quốc chiến: chiến thuật không hợp lệ: {exc}")
         return False
 
-    if progress_items is not None:
-        progress_items.clear()
-        progress_items.extend(["Bắt đầu"])
-        progress_items.extend(
-            get_battle_step_progress_label(step)
-            for step in strategy_steps
-        )
-        progress_items.append("Kết thúc")
+    if add_progress_item is not None:
+        add_progress_item("Bắt đầu", 1)
+        for strategy_step in strategy_steps:
+            add_progress_item(
+                get_battle_step_progress_label(strategy_step),
+                1,
+            )
+        add_progress_item("Kết thúc", 1)
 
     log("Quốc chiến: tìm thấy step Quốc chiến và đã chọn chiến thuật; sẵn sàng.")
     return True
@@ -53,7 +53,12 @@ def post_state_war(steps, log) -> None:
 
 def run_state_war(worker, account, steps, device, strategy_path: str, log) -> bool:
     """Chạy chiến thuật và luôn dọn step Quốc chiến sau khi bắt đầu."""
-    if not pre_state_war(steps, strategy_path, log):
+    if not pre_state_war(
+        steps,
+        strategy_path,
+        log,
+        add_progress_item=worker.task_progress_item_added.emit,
+    ):
         return False
 
     log(f"[{account.username}] Bắt đầu quy trình Quốc chiến.")
