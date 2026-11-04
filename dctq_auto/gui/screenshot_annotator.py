@@ -1149,7 +1149,7 @@ class ScreenshotAnnotator(QDialog):
                 f"cạnh {segment_index + 1}/{segment_count}, "
                 f"vòng {self._strategy_preview_repeat}/{repeat}: {start} → {end}"
             )
-            interval = max(650, int(step.get("duration", 300)) + int(step.get("delay", 0)))
+            interval = min(6500, int(step.get("duration", 300)) + int(step.get("delay", 0)))
         # Match the JSON timing: click delay, or swipe duration plus delay.
         self._strategy_preview_timer.start(interval)
 

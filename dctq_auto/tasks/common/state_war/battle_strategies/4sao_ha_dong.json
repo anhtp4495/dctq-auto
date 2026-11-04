@@ -103,22 +103,57 @@
         780,
         87
       ],
-      "duration": 300,
-      "delay": 1500,
+      "duration": 500,
+      "delay": 10,
       "description": "[Binh Lính] - Thả lính cửa trên"
     },
     {
-      "type": "swipe",
-      "from": [
-        1431,
-        56
+      "type": "swipe_path",
+      "points": [
+        [
+          178,
+          713
+        ],
+        [
+          298,
+          233
+        ],
+        [
+          902,
+          62
+        ],
+        [
+          1502,
+          80
+        ],
+        [
+          1884,
+          322
+        ],
+        [
+          1844,
+          693
+        ],
+        [
+          1633,
+          922
+        ],
+        [
+          1153,
+          918
+        ],
+        [
+          673,
+          831
+        ],
+        [
+          160,
+          713
+        ]
       ],
-      "to": [
-        1782,
-        449
-      ],
-      "duration": 300,
-      "delay": 1500,
+      "repeat": 3,
+      "duration": 100,
+      "delay": 10,
       "description": "[Binh Lính] - Thả lính cửa dưới"
     }
   ]
