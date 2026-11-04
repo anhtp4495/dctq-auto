@@ -82,8 +82,57 @@ def _build_day_positions(screen_width: int, screen_height: int) -> list[tuple[in
     return positions
 
 
-def _tap_all_days(worker, device, account, screen_width, screen_height, log) -> bool:
-    """Click lần lượt 31 ô điểm danh, từ ngày 31 về ngày 1."""
+def _tap_confirmation_if_visible(worker, device, account, templates, log) -> bool:
+    """Kiểm tra và click xác nhận điểm danh bù nếu hộp thoại xuất hiện."""
+    if not worker._wait_if_paused():
+        return False
+
+    template = templates.get(_TEMPLATE_XAC_NHAN_DIEM_DANH_BU)
+    if template is None:
+        log(
+            f"[{account.username}] Không tải được template "
+            f"{_TEMPLATE_XAC_NHAN_DIEM_DANH_BU}; bỏ qua kiểm tra xác nhận."
+        )
+        return True
+
+    screenshot = device.screenshot()
+    screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
+    try:
+        match = match_template(
+            screen_bgr,
+            template.image,
+            threshold=template.threshold,
+            method=template.method,
+            search_rect=template.search_rect,
+            grayscale=template.grayscale,
+        )
+    except (ValueError, cv2.error) as exc:
+        log(
+            f"[{account.username}] Lỗi nhận diện xác nhận điểm danh bù: {exc}"
+        )
+        return True
+
+    if match is None:
+        return True
+
+    report_template_match(
+        log,
+        context=f"[{account.username}]",
+        template=template,
+        match=match,
+    )
+    if not worker._wait_if_paused():
+        return False
+
+    log(f"[{account.username}] Phát hiện hộp thoại xác nhận điểm danh bù.")
+    _tap_match_center(device, match, account, log)
+    return True
+
+
+def _tap_all_days(
+    worker, device, account, screen_width, screen_height, templates, log
+) -> bool:
+    """Click lần lượt 31 ô điểm danh, xử lý xác nhận điểm danh bù nếu xuất hiện."""
     day_positions = _build_day_positions(screen_width, screen_height)
     log(f"[{account.username}] Bắt đầu click {len(day_positions)} ô theo thứ tự ngày 31 → ngày 1.")
 
@@ -94,6 +143,15 @@ def _tap_all_days(worker, device, account, screen_width, screen_height, log) -> 
         device.shell(f"input tap {x} {y}")
         log(f"[{account.username}] Đã click ô ngày {day} tại ({x}, {y}).")
         time.sleep(0.15)
+
+        if not _tap_confirmation_if_visible(
+            worker, device, account, templates, log
+        ):
+            log(
+                f"[{account.username}] Điểm danh đã dừng khi xử lý xác nhận "
+                f"tại ô ngày {day}."
+            )
+            return False
 
     return True
 
@@ -123,7 +181,7 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> boo
         try:
             screen_height, screen_width = screen_bgr.shape[:2]
             if not _tap_all_days(
-                worker, device, account, screen_width, screen_height, log
+                worker, device, account, screen_width, screen_height, templates, log
             ):
                 return False
 
