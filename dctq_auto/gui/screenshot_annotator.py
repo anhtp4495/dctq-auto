@@ -61,6 +61,8 @@ class ClickableImage(QWidget):
         is_region_mode,
         on_image_rect,
         is_cursor_mode=None,
+        is_swipe_capture=None,
+        on_image_swipe=None,
         parent=None,
     ) -> None:
         super().__init__(parent)
@@ -69,6 +71,8 @@ class ClickableImage(QWidget):
         self._is_region_mode = is_region_mode
         self._on_image_rect = on_image_rect
         self._is_cursor_mode = is_cursor_mode or (lambda: False)
+        self._is_swipe_capture = is_swipe_capture or (lambda: False)
+        self._on_image_swipe = on_image_swipe or (lambda *_args: None)
         self._points: list[tuple[int, int, str]] = []
         self._ocr_boxes: list[dict] = []
         self._selected_region: tuple[int, int, int, int] | None = None
@@ -226,6 +230,12 @@ class ClickableImage(QWidget):
         target = self._target_rect()
         if not target.contains(point):
             return
+        if self._is_swipe_capture():
+            self._drag_start = point
+            self._drag_current = point
+            self.setCursor(Qt.CursorShape.CrossCursor)
+            self.update()
+            return
         if self._is_region_mode():
             self._drag_start = point
             self._drag_current = point
@@ -273,6 +283,12 @@ class ClickableImage(QWidget):
         self.update()
         x1, y1 = self._to_image_point(start)
         x2, y2 = self._to_image_point(end)
+        if self._is_swipe_capture():
+            if abs(x2 - x1) < 2 and abs(y2 - y1) < 2:
+                self._on_image_click(x1, y1)
+            else:
+                self._on_image_swipe(x1, y1, x2, y2)
+            return
         left, right = sorted((x1, x2))
         top, bottom = sorted((y1, y2))
         if was_ctrl_gesture:
@@ -395,6 +411,8 @@ class ScreenshotAnnotator(QDialog):
             lambda: self._current_mode() == "Từng vùng",
             self._on_image_rect_selected,
             lambda: self._current_mode() == "Con trỏ",
+            lambda: self._strategy_capture_target == "swipe",
+            self._on_image_swipe_selected,
         )
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(False)
@@ -528,6 +546,11 @@ class ScreenshotAnnotator(QDialog):
             lambda: self._begin_strategy_capture("to")
         )
         actions.addWidget(self.strategy_capture_to_button)
+        self.strategy_capture_swipe_button = QPushButton("Vẽ swipe trên ảnh")
+        self.strategy_capture_swipe_button.clicked.connect(
+            lambda: self._begin_strategy_capture("swipe")
+        )
+        actions.addWidget(self.strategy_capture_swipe_button)
         add_button = QPushButton("Thêm bước")
         add_button.clicked.connect(self._add_strategy_step)
         actions.addWidget(add_button)
@@ -699,6 +722,7 @@ class ScreenshotAnnotator(QDialog):
         self.strategy_capture_click_button.setEnabled(is_click)
         self.strategy_capture_from_button.setEnabled(not is_click)
         self.strategy_capture_to_button.setEnabled(not is_click)
+        self.strategy_capture_swipe_button.setEnabled(not is_click)
 
     def _begin_strategy_capture(self, target: str) -> None:
         if self._pixmap.isNull():
@@ -707,9 +731,31 @@ class ScreenshotAnnotator(QDialog):
         self._strategy_capture_target = target
         self.point_mode_button.setChecked(True)
         self._on_mode_changed("Từng điểm")
-        labels = {"click": "tọa độ click", "from": "điểm đầu swipe", "to": "điểm cuối swipe"}
+        labels = {
+            "click": "tọa độ click",
+            "from": "điểm đầu swipe",
+            "to": "điểm cuối swipe",
+            "swipe": "đường swipe",
+        }
+        instruction = (
+            "Kéo chuột từ điểm đầu đến điểm cuối ngay trên ảnh."
+            if target == "swipe"
+            else "Nhấp vào vị trí tương ứng trên ảnh."
+        )
+        self.strategy_editor_status.setText(f"Đang chờ chọn {labels[target]}: {instruction}")
+
+    def _on_image_swipe_selected(self, from_x: int, from_y: int, to_x: int, to_y: int) -> None:
+        """Fill both swipe endpoints from a drag gesture on the screenshot."""
+        if self.strategy_type_combo.currentData() != "swipe":
+            return
+        self.strategy_from_x.setValue(from_x)
+        self.strategy_from_y.setValue(from_y)
+        self.strategy_to_x.setValue(to_x)
+        self.strategy_to_y.setValue(to_y)
+        self._strategy_capture_target = None
         self.strategy_editor_status.setText(
-            f"Đang chờ chọn {labels[target]}: nhấp vào vị trí tương ứng trên ảnh."
+            f"Đã lấy swipe: ({from_x}, {from_y}) → ({to_x}, {to_y}). "
+            "Nhấn Cập nhật để áp dụng vào bước đang chọn hoặc Thêm bước để tạo bước mới."
         )
 
     def _capture_strategy_coordinate(self, x: int, y: int) -> bool:
