@@ -108,6 +108,19 @@ def load_battle_strategy(strategy_path: str | Path) -> tuple[dict, list[dict]]:
     return data, steps
 
 
+def get_battle_step_progress_label(step: dict, index: int) -> str:
+    """Tạo nhãn ổn định để hiển thị từng thao tác trong danh sách tiến trình."""
+    description = step.get("description")
+    if not description:
+        if step["type"] == "click":
+            description = f"Click ({step['x']}, {step['y']})"
+        else:
+            x1, y1 = step["from"]
+            x2, y2 = step["to"]
+            description = f"Swipe ({x1}, {y1}) -> ({x2}, {y2})"
+    return f"Quốc chiến — Bước {index}: {description}"
+
+
 def _wait(worker, seconds: float) -> bool:
     deadline = time.monotonic() + max(0.0, seconds)
     while time.monotonic() < deadline:
@@ -118,7 +131,7 @@ def _wait(worker, seconds: float) -> bool:
 
 
 def run_battle_strategy(worker, device, strategy_path: str | Path) -> bool:
-    """Thực thi tuần tự click/swipe, hỗ trợ pause và stop tại ranh giới bước."""
+    """Thực thi tuần tự click/swipe và cập nhật riêng từng bước lên tiến trình."""
     data, steps = load_battle_strategy(strategy_path)
     strategy_name = str(data.get("name") or Path(strategy_path).stem)
     total = len(steps)
@@ -128,40 +141,45 @@ def run_battle_strategy(worker, device, strategy_path: str | Path) -> bool:
     worker.progress_changed.emit(0, total, f"Chiến thuật: {strategy_name}")
 
     for index, step in enumerate(steps, start=1):
+        progress_label = get_battle_step_progress_label(step, index)
         if not worker._wait_if_paused():
             worker.log_message.emit("Quốc chiến: đã dừng theo yêu cầu.")
-            worker.task_progress_changed.emit("Triển khai chiến thuật Quốc chiến", "stopped", index - 1, total)
+            worker.task_progress_changed.emit(
+                progress_label, "stopped", 0, 1
+            )
             return False
 
+        worker.task_progress_changed.emit(progress_label, "running", 0, 1)
         description = step["description"] or f"{step['type']} ({index}/{total})"
-        if step["type"] == "click":
-            x, y = step["x"], step["y"]
-            worker.log_message.emit(
-                f"Quốc chiến [{index}/{total}]: click ({x}, {y}) — {description}."
-            )
-            device.shell(f"input tap {x} {y}")
-        else:
-            x1, y1 = step["from"]
-            x2, y2 = step["to"]
-            duration = step["duration"]
-            worker.log_message.emit(
-                f"Quốc chiến [{index}/{total}]: swipe ({x1}, {y1}) -> "
-                f"({x2}, {y2}) trong {duration} ms — {description}."
-            )
-            device.shell(f"input swipe {x1} {y1} {x2} {y2} {duration}")
+        try:
+            if step["type"] == "click":
+                x, y = step["x"], step["y"]
+                worker.log_message.emit(
+                    f"Quốc chiến [{index}/{total}]: click ({x}, {y}) — {description}."
+                )
+                device.shell(f"input tap {x} {y}")
+            else:
+                x1, y1 = step["from"]
+                x2, y2 = step["to"]
+                duration = step["duration"]
+                worker.log_message.emit(
+                    f"Quốc chiến [{index}/{total}]: swipe ({x1}, {y1}) -> "
+                    f"({x2}, {y2}) trong {duration} ms — {description}."
+                )
+                device.shell(f"input swipe {x1} {y1} {x2} {y2} {duration}")
 
-        if step["delay"] and not _wait(worker, step["delay"] / 1000):
-            worker.log_message.emit("Quốc chiến: đã dừng theo yêu cầu.")
-            worker.task_progress_changed.emit("Triển khai chiến thuật Quốc chiến", "stopped", index, total)
-            return False
+            if step["delay"] and not _wait(worker, step["delay"] / 1000):
+                worker.log_message.emit("Quốc chiến: đã dừng theo yêu cầu.")
+                worker.task_progress_changed.emit(
+                    progress_label, "stopped", 0, 1
+                )
+                return False
+        except Exception:
+            worker.task_progress_changed.emit(progress_label, "failed", 0, 1)
+            raise
 
-        worker.task_progress_changed.emit(
-            "Triển khai chiến thuật Quốc chiến", "running", index, total
-        )
+        worker.task_progress_changed.emit(progress_label, "done", 1, 1)
         worker.progress_changed.emit(index, total, f"Quốc chiến: {index}/{total}")
 
-    worker.task_progress_changed.emit(
-        "Triển khai chiến thuật Quốc chiến", "done", total, total
-    )
     worker.log_message.emit(f"Quốc chiến: hoàn tất chiến thuật '{strategy_name}'.")
     return True
