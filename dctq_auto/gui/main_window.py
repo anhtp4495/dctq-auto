@@ -946,9 +946,7 @@ class MainWindow(QMainWindow):
         self.state_war_strategy_combo.clear()
         strategies = list_battle_strategies()
         for strategy in strategies:
-            label = strategy["name"]
-            if not label:
-                label = Path(strategy["path"]).stem
+            label = strategy["name"] or strategy["path"].rsplit("/", 1)[-1].rsplit(".", 1)[0]
             self.state_war_strategy_combo.addItem(label, strategy["path"])
         selected_index = self.state_war_strategy_combo.findData(selected_path)
         if selected_index < 0 and self.state_war_strategy_combo.count():
