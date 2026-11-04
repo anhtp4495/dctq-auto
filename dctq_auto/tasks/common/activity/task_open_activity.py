@@ -15,15 +15,13 @@ from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
 
 
+_MAX_TRIES = 6
+
+
 def open_activity(
     self, account, device, ocr_client, log, screenshot=None
 ) -> bool:
-    """Mở Hoạt động bằng Template Matching; nhận screenshot có sẵn nếu được truyền vào."""
-    
-    if not self._wait_if_paused():
-        log(f"[{account.username}] Đã dừng khi đang mở màn hình [Hoạt động].")
-        return False
-
+    """Mở Hoạt động bằng Template Matching, thử nhận diện tối đa _MAX_TRIES lần."""
     log(f"[{account.username}] Bắt đầu mở màn hình [Hoạt động].")
 
     template_names = (
@@ -33,66 +31,86 @@ def open_activity(
     )
     templates = get_templates(template_names)
 
-    try:
-        if screenshot is None:
-            screenshot = device.screenshot()
-        screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
-    except Exception as exc:
-        log(f"[{account.username}] Không chụp được màn hình để nhận diện Hoạt động: {exc}")
-        return False
-
-    for template_name in template_names:
-        template = templates.get(template_name)
-        if template is None:
-            log(f"[{account.username}] Không tải được template {template_name}; bỏ qua.")
-            continue
+    for attempt in range(1, _MAX_TRIES + 1):
+        if not self._wait_if_paused():
+            log(f"[{account.username}] Đã dừng khi đang mở màn hình [Hoạt động].")
+            return False
 
         try:
-            match = match_template(
-                screen_bgr,
-                template.image,
-                threshold=template.threshold,
-                method=template.method,
-                search_rect=template.search_rect,
-                grayscale=template.grayscale,
-            )
-        except (ValueError, cv2.error) as exc:
-            log(f"[{account.username}] Lỗi template matching {template_name}: {exc}")
-            continue
-
-        if match is None:
-            continue
-
-        report_template_match(
-            log,
-            context=f"[{account.username}]",
-            template=template,
-            match=match,
-        )
-
-        if template_name in (_TEMPLATE_DANG_CHON_PHUC_LOI, _TEMPLATE_DANG_CHON_HOAT_DONG):
+            current_screenshot = screenshot if attempt == 1 and screenshot is not None else device.screenshot()
+            screen_bgr = cv2.cvtColor(np.asarray(current_screenshot), cv2.COLOR_RGB2BGR)
+        except Exception as exc:
             log(
-                f"[{account.username}] Đã xác nhận màn hình [Hoạt động] "
-                f"({template.id})."
+                f"[{account.username}] Không chụp được màn hình để nhận diện "
+                f"Hoạt động (lần thử {attempt}/{_MAX_TRIES}): {exc}"
             )
-            return True
-
-        if template_name == _TEMPLATE_MAIN_HOAT_DONG:
-            x = round((match.left + match.right) / 2)
-            y = round((match.top + match.bottom) / 2)
-            log(
-                f"[{account.username}] Phát hiện [Hoạt động] ở [Màn hình chính]; "
-                f"click trung điểm ({x}, {y}) rồi kiểm tra lại."
-            )
-            try:
-                device.shell(f"input tap {x} {y}")
+            if attempt < _MAX_TRIES:
                 time.sleep(1.0)
-                return open_activity(self, account, device, ocr_client, log)
-            except Exception as exc:
-                log(f"[{account.username}] Mở màn hình [Hoạt động] thất bại: {exc}")
-                return False
+                continue
+            return False
 
-    log(f"[{account.username}] Mở màn hình [Hoạt động] thất bại.")
+        retry = False
+        for template_name in template_names:
+            template = templates.get(template_name)
+            if template is None:
+                log(f"[{account.username}] Không tải được template {template_name}; bỏ qua.")
+                continue
+
+            try:
+                match = match_template(
+                    screen_bgr,
+                    template.image,
+                    threshold=template.threshold,
+                    method=template.method,
+                    search_rect=template.search_rect,
+                    grayscale=template.grayscale,
+                )
+            except (ValueError, cv2.error) as exc:
+                log(f"[{account.username}] Lỗi template matching {template_name}: {exc}")
+                continue
+
+            if match is None:
+                continue
+
+            report_template_match(
+                log,
+                context=f"[{account.username}]",
+                template=template,
+                match=match,
+            )
+
+            if template_name in (_TEMPLATE_DANG_CHON_PHUC_LOI, _TEMPLATE_DANG_CHON_HOAT_DONG):
+                log(
+                    f"[{account.username}] Đã xác nhận màn hình [Hoạt động] "
+                    f"({template.id}) ở lần thử {attempt}/{_MAX_TRIES}."
+                )
+                return True
+
+            if template_name == _TEMPLATE_MAIN_HOAT_DONG:
+                x = round((match.left + match.right) / 2)
+                y = round((match.top + match.bottom) / 2)
+                log(
+                    f"[{account.username}] Phát hiện [Hoạt động] ở [Màn hình chính]; "
+                    f"click trung điểm ({x}, {y}) rồi kiểm tra lại "
+                    f"(lần thử {attempt}/{_MAX_TRIES})."
+                )
+                try:
+                    device.shell(f"input tap {x} {y}")
+                except Exception as exc:
+                    log(f"[{account.username}] Mở màn hình [Hoạt động] thất bại: {exc}")
+                    return False
+                retry = True
+                break
+
+        if attempt < _MAX_TRIES:
+            if not retry:
+                log(
+                    f"[{account.username}] Chưa nhận diện được màn hình [Hoạt động]; "
+                    f"thử lại ({attempt + 1}/{_MAX_TRIES})."
+                )
+            time.sleep(1.0)
+
+    log(f"[{account.username}] Mở màn hình [Hoạt động] thất bại sau {_MAX_TRIES} lần thử.")
     return False
 
 
