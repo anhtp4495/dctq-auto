@@ -601,6 +601,8 @@ class ScreenshotAnnotator(QDialog):
             data = json.loads(resolved.read_text(encoding="utf-8"))
             if not isinstance(data, dict) or not isinstance(data.get("steps"), list):
                 raise ValueError("JSON phải là object và có danh sách steps.")
+            if any(not isinstance(step, dict) for step in data["steps"]):
+                raise ValueError("Mỗi phần tử trong steps phải là object.")
             self._strategy_steps = [dict(step) for step in data["steps"]]
             self._strategy_path = resolved
             self.strategy_name_input.setText(
@@ -611,7 +613,7 @@ class ScreenshotAnnotator(QDialog):
             self.strategy_editor_status.setText(
                 f"Đã tải {resolved.name}: {len(self._strategy_steps)} bước."
             )
-        except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
+        except (OSError, UnicodeError, json.JSONDecodeError, TypeError, ValueError) as exc:
             QMessageBox.warning(self, "Không đọc được chiến thuật", str(exc))
 
     def _new_strategy(self) -> None:
@@ -953,6 +955,7 @@ class ScreenshotAnnotator(QDialog):
             return
         self._image_path = path
         self._pixmap = pixmap
+        self._strategy_capture_target = None
         self._points.clear()
         self._ocr_elements = []
         self._ocr_region = None
