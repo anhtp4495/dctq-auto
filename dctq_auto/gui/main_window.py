@@ -39,6 +39,7 @@ from dctq_auto.config.settings import Settings
 from dctq_auto.gui.clone_tab import CloneTab
 from dctq_auto.gui.screenshot_annotator import ScreenshotAnnotator
 from dctq_auto.tasks.clone.accounts import load_accounts
+from dctq_auto.tasks.common.tasks.state_war.task_run_state_war import list_battle_strategies
 
 
 SCREENSHOT_DIR = "artifacts/screenshots"
@@ -903,12 +904,76 @@ class MainWindow(QMainWindow):
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        group = QGroupBox("Quốc chiến")
+
+        group = QGroupBox("Chiến thuật Quốc chiến")
         group_layout = QVBoxLayout(group)
-        group_layout.addWidget(QLabel("Sẽ bổ sung cấu hình sau."))
+        strategy_row = QHBoxLayout()
+        self.state_war_strategy_combo = QComboBox()
+        self.state_war_strategy_combo.setMinimumContentsLength(14)
+        self.state_war_strategy_combo.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+        )
+        self.state_war_strategy_combo.currentIndexChanged.connect(
+            self._update_state_war_description
+        )
+        strategy_row.addWidget(self.state_war_strategy_combo, 1)
+        self.state_war_refresh_button = QPushButton("↻")
+        self.state_war_refresh_button.setFixedWidth(34)
+        self.state_war_refresh_button.setToolTip("Tải lại danh sách chiến thuật JSON")
+        self.state_war_refresh_button.clicked.connect(self._refresh_state_war_strategies)
+        strategy_row.addWidget(self.state_war_refresh_button)
+        group_layout.addLayout(strategy_row)
+
+        self.state_war_description = QLabel("Chưa có chiến thuật JSON.")
+        self.state_war_description.setWordWrap(True)
+        group_layout.addWidget(self.state_war_description)
+        note = QLabel(
+            "Mỗi file JSON là một chiến thuật gồm các thao tác click/swipe. "
+            "Hãy mở sẵn màn hình Quốc chiến trong game trước khi chạy."
+        )
+        note.setWordWrap(True)
+        group_layout.addWidget(note)
         layout.addWidget(group)
         layout.addStretch(1)
+
+        self._refresh_state_war_strategies()
         return self._make_scrollable_tab(page)
+
+    def _refresh_state_war_strategies(self) -> None:
+        """Reload JSON strategy files while preserving the current selection."""
+        selected_path = self.state_war_strategy_combo.currentData()
+        self.state_war_strategy_combo.blockSignals(True)
+        self.state_war_strategy_combo.clear()
+        strategies = list_battle_strategies()
+        for strategy in strategies:
+            label = strategy["name"]
+            if not label:
+                label = Path(strategy["path"]).stem
+            self.state_war_strategy_combo.addItem(label, strategy["path"])
+        selected_index = self.state_war_strategy_combo.findData(selected_path)
+        if selected_index < 0 and self.state_war_strategy_combo.count():
+            selected_index = 0
+        if selected_index >= 0:
+            self.state_war_strategy_combo.setCurrentIndex(selected_index)
+        self.state_war_strategy_combo.blockSignals(False)
+        self._update_state_war_description()
+        self._log(f"Quốc chiến: đã nạp {len(strategies)} chiến thuật JSON.")
+
+    def _update_state_war_description(self, *_args) -> None:
+        """Show the description belonging to the selected JSON strategy."""
+        path = self.state_war_strategy_combo.currentData()
+        if not path:
+            self.state_war_description.setText(
+                "Chưa có chiến thuật. Thêm file *.json vào common/tasks/state_war/battle_strategies/."
+            )
+            return
+        for strategy in list_battle_strategies():
+            if strategy["path"] == path:
+                self.state_war_description.setText(
+                    strategy["description"] or "Không có mô tả cho chiến thuật này."
+                )
+                return
+        self.state_war_description.setText("Không đọc được thông tin chiến thuật đã chọn.")
 
     def _on_device_changed(self, *_args) -> None:
         mock_mode = self.device_combo.currentData() == "mock"
@@ -1680,6 +1745,15 @@ class MainWindow(QMainWindow):
                 "vuot_ai_muu_binh": self.vuot_ai_muu_binh.isChecked(),
             })
             return config
+        if self.tabs.tabText(self.tabs.currentIndex()) == "Quốc chiến":
+            config = self._game_config()
+            config.update({
+                "state_war_mode": True,
+                "state_war_strategy_path": str(
+                    self.state_war_strategy_combo.currentData() or ""
+                ),
+            })
+            return config
         return self._game_config()
 
     def _game_config(self) -> dict:
@@ -1807,6 +1881,13 @@ class MainWindow(QMainWindow):
             return
 
         config = self._current_config()
+        if config.get("state_war_mode") and not config.get("state_war_strategy_path"):
+            QMessageBox.warning(
+                self,
+                "Chưa chọn chiến thuật",
+                "Hãy thêm/chọn một file JSON chiến thuật trong tab Quốc chiến.",
+            )
+            return
         if config.get("task_login"):
             credentials = self._prompt_login_credentials()
             if credentials is None:
@@ -1975,6 +2056,8 @@ class MainWindow(QMainWindow):
     @staticmethod
     def _task_specs(config: dict) -> list[tuple[str, int]]:
         """Return progress rows using the exact labels emitted by the worker."""
+        if config.get("state_war_mode"):
+            return [("Triển khai chiến thuật Quốc chiến", 1)]
         if config.get("utility_tasks_mode"):
             task_labels = (
                 ("task_login", "Đăng nhập"),
