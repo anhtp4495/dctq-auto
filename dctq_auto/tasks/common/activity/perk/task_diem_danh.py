@@ -157,7 +157,7 @@ def _tap_all_days(
     return True
 
 
-def _run_diem_danh(worker, account, steps, device, ocr_client, log, screenshot=None) -> bool:
+def run_diem_danh(worker, account, steps, device, ocr_client, log, screenshot=None) -> bool:
     """Xử lý điểm danh sau khi đã mở đúng mục."""
     templates = get_templates(_TEMPLATE_NAMES)
 
@@ -217,7 +217,7 @@ def _run_diem_danh(worker, account, steps, device, ocr_client, log, screenshot=N
         log(f"[{account.username}] Không click được template {template_name}: {exc}")
         return False
 
-    return _run_diem_danh(
+    return run_diem_danh(
         worker, account, steps, device, ocr_client, log,
         screenshot=None,
     )
@@ -300,19 +300,12 @@ def open_diem_danh(worker, account, device, ocr_client, log, screenshot=None) ->
     return False
 
 
-def run_diem_danh(worker, account, steps, device, ocr_client, log, screenshot=None) -> bool:
-    """Mở mục Điểm danh trước, sau đó thực hiện quy trình điểm danh."""
+def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> bool:
+    """Mở mục Điểm danh trước, sau đó chạy quy trình điểm danh."""
     if not open_diem_danh(
         worker, account, device, ocr_client, log, screenshot=screenshot
     ):
         return False
-    return _run_diem_danh(
-        worker, account, steps, device, ocr_client, log, screenshot=None
-    )
-
-
-def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> bool:
-    """Entry point tương thích với bộ điều phối task."""
     return run_diem_danh(
-        worker, account, steps, device, ocr_client, log, screenshot=screenshot
+        worker, account, steps, device, ocr_client, log, screenshot=None
     )
