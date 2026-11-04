@@ -39,7 +39,7 @@
     ]
   },
   {
-    "id": "chien_tranh_quoc_chien",
+    "id": "clone_chien_tranh_quoc_chien",
     "config_key": "clone_quoc_chien",
     "display_name": "Quốc chiến",
     "priority": 10500,
