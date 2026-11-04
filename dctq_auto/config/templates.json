@@ -331,9 +331,41 @@
         }
       }
     },
-    "hoat_dong.phuc_loi": {
-      "source_image": "resources/screens/hoat_dong/phuc_loi/man_hinh_chinh.png",
+    "hoat_dong.phuc_loi.le_bao_quoc_van": {
+      "source_image": "resources/screens/hoat_dong/phuc_loi/le_bao_quoc_van.png",
       "templates": {
+        "chua_nhan_le_bao_mien_phi": {
+          "description": "Màn hình [Hoạt động] - [Phúc lợi] - [Lễ bao Quốc vận] - Chưa nhận Lễ bao miễn phí",
+          "rect": { "top": 200, "left": 899, "right": 1021, "bottom": 279},
+          "search_rect": { "top": 154, "left": 548, "right": 1003, "bottom": 386},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "da_nhan_le_bao_mien_phi": {
+          "description": "Màn hình [Hoạt động] - [Phúc lợi] - [Lễ bao Quốc vận] - Đã nhận Lễ bao miễn phí",
+          "rect": { "top": 190, "left": 627, "right": 738, "bottom": 300},
+          "search_rect": { "top": 154, "left": 548, "right": 1003, "bottom": 386},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "tat_thong_bao_nhan_le_bao1": {
+          "description": "Màn hình [Hoạt động] - [Phúc lợi] - [Lễ bao Quốc vận] - Tắt thông báo nhận Lễ bao miễn phí",
+          "rect": { "top": 422, "left": 838, "right": 1598, "bottom": 497},
+          "search_rect": { "top": 93, "left": 333, "right": 1576, "bottom": 1008},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "tat_thong_bao_nhan_le_bao2": {
+          "description": "Màn hình [Hoạt động] - [Phúc lợi] - [Lễ bao Quốc vận] - Tắt thông báo nhận Lễ bao miễn phí",
+          "rect": { "top": 679, "left": 906, "right": 1347, "bottom": 744},
+          "search_rect": { "top": 93, "left": 333, "right": 1576, "bottom": 1008},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
       }
     },
     "quan_doan": {

@@ -8,6 +8,8 @@ import numpy as np
 from dctq_auto.config.constants import (
     _TEMPLATE_DA_NHAN_LE_BAO_MIEN_PHI,
     _TEMPLATE_NHAN_LE_BAO_MIEN_PHI,
+    _TEMPLATE_TAT_THONG_BAO_NHAN_LE_BAO_MIEN_PHI1,
+    _TEMPLATE_TAT_THONG_BAO_NHAN_LE_BAO_MIEN_PHI2,
 )
 
 from dctq_auto.vision.template_matching import match_template
@@ -18,6 +20,8 @@ from dctq_auto.vision.template_store import get_templates
 _TEMPLATE_NAMES = (
     _TEMPLATE_NHAN_LE_BAO_MIEN_PHI,
     _TEMPLATE_DA_NHAN_LE_BAO_MIEN_PHI,
+    _TEMPLATE_TAT_THONG_BAO_NHAN_LE_BAO_MIEN_PHI1,
+    _TEMPLATE_TAT_THONG_BAO_NHAN_LE_BAO_MIEN_PHI2,
 )
 
 

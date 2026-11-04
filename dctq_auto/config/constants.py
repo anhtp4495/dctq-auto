@@ -149,5 +149,7 @@ _TEMPLATE_NGAY_CAN_DIEM_DANH = "hoat_dong/ngay_can_diem_danh"
 _TEMPLATE_XAC_NHAN_DIEM_DANH_BU = "hoat_dong/xac_nhan_diem_danh_bu"
 
 # Template dùng bên trong tác vụ nhận lễ bao Quốc Vận.
-_TEMPLATE_NHAN_LE_BAO_MIEN_PHI = "hoat_dong/nhan_le_bao_mien_phi"
-_TEMPLATE_DA_NHAN_LE_BAO_MIEN_PHI = "hoat_dong/da_nhan_le_bao_mien_phi"
+_TEMPLATE_NHAN_LE_BAO_MIEN_PHI = "hoat_dong.phuc_loi.le_bao_quoc_van/chua_nhan_le_bao_mien_phi"
+_TEMPLATE_DA_NHAN_LE_BAO_MIEN_PHI = "hoat_dong.phuc_loi.le_bao_quoc_van/da_nhan_le_bao_mien_phi"
+_TEMPLATE_TAT_THONG_BAO_NHAN_LE_BAO_MIEN_PHI1 = "hoat_dong.phuc_loi.le_bao_quoc_van/tat_thong_bao_nhan_le_bao1"
+_TEMPLATE_TAT_THONG_BAO_NHAN_LE_BAO_MIEN_PHI2 = "hoat_dong.phuc_loi.le_bao_quoc_van/tat_thong_bao_nhan_le_bao2"
