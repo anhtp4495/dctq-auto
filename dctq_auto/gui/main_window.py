@@ -1,7 +1,9 @@
 """Main PySide6 window with task tabs and shared controls."""
 
 import logging
+import os
 import time
+from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer, QSettings, QThread, Signal
 from PySide6.QtGui import QColor, QFont, QGuiApplication, QIcon, QIntValidator, QPainter, QPixmap
@@ -78,7 +80,12 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("DCTQ Auto")
         self.setStyleSheet("QGroupBox { border: 0; margin-top: 8px; padding-top: 4px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; padding: 0; }")
-        self._ui_settings = QSettings("DCTQAuto", "DCTQAuto")
+        app_data_dir = Path(os.getenv("APPDATA") or (Path.home() / "AppData" / "Roaming")) / "DCTQAuto"
+        app_data_dir.mkdir(parents=True, exist_ok=True)
+        self._ui_settings = QSettings(
+            str(app_data_dir / "settings.ini"),
+            QSettings.Format.IniFormat,
+        )
         self._settings = Settings.from_env()
         self._worker = None
         self._paused = False
