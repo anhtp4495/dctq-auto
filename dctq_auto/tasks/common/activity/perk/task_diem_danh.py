@@ -60,6 +60,44 @@ def _tap_match_center(device, match, account, log):
     time.sleep(0.7)
 
 
+def _build_day_positions(screen_width: int, screen_height: int) -> list[tuple[int, int, int]]:
+    """Tạo tọa độ 31 ô điểm danh theo thứ tự ngày 31 đến ngày 1."""
+    grid_left = (484 / 1920) * screen_width
+    grid_top = (402 / 1080) * screen_height
+    grid_width = ((1822 - 484) / 1920) * screen_width
+    grid_height = ((998 - 402) / 1080) * screen_height
+
+    row_ranges = ((1, 9), (10, 18), (19, 27), (28, 31))
+    cell_positions = {}
+    for row_index, (first_cell, last_cell) in enumerate(row_ranges):
+        for cell in range(first_cell, last_cell + 1):
+            cell_positions[cell] = (row_index, cell - first_cell)
+
+    positions = []
+    for day in range(31, 0, -1):
+        row, column = cell_positions[day]
+        x = round(grid_left + (column + 0.5) * grid_width / 9)
+        y = round(grid_top + (row + 0.5) * grid_height / 4)
+        positions.append((day, x, y))
+    return positions
+
+
+def _tap_all_days(worker, device, account, screen_width, screen_height, log) -> bool:
+    """Click lần lượt 31 ô điểm danh, từ ngày 31 về ngày 1."""
+    day_positions = _build_day_positions(screen_width, screen_height)
+    log(f"[{account.username}] Bắt đầu click {len(day_positions)} ô theo thứ tự ngày 31 → ngày 1.")
+
+    for day, x, y in day_positions:
+        if not worker._wait_if_paused():
+            log(f"[{account.username}] Điểm danh đã dừng theo yêu cầu tại ô ngày {day}.")
+            return False
+        device.shell(f"input tap {x} {y}")
+        log(f"[{account.username}] Đã click ô ngày {day} tại ({x}, {y}).")
+        time.sleep(0.15)
+
+    return True
+
+
 def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> bool:
     """Xử lý điểm danh bằng template matching và đệ quy sau mỗi lần click."""
     templates = get_templates(_TEMPLATE_NAMES)
@@ -80,6 +118,35 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> boo
     if template_name is None:
         log(f"[{account.username}] Không nhận diện được template Điểm danh; có thể đã chuyển sang màn hình khác.")
         return False
+
+    if template_name == _TEMPLATE_NGAY_CAN_DIEM_DANH:
+        try:
+            screen_height, screen_width = screen_bgr.shape[:2]
+            if not _tap_all_days(
+                worker, device, account, screen_width, screen_height, log
+            ):
+                return False
+
+            # Đóng màn hình lịch điểm danh giống flow cũ.
+            close_x = round(0.972396 * screen_width)
+            close_y = round(0.119444 * screen_height)
+            if not worker._wait_if_paused():
+                log(f"[{account.username}] Điểm danh đã dừng trước khi đóng lịch.")
+                return False
+            log(
+                f"[{account.username}] Đóng màn hình lịch điểm danh "
+                f"tại ({close_x}, {close_y})."
+            )
+            device.shell(f"input tap {close_x} {close_y}")
+            time.sleep(0.5)
+        except Exception as exc:
+            log(f"[{account.username}] Không hoàn tất được 31 ô điểm danh: {exc}")
+            return False
+
+        return run(
+            worker, account, steps, device, ocr_client, log,
+            screenshot=None,
+        )
 
     if template_name == _TEMPLATE_DANG_CHON_DIEM_DANH:
         positions = ButtonPositions()
