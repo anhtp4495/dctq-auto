@@ -1,5 +1,34 @@
 {
   "display_name": "Trung lập 4 sao - Hà Đông",
-  "description": "Chiến thuật Quốc chiến dành cho mục tiêu Hà Đông cấp 4 sao, triển khai theo phương án trung lập.",
-  "steps": []
+  "description": "Chiến thuật mẫu 4 bước cho mục tiêu Hà Đông cấp 4 sao. Cần thay tọa độ trước khi chạy.",
+  "steps": [
+    {
+      "type": "click",
+      "x": 0,
+      "y": 0,
+      "delay": 500,
+      "description": "MẪU 1: Mở bản đồ Quốc chiến - cập nhật tọa độ"
+    },
+    {
+      "type": "click",
+      "x": 0,
+      "y": 0,
+      "delay": 500,
+      "description": "MẪU 2: Chọn mục tiêu Hà Đông - cập nhật tọa độ"
+    },
+    {
+      "type": "click",
+      "x": 0,
+      "y": 0,
+      "delay": 500,
+      "description": "MẪU 3: Chọn phương án trung lập - cập nhật tọa độ"
+    },
+    {
+      "type": "click",
+      "x": 0,
+      "y": 0,
+      "delay": 500,
+      "description": "MẪU 4: Xác nhận triển khai - cập nhật tọa độ"
+    }
+  ]
 }
