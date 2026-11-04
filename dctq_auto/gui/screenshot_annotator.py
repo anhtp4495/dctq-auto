@@ -1085,7 +1085,7 @@ class ScreenshotAnnotator(QDialog):
         if step.get("type") == "click":
             self.image_view.set_strategy_active_step(index)
             coordinate = f"click ({step.get('x', 0)}, {step.get('y', 0)})"
-            interval = max(650, int(step.get("delay", 0)))
+            interval = max(0, int(step.get("delay", 0)))
             self.strategy_editor_status.setText(
                 f"Xem trước bước {index + 1}/{len(self._strategy_steps)}: "
                 f"{description} — {coordinate}"
@@ -1093,7 +1093,7 @@ class ScreenshotAnnotator(QDialog):
         elif step.get("type") == "swipe":
             self.image_view.set_strategy_active_step(index)
             coordinate = f"swipe {step.get('from', [])} → {step.get('to', [])}"
-            interval = max(650, int(step.get("duration", 300)) + int(step.get("delay", 0)))
+            interval = max(0, int(step.get("duration", 300)) + int(step.get("delay", 0)))
             self.strategy_editor_status.setText(
                 f"Xem trước bước {index + 1}/{len(self._strategy_steps)}: "
                 f"{description} — {coordinate}"
@@ -1121,6 +1121,7 @@ class ScreenshotAnnotator(QDialog):
                 f"vòng {self._strategy_preview_repeat}/{repeat}: {start} → {end}"
             )
             interval = max(650, int(step.get("duration", 300)) + int(step.get("delay", 0)))
+        # Match the JSON timing: click delay, or swipe duration plus delay.
         self._strategy_preview_timer.start(interval)
 
     def _advance_strategy_preview(self) -> None:
