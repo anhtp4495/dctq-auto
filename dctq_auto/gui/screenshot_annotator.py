@@ -66,7 +66,7 @@ class _StrategyTestThread(QThread):
     def run(self) -> None:
         try:
             device = AdbClient(self.serial).connect()
-            for index, step in enumerate(self.steps, start=1):
+            for step in self.steps:
                 if step["type"] == "click":
                     device.shell(f"input tap {step['x']} {step['y']}")
                 else:
@@ -208,7 +208,6 @@ class ClickableImage(QWidget):
                 painter.drawRect(QRect(QPoint(x1, y1), QPoint(x2, y2)).normalized())
 
             if self._strategy_steps:
-                from PySide6.QtCore import QPointF
                 pen = QPen(Qt.GlobalColor.cyan)
                 pen.setWidth(3)
                 painter.setPen(pen)
@@ -492,6 +491,7 @@ class ScreenshotAnnotator(QDialog):
         self.scroll_area.setWidget(self.image_view)
         self.image_view.set_scroll_area(self.scroll_area)
         root.addWidget(self.scroll_area, 1)
+        self._refresh_strategy_overlay()
 
         zoom_row = QHBoxLayout()
         zoom_row.addWidget(QLabel("Zoom:"))
@@ -1158,6 +1158,7 @@ class ScreenshotAnnotator(QDialog):
         self.image_view._pixmap = self._pixmap
         self._apply_zoom()
         self.image_view.set_points(self._points)
+        self._refresh_strategy_overlay()
         self.image_view.set_ocr_boxes([])
         self.image_info.setText(
             f"{self._image_path} — ảnh gốc {self._pixmap.width()}×{self._pixmap.height()} px"
