@@ -4,12 +4,19 @@ from pathlib import Path
 
 from dctq_auto.config.constants import _STEP_CHIEN_TRANH_QUOC_CHIEN
 from dctq_auto.tasks.common.state_war.task_run_state_war import (
+    get_battle_step_progress_label,
+    load_battle_strategy,
     run_battle_strategy,
 )
 
 
-def pre_state_war(steps, strategy_path: str, log) -> bool:
-    """Kiểm tra step Quốc chiến và chiến thuật JSON trước khi chạy."""
+def pre_state_war(
+    steps,
+    strategy_path: str,
+    log,
+    progress_items: list[str] | None = None,
+) -> bool:
+    """Kiểm tra chiến thuật và tạo danh sách tiến trình Quốc chiến."""
     if _STEP_CHIEN_TRANH_QUOC_CHIEN not in steps:
         log("Quốc chiến: không có step Quốc chiến trong danh sách; bỏ qua.")
         return False
@@ -17,6 +24,21 @@ def pre_state_war(steps, strategy_path: str, log) -> bool:
     if not strategy_path or not str(strategy_path).strip():
         log("Quốc chiến: chưa chọn chiến thuật (strategy_path); bỏ qua.")
         return False
+
+    try:
+        _data, strategy_steps = load_battle_strategy(strategy_path)
+    except (OSError, ValueError) as exc:
+        log(f"Quốc chiến: chiến thuật không hợp lệ: {exc}")
+        return False
+
+    if progress_items is not None:
+        progress_items.clear()
+        progress_items.extend(["Bắt đầu"])
+        progress_items.extend(
+            get_battle_step_progress_label(step)
+            for step in strategy_steps
+        )
+        progress_items.append("Kết thúc")
 
     log("Quốc chiến: tìm thấy step Quốc chiến và đã chọn chiến thuật; sẵn sàng.")
     return True
