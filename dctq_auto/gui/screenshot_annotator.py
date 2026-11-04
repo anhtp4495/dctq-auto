@@ -964,6 +964,7 @@ class ScreenshotAnnotator(QDialog):
         self.strategy_path_points_label.setText("0 điểm")
         if self._strategy_capture_target == "swipe_path":
             self.strategy_capture_path_button.setEnabled(True)
+        self._update_strategy_field_visibility()
         self._refresh_strategy_overlay(include_form=True)
         self.strategy_editor_status.setText("Đã xóa các điểm của đường vuốt.")
 
