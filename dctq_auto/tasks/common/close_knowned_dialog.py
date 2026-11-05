@@ -15,8 +15,10 @@ from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
 
 
-def close_knowned_dialog(self, account, device, ocr_client, log) -> bool:
-    """Đóng một dialog đã biết nếu phát hiện; trả về True nếu đã click."""
+def close_knowned_dialog(
+    self, account, device, ocr_client, log, screenshot
+) -> bool:
+    """Đóng dialog đã biết trên screenshot được cung cấp; không tự chụp màn hình."""
     template_names = (
         _TEMPLATE_ACCOUNT_CLOSE_CAP_NHAT_THONG_TIN,
         _TEMPLATE_ACCOUNT_CAP_NHAT_THONG_TIN,
@@ -26,11 +28,11 @@ def close_knowned_dialog(self, account, device, ocr_client, log) -> bool:
 
     try:
         screen = cv2.cvtColor(
-            np.asarray(device.screenshot()),
+            np.asarray(screenshot),
             cv2.COLOR_RGB2BGR,
         )
     except Exception as exc:
-        log(f"[{account.username}] Không chụp được màn hình để kiểm tra dialog: {exc}")
+        log(f"[{account.username}] Không xử lý được screenshot để kiểm tra dialog: {exc}")
         return False
 
     positions = ButtonPositions()
