@@ -25,8 +25,8 @@
     },
     {
       "type": "click",
-      "x": 527,
-      "y": 491,
+      "x": 353,
+      "y": 636,
       "delay": 300,
       "description": "Võ tướng 1 - Triển khai"
     },
@@ -39,9 +39,9 @@
     },
     {
       "type": "click",
-      "x": 1438,
-      "y": 520,
-      "delay": 300,
+      "x": 1472,
+      "y": 540,
+      "delay": 1500,
       "description": "Võ tướng 2 - Triển khai"
     },
     {
@@ -54,7 +54,21 @@
         960,
         50
       ],
-      "duration": 500,
+      "duration": 300,
+      "delay": 300,
+      "description": "Mở cửa giao tranh B -> A"
+    },
+    {
+      "type": "swipe",
+      "from": [
+        960,
+        800
+      ],
+      "to": [
+        960,
+        50
+      ],
+      "duration": 300,
       "delay": 300,
       "description": "Mở cửa giao tranh B -> A"
     },
@@ -99,6 +113,34 @@
       "y": 762,
       "delay": 300,
       "description": "Võ tướng 5 - Triển khai"
+    },
+    {
+      "type": "click",
+      "x": 1191,
+      "y": 950,
+      "delay": 300,
+      "description": "Sử dụng kỹ năng"
+    },
+    {
+      "type": "click",
+      "x": 1041,
+      "y": 950,
+      "delay": 300,
+      "description": "Sử dụng kỹ năng"
+    },
+    {
+      "type": "swipe",
+      "from": [
+        960,
+        350
+      ],
+      "to": [
+        960,
+        800
+      ],
+      "duration": 500,
+      "delay": 300,
+      "description": "Mở cửa giao tranh A -> B"
     }
   ]
 }

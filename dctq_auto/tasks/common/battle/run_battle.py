@@ -45,6 +45,7 @@ def run(self, account, device, ocr_client, log) -> bool:
     strategy_path = config.get("battle_strategy_path") or (
         Path(__file__).resolve().parent
         / "battle_strategies"
+        / "ranked"
         / default_strategy_name
     )
 
