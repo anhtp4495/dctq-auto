@@ -10,6 +10,13 @@ from typing import Any
 from uuid import uuid4
 
 
+class ProgressCategory(str, Enum):
+    """Structural kind of a progress item."""
+
+    ACCOUNT = "account"
+    STANDALONE = "standalone"
+
+
 class ProgressStatus(str, Enum):
     """Lifecycle states shared by all progress items."""
 
@@ -35,7 +42,7 @@ class ProgressInfo:
     """A single progress item; parent_id enables nested progress trees."""
 
     name: str
-    category: str
+    category: ProgressCategory | str
     id: str = field(default_factory=lambda: uuid4().hex)
     parent_id: str | None = None
     account: str | None = None
@@ -50,8 +57,7 @@ class ProgressInfo:
     def __post_init__(self) -> None:
         if not self.name.strip():
             raise ValueError("ProgressInfo.name không được để trống.")
-        if not self.category.strip():
-            raise ValueError("ProgressInfo.category không được để trống.")
+        self.category = ProgressCategory(self.category)
         self.status = ProgressStatus(self.status)
         self._validate_counts()
 
@@ -95,14 +101,14 @@ class ProgressManager:
 
             if "status" in changes:
                 changes["status"] = ProgressStatus(changes["status"])
+            if "category" in changes:
+                changes["category"] = ProgressCategory(changes["category"])
 
             # Validate a candidate first so a bad update cannot partially mutate
             # the live progress record.
             candidate = replace(item, **changes)
             if not candidate.name.strip():
                 raise ValueError("ProgressInfo.name không được để trống.")
-            if not candidate.category.strip():
-                raise ValueError("ProgressInfo.category không được để trống.")
             candidate._validate_counts()
 
             for key, value in changes.items():
