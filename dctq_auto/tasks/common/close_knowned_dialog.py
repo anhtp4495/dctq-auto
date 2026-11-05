@@ -1,4 +1,4 @@
-""""Đóng các dialog đã biết đang mở trên màn hình game."""
+"""Đóng các dialog đã biết đang mở trên màn hình game."""
 
 import cv2
 
@@ -76,4 +76,3 @@ def close_knowned_dialog(
         return True
 
     return False
-"
