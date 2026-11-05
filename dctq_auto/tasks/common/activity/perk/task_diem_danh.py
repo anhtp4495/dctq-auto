@@ -265,13 +265,15 @@ def _tap_all_days(
     }
     target_day = max(already_days, default=0) + 1
     if target_day > 30:
-        log(f"[{account.display_name}] Đã điểm danh đủ 30 ngày.")
-        return True
-
-    log(
-        f"[{account.display_name}] Ngày cần điểm danh được xác định là "
-        f"ngày {target_day}; sẽ ưu tiên xử lý ngày này trước."
-    )
+        log(
+            f"[{account.display_name}] Không còn ngày điểm danh thường; "
+            f"kiểm tra các ngày còn thiếu để điểm danh bù."
+        )
+    else:
+        log(
+            f"[{account.display_name}] Ngày cần điểm danh được xác định là "
+            f"ngày {target_day}; sẽ ưu tiên xử lý ngày này trước."
+        )
 
     catchup_count = 0
     processed_catchup_days = set()
@@ -302,9 +304,6 @@ def _tap_all_days(
                 f"là ngày {target_day + 1}."
             )
             target_day += 1
-            if catchup_count >= 3:
-                log(f"[{account.display_name}] Đã đạt giới hạn 3 ngày điểm danh bù.")
-                break
             continue
 
         log(f"[{account.display_name}] Đã xử lý ngày cần điểm danh {target_day}.")
