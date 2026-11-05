@@ -1946,7 +1946,7 @@ class MainWindow(QMainWindow):
             self.progress_bar.setValue(0)
             self.clone_result_list.clear()
             for account in accounts:
-                label = account.username if account.enabled else f"{account.username} — Đã vô hiệu hóa"
+                label = account.display_name if account.enabled else f"{account.display_name} — Đã vô hiệu hóa"
                 item = QListWidgetItem(label)
                 item.setIcon(
                     self._status_icon("·", "#6e7781")
