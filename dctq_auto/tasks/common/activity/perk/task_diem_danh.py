@@ -103,9 +103,7 @@ def _build_day_regions(screen_width: int, screen_height: int):
                 right,
                 round(bottom * scale_y),
             )
-            center_x = (left + right) // 2
-            center_y = (region[0] + region[3]) // 2
-            day_regions.append((day, region, center_x, center_y))
+            day_regions.append((day, region))
             day += 1
 
     return day_regions
@@ -123,9 +121,11 @@ def _match_day_template(screen_bgr, template, search_rect):
     )
 
 def _tap_day(
-    worker, device, account, day, region, x, y, templates, log
+    worker, device, account, day, region, templates, log
 ) -> str | None:
-    """Click một ngày; chỉ xác nhận thường khi ô chuyển sang đã điểm danh."""
+    """Click trung điểm vùng ngày; chỉ xác nhận thường khi ô đã điểm danh."""
+    tap_x = (region[1] + region[2]) // 2
+    tap_y = (region[0] + region[3]) // 2
     already_template = templates.get(_TEMPLATE_DA_DIEM_DANH)
     if already_template is None:
         log(f"[{account.display_name}] Thiếu template đã điểm danh.")
@@ -136,10 +136,11 @@ def _tap_day(
             return None
 
         log(
-            f"[{account.display_name}] Click ngày {day} tại ({x}, {y}) "
+            f"[{account.display_name}] Click ngày {day} tại "
+            f"({tap_x}, {tap_y}) từ region={region} "
             f"(lần {attempt}/{_TAP_DAY_MAX_TRIES})."
         )
-        device.shell(f"input tap {x} {y}")
+        device.shell(f"input tap {tap_x} {tap_y}")
         time.sleep(0.8)
 
         try:
@@ -214,7 +215,7 @@ def _scan_day_statuses(
     already_days = set()
     log(f"[{account.display_name}] Bắt đầu quét trạng thái {len(day_regions)} ngày.")
 
-    for day, search_rect, x, y in day_regions:
+    for day, search_rect in day_regions:
         if not worker._wait_if_paused():
             log(f"[{account.display_name}] Điểm danh đã dừng theo yêu cầu tại ngày {day}.")
             return None, None
@@ -261,10 +262,7 @@ def _tap_all_days(
     if already_days is None:
         return False
 
-    region_by_day = {
-        day: (region, x, y)
-        for day, region, x, y in day_regions
-    }
+    region_by_day = dict(day_regions)
     target_day = max(already_days, default=0) + 1
     if target_day > 30:
         log(
@@ -290,9 +288,9 @@ def _tap_all_days(
             target_day += 1
             continue
 
-        region, x, y = region_by_day[target_day]
+        region = region_by_day[target_day]
         result = _tap_day(
-            worker, device, account, target_day, region, x, y, templates, log
+            worker, device, account, target_day, region, templates, log
         )
         if result is None:
             return False
@@ -323,9 +321,9 @@ def _tap_all_days(
             if not worker._wait_if_paused():
                 return False
 
-            region, x, y = region_by_day[day]
+            region = region_by_day[day]
             result = _tap_day(
-                worker, device, account, day, region, x, y, templates, log
+                worker, device, account, day, region, templates, log
             )
             if result is None:
                 return False
