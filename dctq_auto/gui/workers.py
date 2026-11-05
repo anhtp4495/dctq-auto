@@ -119,6 +119,7 @@ class BotWorker(
         key = (parent_id, task_name)
         progress_id = self._progress_items_by_key.get(key)
         status_map = {
+            "pending": ProgressStatus.PENDING,
             "running": ProgressStatus.RUNNING,
             "done": ProgressStatus.SUCCESS,
             "success": ProgressStatus.SUCCESS,
