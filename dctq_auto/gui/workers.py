@@ -58,6 +58,7 @@ class BotWorker(
         self._progress_items_by_key: dict[tuple[str, str], str] = {}
         self._progress_accounts: dict[str, str] = {}
         self._active_progress_account_id: str | None = None
+        self._progress_failed = False
 
     def _ensure_progress_root(self) -> ProgressInfo:
         """Create the root item lazily so each worker run owns one progress tree."""
@@ -184,11 +185,22 @@ class BotWorker(
             self._emit_progress_item(item)
         self.clone_account_result.emit(display_name, succeeded)
 
+    def _set_root_status(self, status: ProgressStatus, message: str) -> None:
+        if self._progress_root_id is None:
+            return
+        item = self.progress_manager.update(
+            self._progress_root_id, status=status, message=message
+        )
+        self._emit_progress_item(item)
+
     def pause(self) -> None:
         self._resume_event.clear()
+        self._set_root_status(ProgressStatus.PAUSED, "Đang tạm dừng")
 
     def resume(self) -> None:
         self._resume_event.set()
+        self._set_root_status(ProgressStatus.RUNNING, "Đang tiếp tục")
+
 
     def _wait_if_paused(self) -> bool:
         while not self._resume_event.wait(0.1):
@@ -769,12 +781,40 @@ class BotWorker(
 
 
     def run(self) -> None:
+        try:
+            self._run_impl()
+        except Exception as exc:
+            self._progress_failed = True
+            self.log_message.emit(f"Lỗi worker: {exc}")
+        finally:
+            if self._progress_root_id is not None:
+                descendants = self.progress_manager.get_all()
+                has_failed = any(
+                    item.status == ProgressStatus.FAILED
+                    for item in descendants
+                )
+                status = (
+                    ProgressStatus.STOPPED
+                    if self.isInterruptionRequested()
+                    else ProgressStatus.FAILED
+                    if self._progress_failed or has_failed
+                    else ProgressStatus.SUCCESS
+                )
+                message = {
+                    ProgressStatus.STOPPED: "Đã dừng",
+                    ProgressStatus.FAILED: "Có tác vụ thất bại",
+                    ProgressStatus.SUCCESS: "Hoàn tất",
+                }[status]
+                self._set_root_status(status, message)
+
+    def _run_impl(self) -> None:
         if self._mock_mode:
             self._emit_overall_progress(0, 1, "Đang chuẩn bị chạy thử")
             self.log_message.emit("Bắt đầu với cấu hình đã chọn.")
             try:
                 self._run_mock()
             except Exception as exc:
+                self._progress_failed = True
                 self.log_message.emit(f"Lỗi chạy thử: {exc}")
             return
 
@@ -841,4 +881,5 @@ class BotWorker(
                 "Chưa thực hiện nhiệm vụ trong game: logic gameplay thật chưa được triển khai."
             )
         except Exception as exc:
+            self._progress_failed = True
             self.log_message.emit(f"Lỗi: {exc}")
