@@ -247,10 +247,9 @@ class CustomBattle(BaseBattle):
                             commands.append(
                                 f'input "$event" MOVE {move_x} {move_y}'
                             )
-                            if move_index < move_count:
-                                commands.append(
-                                    f"sleep {duration / move_count / 1000:.3f}"
-                                )
+                            commands.append(
+                                f"sleep {duration / move_count / 1000:.3f}"
+                            )
                         commands.append(f'input "$event" UP {x2} {y2}')
                         device.shell("; ".join(commands))
                     else:
