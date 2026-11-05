@@ -33,8 +33,9 @@ def pre_diem_danh(steps) -> bool:
 
 _SCREEN_TEMPLATE_NAMES = (
     _TEMPLATE_XAC_NHAN_DIEM_DANH_BU,
-    _TEMPLATE_DANG_CHON_DIEM_DANH,
 )
+
+_TAP_DAY_MAX_TRIES = 3
 
 
 def _find_template(screen_bgr, templates, account, log):
@@ -121,81 +122,82 @@ def _match_day_template(screen_bgr, template, search_rect):
         grayscale=template.grayscale,
     )
 
-def _read_screen_state(device, account, templates, log) -> str | None:
-    """Nhận diện trạng thái màn hình sau khi click một ngày."""
-    screenshot = device.screenshot()
-    screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
-
-    template_name, match = _find_template(
-        screen_bgr, templates, account, log
-    )
-    if template_name is None:
-        return None
-
-    return template_name
-
-
 def _tap_day(
     worker, device, account, day, region, x, y, templates, log
 ) -> str | None:
-    """Click một ngày và xác định đó là điểm danh thường hay điểm danh bù."""
-    if not worker._wait_if_paused():
+    """Click một ngày; chỉ xác nhận thường khi ô chuyển sang đã điểm danh."""
+    already_template = templates.get(_TEMPLATE_DA_DIEM_DANH)
+    if already_template is None:
+        log(f"[{account.display_name}] Thiếu template đã điểm danh.")
         return None
 
-    log(f"[{account.display_name}] Click ngày {day} tại ({x}, {y}).")
-    device.shell(f"input tap {x} {y}")
-    time.sleep(0.8)
-
-    try:
-        screen_state = _read_screen_state(device, account, templates, log)
-    except Exception as exc:
-        log(f"[{account.display_name}] Không kiểm tra được trạng thái sau khi click ngày {day}: {exc}")
-        return None
-
-    if screen_state == _TEMPLATE_XAC_NHAN_DIEM_DANH_BU:
-        log(f"[{account.display_name}] Ngày {day} yêu cầu xác nhận điểm danh bù.")
+    for attempt in range(1, _TAP_DAY_MAX_TRIES + 1):
         if not worker._wait_if_paused():
             return None
 
-        template = templates.get(_TEMPLATE_XAC_NHAN_DIEM_DANH_BU)
-        if template is None:
-            log(f"[{account.display_name}] Thiếu template xác nhận điểm danh bù.")
-            return None
+        log(
+            f"[{account.display_name}] Click ngày {day} tại ({x}, {y}) "
+            f"(lần {attempt}/{_TAP_DAY_MAX_TRIES})."
+        )
+        device.shell(f"input tap {x} {y}")
+        time.sleep(0.8)
 
-        screenshot = device.screenshot()
-        screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
         try:
-            match = match_template(
-                screen_bgr,
-                template.image,
-                threshold=template.threshold,
-                method=template.method,
-                search_rect=template.search_rect,
-                grayscale=template.grayscale,
+            screenshot = device.screenshot()
+            screen_bgr = cv2.cvtColor(
+                np.asarray(screenshot), cv2.COLOR_RGB2BGR
+            )
+            screen_template_name, screen_match = _find_template(
+                screen_bgr, templates, account, log
+            )
+        except Exception as exc:
+            log(
+                f"[{account.display_name}] Không kiểm tra được trạng thái "
+                f"sau khi click ngày {day}: {exc}"
+            )
+            continue
+
+        if screen_template_name == _TEMPLATE_XAC_NHAN_DIEM_DANH_BU:
+            log(f"[{account.display_name}] Ngày {day} yêu cầu xác nhận điểm danh bù.")
+            if not worker._wait_if_paused():
+                return None
+            if screen_match is None:
+                log(f"[{account.display_name}] Không tìm thấy vùng xác nhận điểm danh bù ngày {day}.")
+                return None
+
+            _tap_match_center(device, screen_match, account, log)
+            time.sleep(0.8)
+            return "catchup"
+
+        try:
+            already_match = _match_day_template(
+                screen_bgr, already_template, region
             )
         except (ValueError, cv2.error) as exc:
-            log(f"[{account.display_name}] Lỗi nhận diện hộp thoại điểm danh bù ngày {day}: {exc}")
-            return None
+            log(
+                f"[{account.display_name}] Lỗi kiểm tra ngày {day} đã điểm danh: {exc}"
+            )
+            already_match = None
 
-        if match is None:
-            log(f"[{account.display_name}] Hộp thoại xác nhận điểm danh bù ngày {day} đã biến mất.")
-            return None
+        if already_match is not None:
+            report_template_match(
+                log,
+                context=f"[{account.display_name}] Ngày {day}",
+                template=already_template,
+                match=already_match,
+            )
+            return "normal"
 
-        report_template_match(
-            log,
-            context=f"[{account.display_name}]",
-            template=template,
-            match=match,
+        log(
+            f"[{account.display_name}] Ngày {day} chưa chuyển sang trạng thái "
+            f"đã điểm danh; sẽ thử lại."
         )
-        _tap_match_center(device, match, account, log)
-        return "catchup"
 
-    if screen_state == _TEMPLATE_DANG_CHON_DIEM_DANH:
-        return "normal"
-
-    log(f"[{account.display_name}] Không xác định được kết quả click ngày {day}.")
+    log(
+        f"[{account.display_name}] Đã thử click ngày {day} "
+        f"{_TAP_DAY_MAX_TRIES} lần nhưng chưa xác nhận được trạng thái đã điểm danh."
+    )
     return None
-
 
 def _scan_day_statuses(
     worker, device, account, screen_width, screen_height, templates, log
