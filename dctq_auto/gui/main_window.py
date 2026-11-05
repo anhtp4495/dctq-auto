@@ -956,7 +956,6 @@ class MainWindow(QMainWindow):
             self.state_war_strategy_combo.setCurrentIndex(selected_index)
         self.state_war_strategy_combo.blockSignals(False)
         self._update_state_war_description()
-        self._log(f"Quốc chiến: đã nạp {len(strategies)} chiến thuật JSON.")
 
     def _update_state_war_description(self, *_args) -> None:
         """Show the description belonging to the selected JSON strategy."""
