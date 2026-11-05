@@ -141,6 +141,34 @@
       "duration": 500,
       "delay": 300,
       "description": "Mở cửa giao tranh A -> B"
+    },
+    {
+      "type": "click",
+      "x": 1041,
+      "y": 950,
+      "delay": 300,
+      "description": "Sử dụng kỹ năng"
+    },
+    {
+      "type": "click",
+      "x": 894,
+      "y": 801,
+      "delay": 300,
+      "description": "Sử dụng kỹ năng"
+    },
+    {
+      "type": "click",
+      "x": 729,
+      "y": 955,
+      "delay": 300,
+      "description": "Sử dụng kỹ năng"
+    },
+    {
+      "type": "click",
+      "x": 586,
+      "y": 955,
+      "delay": 300,
+      "description": "Sử dụng kỹ năng"
     }
   ]
 }
