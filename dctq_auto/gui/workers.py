@@ -260,7 +260,7 @@ class BotWorker(
                 if finished:
                     if not self._mock_tick(f"Kết thúc {task} {number}: {reason}."):
                         return False
-                    self.task_progress_changed.emit(task, "running", number, count)
+                    self._emit_task_progress(task, "running", number, count)
                     self._progress_completed += 1
                     self._emit_mock_progress(0, f"Hoàn thành lượt {self._progress_completed}/{self._progress_total}: {task} {number}/{count}")
                     break
@@ -283,7 +283,7 @@ class BotWorker(
                 self.log_message.emit,
                 add_progress_item=self.task_progress_item_added.emit,
             ):
-                self.task_progress_changed.emit(
+                self._emit_task_progress(
                     "Triển khai chiến thuật Quốc chiến", "ignored", 0, 1
                 )
                 return
@@ -291,50 +291,50 @@ class BotWorker(
                 data, steps = load_battle_strategy(strategy_path)
             except Exception as exc:
                 self.log_message.emit(f"[Chạy thử] Quốc chiến: chiến thuật không hợp lệ: {exc}")
-                self.task_progress_changed.emit(
+                self._emit_task_progress(
                     "Triển khai chiến thuật Quốc chiến", "failed", 0, 1
                 )
                 return
             name = str(data.get("name") or "Chiến thuật")
             total = len(steps)
-            self.progress_changed.emit(0, total, f"Chạy thử Quốc chiến: {name}")
-            self.task_progress_changed.emit("Bắt đầu", "running", 0, 1)
-            self.task_progress_changed.emit("Bắt đầu", "done", 1, 1)
+            self._emit_overall_progress(0, total, f"Chạy thử Quốc chiến: {name}")
+            self._emit_task_progress("Bắt đầu", "running", 0, 1)
+            self._emit_task_progress("Bắt đầu", "done", 1, 1)
             for index, step in enumerate(steps, start=1):
                 progress_label = get_battle_step_progress_label(step, index)
-                self.task_progress_changed.emit(
+                self._emit_task_progress(
                     progress_label, "running", 0, 1
                 )
                 if not self._mock_tick(
                     f"[Chạy thử] Quốc chiến {name}: {step['type']} ({index}/{total})."
                 ):
-                    self.task_progress_changed.emit(
+                    self._emit_task_progress(
                         progress_label, "stopped", 0, 1
                     )
                     return
-                self.task_progress_changed.emit(
+                self._emit_task_progress(
                     progress_label, "done", 1, 1
                 )
-                self.progress_changed.emit(
+                self._emit_overall_progress(
                     index, total, f"Chạy thử Quốc chiến: {index}/{total}"
                 )
-            self.task_progress_changed.emit("Kết thúc", "running", 0, 1)
-            self.task_progress_changed.emit("Kết thúc", "done", 1, 1)
+            self._emit_task_progress("Kết thúc", "running", 0, 1)
+            self._emit_task_progress("Kết thúc", "done", 1, 1)
             self.log_message.emit(
                 f"[Chạy thử] Hoàn tất mô phỏng chiến thuật Quốc chiến '{name}'. Không gửi lệnh ADB."
             )
             return
         if self._config.get("strategy_mode"):
             total_stages = 100
-            self.progress_changed.emit(0, total_stages, "Chạy thử Mưu Binh")
+            self._emit_overall_progress(0, total_stages, "Chạy thử Mưu Binh")
             for stage in range(1, total_stages + 1):
                 label = f"Ải {stage}"
-                self.task_progress_changed.emit(label, "running", 0, 1)
+                self._emit_task_progress(label, "running", 0, 1)
                 if not self._mock_tick(f"[Chạy thử] Mưu Binh: hoàn thành {label}."):
-                    self.task_progress_changed.emit(label, "stopped", 0, 1)
+                    self._emit_task_progress(label, "stopped", 0, 1)
                     return
-                self.task_progress_changed.emit(label, "done", 1, 1)
-                self.progress_changed.emit(stage, total_stages, f"Chạy thử: {label}")
+                self._emit_task_progress(label, "done", 1, 1)
+                self._emit_overall_progress(stage, total_stages, f"Chạy thử: {label}")
             return
         if self._config.get("utility_tasks_mode"):
             selected = []
@@ -417,11 +417,11 @@ class BotWorker(
                 selected.append("Đổi tài khoản")
             if self._config.get("task_click_coordinates"):
                 selected.append("Click theo tọa độ")
-            self.progress_changed.emit(0, max(1, len(selected)), "Bắt đầu tác vụ")
+            self._emit_overall_progress(0, max(1, len(selected)), "Bắt đầu tác vụ")
             for index, task in enumerate(selected, start=1):
-                self.task_progress_changed.emit(task, "running", 0, 1)
+                self._emit_task_progress(task, "running", 0, 1)
                 if not self._mock_tick(f"[Chạy thử] Thực hiện: {task}"):
-                    self.task_progress_changed.emit(task, "stopped", 0, 1)
+                    self._emit_task_progress(task, "stopped", 0, 1)
                     return
                 if task in ("Bắt đầu trận Giao Tranh", "Thời gian tối đa Giao Tranh") or task.startswith("Chờ Giao Tranh "):
                     count = max(1, int(self._config.get("task_open_battle_count", 1)))
@@ -439,7 +439,7 @@ class BotWorker(
                         f"chế độ={'thời gian tối đa ' + str(time_limit) + ' giây' if time_limit is not None else str(flags) + ' cờ'}."
                     )
                     if task == "Bắt đầu trận Giao Tranh":
-                        self.task_progress_changed.emit(
+                        self._emit_task_progress(
                             task, "running", 1, count
                         )
                         self.log_message.emit(
@@ -447,7 +447,7 @@ class BotWorker(
                         )
                     elif task == "Thời gian tối đa Giao Tranh" or task.startswith("Chờ Giao Tranh "):
                         if not self._simulate_battles("Giao tranh", count, flags, time_limit):
-                            self.task_progress_changed.emit(task, "stopped", 0, count)
+                            self._emit_task_progress(task, "stopped", 0, count)
                             return
                 elif task in ("Bắt đầu trận Tranh Bá", "Thời gian tối đa Tranh Bá"):
                     count = max(1, int(self._config.get("tranh_ba", 6)))
@@ -465,7 +465,7 @@ class BotWorker(
                         time_limit = None
                         flags = 4
                     if task == "Bắt đầu trận Tranh Bá":
-                        self.task_progress_changed.emit(task, "running", 1, count)
+                        self._emit_task_progress(task, "running", 1, count)
                         self.log_message.emit(
                             f"[Chạy thử] Mô phỏng thao tác bắt đầu trận Tranh Bá 1/{count}."
                         )
@@ -477,7 +477,7 @@ class BotWorker(
                             f"chế độ={'thời gian tối đa ' + str(time_limit) + ' giây' if time_limit is not None else str(flags) + ' cờ'}."
                         )
                         if not self._simulate_battles("Tranh bá", count, flags, time_limit):
-                            self.task_progress_changed.emit(task, "stopped", 0, count)
+                            self._emit_task_progress(task, "stopped", 0, count)
                             return
                 if task == "Bắt đầu trận Giao Tranh" and self._config.get("task_end_battle"):
                     # Dòng bắt đầu trận giữ mũi tên đến khi mô phỏng kết thúc trận.
@@ -495,23 +495,23 @@ class BotWorker(
                         and not self._config.get("task_championship_end_battle")
                     ):
                         count = max(1, int(self._config.get("tranh_ba", 6)))
-                        self.task_progress_changed.emit(
+                        self._emit_task_progress(
                             "Bắt đầu trận Tranh Bá", "done", count, count
                         )
-                    self.task_progress_changed.emit(task, "done", 1, 1)
+                    self._emit_task_progress(task, "done", 1, 1)
                 else:
                     if task == "Kết thúc trận Giao Tranh" and self._config.get("task_start_battle"):
                         count = max(1, int(self._config.get("task_open_battle_count", 1)))
-                        self.task_progress_changed.emit(
+                        self._emit_task_progress(
                             "Bắt đầu trận Giao Tranh", "done", count, count
                         )
                     if task == "Kết thúc trận Tranh Bá" and self._config.get("task_championship_start_battle"):
                         count = max(1, int(self._config.get("tranh_ba", 6)))
-                        self.task_progress_changed.emit(
+                        self._emit_task_progress(
                             "Bắt đầu trận Tranh Bá", "done", count, count
                         )
-                    self.task_progress_changed.emit(task, "done", 1, 1)
-                self.progress_changed.emit(index, max(1, len(selected)), task)
+                    self._emit_task_progress(task, "done", 1, 1)
+                self._emit_overall_progress(index, max(1, len(selected)), task)
             if not selected:
                 self.log_message.emit("Tab Tác vụ: chưa chọn tác vụ nào.")
             return
@@ -524,18 +524,18 @@ class BotWorker(
         total = sum(count for _task, count in tasks)
         if total == 0:
             self.log_message.emit("Không có nhiệm vụ nào được chọn.")
-            self.progress_changed.emit(0, 0, "Không có nhiệm vụ được chọn")
+            self._emit_overall_progress(0, 0, "Không có nhiệm vụ được chọn")
             return
 
         self._progress_total = total
         self._progress_completed = 0
-        self.progress_changed.emit(0, self._progress_total, "Bắt đầu")
+        self._emit_overall_progress(0, self._progress_total, "Bắt đầu")
         self.log_message.emit(
             f"Bắt đầu chạy thử {len(tasks)} nhóm nhiệm vụ, tổng cộng {total} lượt. "
             f"Không kết nối ADB và không điều khiển game."
         )
         for task, count in tasks:
-            self.task_progress_changed.emit(task, "running", 0, count)
+            self._emit_task_progress(task, "running", 0, count)
             if not self._wait_if_paused():
                 self.log_message.emit("Đã dừng theo yêu cầu.")
                 return
@@ -581,10 +581,10 @@ class BotWorker(
                     suffix = f" ({', '.join(extras)})" if extras else ""
                     if not self._mock_tick(f"{task}: chạy thử hoàn tất{suffix}."):
                         return
-                    self.task_progress_changed.emit(task, "running", number, count)
+                    self._emit_task_progress(task, "running", number, count)
                     self._progress_completed += 1
                     self._emit_mock_progress(0, f"Hoàn thành lượt {self._progress_completed}/{total}: {task} {number}/{count}")
-            self.task_progress_changed.emit(task, "done", count, count)
+            self._emit_task_progress(task, "done", count, count)
         self.log_message.emit("Hoàn tất chạy thử tất cả nhiệm vụ.")
 
     def _run_clone_mock(self) -> None:
@@ -621,12 +621,12 @@ class BotWorker(
         total = len(enabled_accounts)
         if total == 0:
             self.log_message.emit("Tab Clone: không có tài khoản hoặc nhiệm vụ để chạy.")
-            self.progress_changed.emit(0, 0, "Không có nhiệm vụ được chọn")
+            self._emit_overall_progress(0, 0, "Không có nhiệm vụ được chọn")
             return
 
         self._progress_total = total
         self._progress_completed = 0
-        self.progress_changed.emit(0, total, "Bắt đầu chạy thử Clone")
+        self._emit_overall_progress(0, total, "Bắt đầu chạy thử Clone")
         self.log_message.emit(
             f"Chạy thử Clone: {len(enabled_accounts)} tài khoản được bật, {len(accounts) - len(enabled_accounts)} tài khoản vô hiệu hóa, "
             f"{len(selected)} nhiệm vụ/tài khoản. Chế độ mô phỏng, không điều khiển game."
@@ -642,16 +642,16 @@ class BotWorker(
             if not self._wait_if_paused():
                 self.log_message.emit("Đã dừng theo yêu cầu.")
                 return
-            self.progress_changed.emit(
+            self._emit_overall_progress(
                 self._progress_completed, self._progress_total,
                 f"Tài khoản {account_index}/{len(accounts)}: {account.display_name}",
             )
-            self.clone_account_status.emit(account.display_name, "running")
+            self._emit_clone_account_status(account.display_name, "running")
             self.log_message.emit(
                 f"Đang xử lý tài khoản: {account.display_name}"
             )
             for task_index, (_key, label) in enumerate(selected, start=1):
-                self.progress_changed.emit(
+                self._emit_overall_progress(
                     self._progress_completed, self._progress_total,
                     f"{account.display_name} — {label} ({task_index}/{len(selected)})",
                 )
@@ -667,7 +667,7 @@ class BotWorker(
                     f"{flow_step}/{flow_total}."
                 ):
                     return
-                self.task_progress_changed.emit(
+                self._emit_task_progress(
                     f"{account.display_name} - {label}", "done", 1, 1
                 )
             # Record the account only after its selected mock steps finish.
@@ -677,7 +677,7 @@ class BotWorker(
                 f"Tiến trình tài khoản [{self._progress_completed}/{len(accounts)}]"
             )
             self.log_message.emit(progress_text)
-            self.progress_changed.emit(
+            self._emit_overall_progress(
                 self._progress_completed,
                 self._progress_total,
                 progress_text,
@@ -770,7 +770,7 @@ class BotWorker(
 
     def run(self) -> None:
         if self._mock_mode:
-            self.progress_changed.emit(0, 1, "Đang chuẩn bị chạy thử")
+            self._emit_overall_progress(0, 1, "Đang chuẩn bị chạy thử")
             self.log_message.emit("Bắt đầu với cấu hình đã chọn.")
             try:
                 self._run_mock()
@@ -778,7 +778,7 @@ class BotWorker(
                 self.log_message.emit(f"Lỗi chạy thử: {exc}")
             return
 
-        self.progress_changed.emit(0, 2, "Đang kết nối ADB")
+        self._emit_overall_progress(0, 2, "Đang kết nối ADB")
         self.log_message.emit(f"Bắt đầu với cấu hình: {self._config}")
         if not self._wait_if_paused():
             self.log_message.emit("Đã yêu cầu dừng trước khi kết nối ADB.")
@@ -810,7 +810,7 @@ class BotWorker(
 
                 account = SimpleNamespace(username="Mưu Binh")
                 steps = get_clone_step_registry().get_enabled_steps(self._config)
-                self.progress_changed.emit(0, 100, "Bắt đầu quy trình Chiến Tranh — Mưu Binh")
+                self._emit_overall_progress(0, 100, "Bắt đầu quy trình Chiến Tranh — Mưu Binh")
                 task_war.run(
                     self,
                     account,
@@ -827,7 +827,7 @@ class BotWorker(
             if self._config.get("clone_mode"):
                 self._run_clone_login(device)
                 return
-            self.progress_changed.emit(1, 2, "Đã kết nối ADB")
+            self._emit_overall_progress(1, 2, "Đã kết nối ADB")
 
 
             if not self._wait_if_paused():
@@ -836,7 +836,7 @@ class BotWorker(
 
             screenshot = client.save_screenshot(device, self._screenshot_dir)
             self.log_message.emit(f"Đã lưu screenshot: {screenshot}")
-            self.progress_changed.emit(2, 2, "Hoàn tất bước chuẩn bị")
+            self._emit_overall_progress(2, 2, "Hoàn tất bước chuẩn bị")
             self.log_message.emit(
                 "Chưa thực hiện nhiệm vụ trong game: logic gameplay thật chưa được triển khai."
             )
