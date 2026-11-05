@@ -429,7 +429,11 @@ class ScreenshotAnnotator(QDialog):
         root = QVBoxLayout(self)
         self._strategy_dir = (
             Path(__file__).resolve().parents[1]
-            / "tasks" / "common" / "state_war" / "battle_strategies"
+            / "tasks"
+            / "common"
+            / "battle"
+            / "battle_strategies"
+            / "state_war"
         )
         self._strategy_path: Path | None = None
         self._strategy_steps: list[dict] = []
