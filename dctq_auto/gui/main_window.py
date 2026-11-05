@@ -1933,8 +1933,8 @@ class MainWindow(QMainWindow):
             self._worker.progress_info_added.connect(self._add_clone_progress_item)
             self._worker.progress_info_changed.connect(self._update_clone_progress_item)
         else:
-            self._worker.task_progress_changed.connect(self._update_task_progress)
-            self._worker.task_progress_item_added.connect(self._add_task_progress_item)
+            self._worker.progress_info_added.connect(self._add_standalone_progress_item)
+            self._worker.progress_info_changed.connect(self._update_standalone_progress_item)
         self._init_task_progress(config)
         self._worker.finished.connect(self._on_worker_finished)
         self._set_settings_enabled(False)
@@ -2186,6 +2186,50 @@ class MainWindow(QMainWindow):
                         item, QAbstractItemView.ScrollHint.PositionAtCenter
                     )
                 return
+
+    def _add_standalone_progress_item(self, progress_info) -> None:
+        if progress_info.category != "standalone" or progress_info.parent_id is None:
+            return
+        if progress_info.name not in self.task_progress_labels:
+            item = QListWidgetItem()
+            self.task_progress_list.addItem(item)
+            self.task_progress_labels[progress_info.name] = item
+        self._update_standalone_progress_item(progress_info)
+
+    def _update_standalone_progress_item(self, progress_info) -> None:
+        if progress_info.category != "standalone" or progress_info.parent_id is None:
+            return
+        state = {
+            "pending": "pending",
+            "running": "running",
+            "paused": "paused",
+            "success": "done",
+            "failed": "failed",
+            "skipped": "skipped",
+            "stopped": "stopped",
+        }.get(progress_info.status.value, "pending")
+        self._render_task_progress(
+            progress_info.name, state, progress_info.current, progress_info.total
+        )
+        item = self.task_progress_labels.get(progress_info.name)
+        if item is not None:
+            item.setData(Qt.ItemDataRole.UserRole + 2, progress_info.id)
+            item.setData(Qt.ItemDataRole.UserRole + 3, progress_info.parent_id)
+            details = [progress_info.message] if progress_info.message else []
+            if progress_info.total > 1 or progress_info.current:
+                details.append(f"Tiến độ: {progress_info.current}/{progress_info.total}")
+            if progress_info.error:
+                details.append(f"Lỗi: {progress_info.error}")
+            if progress_info.started_at:
+                details.append(f"Bắt đầu: {progress_info.started_at:%H:%M:%S}")
+            if progress_info.finished_at:
+                details.append(f"Kết thúc: {progress_info.finished_at:%H:%M:%S}")
+                if progress_info.started_at:
+                    elapsed = max(0, int((progress_info.finished_at - progress_info.started_at).total_seconds()))
+                    minutes, seconds = divmod(elapsed, 60)
+                    hours, minutes = divmod(minutes, 60)
+                    details.append(f"Thời lượng: {hours:02d}:{minutes:02d}:{seconds:02d}")
+            item.setToolTip("\n".join(details))
 
     def _add_clone_progress_item(self, progress_info) -> None:
         if getattr(progress_info, "category", None) != "account":
