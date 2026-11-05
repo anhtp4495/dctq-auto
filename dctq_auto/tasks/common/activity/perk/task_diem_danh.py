@@ -311,7 +311,7 @@ def open_diem_danh(worker, account, device, ocr_client, log, screenshot=None) ->
     templates = get_templates(template_names)
     positions = ButtonPositions()
 
-    for attempt in range(3):
+    for attempt in range(6):
         if not worker._wait_if_paused():
             log(f"[{account.display_name}] Mở Điểm danh đã dừng theo yêu cầu.")
             return False
@@ -357,9 +357,9 @@ def open_diem_danh(worker, account, device, ocr_client, log, screenshot=None) ->
 
             log(f"[{account.display_name}] Phát hiện Điểm danh chưa được chọn.")
             _tap_match_center(device, match, account, log)
-            return True
+            continue
 
-        if attempt == 2:
+        if attempt == 5:
             break
 
         try:

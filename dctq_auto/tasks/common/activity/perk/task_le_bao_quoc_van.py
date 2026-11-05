@@ -122,7 +122,7 @@ def open_le_bao_quoc_van(worker, account, device, ocr_client, log, screenshot=No
     templates = get_templates(template_names)
     positions = ButtonPositions()
 
-    for attempt in range(3):
+    for attempt in range(6):
         if not worker._wait_if_paused():
             log(f"[{account.display_name}] Mở Lễ bao Quốc Vận đã dừng theo yêu cầu.")
             return False
@@ -171,9 +171,9 @@ def open_le_bao_quoc_van(worker, account, device, ocr_client, log, screenshot=No
 
             log(f"[{account.display_name}] Phát hiện Lễ bao Quốc Vận chưa được chọn.")
             _tap_match_center(device, match, account, log)
-            return True
+            continue
 
-        if attempt == 2:
+        if attempt == 5:
             break
 
         try:
