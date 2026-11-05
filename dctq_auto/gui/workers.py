@@ -121,6 +121,7 @@ class BotWorker(
                     current=max(0, current),
                     total=max(0, total),
                     message=name,
+                    error="Tác vụ thất bại" if status == ProgressStatus.FAILED else None,
                 )
             )
             self._progress_items_by_key[key] = item.id
