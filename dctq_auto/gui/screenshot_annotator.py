@@ -1295,7 +1295,7 @@ class ScreenshotAnnotator(QDialog):
 
         # Validate the same click/swipe schema used by the runtime executor.
         try:
-            from dctq_auto.tasks.common.state_war.task_run_state_war import _validate_step
+            from dctq_auto.tasks.common.battle.battle_strategies.custom_battle import _validate_step
             steps = [_validate_step(step, index) for index, step in enumerate(self._strategy_steps, 1)]
         except (ImportError, ValueError, TypeError) as exc:
             QMessageBox.warning(self, "Chiến thuật không hợp lệ", str(exc))
