@@ -92,13 +92,26 @@ class BotWorker(
         self._emit_progress_item(updated)
         self.progress_changed.emit(completed, total, message)
 
+    def _get_progress_task_name(self, name: str) -> str:
+        """Remove the active Clone account prefix from a child task label."""
+        account_id = self._active_progress_account_id
+        if account_id is None:
+            return name
+        account = self.progress_manager.get(account_id)
+        if account is None:
+            return name
+        account_name = account.account or account.name
+        prefix = f"{account_name} - "
+        return name[len(prefix):] if name.startswith(prefix) else name
+
     def _emit_task_progress(
         self, name: str, state: str, current: int, total: int
     ) -> None:
         """Update a task node and retain the existing task progress signal."""
         root = self._ensure_progress_root()
         parent_id = self._active_progress_account_id or root.id
-        key = (parent_id, name)
+        task_name = self._get_progress_task_name(name)
+        key = (parent_id, task_name)
         progress_id = self._progress_items_by_key.get(key)
         status_map = {
             "running": ProgressStatus.RUNNING,
@@ -115,12 +128,12 @@ class BotWorker(
                 ProgressInfo(
                     id=f"task-{len(self._progress_items_by_key) + 1}",
                     parent_id=parent_id,
-                    name=name,
+                    name=task_name,
                     category="standalone",
                     status=status,
                     current=max(0, current),
                     total=max(0, total),
-                    message=name,
+                    message=task_name,
                     error="Tác vụ thất bại" if status == ProgressStatus.FAILED else None,
                 )
             )
@@ -132,7 +145,7 @@ class BotWorker(
                 status=status,
                 current=max(0, current),
                 total=max(0, total),
-                message=name,
+                message=task_name,
                 error="Tác vụ thất bại" if status == ProgressStatus.FAILED else None,
             )
             self._emit_progress_item(item)
@@ -161,18 +174,19 @@ class BotWorker(
         """Register a pending task row while preserving the legacy list signal."""
         root = self._ensure_progress_root()
         parent_id = self._active_progress_account_id or root.id
-        key = (parent_id, name)
+        task_name = self._get_progress_task_name(name)
+        key = (parent_id, task_name)
         progress_id = self._progress_items_by_key.get(key)
         if progress_id is None:
             item = self.progress_manager.add(
                 ProgressInfo(
                     id=f"task-{len(self._progress_items_by_key) + 1}",
                     parent_id=parent_id,
-                    name=name,
+                    name=task_name,
                     category="standalone",
                     current=0,
                     total=max(0, total),
-                    message=name,
+                    message=task_name,
                 )
             )
             self._progress_items_by_key[key] = item.id
