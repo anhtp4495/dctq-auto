@@ -2267,7 +2267,7 @@ class MainWindow(QMainWindow):
                     "Hoàn thành", "Thất bại",
                 }
                 item.setText(
-                    f"{username}\\n{message}"
+                    f"{username}\n{message}"
                     if message and message not in generic_messages
                     else username
                 )
