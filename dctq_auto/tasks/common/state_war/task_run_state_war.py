@@ -47,6 +47,12 @@ def _validate_step(step: Any, index: int) -> dict:
     delay = _integer(step.get("delay", 0), f"Bước {index}.delay")
     description = str(step.get("description") or "").strip()
 
+    if action == "none":
+        return {
+            "type": "none",
+            "delay": delay,
+            "description": description,
+        }
     if action == "click":
         return {
             "type": "click",
@@ -168,7 +174,16 @@ def run_battle_strategy(worker, device, strategy_path: str | Path) -> bool:
         worker._emit_task_progress(progress_label, "running", 0, 1)
         description = step["description"] or f"{step['type']} ({index}/{total})"
         try:
-            if step["type"] == "click":
+            if step["type"] == "none":
+                worker.log_message.emit(
+                    f"Quốc chiến [{index}/{total}]: None — bỏ qua thao tác, "
+                    f"chờ {step['delay']} ms — {description}."
+                )
+                if step["delay"] and not _wait(worker, step["delay"] / 1000):
+                    worker.log_message.emit("Quốc chiến: đã dừng theo yêu cầu.")
+                    worker._emit_task_progress(progress_label, "stopped", 0, 1)
+                    return False
+            elif step["type"] == "click":
                 x, y = step["x"], step["y"]
                 worker.log_message.emit(
                     f"Quốc chiến [{index}/{total}]: click ({x}, {y}) — {description}."
