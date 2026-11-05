@@ -914,7 +914,7 @@ class BotWorker(
                 from dctq_auto.tasks.common.state_war.task_state_war import (
                     run_state_war,
                 )
-                account = SimpleNamespace(username="Quốc chiến")
+                account = SimpleNamespace(username="Quốc chiến", display_name="Quốc chiến")
                 steps = [_STEP_CHIEN_TRANH_QUOC_CHIEN]
                 run_state_war(
                     self,
@@ -929,7 +929,7 @@ class BotWorker(
                 from dctq_auto.config.step_registry import get_clone_step_registry
                 from dctq_auto.tasks.common.war import task_war
 
-                account = SimpleNamespace(username="Mưu Binh")
+                account = SimpleNamespace(username="Mưu Binh", display_name="Mưu Binh")
                 steps = get_clone_step_registry().get_enabled_steps(self._config)
                 self._emit_overall_progress(0, 100, "Bắt đầu quy trình Chiến Tranh — Mưu Binh")
                 task_war.run(
