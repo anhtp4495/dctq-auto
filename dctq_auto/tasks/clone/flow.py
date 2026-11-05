@@ -668,6 +668,7 @@ def run_clone_flow_optimize(self, device) -> None:
         self.progress_changed.emit(
             index - 1, total, f"Tài khoản {index}/{total}: {account.display_name}"
         )
+        self.clone_account_status.emit(account.display_name, "running")
         ocr_client = AdbClient(serial=self._serial)
         self.log_message.emit(f"[{account.display_name}] Bắt đầu đăng nhập.")
         try:
