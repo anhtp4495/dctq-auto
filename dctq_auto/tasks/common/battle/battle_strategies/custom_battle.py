@@ -95,6 +95,7 @@ def _validate_step(step: Any, index: int) -> dict:
             "duration": _integer(
                 step.get("duration"), f"Bước {index}.duration", minimum=1
             ),
+            "hold": _integer(step.get("hold", 0), f"Bước {index}.hold"),
             "delay": delay,
             "description": description,
         }
@@ -210,6 +211,7 @@ class CustomBattle(BaseBattle):
 
             points = step["points"]
             duration = step["duration"]
+            hold = step["hold"]
             repeat = step["repeat"]
             segment_total = (len(points) - 1) * repeat
             segment_index = 0
@@ -218,15 +220,43 @@ class CustomBattle(BaseBattle):
                     x1, y1 = points[point_index]
                     x2, y2 = points[point_index + 1]
                     segment_index += 1
+                    should_hold = hold > 0 and repeat_index == 1 and point_index == 0
+                    hold_log = f", giữ {hold} ms" if should_hold else ""
                     log(
                         f"[{account.display_name}] Chiến thuật [{index}/{total}]: "
                         f"swipe_path {segment_index}/{segment_total} "
                         f"(lượt {repeat_index}/{repeat}): ({x1}, {y1}) -> "
-                        f"({x2}, {y2}) trong {duration} ms — {description}."
+                        f"({x2}, {y2}) trong {duration} ms"
+                        f"{hold_log} — {description}."
                     )
-                    device.shell(
-                        f"input swipe {x1} {y1} {x2} {y2} {duration}"
-                    )
+
+                    if should_hold:
+                        # Giữ pointer DOWN liên tục rồi mới MOVE để game nhận
+                        # thao tác nhấn giữ-kéo; các lượt repeat sau không hold.
+                        move_count = max(1, min(60, duration // 16))
+                        commands = [
+                            "sdk=$(getprop ro.build.version.sdk)",
+                            'if [ "$sdk" -le 29 ]; then event=event; else event=motionevent; fi',
+                            f'input "$event" DOWN {x1} {y1}',
+                            f"sleep {hold / 1000:.3f}",
+                        ]
+                        for move_index in range(1, move_count + 1):
+                            ratio = move_index / move_count
+                            move_x = round(x1 + (x2 - x1) * ratio)
+                            move_y = round(y1 + (y2 - y1) * ratio)
+                            commands.append(
+                                f'input "$event" MOVE {move_x} {move_y}'
+                            )
+                            commands.append(
+                                f"sleep {duration / move_count / 1000:.3f}"
+                            )
+                        commands.append(f'input "$event" UP {x2} {y2}')
+                        device.shell("; ".join(commands))
+                    else:
+                        device.shell(
+                            f"input swipe {x1} {y1} {x2} {y2} {duration}"
+                        )
+
                     if delay:
                         time.sleep(delay / 1000)
 
