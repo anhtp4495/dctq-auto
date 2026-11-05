@@ -57,7 +57,7 @@ def run_state_war(worker, account, steps, device, strategy_path: str, log) -> bo
         steps,
         strategy_path,
         log,
-        add_progress_item=worker.task_progress_item_added.emit,
+        add_progress_item=worker._add_task_progress_item,
     ):
         return False
 
