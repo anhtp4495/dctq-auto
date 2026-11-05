@@ -10,6 +10,8 @@ from dctq_auto.config.constants import (
     _TEMPLATE_CHUA_CHON_DIEM_DANH,
     _TEMPLATE_DANG_CHON_DIEM_DANH,
     _TEMPLATE_XAC_NHAN_DIEM_DANH_BU,
+    _TEMPLATE_DIEM_DANH_BU,
+    _TEMPLATE_DA_DIEM_DANH,
 )
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
@@ -61,27 +63,50 @@ def _tap_match_center(device, match, account, log):
     time.sleep(0.7)
 
 
-def _build_day_positions(screen_width: int, screen_height: int) -> list[tuple[int, int, int]]:
-    """Tạo tọa độ 31 ô điểm danh theo thứ tự ngày 31 đến ngày 1."""
-    grid_left = (484 / 1920) * screen_width
-    grid_top = (402 / 1080) * screen_height
-    grid_width = ((1822 - 484) / 1920) * screen_width
-    grid_height = ((998 - 402) / 1080) * screen_height
+def _build_day_regions(screen_width: int, screen_height: int):
+    """Tạo vùng tìm kiếm cho 30 ô theo lưới 9 + 9 + 9 + 3."""
+    scale_x = screen_width / 1920
+    scale_y = screen_height / 1080
 
-    row_ranges = ((1, 9), (10, 18), (19, 27), (28, 31))
-    cell_positions = {}
-    for row_index, (first_cell, last_cell) in enumerate(row_ranges):
-        for cell in range(first_cell, last_cell + 1):
-            cell_positions[cell] = (row_index, cell - first_cell)
+    # Tọa độ gốc lấy từ ba ô mẫu: ngày 1, ngày 9 và ngày 30.
+    row_bounds = (
+        (405, 537),
+        (554, 689),
+        (704, 841),
+        (853, 992),
+    )
+    row_lengths = (9, 9, 9, 3)
+    day_regions = []
 
-    positions = []
-    for day in range(31, 0, -1):
-        row, column = cell_positions[day]
-        x = round(grid_left + (column + 0.5) * grid_width / 9)
-        y = round(grid_top + (row + 0.5) * grid_height / 4)
-        positions.append((day, x, y))
-    return positions
+    day = 1
+    for row_index, (top, bottom) in enumerate(row_bounds):
+        for column in range(row_lengths[row_index]):
+            left = round((480 + column * 150) * scale_x)
+            right = round((620 + column * 150) * scale_x)
+            region = (
+                round(top * scale_y),
+                left,
+                right,
+                round(bottom * scale_y),
+            )
+            center_x = (left + right) // 2
+            center_y = (region[0] + region[3]) // 2
+            day_regions.append((day, region, center_x, center_y))
+            day += 1
 
+    return day_regions
+
+
+def _match_day_template(screen_bgr, template, search_rect):
+    """Tìm template trạng thái trong đúng vùng của một ngày."""
+    return match_template(
+        screen_bgr,
+        template.image,
+        threshold=template.threshold,
+        method=template.method,
+        search_rect=search_rect,
+        grayscale=template.grayscale,
+    )
 
 def _tap_confirmation_if_visible(worker, device, account, templates, log) -> bool:
     """Kiểm tra và click xác nhận điểm danh bù nếu hộp thoại xuất hiện."""
@@ -133,26 +158,67 @@ def _tap_confirmation_if_visible(worker, device, account, templates, log) -> boo
 def _tap_all_days(
     worker, device, account, screen_width, screen_height, templates, log
 ) -> bool:
-    """Click lần lượt 31 ô điểm danh, xử lý xác nhận điểm danh bù nếu xuất hiện."""
-    day_positions = _build_day_positions(screen_width, screen_height)
-    log(f"[{account.display_name}] Bắt đầu click {len(day_positions)} ô theo thứ tự ngày 31 → ngày 1.")
+    """Nhận diện trạng thái rồi chỉ click các ngày chưa điểm danh."""
+    day_regions = _build_day_regions(screen_width, screen_height)
+    already_template = templates.get(_TEMPLATE_DA_DIEM_DANH)
+    catchup_template = templates.get(_TEMPLATE_DIEM_DANH_BU)
 
-    for day, x, y in day_positions:
+    if already_template is None or catchup_template is None:
+        log(f"[{account.display_name}] Thiếu template trạng thái ngày điểm danh.")
+        return False
+
+    log(f"[{account.display_name}] Bắt đầu kiểm tra {len(day_regions)} ngày điểm danh.")
+
+    for day, search_rect, x, y in day_regions:
         if not worker._wait_if_paused():
-            log(f"[{account.display_name}] Điểm danh đã dừng theo yêu cầu tại ô ngày {day}.")
+            log(f"[{account.display_name}] Điểm danh đã dừng theo yêu cầu tại ngày {day}.")
             return False
-        device.shell(f"input tap {x} {y}")
-        log(f"[{account.display_name}] Đã click ô ngày {day} tại ({x}, {y}).")
-        time.sleep(0.15)
 
-        if not _tap_confirmation_if_visible(
-            worker, device, account, templates, log
-        ):
-            log(
-                f"[{account.display_name}] Điểm danh đã dừng khi xử lý xác nhận "
-                f"tại ô ngày {day}."
+        try:
+            screenshot = device.screenshot()
+            screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
+
+            already_match = _match_day_template(
+                screen_bgr, already_template, search_rect
             )
+            if already_match is not None:
+                log(f"[{account.display_name}] Ngày {day} đã điểm danh; bỏ qua.")
+                continue
+
+            catchup_match = _match_day_template(
+                screen_bgr, catchup_template, search_rect
+            )
+        except (ValueError, cv2.error) as exc:
+            log(f"[{account.display_name}] Lỗi nhận diện trạng thái ngày {day}: {exc}")
             return False
+        except Exception as exc:
+            log(f"[{account.display_name}] Không kiểm tra được ngày {day}: {exc}")
+            return False
+
+        if not worker._wait_if_paused():
+            return False
+
+        if catchup_match is not None:
+            report_template_match(
+                log,
+                context=f"[{account.display_name}] Ngày {day}",
+                template=catchup_template,
+                match=catchup_match,
+            )
+            log(f"[{account.display_name}] Ngày {day} là ngày điểm danh bù; click ({x}, {y}).")
+            device.shell(f"input tap {x} {y}")
+            time.sleep(1.0)
+
+            if not _tap_confirmation_if_visible(
+                worker, device, account, templates, log
+            ):
+                log(f"[{account.display_name}] Không xử lý được xác nhận điểm danh bù ngày {day}.")
+                return False
+            continue
+
+        log(f"[{account.display_name}] Ngày {day} chưa điểm danh; click ({x}, {y}).")
+        device.shell(f"input tap {x} {y}")
+        time.sleep(0.15)
 
     return True
 
