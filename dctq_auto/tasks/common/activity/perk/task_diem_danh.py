@@ -25,10 +25,15 @@ _TEMPLATE_NAMES = (
     _TEMPLATE_DA_DIEM_DANH,
 )
 
+_SCREEN_TEMPLATE_NAMES = (
+    _TEMPLATE_XAC_NHAN_DIEM_DANH_BU,
+    _TEMPLATE_DANG_CHON_DIEM_DANH,
+)
+
 
 def _find_template(screen_bgr, templates, account, log):
     """Tìm template đầu tiên khớp theo thứ tự ưu tiên."""
-    for template_name in _TEMPLATE_NAMES:
+    for template_name in _SCREEN_TEMPLATE_NAMES:
         template = templates.get(template_name)
         if template is None:
             log(f"[{account.display_name}] Không tải được template {template_name}; bỏ qua.")
