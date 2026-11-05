@@ -361,7 +361,7 @@
         },
         "diem_danh_bu": {
           "description": "Màn hình [Hoạt động] - [Phúc lợi] - [Điểm danh] - Điểm danh bù",
-          "rect": { "top": 403, "left": 483, "right": 1823, "bottom": 997},
+          "rect": { "top": 255, "left": 930, "right": 1033, "bottom": 362},
           "search_rect": { "top": 400, "left": 483, "right": 1823, "bottom": 1000},
           "threshold": 0.95,
           "grayscale": false,
