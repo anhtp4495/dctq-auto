@@ -427,14 +427,18 @@ class ScreenshotAnnotator(QDialog):
         )
 
         root = QVBoxLayout(self)
-        self._strategy_dir = (
+        self._strategy_root = (
             Path(__file__).resolve().parents[1]
             / "tasks"
             / "common"
             / "battle"
             / "battle_strategies"
-            / "state_war"
         )
+        self._strategy_dirs = {
+            "state_war": self._strategy_root / "state_war",
+            "ranked": self._strategy_root / "ranked",
+        }
+        self._strategy_dir = self._strategy_dirs["state_war"]
         self._strategy_path: Path | None = None
         self._strategy_steps: list[dict] = []
         self._strategy_path_points: list[list[int]] = []
@@ -566,10 +570,17 @@ class ScreenshotAnnotator(QDialog):
 
     def _build_strategy_editor(self, root: QVBoxLayout) -> None:
         """Add a compact strategy JSON editor above the existing image analyzer."""
-        group = QGroupBox("Biên tập chiến thuật Quốc chiến")
+        group = QGroupBox("Biên tập chiến thuật")
         layout = QVBoxLayout(group)
 
         file_row = QHBoxLayout()
+        self.strategy_category_combo = QComboBox()
+        self.strategy_category_combo.addItem("Quốc chiến", "state_war")
+        self.strategy_category_combo.addItem("Tranh Bá", "ranked")
+        self.strategy_category_combo.currentIndexChanged.connect(
+            self._on_strategy_category_changed
+        )
+        file_row.addWidget(self.strategy_category_combo)
         self.strategy_combo = QComboBox()
         self.strategy_combo.setMinimumWidth(180)
         self.strategy_combo.currentIndexChanged.connect(self._on_strategy_selected)
@@ -717,8 +728,14 @@ class ScreenshotAnnotator(QDialog):
         spin.setKeyboardTracking(False)
         return spin
 
-    def _refresh_strategy_files(self, select_path: Path | None = None) -> None:
-        self._strategy_dir.mkdir(parents=True, exist_ok=True)
+    def _on_strategy_category_changed(self, _index: int) -> None:
+        category = self.strategy_category_combo.currentData()
+        self._strategy_dir = self._strategy_dirs.get(category, self._strategy_dirs["state_war"])
+        self._strategy_path = None
+        self._strategy_steps = []
+        self._refresh_strategy_files()
+
+    def _refresh_strategy_files(self, select_path: Path | None = None) -> None:        self._strategy_dir.mkdir(parents=True, exist_ok=True)
         self.strategy_combo.blockSignals(True)
         self.strategy_combo.clear()
         for path in sorted(self._strategy_dir.glob("*.json"), key=lambda p: p.name.casefold()):
