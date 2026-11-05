@@ -136,6 +136,28 @@ class BotWorker(
             self._emit_progress_item(item)
         self.task_progress_changed.emit(name, state, current, total)
 
+    def _add_task_progress_item(self, name: str, total: int) -> None:
+        """Register a pending task row while preserving the legacy list signal."""
+        root = self._ensure_progress_root()
+        parent_id = self._active_progress_account_id or root.id
+        key = (parent_id, name)
+        progress_id = self._progress_items_by_key.get(key)
+        if progress_id is None:
+            item = self.progress_manager.add(
+                ProgressInfo(
+                    id=f"task-{len(self._progress_items_by_key) + 1}",
+                    parent_id=parent_id,
+                    name=name,
+                    category="task",
+                    current=0,
+                    total=max(0, total),
+                    message=name,
+                )
+            )
+            self._progress_items_by_key[key] = item.id
+            self.progress_info_added.emit(replace(item))
+        self.task_progress_item_added.emit(name, total)
+
     def _emit_clone_account_status(self, display_name: str, state: str) -> None:
         """Represent each Clone account as a child of the run progress."""
         root = self._ensure_progress_root()
@@ -294,7 +316,7 @@ class BotWorker(
                 selected_steps,
                 strategy_path,
                 self.log_message.emit,
-                add_progress_item=self.task_progress_item_added.emit,
+                add_progress_item=self._add_task_progress_item,
             ):
                 self._emit_task_progress(
                     "Triển khai chiến thuật Quốc chiến", "ignored", 0, 1
