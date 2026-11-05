@@ -26,9 +26,11 @@ def pre_le_bao_quoc_van(steps) -> bool:
     return _STEP_QUOC_VAN in steps
 
 
-def post_le_bao_quoc_van(steps) -> None:
+def post_le_bao_quoc_van(steps) -> list[str]:
     """Đánh dấu tác vụ Lễ bao Quốc Vận đã hoàn thành."""
-    steps.remove(_STEP_QUOC_VAN)
+    if _STEP_QUOC_VAN in steps:
+        steps.remove(_STEP_QUOC_VAN)
+    return steps
 
 
 _TEMPLATE_NAMES = (
@@ -204,14 +206,17 @@ def open_le_bao_quoc_van(worker, account, device, ocr_client, log, screenshot=No
     return False
 
 
-def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> bool:
+def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> list[str]:
     """Kiểm tra precondition, mở mục Lễ bao Quốc Vận rồi nhận lễ bao."""
     if not pre_le_bao_quoc_van(steps):
-        return False
+        return steps
     if not open_le_bao_quoc_van(
         worker, account, device, ocr_client, log, screenshot=screenshot
     ):
-        return False
-    return run_le_bao_quoc_van(
+        return post_le_bao_quoc_van(steps)
+        
+    run_le_bao_quoc_van(
         worker, account, steps, device, ocr_client, log, screenshot=None
     )
+
+    return post_le_bao_quoc_van(steps)

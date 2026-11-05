@@ -31,6 +31,12 @@ def pre_diem_danh(steps) -> bool:
     return _STEP_DIEM_DANH in steps
 
 
+def post_diem_danh(steps) -> list[str]:
+    """Đánh dấu tác vụ Điểm danh đã hoàn thành."""
+    if _STEP_DIEM_DANH in steps:
+        steps.remove(_STEP_DIEM_DANH)
+    return steps
+
 _SCREEN_TEMPLATE_NAMES = (
     _TEMPLATE_XAC_NHAN_DIEM_DANH_BU,
 )
@@ -480,14 +486,16 @@ def open_diem_danh(worker, account, device, ocr_client, log, screenshot=None) ->
     return False
 
 
-def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> bool:
+def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> list[str]:
     """Kiểm tra precondition, mở mục Điểm danh rồi chạy quy trình điểm danh."""
     if not pre_diem_danh(steps):
-        return False
+        return steps
     if not open_diem_danh(
         worker, account, device, ocr_client, log, screenshot=screenshot
     ):
-        return False
-    return run_diem_danh(
+    return post_diem_danh(steps)
+    
+    run_diem_danh(
         worker, account, steps, device, ocr_client, log, screenshot=None
     )
+    return post_diem_danh(steps)
