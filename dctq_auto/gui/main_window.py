@@ -2093,8 +2093,8 @@ class MainWindow(QMainWindow):
             self._render_task_progress(name, "pending", 0, count)
 
     @staticmethod
-    def _status_icon(glyph: str, color: str) -> QIcon:
-        pixmap = QPixmap(18, 18)
+    def _status_icon(glyph: str, color: str, indent: int = 0) -> QIcon:
+        pixmap = QPixmap(18 + indent, 18)
         pixmap.fill(Qt.GlobalColor.transparent)
         painter = QPainter(pixmap)
         painter.setPen(QColor(color))
@@ -2102,7 +2102,8 @@ class MainWindow(QMainWindow):
         font.setBold(True)
         font.setPixelSize(16)
         painter.setFont(font)
-        painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, glyph)
+        icon_rect = pixmap.rect().adjusted(indent, 0, 0, 0)
+        painter.drawText(icon_rect, Qt.AlignmentFlag.AlignCenter, glyph)
         painter.end()
         return QIcon(pixmap)
 
@@ -2310,8 +2311,9 @@ class MainWindow(QMainWindow):
             "stopped": ("■", "#8c959f"),
         }
         glyph, color = states.get(progress_info.status.value, ("·", "#6e7781"))
-        item.setIcon(self._status_icon(glyph, color))
-        item.setText(f"    {progress_info.name}")
+        # Child icon and label share the same indentation beneath the account row.
+        item.setIcon(self._status_icon(glyph, color, indent=12))
+        item.setText(progress_info.name)
         details = [progress_info.message] if progress_info.message else []
         if progress_info.total > 1 or progress_info.current:
             details.append(f"Tiến độ: {progress_info.current}/{progress_info.total}")
