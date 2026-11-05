@@ -300,7 +300,7 @@ def run(
         f"(lần {current_try}/{_MAX_TRIES}); sẽ thử lại."
     )
     close_knowned_dialog(
-        self, account, device, ocr_client, log, screenshot
+        self, account, device, ocr_client, log, screen_bgr
     )
     time.sleep(1)
     return run(
