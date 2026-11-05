@@ -129,12 +129,6 @@ def task_open_perk(
 
 def run_perk(worker, account, steps, device, ocr_client, log) -> list[str]:
     """Chạy tuần tự các tác vụ con được chọn trong Phúc lợi."""
-    if not pre_perk(steps):
-        return steps
-
-    if not task_open_perk(worker, account, device, ocr_client, log):
-        return steps
-
     for step, task, label in (
         (_STEP_DIEM_DANH, task_diem_danh, "Điểm danh"),
         (_STEP_QUOC_VAN, task_le_bao_quoc_van, "Lễ bao Quốc Vận"),
@@ -166,5 +160,13 @@ def run(
     worker, account, steps, device, ocr_client, log,
     screenshot=None, swipe_positions=None,
 ) -> list[str]:
-    """Entry point tương thích với bộ điều phối Hoạt động."""
+    """Kiểm tra điều kiện, mở Phúc lợi rồi chạy các tác vụ con."""
+    if not pre_perk(steps):
+        return steps
+
+    if not task_open_perk(
+        worker, account, device, ocr_client, log, screenshot=screenshot
+    ):
+        return steps
+
     return run_perk(worker, account, steps, device, ocr_client, log)
