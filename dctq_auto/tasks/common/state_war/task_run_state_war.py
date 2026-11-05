@@ -8,7 +8,12 @@ from dctq_auto.tasks.common.battle.battle_strategies.custom_battle import (
 )
 
 
-STRATEGY_DIR = Path(__file__).resolve().parent / "battle_strategies"
+STRATEGY_DIR = (
+    Path(__file__).resolve().parents[1]
+    / "battle"
+    / "battle_strategies"
+    / "state_war"
+)
 
 
 def list_battle_strategies() -> list[dict[str, str]]:
