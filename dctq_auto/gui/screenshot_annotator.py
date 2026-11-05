@@ -911,8 +911,6 @@ class ScreenshotAnnotator(QDialog):
         self.strategy_duration.setEnabled(is_swipe or is_path)
         self.strategy_repeat.setEnabled(is_path)
         self.strategy_path_points_label.setEnabled(is_path)
-        self.strategy_step_description.setEnabled(not is_none)
-        self.strategy_delay.setEnabled(not is_none)
         self.strategy_capture_click_button.setEnabled(is_click)
         self.strategy_capture_from_button.setEnabled(is_swipe)
         self.strategy_capture_to_button.setEnabled(is_swipe)
