@@ -210,13 +210,16 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
     """Kiểm tra precondition, mở mục Lễ bao Quốc Vận rồi nhận lễ bao."""
     if not pre_le_bao_quoc_van(steps):
         return steps
+
     if not open_le_bao_quoc_van(
         worker, account, device, ocr_client, log, screenshot=screenshot
     ):
-        return post_le_bao_quoc_van(steps)
-        
-    run_le_bao_quoc_van(
+        return steps
+
+    success = run_le_bao_quoc_van(
         worker, account, steps, device, ocr_client, log, screenshot=None
     )
+    if success:
+        return post_le_bao_quoc_van(steps)
 
-    return post_le_bao_quoc_van(steps)
+    return steps
