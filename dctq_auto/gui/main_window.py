@@ -962,7 +962,7 @@ class MainWindow(QMainWindow):
         path = self.state_war_strategy_combo.currentData()
         if not path:
             self.state_war_description.setText(
-                "Chưa có chiến thuật. Thêm file *.json vào common/state_war/battle_strategies/."
+                "Chưa có chiến thuật. Thêm file *.json vào common/battle/battle_strategies/state_war/."
             )
             return
         for strategy in list_battle_strategies():
