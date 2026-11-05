@@ -13,11 +13,17 @@ from dctq_auto.config.constants import (
     _TEMPLATE_NHAN_LE_BAO_MIEN_PHI,
     _TEMPLATE_TAT_THONG_BAO_NHAN_LE_BAO_MIEN_PHI1,
     _TEMPLATE_TAT_THONG_BAO_NHAN_LE_BAO_MIEN_PHI2,
+    _STEP_QUOC_VAN,
 )
 
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
+
+
+def pre_le_bao_quoc_van(steps) -> bool:
+    """Cho biết tác vụ Lễ bao Quốc Vận có được chọn hay không."""
+    return _STEP_QUOC_VAN in steps
 
 
 _TEMPLATE_NAMES = (
