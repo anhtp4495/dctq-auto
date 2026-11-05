@@ -502,7 +502,7 @@ class BotWorker(
         for account in accounts:
             if not account.enabled:
                 self.clone_account_status.emit(account.username, "disabled")
-                self.log_message.emit(f"Tài khoản {account.username}: đã vô hiệu hóa, bỏ qua.")
+                self.log_message.emit(f"Tài khoản {account.display_name}: đã vô hiệu hóa, bỏ qua.")
                 continue
             enabled_index += 1
             account_index = enabled_index
@@ -511,16 +511,16 @@ class BotWorker(
                 return
             self.progress_changed.emit(
                 self._progress_completed, self._progress_total,
-                f"Tài khoản {account_index}/{len(accounts)}: {account.username}",
+                f"Tài khoản {account_index}/{len(accounts)}: {account.display_name}",
             )
             self.clone_account_status.emit(account.username, "running")
             self.log_message.emit(
-                f"Đang xử lý tài khoản: {account.username}"
+                f"Đang xử lý tài khoản: {account.display_name}"
             )
             for task_index, (_key, label) in enumerate(selected, start=1):
                 self.progress_changed.emit(
                     self._progress_completed, self._progress_total,
-                    f"{account.username} — {label} ({task_index}/{len(selected)})",
+                    f"{account.display_name} — {label} ({task_index}/{len(selected)})",
                 )
                 flow_step = {
                     "clone_receive_quoc_van": 2,
@@ -530,12 +530,12 @@ class BotWorker(
                     "clone_receive_quoc_van", "clone_daily_check_in"
                 ) else len(selected)
                 if not self._mock_tick(
-                    f"[{account.username}] {label}: chạy thử bước "
+                    f"[{account.display_name}] {label}: chạy thử bước "
                     f"{flow_step}/{flow_total}."
                 ):
                     return
                 self.task_progress_changed.emit(
-                    f"{account.username} - {label}", "done", 1, 1
+                    f"{account.display_name} - {label}", "done", 1, 1
                 )
             # Record the account only after its selected mock steps finish.
             self.clone_account_result.emit(account.username, True)
