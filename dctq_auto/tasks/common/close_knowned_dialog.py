@@ -1,7 +1,6 @@
-"""Đóng các dialog đã biết đang mở trên màn hình game."""
+""""Đóng các dialog đã biết đang mở trên màn hình game."""
 
 import cv2
-import numpy as np
 
 from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.config.constants import (
@@ -16,26 +15,17 @@ from dctq_auto.vision.template_store import get_templates
 
 
 def close_knowned_dialog(
-    self, account, device, ocr_client, log, screenshot
+    self, account, device, ocr_client, log, screen_bgr
 ) -> bool:
-    """Đóng dialog đã biết trên screenshot được cung cấp; không tự chụp màn hình."""
+    """Đóng dialog đã biết trên ảnh BGR được cung cấp; không tự chụp màn hình."""
     template_names = (
         _TEMPLATE_ACCOUNT_CLOSE_CAP_NHAT_THONG_TIN,
         _TEMPLATE_ACCOUNT_CAP_NHAT_THONG_TIN,
         _TEMPLATE_THONG_BAO_DICH_QUAN_TAP_KICH,
     )
     templates = get_templates(template_names)
-
-    try:
-        screen = cv2.cvtColor(
-            np.asarray(screenshot),
-            cv2.COLOR_RGB2BGR,
-        )
-    except Exception as exc:
-        log(f"[{account.username}] Không xử lý được screenshot để kiểm tra dialog: {exc}")
-        return False
-
     positions = ButtonPositions()
+
     for template_name in template_names:
         template = templates.get(template_name)
         if template is None:
@@ -43,7 +33,7 @@ def close_knowned_dialog(
 
         try:
             match = match_template(
-                screen,
+                screen_bgr,
                 template.image,
                 threshold=template.threshold,
                 method=template.method,
@@ -86,3 +76,4 @@ def close_knowned_dialog(
         return True
 
     return False
+"
