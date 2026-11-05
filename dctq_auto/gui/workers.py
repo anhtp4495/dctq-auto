@@ -65,7 +65,7 @@ class BotWorker(
         """Create the root item lazily so each worker run owns one progress tree."""
         if self._progress_root_id is None:
             root = self.progress_manager.add(
-                ProgressInfo(name="Tiến trình", category="run")
+                ProgressInfo(name="Tiến trình", category="standalone")
             )
             self._progress_root_id = root.id
             self.progress_info_added.emit(replace(root))
@@ -116,7 +116,7 @@ class BotWorker(
                     id=f"task-{len(self._progress_items_by_key) + 1}",
                     parent_id=parent_id,
                     name=name,
-                    category="task",
+                    category="standalone",
                     status=status,
                     current=max(0, current),
                     total=max(0, total),
