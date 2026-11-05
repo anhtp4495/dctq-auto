@@ -2243,12 +2243,37 @@ class MainWindow(QMainWindow):
             item.setData(Qt.ItemDataRole.UserRole, username)
             self.clone_result_list.addItem(item)
         self._render_clone_account_status(username, progress_info.status.value)
+        self._set_clone_progress_metadata(username, progress_info)
 
     def _update_clone_progress_item(self, progress_info) -> None:
         if getattr(progress_info, "category", None) != "account":
             return
         username = getattr(progress_info, "account", None) or progress_info.name
         self._render_clone_account_status(username, progress_info.status.value)
+        self._set_clone_progress_metadata(username, progress_info)
+
+    def _set_clone_progress_metadata(self, username: str, progress_info) -> None:
+        for index in range(self.clone_result_list.count()):
+            item = self.clone_result_list.item(index)
+            if item.data(Qt.ItemDataRole.UserRole) == username:
+                item.setData(Qt.ItemDataRole.UserRole + 2, progress_info.id)
+                item.setData(Qt.ItemDataRole.UserRole + 3, progress_info.parent_id)
+                details = [progress_info.message] if progress_info.message else []
+                if progress_info.total > 1 or progress_info.current:
+                    details.append(f"Tiến độ: {progress_info.current}/{progress_info.total}")
+                if progress_info.error:
+                    details.append(f"Lỗi: {progress_info.error}")
+                if progress_info.started_at:
+                    details.append(f"Bắt đầu: {progress_info.started_at:%H:%M:%S}")
+                if progress_info.finished_at:
+                    details.append(f"Kết thúc: {progress_info.finished_at:%H:%M:%S}")
+                    if progress_info.started_at:
+                        elapsed = max(0, int((progress_info.finished_at - progress_info.started_at).total_seconds()))
+                        minutes, seconds = divmod(elapsed, 60)
+                        hours, minutes = divmod(minutes, 60)
+                        details.append(f"Thời lượng: {hours:02d}:{minutes:02d}:{seconds:02d}")
+                item.setToolTip("\n".join(details))
+                return
 
     # Legacy renderers retained for callers outside the unified Clone GUI path.
     def _update_clone_account_status(self, username: str, state: str) -> None:
