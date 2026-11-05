@@ -39,17 +39,17 @@ def run(
 ) -> bool:
     """Nhận diện trạng thái hiện tại, đóng giao diện và xác nhận đã thoát."""
     if current_try == 1:
-        log(f"[{account.username}] Bắt đầu đóng màn hình Giao Tranh.")
+        log(f"[{account.display_name}] Bắt đầu đóng màn hình Giao Tranh.")
 
     if current_try > _MAX_TRIES:
         log(
-            f"[{account.username}] Đóng Giao Tranh thất bại: "
+            f"[{account.display_name}] Đóng Giao Tranh thất bại: "
             f"quá {_MAX_TRIES} lần kiểm tra."
         )
         return False
 
     if not self._wait_if_paused():
-        log(f"[{account.username}] Đã dừng khi đang đóng Giao Tranh.")
+        log(f"[{account.display_name}] Đã dừng khi đang đóng Giao Tranh.")
         return False
 
     templates = get_templates(_CLOSE_TEMPLATES)
@@ -58,7 +58,7 @@ def run(
         screen = _screen_bgr(device)
     except Exception as exc:
         log(
-            f"[{account.username}] Không chụp được màn hình "
+            f"[{account.display_name}] Không chụp được màn hình "
             f"để đóng Giao Tranh: {exc}"
         )
         return False
@@ -69,7 +69,7 @@ def run(
         template = templates.get(template_name)
         if template is None:
             log(
-                f"[{account.username}] Không tải được template "
+                f"[{account.display_name}] Không tải được template "
                 f"{template_name}; bỏ qua."
             )
             continue
@@ -81,7 +81,7 @@ def run(
         # Hồi thành: click vào giữa nút rồi kiểm tra lại trạng thái.
         if template_name == _TEMPLATE_QUAN_SU_GIAO_TRANH_HOI_THANH:
             x, y = _click_match(device, match)
-            log(f"[{account.username}] Click Hồi thành tại ({x}, {y}).")
+            log(f"[{account.display_name}] Click Hồi thành tại ({x}, {y}).")
             time.sleep(1)
             return run(
                 self, account, device, ocr_client, log,
@@ -94,7 +94,7 @@ def run(
             _TEMPLATE_MAIN_QUAN_SU,
         ):
             log(
-                f"[{account.username}] Đã thoát khỏi Giao Tranh; "
+                f"[{account.display_name}] Đã thoát khỏi Giao Tranh; "
                 "xác nhận trở về màn hình chính."
             )
             return True
@@ -104,7 +104,7 @@ def run(
             x, y = positions.get("quan_su.giao_tranh", "huy_tim_doi_thu")
             device.shell(f"input tap {x} {y}")
             log(
-                f"[{account.username}] Đang ở màn hình Tìm đối thủ; "
+                f"[{account.display_name}] Đang ở màn hình Tìm đối thủ; "
                 f"click Hủy tìm đối thủ tại ({x}, {y})."
             )
             time.sleep(1)
@@ -118,7 +118,7 @@ def run(
             x, y = positions.get("quan_su.giao_tranh", "huy_xuat_chien")
             device.shell(f"input tap {x} {y}")
             log(
-                f"[{account.username}] Đang ở màn hình Xuất chiến; "
+                f"[{account.display_name}] Đang ở màn hình Xuất chiến; "
                 f"click Hủy xuất chiến tại ({x}, {y})."
             )
             time.sleep(1)
@@ -128,7 +128,7 @@ def run(
             )
 
     log(
-        f"[{account.username}] Đóng Giao Tranh — chưa nhận diện được trạng thái "
+        f"[{account.display_name}] Đóng Giao Tranh — chưa nhận diện được trạng thái "
         f"(lần {current_try}/{_MAX_TRIES}); sẽ thử lại."
     )
     time.sleep(1)

@@ -31,7 +31,7 @@ def poll(device, account, log):
     templates = get_templates(TEMPLATE_NAMES)
     if not templates:
         log(
-            f"[{account.username}] Không tải được template Mưu Binh. "
+            f"[{account.display_name}] Không tải được template Mưu Binh. "
             "Kiểm tra ảnh nguồn và rect/search_rect trong templates.json."
         )
         return None
@@ -39,7 +39,7 @@ def poll(device, account, log):
     try:
         screen = screen_bgr(device)
     except Exception as exc:
-        log(f"[{account.username}] Không chụp được màn hình Mưu Binh: {exc}")
+        log(f"[{account.display_name}] Không chụp được màn hình Mưu Binh: {exc}")
         return None
 
     # Giữ đủ key để task_run_stage_defense có thể truy cập an toàn,

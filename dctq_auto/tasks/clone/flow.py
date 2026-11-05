@@ -25,7 +25,7 @@ def run_clone_flow(self, device) -> None:
     total = len(enabled_accounts)
     for account in accounts:
         if not account.enabled:
-            self.clone_account_status.emit(account.username, "disabled")
+            self.clone_account_status.emit(account.display_name, "disabled")
             self.log_message.emit(f"Tài khoản {account.display_name}: đã vô hiệu hóa, bỏ qua.")
     if total == 0:
         self.log_message.emit("Clone: tất cả tài khoản đều đã vô hiệu hóa; không có tài khoản để chạy.")
@@ -68,47 +68,47 @@ def run_clone_flow(self, device) -> None:
 
         self.progress_changed.emit(
             processed_count, total,
-            f"Tài khoản {index}/{total}: {account.username} — Đăng nhập",
+            f"Tài khoản {index}/{total}: {account.display_name} — Đăng nhập",
         )
-        self.clone_account_status.emit(account.username, "running")
+        self.clone_account_status.emit(account.display_name, "running")
         self.log_message.emit(
-            f"[{account.username}] Kiểm tra màn hình đăng nhập ({index}/{total})."
+            f"[{account.display_name}] Kiểm tra màn hình đăng nhập ({index}/{total})."
         )
         try:
             screen_text = self._screen_text(device)
         except Exception as exc:
             failed_count += 1
             processed_count += 1
-            account_results.append((account.username, f"FAILED — lỗi OCR: {exc}"))
-            self.clone_account_result.emit(account.username, False)
+            account_results.append((account.display_name, f"FAILED — lỗi OCR: {exc}"))
+            self.clone_account_result.emit(account.display_name, False)
             self.log_message.emit(
-                f"[{account.username}] FAILED — không đọc được màn hình bằng OCR: {exc}. "
+                f"[{account.display_name}] FAILED — không đọc được màn hình bằng OCR: {exc}. "
                 "Bỏ qua account này và thử account tiếp theo."
             )
             self.task_progress_changed.emit(
-                f"{account.username} - Đăng nhập", "failed", 0, 1
+                f"{account.display_name} - Đăng nhập", "failed", 0, 1
             )
-            emit_account_progress(f"FAILED: {account.username}")
+            emit_account_progress(f"FAILED: {account.display_name}")
             continue
 
         if not self._is_login_screen(screen_text):
             normalized_screen = self._normalize_screen_text(screen_text)
             self.log_message.emit(
-                f"[{account.username}] OCR màn hình hiện tại: "
+                f"[{account.display_name}] OCR màn hình hiện tại: "
                 f"{normalized_screen[:240] or '(không đọc được chữ)'}"
             )
             failed_count += 1
             processed_count += 1
-            account_results.append((account.username, "FAILED — không nhận diện được màn hình đăng nhập"))
-            self.clone_account_result.emit(account.username, False)
+            account_results.append((account.display_name, "FAILED — không nhận diện được màn hình đăng nhập"))
+            self.clone_account_result.emit(account.display_name, False)
             self.log_message.emit(
-                f"[{account.username}] FAILED — không nhận diện được màn hình đăng nhập; "
+                f"[{account.display_name}] FAILED — không nhận diện được màn hình đăng nhập; "
                 "bỏ qua account này. Không nhập thông tin vào màn hình chưa xác định."
             )
             self.task_progress_changed.emit(
-                f"{account.username} - Đăng nhập", "failed", 0, 1
+                f"{account.display_name} - Đăng nhập", "failed", 0, 1
             )
-            emit_account_progress(f"FAILED: {account.username}")
+            emit_account_progress(f"FAILED: {account.display_name}")
             # If an earlier account is still logged in, we cannot safely switch users
             # until logout is implemented. Otherwise try the next account.
             if success_count:
@@ -126,16 +126,16 @@ def run_clone_flow(self, device) -> None:
         except Exception as exc:
             failed_count += 1
             processed_count += 1
-            account_results.append((account.username, f"FAILED — lỗi thao tác đăng nhập: {exc}"))
-            self.clone_account_result.emit(account.username, False)
+            account_results.append((account.display_name, f"FAILED — lỗi thao tác đăng nhập: {exc}"))
+            self.clone_account_result.emit(account.display_name, False)
             self.log_message.emit(
-                f"[{account.username}] FAILED — không thể nhập thông tin hoặc bấm đăng nhập: "
+                f"[{account.display_name}] FAILED — không thể nhập thông tin hoặc bấm đăng nhập: "
                 f"{exc}. Bỏ qua account này và thử account tiếp theo."
             )
             self.task_progress_changed.emit(
-                f"{account.username} - Đăng nhập", "failed", 0, 1
+                f"{account.display_name} - Đăng nhập", "failed", 0, 1
             )
-            emit_account_progress(f"FAILED: {account.username}")
+            emit_account_progress(f"FAILED: {account.display_name}")
             continue
 
         from dctq_auto.tasks.common.login import verify_login
@@ -151,16 +151,16 @@ def run_clone_flow(self, device) -> None:
                 reason = observed_error
             else:
                 reason = "không xác nhận được đăng nhập thành công sau 20 giây"
-            account_results.append((account.username, f"FAILED — {reason}"))
-            self.clone_account_result.emit(account.username, False)
+            account_results.append((account.display_name, f"FAILED — {reason}"))
+            self.clone_account_result.emit(account.display_name, False)
             self.log_message.emit(
-                f"[{account.username}] FAILED — {reason}. "
+                f"[{account.display_name}] FAILED — {reason}. "
                 "Bỏ qua account này và chuyển sang account tiếp theo."
             )
             self.task_progress_changed.emit(
-                f"{account.username} - Đăng nhập", "failed", 0, 1
+                f"{account.display_name} - Đăng nhập", "failed", 0, 1
             )
-            emit_account_progress(f"FAILED: {account.username}")
+            emit_account_progress(f"FAILED: {account.display_name}")
             continue
 
         # The game may need extra time to finish loading the profile.
@@ -250,16 +250,16 @@ def run_clone_flow(self, device) -> None:
         if not profile_found:
             failed_count += 1
             processed_count += 1
-            account_results.append((account.username, "FAILED — không thấy profile quan_chuc sau 60 giây"))
-            self.clone_account_result.emit(account.username, False)
+            account_results.append((account.display_name, "FAILED — không thấy profile quan_chuc sau 60 giây"))
+            self.clone_account_result.emit(account.display_name, False)
             self.log_message.emit(
                 f"[{account.display_name}] FAILED — không thấy profile 'quan_chuc' sau 60 giây; "
                 "bỏ qua account này và thử account tiếp theo."
             )
             self.task_progress_changed.emit(
-                f"{account.username} - Đăng nhập", "failed", 0, 1
+                f"{account.display_name} - Đăng nhập", "failed", 0, 1
             )
-            emit_account_progress(f"FAILED: {account.username}")
+            emit_account_progress(f"FAILED: {account.display_name}")
             # Profile may be logged in but not recognized. Avoid entering another
             # account on an unknown screen unless a safe logout flow exists.
             if index < total:
@@ -504,11 +504,11 @@ def run_clone_flow(self, device) -> None:
         if not logout_ok:
             failed_count += 1
             processed_count += 1
-            account_results.append((account.username, "FAILED — đăng xuất không xác nhận được"))
-            self.clone_account_result.emit(account.username, False)
-            emit_account_progress(f"FAILED: {account.username}")
+            account_results.append((account.display_name, "FAILED — đăng xuất không xác nhận được"))
+            self.clone_account_result.emit(account.display_name, False)
+            emit_account_progress(f"FAILED: {account.display_name}")
             self.task_progress_changed.emit(
-                f"{account.username} - Đăng nhập", "failed", 0, 1
+                f"{account.display_name} - Đăng nhập", "failed", 0, 1
             )
             self.log_message.emit(
                 f"[{account.display_name}] Dừng vòng lặp Clone để tránh đăng nhập account kế tiếp "
@@ -518,15 +518,15 @@ def run_clone_flow(self, device) -> None:
 
         success_count += 1
         processed_count += 1
-        account_results.append((account.username, "SUCCESS"))
-        self.clone_account_result.emit(account.username, True)
+        account_results.append((account.display_name, "SUCCESS"))
+        self.clone_account_result.emit(account.display_name, True)
         self.log_message.emit(
             f"[{account.display_name}] SUCCESS — đăng nhập thành công, profile đã tải "
             f"({success_count} thành công, {failed_count} thất bại)."
         )
-        emit_account_progress(f"SUCCESS: {account.username}")
+        emit_account_progress(f"SUCCESS: {account.display_name}")
         self.task_progress_changed.emit(
-            f"{account.username} - Đăng nhập", "done", 1, 1
+            f"{account.display_name} - Đăng nhập", "done", 1, 1
         )
 
     self.log_message.emit(
@@ -539,7 +539,7 @@ def run_clone_flow(self, device) -> None:
             self.log_message.emit(f"  {username}: {result}")
     processed_names = {username for username, _result in account_results}
     for account in accounts:
-        if account.username not in processed_names:
+        if account.display_name not in processed_names:
             self.log_message.emit(f"  {account.display_name}: NOT PROCESSED — chưa chạy")
     if self._config.get("clone_daily_check_in"):
         self.log_message.emit(
@@ -622,7 +622,7 @@ def run_clone_flow_optimize(self, device) -> None:
     )
 
     for account in disabled_accounts:
-        self.clone_account_status.emit(account.username, "disabled")
+        self.clone_account_status.emit(account.display_name, "disabled")
         self.log_message.emit(
             f"Clone Optimize — tài khoản {account.display_name}: vô hiệu hóa, bỏ qua."
         )
@@ -666,24 +666,24 @@ def run_clone_flow_optimize(self, device) -> None:
             return
 
         self.progress_changed.emit(
-            index - 1, total, f"Tài khoản {index}/{total}: {account.username}"
+            index - 1, total, f"Tài khoản {index}/{total}: {account.display_name}"
         )
         ocr_client = AdbClient(serial=self._serial)
-        self.log_message.emit(f"[{account.username}] Bắt đầu đăng nhập.")
+        self.log_message.emit(f"[{account.display_name}] Bắt đầu đăng nhập.")
         try:
             login_result, login_error = login_account(self, account, device, ocr_client)
         except Exception as exc:
             login_result, login_error = False, str(exc)
 
         if login_result is None:
-            self.log_message.emit(f"[{account.username}] Đăng nhập bị dừng; bỏ qua tài khoản.")
+            self.log_message.emit(f"[{account.display_name}] Đăng nhập bị dừng; bỏ qua tài khoản.")
             continue
         if login_result is not True:
             self.log_message.emit(
-                f"[{account.username}] Đăng nhập thất bại: {login_error or 'không rõ nguyên nhân'}."
+                f"[{account.display_name}] Đăng nhập thất bại: {login_error or 'không rõ nguyên nhân'}."
             )
-            self.clone_account_status.emit(account.username, "failed")
-            self.clone_account_result.emit(account.username, False)
+            self.clone_account_status.emit(account.display_name, "failed")
+            self.clone_account_result.emit(account.display_name, False)
             failed_count += 1
             continue
 
@@ -714,9 +714,9 @@ def run_clone_flow_optimize(self, device) -> None:
                 result = False
 
             self.clone_account_status.emit(
-                account.username, "done" if result else "failed"
+                account.display_name, "done" if result else "failed"
             )
-            self.clone_account_result.emit(account.username, bool(result))
+            self.clone_account_result.emit(account.display_name, bool(result))
             if result:
                 success_count += 1
             else:

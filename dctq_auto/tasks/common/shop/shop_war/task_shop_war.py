@@ -35,7 +35,7 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
     if not task_open_shop_war.run(
         worker, account, steps, device, ocr_client, log, screenshot=screenshot
     ):
-        log(f"[{account.username}] Không mở được [Shop Chiến Tranh]; bỏ qua các shop con.")
+        log(f"[{account.display_name}] Không mở được [Shop Chiến Tranh]; bỏ qua các shop con.")
         return steps
 
     for task, task_name in _WAR_SHOP_TASKS:
@@ -44,6 +44,6 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
                 worker, account, steps, device, ocr_client, log, screenshot=None
             )
         except Exception as exc:
-            log(f"[{account.username}] {task_name} thất bại: {exc}")
+            log(f"[{account.display_name}] {task_name} thất bại: {exc}")
 
     return steps

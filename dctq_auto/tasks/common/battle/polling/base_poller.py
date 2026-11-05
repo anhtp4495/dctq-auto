@@ -50,7 +50,7 @@ class BasePoller:
         try:
             screen = screen_bgr(context["device"])
         except Exception as exc:
-            context["log"](f"[{account.username}] Không chụp được màn hình trận đấu: {exc}")
+            context["log"](f"[{account.display_name}] Không chụp được màn hình trận đấu: {exc}")
             return None
 
         is_championship = context.get("battle_type") == "championship"

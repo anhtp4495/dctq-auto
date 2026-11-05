@@ -21,7 +21,7 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None):
         if not task_open_activity.run(
             worker, account, device, ocr_client, log, screenshot=screenshot
         ):
-            log(f"[{account.username}] Không mở được màn hình [Hoạt động]; giữ nguyên các bước.")
+            log(f"[{account.display_name}] Không mở được màn hình [Hoạt động]; giữ nguyên các bước.")
             return steps
 
         task_perk.run(worker, account, steps, device, ocr_client, log)
@@ -32,8 +32,8 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None):
                     worker, account, device, ocr_client, log
                 )
                 if not closed:
-                    log(f"[{account.username}] Cảnh báo: chưa xác nhận đóng được màn hình [Hoạt động].")
+                    log(f"[{account.display_name}] Cảnh báo: chưa xác nhận đóng được màn hình [Hoạt động].")
             except Exception as exc:
-                log(f"[{account.username}] Lỗi khi đóng màn hình [Hoạt động]: {exc}")
+                log(f"[{account.display_name}] Lỗi khi đóng màn hình [Hoạt động]: {exc}")
 
     return steps

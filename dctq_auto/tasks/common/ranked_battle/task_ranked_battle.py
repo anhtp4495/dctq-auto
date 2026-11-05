@@ -86,22 +86,22 @@ def run(worker, account, steps, device, ocr_client, log) -> list[str]:
     try:
         opened = task_open_ranked_battle.run(worker, account, device, ocr_client, log)
         if not opened:
-            log(f"[{account.username}] Không mở được Tranh Bá; bỏ qua phần theo dõi trận.")
+            log(f"[{account.display_name}] Không mở được Tranh Bá; bỏ qua phần theo dõi trận.")
         else:
             battle_ok = task_run_ranked_battle.run(
                 worker, account, device, ocr_client, log
             )
     except Exception as exc:
-        log(f"[{account.username}] Quy trình Tranh Bá phát sinh lỗi: {exc}")
+        log(f"[{account.display_name}] Quy trình Tranh Bá phát sinh lỗi: {exc}")
     finally:
         try:
             closed = task_close_ranked_battle.run(worker, account, device, ocr_client, log)
             log(
-                f"[{account.username}] Đóng giao diện Tranh Bá "
+                f"[{account.display_name}] Đóng giao diện Tranh Bá "
                 f"{'thành công' if closed else 'chưa xác nhận được'}."
             )
         except Exception as exc:
-            log(f"[{account.username}] Đóng Tranh Bá phát sinh lỗi: {exc}")
+            log(f"[{account.display_name}] Đóng Tranh Bá phát sinh lỗi: {exc}")
 
     target = get_battle_config(worker._config).battle_count
     completed = int(getattr(worker, "_ranked_battle_completed_count", 0))

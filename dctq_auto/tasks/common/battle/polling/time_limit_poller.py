@@ -23,7 +23,7 @@ class TimeLimitPoller(BasePoller):
             account = context["account"]
             if not context.get("time_limit_reached_logged", False):
                 context["log"](
-                    f"[{account.username}] Đã vượt thời gian tối đa "
+                    f"[{account.display_name}] Đã vượt thời gian tối đa "
                     f"{seconds} giây (thực tế {elapsed:.1f} giây)."
                 )
                 context["time_limit_reached_logged"] = True

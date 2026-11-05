@@ -24,7 +24,7 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
         if not task_open_shop.run(
             worker, account, device, ocr_client, log, screenshot=screenshot
         ):
-            log(f"[{account.username}] Không mở được [Cửa hàng]; giữ nguyên step.")
+            log(f"[{account.display_name}] Không mở được [Cửa hàng]; giữ nguyên step.")
             return steps
         shop_opened = True
 
@@ -34,7 +34,7 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
                     worker, account, steps, device, ocr_client, log, screenshot=None
                 )
             except Exception as exc:
-                log(f"[{account.username}] {task_name} thất bại: {exc}")
+                log(f"[{account.display_name}] {task_name} thất bại: {exc}")
 
         return steps
     finally:
@@ -42,6 +42,6 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
             try:
                 closed = task_close_shop.run(worker, account, device, ocr_client, log)
                 if not closed:
-                    log(f"[{account.username}] Cảnh báo: chưa xác nhận thoát được [Cửa hàng].")
+                    log(f"[{account.display_name}] Cảnh báo: chưa xác nhận thoát được [Cửa hàng].")
             except Exception as exc:
-                log(f"[{account.username}] Lỗi khi đóng [Cửa hàng]: {exc}")
+                log(f"[{account.display_name}] Lỗi khi đóng [Cửa hàng]: {exc}")

@@ -24,10 +24,10 @@ def open_guild(
     """Mở Quân đoàn bằng Template Matching; nhận screenshot có sẵn nếu được truyền vào."""
 
     if not self._wait_if_paused():
-        log(f"[{account.username}] Đã dừng khi đang mở màn hình [Quân đoàn].")
+        log(f"[{account.display_name}] Đã dừng khi đang mở màn hình [Quân đoàn].")
         return False
 
-    log(f"[{account.username}] Bắt đầu mở màn hình [Quân đoàn].")
+    log(f"[{account.display_name}] Bắt đầu mở màn hình [Quân đoàn].")
 
     template_names = (
         _TEMPLATE_MAIN_QUAN_DOAN_MO_CHAT,
@@ -41,13 +41,13 @@ def open_guild(
             screenshot = device.screenshot()
         screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
     except Exception as exc:
-        log(f"[{account.username}] Không chụp được màn hình để nhận diện Quân đoàn: {exc}")
+        log(f"[{account.display_name}] Không chụp được màn hình để nhận diện Quân đoàn: {exc}")
         return False
 
     for template_name in template_names:
         template = templates.get(template_name)
         if template is None:
-            log(f"[{account.username}] Không tải được template {template_name}; bỏ qua.")
+            log(f"[{account.display_name}] Không tải được template {template_name}; bỏ qua.")
             continue
 
         try:
@@ -60,7 +60,7 @@ def open_guild(
                 grayscale=template.grayscale,
             )
         except (ValueError, cv2.error) as exc:
-            log(f"[{account.username}] Lỗi template matching {template_name}: {exc}")
+            log(f"[{account.display_name}] Lỗi template matching {template_name}: {exc}")
             continue
 
         if match is None:
@@ -68,14 +68,14 @@ def open_guild(
 
         report_template_match(
             log,
-            context=f"[{account.username}]",
+            context=f"[{account.display_name}]",
             template=template,
             match=match,
         )
 
         if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH:
             log(
-                f"[{account.username}] Đã xác nhận đang ở giao diện [Quân đoàn] "
+                f"[{account.display_name}] Đã xác nhận đang ở giao diện [Quân đoàn] "
                 f"({template.id})."
             )
             return True
@@ -92,7 +92,7 @@ def open_guild(
                 else "Vào quân đoàn"
             )
             log(
-                f"[{account.username}] Phát hiện nút {action}; "
+                f"[{account.display_name}] Phát hiện nút {action}; "
                 f"click trung điểm ({x}, {y}) rồi kiểm tra lại."
             )
             try:
@@ -100,14 +100,14 @@ def open_guild(
                 time.sleep(1.0)
                 return open_guild(self, account, device, ocr_client, log)
             except Exception as exc:
-                log(f"[{account.username}] Mở màn hình [Quân đoàn] thất bại: {exc}")
+                log(f"[{account.display_name}] Mở màn hình [Quân đoàn] thất bại: {exc}")
                 return False
 
     if current_try < _MAX_TRY_DETECT_MAIN_SCREEN:
-        log(f"[{account.username}] [Quân đoàn] Chưa chạy xong - Thử lại lần {current_try}.")
+        log(f"[{account.display_name}] [Quân đoàn] Chưa chạy xong - Thử lại lần {current_try}.")
         return open_guild(self, account, device, ocr_client, log, screenshot=None, current_try=current_try + 1)
 
-    log(f"[{account.username}] Mở màn hình [Quân đoàn] thất bại.")
+    log(f"[{account.display_name}] Mở màn hình [Quân đoàn] thất bại.")
     return False
 
 

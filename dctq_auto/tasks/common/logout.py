@@ -22,7 +22,7 @@ def _tap_match_center(device, match, account, log):
     """Click trung điểm vùng template được nhận diện."""
     x = (match.left + match.right) // 2
     y = (match.top + match.bottom) // 2
-    log(f"[{account.username}] Click trung điểm template tại ({x}, {y}).")
+    log(f"[{account.display_name}] Click trung điểm template tại ({x}, {y}).")
     device.shell(f"input tap {x} {y}")
     time.sleep(0.7)
 
@@ -48,11 +48,11 @@ def prepare_logout(worker, account, device, ocr_client) -> tuple[bool | None, st
             ocr_client.tap_ocr_target("close_quan_doan")
             time.sleep(0.8)
             worker.log_message.emit(
-                f"[{account.username}] Đã gửi thao tác đóng màn hình quân đoàn."
+                f"[{account.display_name}] Đã gửi thao tác đóng màn hình quân đoàn."
             )
         except Exception as exc:
             worker.log_message.emit(
-                f"[{account.username}] Không bấm được nút đóng quân đoàn: {exc}; "
+                f"[{account.display_name}] Không bấm được nút đóng quân đoàn: {exc}; "
                 "vẫn tiếp tục quy trình đăng xuất."
             )
 
@@ -83,7 +83,7 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
         screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
     except Exception as exc:
         worker.log_message.emit(
-            f"[{account.username}] Không chụp được màn hình khi đăng xuất: {exc}"
+            f"[{account.display_name}] Không chụp được màn hình khi đăng xuất: {exc}"
         )
         return False
 
@@ -105,7 +105,7 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
             )
         except (ValueError, cv2.error) as exc:
             worker.log_message.emit(
-                f"[{account.username}] Lỗi template matching {template_name}: {exc}"
+                f"[{account.display_name}] Lỗi template matching {template_name}: {exc}"
             )
             continue
 
@@ -114,7 +114,7 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
 
         report_template_match(
             worker.log_message.emit,
-            context=f"[{account.username}] Đăng xuất:",
+            context=f"[{account.display_name}] Đăng xuất:",
             template=template,
             match=match,
         )
@@ -124,13 +124,13 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
 
     if detected_state == "dang_nhap":
         worker.log_message.emit(
-            f"[{account.username}] Đã về màn hình đăng nhập sau khi đổi tài khoản."
+            f"[{account.display_name}] Đã về màn hình đăng nhập sau khi đổi tài khoản."
         )
         return True
 
     if detected_state == "waiting":
         worker.log_message.emit(
-            f"[{account.username}] Đang ở màn hình chờ; kiểm tra lại sau 3 giây."
+            f"[{account.display_name}] Đang ở màn hình chờ; kiểm tra lại sau 3 giây."
         )
         time.sleep(3)
         return run_logout_flow(worker, account, device, ocr_client)
@@ -138,7 +138,7 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
     if detected_state == "man_hinh_chinh":
         tap_x, tap_y = ButtonPositions().get("main", "profile")
         worker.log_message.emit(
-            f"[{account.username}] Mở profile tại ({tap_x}, {tap_y}); "
+            f"[{account.display_name}] Mở profile tại ({tap_x}, {tap_y}); "
             "sẽ nhận diện lại màn hình sau thao tác."
         )
         device.shell(f"input tap {tap_x} {tap_y}")
@@ -159,14 +159,14 @@ def run_logout_flow(worker, account, device, ocr_client) -> bool | None:
         tap_x = (detected_match.left + detected_match.right) // 2
         tap_y = (detected_match.top + detected_match.bottom) // 2
         worker.log_message.emit(
-            f"[{account.username}] Bấm giữa template {detected_state} tại ({tap_x}, {tap_y})."
+            f"[{account.display_name}] Bấm giữa template {detected_state} tại ({tap_x}, {tap_y})."
         )
         device.shell(f"input tap {tap_x} {tap_y}")
         time.sleep(1)
         return run_logout_flow(worker, account, device, ocr_client)
 
     worker.log_message.emit(
-        f"[{account.username}] Không nhận diện được trạng thái đăng xuất."
+        f"[{account.display_name}] Không nhận diện được trạng thái đăng xuất."
     )
     return False
 
@@ -179,7 +179,7 @@ def handle_post_logout(
     """Xác minh trạng thái sau khi đăng xuất bằng template matching."""
     if not worker._config.get("clone_logout", True):
         worker.log_message.emit(
-            f"[{account.username}] Bỏ qua đăng xuất theo cấu hình."
+            f"[{account.display_name}] Bỏ qua đăng xuất theo cấu hình."
         )
         return True, None
 
@@ -197,7 +197,7 @@ def handle_post_logout(
         screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
     except Exception as exc:
         worker.log_message.emit(
-            f"[{account.username}] Không chụp được màn hình để xác minh đăng xuất: {exc}"
+            f"[{account.display_name}] Không chụp được màn hình để xác minh đăng xuất: {exc}"
         )
         return False, None
 
@@ -218,7 +218,7 @@ def handle_post_logout(
             )
         except (ValueError, cv2.error) as exc:
             worker.log_message.emit(
-                f"[{account.username}] Lỗi template matching {template_name}: {exc}"
+                f"[{account.display_name}] Lỗi template matching {template_name}: {exc}"
             )
             continue
 
@@ -227,7 +227,7 @@ def handle_post_logout(
 
         report_template_match(
             worker.log_message.emit,
-            context=f"[{account.username}] Xác minh đăng xuất:",
+            context=f"[{account.display_name}] Xác minh đăng xuất:",
             template=template,
             match=match,
         )
@@ -235,23 +235,23 @@ def handle_post_logout(
         state = template.id
         if state == "dang_nhap":
             worker.log_message.emit(
-                f"[{account.username}] Đăng xuất thành công."
+                f"[{account.display_name}] Đăng xuất thành công."
             )
             return True, None
 
         if state == "waiting":
             worker.log_message.emit(
-                f"[{account.username}] Đang chờ đăng xuất; kiểm tra lại sau 3 giây."
+                f"[{account.display_name}] Đang chờ đăng xuất; kiểm tra lại sau 3 giây."
             )
             time.sleep(3)
             return handle_post_logout(worker, account, device, ocr_client)
 
     if current_try < _MAX_TRY_DETECT_MAIN_SCREEN:
-        worker.log_message.emit(f"[{account.username}] Chưa xác định đã đã đăng xuất thành công - Thử lại lần {current_try}.")
+        worker.log_message.emit(f"[{account.display_name}] Chưa xác định đã đã đăng xuất thành công - Thử lại lần {current_try}.")
         return handle_post_logout(worker, account, device, ocr_client, current_try + 1)
 
     worker.log_message.emit(
-        f"[{account.username}] Đăng xuất thất bại."
+        f"[{account.display_name}] Đăng xuất thất bại."
     )
     return False, "Đăng xuất thất bại."
 

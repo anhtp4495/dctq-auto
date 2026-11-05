@@ -33,7 +33,7 @@ def _find_template(screen_bgr, templates, account, log):
     for template_name in _TEMPLATE_NAMES:
         template = templates.get(template_name)
         if template is None:
-            log(f"[{account.username}] Không tải được template {template_name}; bỏ qua.")
+            log(f"[{account.display_name}] Không tải được template {template_name}; bỏ qua.")
             continue
         try:
             match = match_template(
@@ -45,12 +45,12 @@ def _find_template(screen_bgr, templates, account, log):
                 grayscale=template.grayscale,
             )
         except (ValueError, cv2.error) as exc:
-            log(f"[{account.username}] Lỗi template matching {template_name}: {exc}")
+            log(f"[{account.display_name}] Lỗi template matching {template_name}: {exc}")
             continue
         if match is not None:
             report_template_match(
                 log,
-                context=f"[{account.username}]",
+                context=f"[{account.display_name}]",
                 template=template,
                 match=match,
             )
@@ -62,7 +62,7 @@ def _tap_match_center(device, match, account, log):
     """Click trung điểm vùng template được nhận diện."""
     x = (match.left + match.right) // 2
     y = (match.top + match.bottom) // 2
-    log(f"[{account.username}] Click trung điểm template tại ({x}, {y}).")
+    log(f"[{account.display_name}] Click trung điểm template tại ({x}, {y}).")
     device.shell(f"input tap {x} {y}")
     time.sleep(0.7)
 
@@ -72,7 +72,7 @@ def run_le_bao_quoc_van(worker, account, steps, device, ocr_client, log, screens
     templates = get_templates(_TEMPLATE_NAMES)
 
     if not worker._wait_if_paused():
-        log(f"[{account.username}] Nhận lễ bao Quốc Vận đã dừng theo yêu cầu.")
+        log(f"[{account.display_name}] Nhận lễ bao Quốc Vận đã dừng theo yêu cầu.")
         return False
 
     try:
@@ -80,25 +80,25 @@ def run_le_bao_quoc_van(worker, account, steps, device, ocr_client, log, screens
             screenshot = device.screenshot()
         screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
     except Exception as exc:
-        log(f"[{account.username}] Không chụp được màn hình để nhận diện lễ bao Quốc Vận: {exc}")
+        log(f"[{account.display_name}] Không chụp được màn hình để nhận diện lễ bao Quốc Vận: {exc}")
         return False
 
     template_name, match = _find_template(screen_bgr, templates, account, log)
     if template_name is None:
         log(
-            f"[{account.username}] Không nhận diện được template lễ bao Quốc Vận; "
+            f"[{account.display_name}] Không nhận diện được template lễ bao Quốc Vận; "
             "có thể đã chuyển sang màn hình khác."
         )
         return False
 
     if template_name == _TEMPLATE_DA_NHAN_LE_BAO_MIEN_PHI:
-        log(f"[{account.username}] Đã nhận lễ bao Quốc Vận.")
+        log(f"[{account.display_name}] Đã nhận lễ bao Quốc Vận.")
         return True
 
     try:
         _tap_match_center(device, match, account, log)
     except Exception as exc:
-        log(f"[{account.username}] Không click được template {template_name}: {exc}")
+        log(f"[{account.display_name}] Không click được template {template_name}: {exc}")
         return False
 
     return run_le_bao_quoc_van(
@@ -118,7 +118,7 @@ def open_le_bao_quoc_van(worker, account, device, ocr_client, log, screenshot=No
 
     for attempt in range(3):
         if not worker._wait_if_paused():
-            log(f"[{account.username}] Mở Lễ bao Quốc Vận đã dừng theo yêu cầu.")
+            log(f"[{account.display_name}] Mở Lễ bao Quốc Vận đã dừng theo yêu cầu.")
             return False
 
         try:
@@ -131,7 +131,7 @@ def open_le_bao_quoc_van(worker, account, device, ocr_client, log, screenshot=No
             )
         except Exception as exc:
             log(
-                f"[{account.username}] Không chụp được màn hình khi mở "
+                f"[{account.display_name}] Không chụp được màn hình khi mở "
                 f"Lễ bao Quốc Vận: {exc}"
             )
             return False
@@ -139,7 +139,7 @@ def open_le_bao_quoc_van(worker, account, device, ocr_client, log, screenshot=No
         for template_name in template_names:
             template = templates.get(template_name)
             if template is None:
-                log(f"[{account.username}] Không tải được template {template_name}; bỏ qua.")
+                log(f"[{account.display_name}] Không tải được template {template_name}; bỏ qua.")
                 continue
             try:
                 match = match_template(
@@ -151,19 +151,19 @@ def open_le_bao_quoc_van(worker, account, device, ocr_client, log, screenshot=No
                     grayscale=template.grayscale,
                 )
             except (ValueError, cv2.error) as exc:
-                log(f"[{account.username}] Lỗi nhận diện {template_name}: {exc}")
+                log(f"[{account.display_name}] Lỗi nhận diện {template_name}: {exc}")
                 continue
             if match is None:
                 continue
 
             report_template_match(
-                log, context=f"[{account.username}]", template=template, match=match
+                log, context=f"[{account.display_name}]", template=template, match=match
             )
             if template_name == _TEMPLATE_DANG_CHON_LE_BAO_QUOC_VAN:
-                log(f"[{account.username}] Đã ở sẵn mục Lễ bao Quốc Vận.")
+                log(f"[{account.display_name}] Đã ở sẵn mục Lễ bao Quốc Vận.")
                 return True
 
-            log(f"[{account.username}] Phát hiện Lễ bao Quốc Vận chưa được chọn.")
+            log(f"[{account.display_name}] Phát hiện Lễ bao Quốc Vận chưa được chọn.")
             _tap_match_center(device, match, account, log)
             return True
 
@@ -174,20 +174,20 @@ def open_le_bao_quoc_van(worker, account, device, ocr_client, log, screenshot=No
             x1, y1 = positions.get("hoat_dong", "hoat_dong_phuc_loi_item1")
             x2, y2 = positions.get("hoat_dong", "hoat_dong_phuc_loi_item2")
             log(
-                f"[{account.username}] Chưa thấy Lễ bao Quốc Vận; vuốt từ trên xuống "
+                f"[{account.display_name}] Chưa thấy Lễ bao Quốc Vận; vuốt từ trên xuống "
                 f"lần {attempt + 1}/2: ({x1}, {y1}) -> ({x2}, {y2})."
             )
             device.shell(f"input swipe {x1} {y1} {x2} {y2} 400")
             time.sleep(0.7)
         except Exception as exc:
             log(
-                f"[{account.username}] Không vuốt được danh sách để tìm "
+                f"[{account.display_name}] Không vuốt được danh sách để tìm "
                 f"Lễ bao Quốc Vận: {exc}"
             )
             return False
 
     log(
-        f"[{account.username}] Không tìm thấy mục Lễ bao Quốc Vận "
+        f"[{account.display_name}] Không tìm thấy mục Lễ bao Quốc Vận "
         "sau tối đa 2 lần vuốt."
     )
     return False

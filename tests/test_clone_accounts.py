@@ -14,7 +14,7 @@ def test_load_accounts_skips_blank_and_comment_lines(tmp_path: Path) -> None:
 
     accounts = load_accounts(account_file)
 
-    assert [(account.username, account.password) for account in accounts] == [
+    assert [(account.display_name, account.password) for account in accounts] == [
         ("user1", "pass1"),
         ("user2@example.com", "pass|with|pipes"),
     ]

@@ -34,7 +34,7 @@ def run(worker, account, device, ocr_client, log, screenshot=None) -> bool:
 
     while True:
         if not worker._wait_if_paused():
-            log(f"[{account.username}] Đã dừng khi đang đóng [Cửa hàng].")
+            log(f"[{account.display_name}] Đã dừng khi đang đóng [Cửa hàng].")
             return False
 
         try:
@@ -42,7 +42,7 @@ def run(worker, account, device, ocr_client, log, screenshot=None) -> bool:
             screen_bgr = cv2.cvtColor(np.asarray(current_screenshot), cv2.COLOR_RGB2BGR)
             screenshot = None
         except Exception as exc:
-            log(f"[{account.username}] Không chụp được màn hình để đóng [Cửa hàng]: {exc}")
+            log(f"[{account.display_name}] Không chụp được màn hình để đóng [Cửa hàng]: {exc}")
             return False
 
         matched_template = None
@@ -63,19 +63,19 @@ def run(worker, account, device, ocr_client, log, screenshot=None) -> bool:
                     grayscale=template.grayscale,
                 )
             except (ValueError, cv2.error) as exc:
-                log(f"[{account.username}] Lỗi template matching {template_name}: {exc}")
+                log(f"[{account.display_name}] Lỗi template matching {template_name}: {exc}")
                 continue
 
             if match is not None:
                 matched_template = template_name
                 matched_result = match
                 report_template_match(
-                    log, context=f"[{account.username}]", template=template, match=match
+                    log, context=f"[{account.display_name}]", template=template, match=match
                 )
                 break
 
         if matched_template == _TEMPLATE_MAIN_CUA_HANG:
-            log(f"[{account.username}] Đã xác nhận trở về giao diện chính sau khi đóng [Cửa hàng].")
+            log(f"[{account.display_name}] Đã xác nhận trở về giao diện chính sau khi đóng [Cửa hàng].")
             return True
 
         if matched_template is not None:
@@ -91,24 +91,24 @@ def run(worker, account, device, ocr_client, log, screenshot=None) -> bool:
                     else "đóng màn hình cửa hàng"
                 )
                 log(
-                    f"[{account.username}] Phát hiện nút {action}; "
+                    f"[{account.display_name}] Phát hiện nút {action}; "
                     f"click trung tâm ({x}, {y})."
                 )
             else:
                 try:
                     x, y = ButtonPositions().get("cua_hang", "dong_man_hinh")
                 except (KeyError, ValueError) as exc:
-                    log(f"[{account.username}] Không lấy được tọa độ đóng [Cửa hàng]: {exc}")
+                    log(f"[{account.display_name}] Không lấy được tọa độ đóng [Cửa hàng]: {exc}")
                     return False
                 log(
-                    f"[{account.username}] Đang ở [Thương Thành]; "
+                    f"[{account.display_name}] Đang ở [Thương Thành]; "
                     f"click buttonlocations cua_hang.dong_man_hinh tại ({x}, {y})."
                 )
 
             try:
                 device.shell(f"input tap {x} {y}")
             except Exception as exc:
-                log(f"[{account.username}] Click đóng [Cửa hàng] thất bại: {exc}")
+                log(f"[{account.display_name}] Click đóng [Cửa hàng] thất bại: {exc}")
                 return False
 
             if deadline is None:
@@ -118,19 +118,19 @@ def run(worker, account, device, ocr_client, log, screenshot=None) -> bool:
             continue
 
         if deadline is None:
-            log(f"[{account.username}] Không xác định được trạng thái hiện tại của [Cửa hàng].")
+            log(f"[{account.display_name}] Không xác định được trạng thái hiện tại của [Cửa hàng].")
             return False
 
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             log(
-                f"[{account.username}] Hết {_MAX_WAIT_MAIN_SCREEN_SECONDS:.0f} giây "
+                f"[{account.display_name}] Hết {_MAX_WAIT_MAIN_SCREEN_SECONDS:.0f} giây "
                 "nhưng chưa xác nhận được đã trở về giao diện chính."
             )
             return False
 
         log(
-            f"[{account.username}] Đang chờ giao diện chính sau khi đóng [Cửa hàng] "
+            f"[{account.display_name}] Đang chờ giao diện chính sau khi đóng [Cửa hàng] "
             f"(còn tối đa {remaining:.1f} giây)."
         )
         time.sleep(min(_SCREEN_POLL_INTERVAL_SECONDS, remaining))

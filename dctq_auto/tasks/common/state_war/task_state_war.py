@@ -61,7 +61,7 @@ def run_state_war(worker, account, steps, device, strategy_path: str, log) -> bo
     ):
         return False
 
-    log(f"[{account.username}] Bắt đầu quy trình Quốc chiến.")
+    log(f"[{account.display_name}] Bắt đầu quy trình Quốc chiến.")
     worker.task_progress_changed.emit(
         "Triển khai chiến thuật Quốc chiến", "running", 0, 1
     )
@@ -72,7 +72,7 @@ def run_state_war(worker, account, steps, device, strategy_path: str, log) -> bo
         )
         return success
     except Exception as exc:
-        log(f"[{account.username}] Quy trình Quốc chiến phát sinh lỗi: {exc}")
+        log(f"[{account.display_name}] Quy trình Quốc chiến phát sinh lỗi: {exc}")
         worker.task_progress_changed.emit(
             "Triển khai chiến thuật Quốc chiến", "failed", 0, 1
         )

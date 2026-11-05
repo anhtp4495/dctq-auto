@@ -37,7 +37,7 @@ class PincerBattle(BaseBattle):
         def deploy_hero(index: int) -> bool:
             hero_number = index + 1
             if not context["wait_if_paused"]():
-                log(f"[{account.username}] Đã dừng trước khi chọn võ tướng {hero_number}.")
+                log(f"[{account.display_name}] Đã dừng trước khi chọn võ tướng {hero_number}.")
                 return False
             if index == 0 and context.get("mark_battle_started"):
                 context["mark_battle_started"]()
@@ -45,17 +45,17 @@ class PincerBattle(BaseBattle):
             tap(device, hero_points[index], account=account, log=log)
             time.sleep(0.3)
             log(
-                f"[{account.username}] Chọn võ tướng {hero_number}/5 tại "
+                f"[{account.display_name}] Chọn võ tướng {hero_number}/5 tại "
                 f"{hero_points[index]}."
             )
 
             if not context["wait_if_paused"]():
-                log(f"[{account.username}] Đã dừng trước khi thả võ tướng {hero_number}.")
+                log(f"[{account.display_name}] Đã dừng trước khi thả võ tướng {hero_number}.")
                 return False
             tap(device, battle_points[index], account=account, log=log)
             time.sleep(0.3)
             log(
-                f"[{account.username}] Thả võ tướng {hero_number}/5 tại "
+                f"[{account.display_name}] Thả võ tướng {hero_number}/5 tại "
                 f"{battle_points[index]}."
             )
             return True
@@ -63,12 +63,12 @@ class PincerBattle(BaseBattle):
         # Mở cửa thứ nhất và triển khai hai võ tướng đầu tiên.
         for repeat in range(1, 2):
             if not context["wait_if_paused"]():
-                log(f"[{account.username}] Đã dừng khi kéo điểm A -> B ({repeat}/1).")
+                log(f"[{account.display_name}] Đã dừng khi kéo điểm A -> B ({repeat}/1).")
                 return False
             swipe(device, point_a, point_b, account=account, log=log)
             time.sleep(0.3)
             log(
-                f"[{account.username}] Kéo điểm A -> B lần {repeat}/1: "
+                f"[{account.display_name}] Kéo điểm A -> B lần {repeat}/1: "
                 f"{point_a} -> {point_b}."
             )
 
@@ -79,12 +79,12 @@ class PincerBattle(BaseBattle):
         # Mở cửa thứ hai và triển khai ba võ tướng còn lại.
         for repeat in range(1, 2):
             if not context["wait_if_paused"]():
-                log(f"[{account.username}] Đã dừng khi kéo điểm B -> A ({repeat}/1).")
+                log(f"[{account.display_name}] Đã dừng khi kéo điểm B -> A ({repeat}/1).")
                 return False
             swipe(device, point_b, point_a, account=account, log=log)
             time.sleep(0.3)
             log(
-                f"[{account.username}] Kéo điểm B -> A lần {repeat}/1: "
+                f"[{account.display_name}] Kéo điểm B -> A lần {repeat}/1: "
                 f"{point_b} -> {point_a}."
             )
 
@@ -92,5 +92,5 @@ class PincerBattle(BaseBattle):
             if not deploy_hero(index):
                 return False
 
-        log(f"[{account.username}] Đã triển khai đủ 5 võ tướng theo chiến thuật gọng kìm.")
+        log(f"[{account.display_name}] Đã triển khai đủ 5 võ tướng theo chiến thuật gọng kìm.")
         return True

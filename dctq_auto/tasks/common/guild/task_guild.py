@@ -39,7 +39,7 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
         if not task_open_guild.run(
             worker, account, device, ocr_client, log, screenshot=screenshot
         ):
-            log(f"[{account.username}] Không mở được màn hình [Quân đoàn]; giữ nguyên các bước.")
+            log(f"[{account.display_name}] Không mở được màn hình [Quân đoàn]; giữ nguyên các bước.")
             return steps
 
         return steps_run(
@@ -50,9 +50,9 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
             try:
                 closed = task_close_guild.run(worker, account, device, ocr_client, log)
                 if not closed:
-                    log(f"[{account.username}] Cảnh báo: chưa xác nhận thoát được màn hình [Quân đoàn].")
+                    log(f"[{account.display_name}] Cảnh báo: chưa xác nhận thoát được màn hình [Quân đoàn].")
             except Exception as exc:
-                log(f"[{account.username}] Lỗi khi thoát màn hình [Quân đoàn]: {exc}")
+                log(f"[{account.display_name}] Lỗi khi thoát màn hình [Quân đoàn]: {exc}")
 
 
 def steps_run(
@@ -76,6 +76,6 @@ def steps_run(
                 worker, account, steps, device, ocr_client, log, screenshot=None
             )
         except Exception as exc:
-            log(f"[{account.username}] {task_name} thất bại: {exc}")
+            log(f"[{account.display_name}] {task_name} thất bại: {exc}")
 
     return steps

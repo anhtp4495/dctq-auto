@@ -58,13 +58,13 @@ def run(self, account, device, ocr_client, log) -> bool:
     deadline = time.monotonic() + max(180, target_battles * 180)
 
     log(
-        f"[{account.username}] Bắt đầu theo dõi Giao Tranh: "
+        f"[{account.display_name}] Bắt đầu theo dõi Giao Tranh: "
         f"{target_battles} trận, chế độ {mode}."
     )
 
     while time.monotonic() < deadline:
         if not self._wait_if_paused():
-            log(f"[{account.username}] Đã dừng khi đang chạy Giao Tranh.")
+            log(f"[{account.display_name}] Đã dừng khi đang chạy Giao Tranh.")
             return False
 
         observation = poller.poll(context)
@@ -78,7 +78,7 @@ def run(self, account, device, ocr_client, log) -> bool:
             )
             device.shell(f"input tap {x} {y}")
             log(
-                f"[{account.username}] Phát hiện hộp thoại Dùng lương thảo "
+                f"[{account.display_name}] Phát hiện hộp thoại Dùng lương thảo "
                 f"(thiếu tài nguyên khi xuất quân); xác nhận tại ({x}, {y})."
             )
             time.sleep(1)
@@ -98,11 +98,11 @@ def run(self, account, device, ocr_client, log) -> bool:
                 completed_battles += 1
                 self._battle_completed_count = completed_battles
                 log(
-                    f"[{account.username}] Phát hiện Trận sau: "
+                    f"[{account.display_name}] Phát hiện Trận sau: "
                     f"hoàn thành {completed_battles}/{target_battles} trận."
                 )
                 if completed_battles >= target_battles:
-                    log(f"[{account.username}] Đã đủ số trận; chuyển sang tác vụ Hồi thành.")
+                    log(f"[{account.display_name}] Đã đủ số trận; chuyển sang tác vụ Hồi thành.")
                     return True
 
             from dctq_auto.tasks.common.battle.battle_utils import click_match
@@ -111,7 +111,7 @@ def run(self, account, device, ocr_client, log) -> bool:
             # bộ đếm trận cho đến khi template biến mất rồi xuất hiện lại.
             x, y = click_match(device, next_battle)
             log(
-                f"[{account.username}] Còn trận tiếp theo; click Trận sau "
+                f"[{account.display_name}] Còn trận tiếp theo; click Trận sau "
                 f"tại ({x}, {y}) để chuyển trận."
             )
             hero_deployed = False
@@ -129,7 +129,7 @@ def run(self, account, device, ocr_client, log) -> bool:
             device.shell(f"input tap {x} {y}")
             withdraw_confirmation_requested = True
             log(
-                f"[{account.username}] Phát hiện hộp thoại Thu quân; "
+                f"[{account.display_name}] Phát hiện hộp thoại Thu quân; "
                 f"click Xác nhận tại ({x}, {y})."
             )
             time.sleep(1)
@@ -137,7 +137,7 @@ def run(self, account, device, ocr_client, log) -> bool:
 
         if retreat is not None and not hero_deployed:
             log(
-                f"[{account.username}] Phát hiện Rút lui; "
+                f"[{account.display_name}] Phát hiện Rút lui; "
                 "bắt đầu triển khai đội hình theo chiến thuật gọng kìm."
             )
             context["mark_battle_started"] = (
@@ -154,14 +154,14 @@ def run(self, account, device, ocr_client, log) -> bool:
             x, y = click_match(device, collect)
             retreat_requested = True
             log(
-                f"[{account.username}] Điều kiện chế độ {mode} đã đạt; "
+                f"[{account.display_name}] Điều kiện chế độ {mode} đã đạt; "
                 f"click Thu quân tại ({x}, {y})."
             )
             time.sleep(1)
             continue
 
     log(
-        f"[{account.username}] Theo dõi Giao Tranh thất bại: "
+        f"[{account.display_name}] Theo dõi Giao Tranh thất bại: "
         "quá thời gian chờ mà không hoàn thành đủ số trận."
     )
     return False

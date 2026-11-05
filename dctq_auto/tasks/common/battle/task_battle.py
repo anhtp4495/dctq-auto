@@ -76,7 +76,7 @@ def post_battle(worker, account, steps, device, log) -> list[str]:
     try:
         screen = screen_bgr(device)
     except Exception as exc:
-        log(f"[{account.username}] Hậu kiểm Giao Tranh: không chụp được màn hình: {exc}")
+        log(f"[{account.display_name}] Hậu kiểm Giao Tranh: không chụp được màn hình: {exc}")
         if _STEP_QUAN_SU_GIAO_TRANH in steps:
             steps.remove(_STEP_QUAN_SU_GIAO_TRANH)
         return steps
@@ -104,21 +104,21 @@ def post_battle(worker, account, steps, device, log) -> list[str]:
     count_reached = completed_battles >= target_battles
 
     log(
-        f"[{account.username}] Hậu kiểm Giao Tranh: "
+        f"[{account.display_name}] Hậu kiểm Giao Tranh: "
         f"đã đóng màn hình={screen_closed}, "
         f"số trận={completed_battles}/{target_battles}."
     )
     if screen_closed and count_reached:
-        log(f"[{account.username}] Hậu kiểm: đã đóng Giao Tranh và đủ số trận.")
+        log(f"[{account.display_name}] Hậu kiểm: đã đóng Giao Tranh và đủ số trận.")
 
     if not screen_closed:
         log(
-            f"[{account.username}] Hậu kiểm thất bại: chưa nhận diện được "
+            f"[{account.display_name}] Hậu kiểm thất bại: chưa nhận diện được "
             "Hồi thành hoặc Lối vào Giao Tranh."
         )
     if not count_reached:
         log(
-            f"[{account.username}] Hậu kiểm thất bại: số trận hoàn thành "
+            f"[{account.display_name}] Hậu kiểm thất bại: số trận hoàn thành "
             f"chưa đạt yêu cầu ({completed_battles}/{target_battles})."
         )
     if _STEP_QUAN_SU_GIAO_TRANH in steps:
@@ -141,30 +141,30 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
             worker, account, device, ocr_client, log, screenshot=screenshot
         )
         if not opened:
-            log(f"[{account.username}] Không mở được Giao Tranh; bỏ qua run_battle.")
+            log(f"[{account.display_name}] Không mở được Giao Tranh; bỏ qua run_battle.")
         else:
             # Bước 2: chạy và đếm số trận.
             run_battle.run(worker, account, device, ocr_client, log)
 
     except Exception as exc:
-        log(f"[{account.username}] Quy trình Giao Tranh phát sinh lỗi: {exc}")
+        log(f"[{account.display_name}] Quy trình Giao Tranh phát sinh lỗi: {exc}")
 
     finally:
         # Luôn thử đóng giao diện kể cả open/battle trả False hoặc phát sinh exception.
         try:
             close_ok = task_close_battle.run(worker, account, device, ocr_client, log)
             log(
-                f"[{account.username}] Tác vụ đóng Giao Tranh "
+                f"[{account.display_name}] Tác vụ đóng Giao Tranh "
                 f"{'thành công' if close_ok else 'chưa xác nhận được'}."
             )
         except Exception as exc:
-            log(f"[{account.username}] Đóng Giao Tranh phát sinh lỗi: {exc}")
+            log(f"[{account.display_name}] Đóng Giao Tranh phát sinh lỗi: {exc}")
 
     # Bước 4: hậu kiểm độc lập sau khi finally đã chạy xong.
     try:
         return post_battle(worker, account, steps, device, log)
     except Exception as exc:
-        log(f"[{account.username}] Hậu kiểm Giao Tranh phát sinh lỗi: {exc}")
+        log(f"[{account.display_name}] Hậu kiểm Giao Tranh phát sinh lỗi: {exc}")
         if _STEP_QUAN_SU_GIAO_TRANH in steps:
             steps.remove(_STEP_QUAN_SU_GIAO_TRANH)
         return steps

@@ -50,7 +50,7 @@ def detect_group(screen_bgr, account, log) -> str:
 
     if template is None:
         log(
-            f"[{account.username}] Không tải được template {template_name}; "
+            f"[{account.display_name}] Không tải được template {template_name}; "
             "mặc định dùng danh sách võ tướng 2."
         )
         return "quan_su.giao_tranh.danh_sach2"
@@ -66,7 +66,7 @@ def detect_group(screen_bgr, account, log) -> str:
         )
     except (ValueError, cv2.error) as exc:
         log(
-            f"[{account.username}] Lỗi template matching {template_name}: {exc}; "
+            f"[{account.display_name}] Lỗi template matching {template_name}: {exc}; "
             "mặc định dùng danh sách võ tướng 2."
         )
         return "quan_su.giao_tranh.danh_sach2"
@@ -77,7 +77,7 @@ def detect_group(screen_bgr, account, log) -> str:
 
     report_template_match(
         log,
-        context=f"[{account.username}]",
+        context=f"[{account.display_name}]",
         template=template,
         match=match,
     )
@@ -103,7 +103,7 @@ def _handle_template_match(
     """
     report_template_match(
         log,
-        context=f"[{account.username}]",
+        context=f"[{account.display_name}]",
         template=template,
         match=match,
     )
@@ -111,7 +111,7 @@ def _handle_template_match(
     # Lối vào Giao Tranh.
     if template_name == _TEMPLATE_QUAN_SU_GIAO_TRANH_LOI_VAO:
         x, y = _click_match(device, match)
-        log(f"[{account.username}] Click [Lối vào Giao Tranh] tại ({x}, {y}).")
+        log(f"[{account.display_name}] Click [Lối vào Giao Tranh] tại ({x}, {y}).")
         time.sleep(1)
         return run(
             self, account, device, ocr_client, log,
@@ -121,7 +121,7 @@ def _handle_template_match(
     # Khu vực Quân Sự.
     if template_name == _TEMPLATE_MAIN_QUAN_SU:
         x, y = _click_match(device, match)
-        log(f"[{account.username}] Click [Quân Sự] tại ({x}, {y}).")
+        log(f"[{account.display_name}] Click [Quân Sự] tại ({x}, {y}).")
         time.sleep(0.7)
         return run(
             self, account, device, ocr_client, log,
@@ -131,7 +131,7 @@ def _handle_template_match(
     # Canh Bát Trận.
     if template_name == _TEMPLATE_QUAN_SU_GIAO_TRANH_CHUA_SU_DUNG_CANH_BAT_TRAN:
         x, y = _click_match(device, match)
-        log(f"[{account.username}] Click sử dụng Canh Bát Trận tại ({x}, {y}).")
+        log(f"[{account.display_name}] Click sử dụng Canh Bát Trận tại ({x}, {y}).")
         time.sleep(0.7)
 
         return run(
@@ -142,7 +142,7 @@ def _handle_template_match(
     # Tìm đối thủ.
     if template_name == _TEMPLATE_QUAN_SU_GIAO_TRANH_TIM_DOI_THU:
         x, y = _click_match(device, match)
-        log(f"[{account.username}] Click Tìm đối thủ tại ({x}, {y}).")
+        log(f"[{account.display_name}] Click Tìm đối thủ tại ({x}, {y}).")
         time.sleep(1)
 
         return run(
@@ -157,7 +157,7 @@ def _handle_template_match(
         )
         device.shell(f"input tap {x} {y}")
         log(
-            f"[{account.username}] Phát hiện Bài Miễn Chiến; "
+            f"[{account.display_name}] Phát hiện Bài Miễn Chiến; "
             f"click phát động giao tranh tại ({x}, {y})."
         )
         time.sleep(1)
@@ -173,7 +173,7 @@ def _handle_template_match(
         )
         device.shell(f"input tap {x} {y}")
         log(
-            f"[{account.username}] Phát hiện Thiếu lương thảo; "
+            f"[{account.display_name}] Phát hiện Thiếu lương thảo; "
             f"click để bổ sung lương thảo tại ({x}, {y})."
         )
         time.sleep(1)
@@ -187,13 +187,13 @@ def _handle_template_match(
         hero_position_group = detect_group(screen_bgr, account, log)
         self._battle_hero_position_group = hero_position_group
         log(
-            f"[{account.username}] Chọn bộ tọa độ võ tướng "
+            f"[{account.display_name}] Chọn bộ tọa độ võ tướng "
             f"{hero_position_group}."
         )
 
         x, y = _click_match(device, match)
         log(
-            f"[{account.username}] Click Xuất chiến tại ({x}, {y}); "
+            f"[{account.display_name}] Click Xuất chiến tại ({x}, {y}); "
             "chờ vào trận."
         )
         time.sleep(1)
@@ -205,7 +205,7 @@ def _handle_template_match(
         _TEMPLATE_QUAN_SU_GIAO_TRANH_THU_QUAN,
         _TEMPLATE_QUAN_SU_GIAO_TRANH_TRAN_SAU,
     ):
-        log(f"[{account.username}] Đang trong trận Giao Tranh - run_battble sẽ xử lý tiếp.")
+        log(f"[{account.display_name}] Đang trong trận Giao Tranh - run_battble sẽ xử lý tiếp.")
         return True
 
     return None
@@ -222,17 +222,17 @@ def run(
 ) -> bool:
     """Điều hướng vào Giao Tranh bằng cách nhận diện và xử lý từng template."""
     if current_try == 1:
-        log(f"[{account.username}] Bắt đầu mở màn hình Giao Tranh.")
+        log(f"[{account.display_name}] Bắt đầu mở màn hình Giao Tranh.")
 
     if current_try > _MAX_TRIES:
         log(
-            f"[{account.username}] Mở Giao Tranh thất bại: "
+            f"[{account.display_name}] Mở Giao Tranh thất bại: "
             f"quá {_MAX_TRIES} lần kiểm tra."
         )
         return False
 
     if not self._wait_if_paused():
-        log(f"[{account.username}] Đã dừng khi đang mở Giao Tranh.")
+        log(f"[{account.display_name}] Đã dừng khi đang mở Giao Tranh.")
         return False
 
     template_names = _OPEN_TEMPLATES
@@ -244,7 +244,7 @@ def run(
         screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
     except Exception as exc:
         log(
-            f"[{account.username}] Không chụp được màn hình "
+            f"[{account.display_name}] Không chụp được màn hình "
             f"để nhận diện Giao Tranh: {exc}"
         )
         return False
@@ -255,7 +255,7 @@ def run(
         template = templates.get(template_name)
         if template is None:
             log(
-                f"[{account.username}] Không tải được template "
+                f"[{account.display_name}] Không tải được template "
                 f"{template_name}; bỏ qua."
             )
             continue
@@ -271,7 +271,7 @@ def run(
             )
         except (ValueError, cv2.error) as exc:
             log(
-                f"[{account.username}] Lỗi template matching "
+                f"[{account.display_name}] Lỗi template matching "
                 f"{template_name}: {exc}"
             )
             continue
@@ -296,7 +296,7 @@ def run(
             return result
 
     log(
-        f"[{account.username}] Mở Giao Tranh — chưa nhận diện được trạng thái "
+        f"[{account.display_name}] Mở Giao Tranh — chưa nhận diện được trạng thái "
         f"(lần {current_try}/{_MAX_TRIES}); sẽ thử lại."
     )
     close_knowned_dialog(

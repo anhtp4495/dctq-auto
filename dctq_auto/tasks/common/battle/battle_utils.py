@@ -26,11 +26,11 @@ def match(screen, template, *, account, log):
             grayscale=template.grayscale,
         )
     except (ValueError, cv2.error) as exc:
-        log(f"[{account.username}] Lỗi matching template {template.id}: {exc}")
+        log(f"[{account.display_name}] Lỗi matching template {template.id}: {exc}")
         return None
     if result is not None:
         report_template_match(
-            log, context=f"[{account.username}]", template=template, match=result
+            log, context=f"[{account.display_name}]", template=template, match=result
         )
     return result
 
@@ -53,7 +53,7 @@ def tap(
     """Click vào tọa độ bằng ADB và ghi log lệnh."""
     x, y = point
     command = f"input tap {x} {y}"
-    log(f"[{account.username}] ADB: {command}")
+    log(f"[{account.display_name}] ADB: {command}")
     device.shell(command)
 
 
@@ -70,5 +70,5 @@ def swipe(
     x1, y1 = start
     x2, y2 = end
     command = f"input swipe {x1} {y1} {x2} {y2} {duration_ms}"
-    log(f"[{account.username}] ADB: {command}")
+    log(f"[{account.display_name}] ADB: {command}")
     device.shell(command)

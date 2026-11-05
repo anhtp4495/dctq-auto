@@ -23,7 +23,7 @@ def open_activity(
     self, account, device, ocr_client, log, screenshot=None
 ) -> bool:
     """Mở Hoạt động bằng Template Matching, thử nhận diện tối đa _MAX_TRIES lần."""
-    log(f"[{account.username}] Bắt đầu mở màn hình [Hoạt động].")
+    log(f"[{account.display_name}] Bắt đầu mở màn hình [Hoạt động].")
 
     template_names = (
         _TEMPLATE_MAIN_HOAT_DONG,
@@ -34,7 +34,7 @@ def open_activity(
 
     for attempt in range(1, _MAX_TRIES + 1):
         if not self._wait_if_paused():
-            log(f"[{account.username}] Đã dừng khi đang mở màn hình [Hoạt động].")
+            log(f"[{account.display_name}] Đã dừng khi đang mở màn hình [Hoạt động].")
             return False
 
         try:
@@ -42,7 +42,7 @@ def open_activity(
             screen_bgr = cv2.cvtColor(np.asarray(current_screenshot), cv2.COLOR_RGB2BGR)
         except Exception as exc:
             log(
-                f"[{account.username}] Không chụp được màn hình để nhận diện "
+                f"[{account.display_name}] Không chụp được màn hình để nhận diện "
                 f"Hoạt động (lần thử {attempt}/{_MAX_TRIES}): {exc}"
             )
             if attempt < _MAX_TRIES:
@@ -54,7 +54,7 @@ def open_activity(
         for template_name in template_names:
             template = templates.get(template_name)
             if template is None:
-                log(f"[{account.username}] Không tải được template {template_name}; bỏ qua.")
+                log(f"[{account.display_name}] Không tải được template {template_name}; bỏ qua.")
                 continue
 
             try:
@@ -67,7 +67,7 @@ def open_activity(
                     grayscale=template.grayscale,
                 )
             except (ValueError, cv2.error) as exc:
-                log(f"[{account.username}] Lỗi template matching {template_name}: {exc}")
+                log(f"[{account.display_name}] Lỗi template matching {template_name}: {exc}")
                 continue
 
             if match is None:
@@ -75,14 +75,14 @@ def open_activity(
 
             report_template_match(
                 log,
-                context=f"[{account.username}]",
+                context=f"[{account.display_name}]",
                 template=template,
                 match=match,
             )
 
             if template_name in (_TEMPLATE_DANG_CHON_PHUC_LOI, _TEMPLATE_DANG_CHON_HOAT_DONG):
                 log(
-                    f"[{account.username}] Đã xác nhận màn hình [Hoạt động] "
+                    f"[{account.display_name}] Đã xác nhận màn hình [Hoạt động] "
                     f"({template.id}) ở lần thử {attempt}/{_MAX_TRIES}."
                 )
                 return True
@@ -91,14 +91,14 @@ def open_activity(
                 x = round((match.left + match.right) / 2)
                 y = round((match.top + match.bottom) / 2)
                 log(
-                    f"[{account.username}] Phát hiện [Hoạt động] ở [Màn hình chính]; "
+                    f"[{account.display_name}] Phát hiện [Hoạt động] ở [Màn hình chính]; "
                     f"click trung điểm ({x}, {y}) rồi kiểm tra lại "
                     f"(lần thử {attempt}/{_MAX_TRIES})."
                 )
                 try:
                     device.shell(f"input tap {x} {y}")
                 except Exception as exc:
-                    log(f"[{account.username}] Mở màn hình [Hoạt động] thất bại: {exc}")
+                    log(f"[{account.display_name}] Mở màn hình [Hoạt động] thất bại: {exc}")
                     return False
                 retry = True
                 break
@@ -106,7 +106,7 @@ def open_activity(
         if attempt < _MAX_TRIES:
             if not retry:
                 log(
-                    f"[{account.username}] Chưa nhận diện được màn hình [Hoạt động]; "
+                    f"[{account.display_name}] Chưa nhận diện được màn hình [Hoạt động]; "
                     f"thử lại ({attempt + 1}/{_MAX_TRIES})."
                 )
                 close_knowned_dialog(
@@ -114,7 +114,7 @@ def open_activity(
                 )
             time.sleep(1.0)
 
-    log(f"[{account.username}] Mở màn hình [Hoạt động] thất bại sau {_MAX_TRIES} lần thử.")
+    log(f"[{account.display_name}] Mở màn hình [Hoạt động] thất bại sau {_MAX_TRIES} lần thử.")
     return False
 
 

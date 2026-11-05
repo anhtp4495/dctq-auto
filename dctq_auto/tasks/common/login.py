@@ -51,7 +51,7 @@ def submit_login_form(worker, account, device, ocr_client) -> bool:
     time.sleep(0.3)
     ocr_client.tap_ocr_target("dang_nhap")
     worker.log_message.emit(
-        f"[{account.username}] Đã gửi yêu cầu đăng nhập; đang xác minh kết quả bằng template matching."
+        f"[{account.display_name}] Đã gửi yêu cầu đăng nhập; đang xác minh kết quả bằng template matching."
     )
     return True
 
@@ -87,7 +87,7 @@ def handle_post_login(
         screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
     except Exception as exc:
         worker.log_message.emit(
-            f"[{account.username}] Không chụp được màn hình hậu đăng nhập: {exc}"
+            f"[{account.display_name}] Không chụp được màn hình hậu đăng nhập: {exc}"
         )
         return False, "Không xác minh được trạng thái sau đăng nhập"
 
@@ -109,7 +109,7 @@ def handle_post_login(
             match = _match_account_template(screen_bgr, template)
         except (ValueError, cv2.error) as exc:
             worker.log_message.emit(
-                f"[{account.username}] Lỗi template matching {template_name}: {exc}"
+                f"[{account.display_name}] Lỗi template matching {template_name}: {exc}"
             )
             continue
 
@@ -118,18 +118,18 @@ def handle_post_login(
 
         report_template_match(
             worker.log_message.emit,
-            context=f"[{account.username}]",
+            context=f"[{account.display_name}]",
             template=template,
             match=match,
         )
 
         if template.id  == "thong_bao_bi_tan_cong":
             worker.log_message.emit(
-                f"[{account.username}] Phát hiện Địch Quân Tập Kích; đang đóng cửa sổ."
+                f"[{account.display_name}] Phát hiện Địch Quân Tập Kích; đang đóng cửa sổ."
             )
             tap_x, tap_y = ButtonPositions().get("main.dich_quan_tap_kich", "dong_man_hinh")
             worker.log_message.emit(
-                f"[{account.username}] Đóng màn hình Địch Quân Tập Kích "
+                f"[{account.display_name}] Đóng màn hình Địch Quân Tập Kích "
                 f"theo ButtonPositions tại ({tap_x}, {tap_y})."
             )
             device.shell(f"input tap {tap_x} {tap_y}")
@@ -138,35 +138,35 @@ def handle_post_login(
 
         if template.id == "waiting":
             worker.log_message.emit(
-                f"[{account.username}] Đang chờ đăng nhập hoàn tất; kiểm tra lại sau 3 giây."
+                f"[{account.display_name}] Đang chờ đăng nhập hoàn tất; kiểm tra lại sau 3 giây."
             )
             time.sleep(3)
             return handle_post_login(worker, account, device, ocr_client)
 
         if template.id == "cap_nhat_thong_tin" or template.id == "close_cap_nhat_thong_tin":
             worker.log_message.emit(
-                f"[{account.username}] Phát hiện hộp thoại cập nhật thông tin; đang đóng hộp thoại."
+                f"[{account.display_name}] Phát hiện hộp thoại cập nhật thông tin; đang đóng hộp thoại."
             )
             try:
                 ocr_client.tap_ocr_target("close_cap_nhat_thong_tin_ca_nhan")
             except Exception as exc:
                 worker.log_message.emit(
-                    f"[{account.username}] Không đóng được hộp thoại cập nhật thông tin: {exc}"
+                    f"[{account.display_name}] Không đóng được hộp thoại cập nhật thông tin: {exc}"
                 )
                 return False, "Không đóng được hộp thoại cập nhật thông tin"
             time.sleep(1)
             return handle_post_login(worker, account, device, ocr_client)
 
         if template.id == "man_hinh_chinh":
-            worker.log_message.emit(f"[{account.username}] Đăng nhập thành công.")
+            worker.log_message.emit(f"[{account.display_name}] Đăng nhập thành công.")
             return True, None
 
     if current_try < _MAX_TRY_DETECT_MAIN_SCREEN:
-        worker.log_message.emit(f"[{account.username}] Chưa xác định đã tải game thành công - Thử lại lần {current_try}.")
+        worker.log_message.emit(f"[{account.display_name}] Chưa xác định đã tải game thành công - Thử lại lần {current_try}.")
         return handle_post_login(worker, account, device, ocr_client, current_try + 1)
 
     worker.log_message.emit(
-        f"[{account.username}] Không nhận diện được trạng thái hậu đăng nhập từ {len(templates)} template."
+        f"[{account.display_name}] Không nhận diện được trạng thái hậu đăng nhập từ {len(templates)} template."
     )
     return False, "Không xác định được trạng thái sau đăng nhập"
 
@@ -188,7 +188,7 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
         screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
     except Exception as exc:
         worker.log_message.emit(
-            f"[{account.username}] Không chụp được màn hình xác minh: {exc}; "
+            f"[{account.display_name}] Không chụp được màn hình xác minh: {exc}; "
             "không phát hiện được wrong_username_or_pass; đăng nhập thành công theo quy tắc hiện tại."
         )
         return True, None
@@ -218,7 +218,7 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
             )
         except (ValueError, cv2.error) as exc:
             worker.log_message.emit(
-                f"[{account.username}] Lỗi template matching {template_name}: {exc}"
+                f"[{account.display_name}] Lỗi template matching {template_name}: {exc}"
             )
             continue
 
@@ -227,19 +227,19 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
 
         report_template_match(
             worker.log_message.emit,
-            context=f"[{account.username}]",
+            context=f"[{account.display_name}]",
             template=template,
             match=match,
         )
         if template.id == "thong_tin_dang_nhap_khong_dung":
             reason = "Thông tin đăng nhập không đúng"
             worker.log_message.emit(
-                f"[{account.username}] Đăng nhập thất bại: phát hiện template wrong_username_or_pass."
+                f"[{account.display_name}] Đăng nhập thất bại: phát hiện template wrong_username_or_pass."
             )
             return False, reason
 
     worker.log_message.emit(
-        f"[{account.username}] Đăng nhập thành công."
+        f"[{account.display_name}] Đăng nhập thành công."
     )
     return True, None
 
@@ -269,7 +269,7 @@ def prepare_login(
         )
     except Exception as exc:
         worker.log_message.emit(
-            f"[{account.username}] Không chụp được màn hình tiền đăng nhập: {exc}"
+            f"[{account.display_name}] Không chụp được màn hình tiền đăng nhập: {exc}"
         )
         return False, "Không xác minh được trạng thái trước đăng nhập"
 
@@ -283,7 +283,7 @@ def prepare_login(
             match = _match_account_template(screen_bgr, template)
         except (ValueError, cv2.error) as exc:
             worker.log_message.emit(
-                f"[{account.username}] Lỗi template matching {template_name}: {exc}"
+                f"[{account.display_name}] Lỗi template matching {template_name}: {exc}"
             )
             continue
 
@@ -292,7 +292,7 @@ def prepare_login(
 
         report_template_match(
             worker.log_message.emit,
-            context=f"[{account.username}] Tiền đăng nhập:",
+            context=f"[{account.display_name}] Tiền đăng nhập:",
             template=template,
             match=match,
         )
@@ -301,11 +301,11 @@ def prepare_login(
 
     if detected_state == "thong_bao_bi_tan_cong":
         worker.log_message.emit(
-            f"[{account.username}] Phát hiện Địch Quân Tập Kích; đang đóng cửa sổ."
+            f"[{account.display_name}] Phát hiện Địch Quân Tập Kích; đang đóng cửa sổ."
         )
         tap_x, tap_y = ButtonPositions().get("main.dich_quan_tap_kich", "dong_man_hinh")
         worker.log_message.emit(
-            f"[{account.username}] Đóng màn hình Địch Quân Tập Kích "
+            f"[{account.display_name}] Đóng màn hình Địch Quân Tập Kích "
             f"theo ButtonPositions tại ({tap_x}, {tap_y})."
         )
         device.shell(f"input tap {tap_x} {tap_y}")
@@ -317,7 +317,7 @@ def prepare_login(
 
     if detected_state in ("trang_ca_nhan", "man_hinh_chinh"):
         worker.log_message.emit(
-            f"[{account.username}] Đang ở màn hình profile; gọi quy trình đăng xuất."
+            f"[{account.display_name}] Đang ở màn hình profile; gọi quy trình đăng xuất."
         )
         logout_result, logout_error = logout_account(
             worker, account, device, ocr_client
@@ -328,27 +328,27 @@ def prepare_login(
 
     if detected_state == "waiting":
         worker.log_message.emit(
-            f"[{account.username}] Màn hình đang chờ; kiểm tra lại sau 3 giây."
+            f"[{account.display_name}] Màn hình đang chờ; kiểm tra lại sau 3 giây."
         )
         time.sleep(3)
         return prepare_login(worker, account, device, ocr_client)
 
     if detected_state == "cap_nhat_thong_tin" or detected_state == "close_cap_nhat_thong_tin":
         worker.log_message.emit(
-            f"[{account.username}] Phát hiện hộp thoại cập nhật thông tin; đang đóng hộp thoại."
+            f"[{account.display_name}] Phát hiện hộp thoại cập nhật thông tin; đang đóng hộp thoại."
         )
         try:
             ocr_client.tap_ocr_target("close_cap_nhat_thong_tin_ca_nhan")
         except Exception as exc:
             worker.log_message.emit(
-                f"[{account.username}] Không đóng được hộp thoại cập nhật thông tin: {exc}"
+                f"[{account.display_name}] Không đóng được hộp thoại cập nhật thông tin: {exc}"
             )
             return False, "Không đóng được hộp thoại cập nhật thông tin"
         time.sleep(1)
         return prepare_login(worker, account, device, ocr_client)
 
     worker.log_message.emit(
-        f"[{account.username}] Không nhận diện được trạng thái tiền đăng nhập."
+        f"[{account.display_name}] Không nhận diện được trạng thái tiền đăng nhập."
     )
     return False, "Không xác định được trạng thái trước đăng nhập"
 

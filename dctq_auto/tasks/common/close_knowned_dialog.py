@@ -42,7 +42,7 @@ def close_knowned_dialog(
             )
         except (ValueError, cv2.error) as exc:
             log(
-                f"[{account.username}] Lỗi matching template "
+                f"[{account.display_name}] Lỗi matching template "
                 f"{template.id}: {exc}"
             )
             continue
@@ -52,7 +52,7 @@ def close_knowned_dialog(
 
         report_template_match(
             log,
-            context=f"[{account.username}]",
+            context=f"[{account.display_name}]",
             template=template,
             match=match,
         )
@@ -70,7 +70,7 @@ def close_knowned_dialog(
             dialog_name = "Địch Quân Tập Kích"
 
         log(
-            f"[{account.username}] Đã phát hiện {dialog_name}; "
+            f"[{account.display_name}] Đã phát hiện {dialog_name}; "
             f"click đóng màn hình tại ({x}, {y})."
         )
         return True

@@ -40,7 +40,7 @@ def _find_template(screen_bgr, templates, template_names, account, log):
     for template_name in template_names:
         template = templates.get(template_name)
         if template is None:
-            log(f"[{account.username}] Không tải được template {template_name}; bỏ qua.")
+            log(f"[{account.display_name}] Không tải được template {template_name}; bỏ qua.")
             continue
         try:
             match = match_template(
@@ -52,12 +52,12 @@ def _find_template(screen_bgr, templates, template_names, account, log):
                 grayscale=template.grayscale,
             )
         except (ValueError, cv2.error) as exc:
-            log(f"[{account.username}] Lỗi template matching {template_name}: {exc}")
+            log(f"[{account.display_name}] Lỗi template matching {template_name}: {exc}")
             continue
         if match is not None:
             report_template_match(
                 log,
-                context=f"[{account.username}]",
+                context=f"[{account.display_name}]",
                 template=template,
                 match=match,
             )
@@ -69,14 +69,14 @@ def _tap_match_center(device, match, account, log, label):
     """Click trung điểm vùng template được nhận diện."""
     x = (match.left + match.right) // 2
     y = (match.top + match.bottom) // 2
-    log(f"[{account.username}] Click trung điểm {label} tại ({x}, {y}).")
+    log(f"[{account.display_name}] Click trung điểm {label} tại ({x}, {y}).")
     device.shell(f"input tap {x} {y}")
     time.sleep(0.7)
 
 
 def _finish_step(steps, account, log, message):
     """Ghi log và loại step KNB khỏi danh sách chạy."""
-    log(f"[{account.username}] {message}")
+    log(f"[{account.display_name}] {message}")
     if _STEP_QUAN_DOAN_DONG_GOP_KNB in steps:
         steps.remove(_STEP_QUAN_DOAN_DONG_GOP_KNB)
     return steps
@@ -93,7 +93,7 @@ def _run(
         return steps
 
     if not worker._wait_if_paused():
-        log(f"[{account.username}] Đóng góp KNB tạm dừng theo yêu cầu.")
+        log(f"[{account.display_name}] Đóng góp KNB tạm dừng theo yêu cầu.")
         return steps
 
     try:
@@ -129,7 +129,7 @@ def _run(
     if template_name == _TEMPLATE_QUAN_DOAN_DONG_GOP_40_KNB:
         tap_x, tap_y = ButtonPositions().get("quan_doan.knb", "dong_man_hinh")
         log(
-            f"[{account.username}] Đóng màn hình góp KNB ({tap_x}, {tap_y}); "
+            f"[{account.display_name}] Đóng màn hình góp KNB ({tap_x}, {tap_y}); "
         )
         device.shell(f"input tap {tap_x} {tap_y}")
         time.sleep(1.5)
@@ -156,14 +156,14 @@ def _run(
     if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_KNB:
         tap_x, tap_y = ButtonPositions().get("quan_doan.knb", "dong_man_hinh")
         log(
-            f"[{account.username}] Đóng màn hình góp KNB ({tap_x}, {tap_y}); "
+            f"[{account.display_name}] Đóng màn hình góp KNB ({tap_x}, {tap_y}); "
         )
         device.shell(f"input tap {tap_x} {tap_y}")
         time.sleep(0.7)
 
     if current_try < _MAX_TRY_DETECT_MAIN_SCREEN:
         time.sleep(0.7)
-        log(f"[{account.username}] [Quân đoàn] Đóng góp KNB chưa xong - Thử lại lần {current_try}.")
+        log(f"[{account.display_name}] [Quân đoàn] Đóng góp KNB chưa xong - Thử lại lần {current_try}.")
         return _run(
             worker, account, steps, device, ocr_client, log, None,
             templates, skipped_templates, current_try = current_try + 1
@@ -182,7 +182,7 @@ def run(
     if _STEP_QUAN_DOAN_DONG_GOP_KNB not in steps:
         return steps
 
-    log(f"[{account.username}] Bắt đầu [Đóng góp KNB] ...")
+    log(f"[{account.display_name}] Bắt đầu [Đóng góp KNB] ...")
     template_names = get_template_names(steps)
     templates = get_templates(template_names)
 

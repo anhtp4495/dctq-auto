@@ -43,7 +43,7 @@ def _find_template(screen_bgr, templates, template_names, account, log):
     for template_name in template_names:
         template = templates.get(template_name)
         if template is None:
-            log(f"[{account.username}] Không tải được template {template_name}; bỏ qua.")
+            log(f"[{account.display_name}] Không tải được template {template_name}; bỏ qua.")
             continue
         try:
             match = match_template(
@@ -55,12 +55,12 @@ def _find_template(screen_bgr, templates, template_names, account, log):
                 grayscale=template.grayscale,
             )
         except (ValueError, cv2.error) as exc:
-            log(f"[{account.username}] Lỗi template matching {template_name}: {exc}")
+            log(f"[{account.display_name}] Lỗi template matching {template_name}: {exc}")
             continue
         if match is not None:
             report_template_match(
                 log,
-                context=f"[{account.username}]",
+                context=f"[{account.display_name}]",
                 template=template,
                 match=match,
             )
@@ -72,7 +72,7 @@ def _tap_match_center(device, match, account, log, label):
     """Click trung điểm vùng template được nhận diện."""
     x = (match.left + match.right) // 2
     y = (match.top + match.bottom) // 2
-    log(f"[{account.username}] Click trung điểm {label} tại ({x}, {y}).")
+    log(f"[{account.display_name}] Click trung điểm {label} tại ({x}, {y}).")
     device.shell(f"input tap {x} {y}")
     time.sleep(0.7)
 
@@ -81,7 +81,7 @@ def _close_blessing_screen(device, account, log):
     """Đóng màn hình Cầu vận theo tọa độ đã cấu hình."""
     tap_x, tap_y = ButtonPositions().get("quan_doan.cau_van", "dong_man_hinh")
     log(
-        f"[{account.username}] Đóng màn hình Cầu vận "
+        f"[{account.display_name}] Đóng màn hình Cầu vận "
         f"theo ButtonPositions tại ({tap_x}, {tap_y})."
     )
     device.shell(f"input tap {tap_x} {tap_y}")
@@ -90,7 +90,7 @@ def _close_blessing_screen(device, account, log):
 
 def _finish_step(steps, account, log, message):
     """Ghi log và loại step Cầu vận khỏi danh sách chạy."""
-    log(f"[{account.username}] {message}")
+    log(f"[{account.display_name}] {message}")
     if _STEP_QUAN_DOAN_CAU_VAN in steps:
         steps.remove(_STEP_QUAN_DOAN_CAU_VAN)
     return steps
@@ -104,7 +104,7 @@ def _run(
         return steps
 
     if not worker._wait_if_paused():
-        log(f"[{account.username}] Cầu vận tạm dừng theo yêu cầu.")
+        log(f"[{account.display_name}] Cầu vận tạm dừng theo yêu cầu.")
         return steps
 
     try:
@@ -114,7 +114,7 @@ def _run(
     except Exception as exc:
         if try_time < _MAX_TRY_DETECT_BLESSING:
             log(
-                f"[{account.username}] Không chụp được màn hình Cầu vận ({exc}); "
+                f"[{account.display_name}] Không chụp được màn hình Cầu vận ({exc}); "
                 f"thử lại lần {try_time}/{_MAX_TRY_DETECT_BLESSING}."
             )
             time.sleep(0.7)
@@ -139,7 +139,7 @@ def _run(
         _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN1,
         _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN2,
     ):
-        log(f"[{account.username}] Đã Cầu vận xong.")
+        log(f"[{account.display_name}] Đã Cầu vận xong.")
         _close_blessing_screen(device, account, log)
         return _finish_step(
             steps, account, log, "Hoàn tất tác vụ Cầu vận Quân đoàn."
@@ -156,7 +156,7 @@ def _run(
                 f"Không xác định được trạng thái Cầu vận sau {_MAX_TRY_DETECT_BLESSING} lần; bỏ step.",
             )
         log(
-            f"[{account.username}] Chưa xác định được trạng thái Cầu vận; "
+            f"[{account.display_name}] Chưa xác định được trạng thái Cầu vận; "
             f"thử lại lần {try_time}/{_MAX_TRY_DETECT_BLESSING}."
         )
 
@@ -179,7 +179,7 @@ def run(
     if _STEP_QUAN_DOAN_CAU_VAN not in steps:
         return steps
 
-    log(f"[{account.username}] Bắt đầu [Cầu vận Quân đoàn] ...")
+    log(f"[{account.display_name}] Bắt đầu [Cầu vận Quân đoàn] ...")
     template_names = get_template_names(steps)
     templates = get_templates(template_names)
 

@@ -501,7 +501,7 @@ class BotWorker(
         enabled_index = 0
         for account in accounts:
             if not account.enabled:
-                self.clone_account_status.emit(account.username, "disabled")
+                self.clone_account_status.emit(account.display_name, "disabled")
                 self.log_message.emit(f"Tài khoản {account.display_name}: đã vô hiệu hóa, bỏ qua.")
                 continue
             enabled_index += 1
@@ -513,7 +513,7 @@ class BotWorker(
                 self._progress_completed, self._progress_total,
                 f"Tài khoản {account_index}/{len(accounts)}: {account.display_name}",
             )
-            self.clone_account_status.emit(account.username, "running")
+            self.clone_account_status.emit(account.display_name, "running")
             self.log_message.emit(
                 f"Đang xử lý tài khoản: {account.display_name}"
             )
@@ -538,7 +538,7 @@ class BotWorker(
                     f"{account.display_name} - {label}", "done", 1, 1
                 )
             # Record the account only after its selected mock steps finish.
-            self.clone_account_result.emit(account.username, True)
+            self.clone_account_result.emit(account.display_name, True)
             self._progress_completed += 1
             progress_text = (
                 f"Tiến trình tài khoản [{self._progress_completed}/{len(accounts)}]"

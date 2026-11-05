@@ -22,10 +22,10 @@ def close_guild(
     """Đóng Quân đoàn bằng Template Matching; nhận screenshot có sẵn nếu được truyền vào."""
 
     if not self._wait_if_paused():
-        log(f"[{account.username}] Đã dừng khi đang đóng màn hình [Quân đoàn].")
+        log(f"[{account.display_name}] Đã dừng khi đang đóng màn hình [Quân đoàn].")
         return False
 
-    log(f"[{account.username}] Bắt đầu kiểm tra đóng màn hình [Quân đoàn].")
+    log(f"[{account.display_name}] Bắt đầu kiểm tra đóng màn hình [Quân đoàn].")
 
     template_names = (
         _TEMPLATE_MAIN_QUAN_DOAN_MO_CHAT,
@@ -39,13 +39,13 @@ def close_guild(
             screenshot = device.screenshot()
         screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
     except Exception as exc:
-        log(f"[{account.username}] Không chụp được màn hình để nhận diện Quân đoàn: {exc}")
+        log(f"[{account.display_name}] Không chụp được màn hình để nhận diện Quân đoàn: {exc}")
         return False
 
     for template_name in template_names:
         template = templates.get(template_name)
         if template is None:
-            log(f"[{account.username}] Không tải được template {template_name}; bỏ qua.")
+            log(f"[{account.display_name}] Không tải được template {template_name}; bỏ qua.")
             continue
 
         try:
@@ -58,7 +58,7 @@ def close_guild(
                 grayscale=template.grayscale,
             )
         except (ValueError, cv2.error) as exc:
-            log(f"[{account.username}] Lỗi template matching {template_name}: {exc}")
+            log(f"[{account.display_name}] Lỗi template matching {template_name}: {exc}")
             continue
 
         if match is None:
@@ -66,34 +66,34 @@ def close_guild(
 
         report_template_match(
             log,
-            context=f"[{account.username}]",
+            context=f"[{account.display_name}]",
             template=template,
             match=match,
         )
 
         if template_name == _TEMPLATE_MAIN_QUAN_DOAN_MO_CHAT:
-            log(f"[{account.username}] Đã xác nhận đóng màn hình [Quân đoàn] thành công.")
+            log(f"[{account.display_name}] Đã xác nhận đóng màn hình [Quân đoàn] thành công.")
             return True
 
         if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH:
             try:
                 x, y = ButtonPositions().get("quan_doan", "dong_man_hinh")
                 log(
-                    f"[{account.username}] Đang ở giao diện Quân đoàn "
+                    f"[{account.display_name}] Đang ở giao diện Quân đoàn "
                     f"({template.id}); click đóng màn hình tại ({x}, {y})."
                 )
                 device.shell(f"input tap {x} {y}")
                 time.sleep(1.0)
                 return close_guild(self, account, device, ocr_client, log)
             except Exception as exc:
-                log(f"[{account.username}] Đóng màn hình Quân đoàn thất bại: {exc}")
+                log(f"[{account.display_name}] Đóng màn hình Quân đoàn thất bại: {exc}")
                 return False
 
         if template_name == _TEMPLATE_QUAN_DOAN_CHAT_TAT_CHAT:
             x = round((match.left + match.right) / 2)
             y = round((match.top + match.bottom) / 2)
             log(
-                f"[{account.username}] Phát hiện nút tắt chat Quân đoàn "
+                f"[{account.display_name}] Phát hiện nút tắt chat Quân đoàn "
                 f"({template.id}); click trung điểm ({x}, {y}) rồi kiểm tra lại."
             )
             try:
@@ -101,10 +101,10 @@ def close_guild(
                 time.sleep(1.0)
                 return close_guild(self, account, device, ocr_client, log)
             except Exception as exc:
-                log(f"[{account.username}] Đóng chat Quân đoàn thất bại: {exc}")
+                log(f"[{account.display_name}] Đóng chat Quân đoàn thất bại: {exc}")
                 return False
 
-    log(f"[{account.username}] Không xác định được trạng thái màn hình Quân đoàn.")
+    log(f"[{account.display_name}] Không xác định được trạng thái màn hình Quân đoàn.")
     return False
 
 

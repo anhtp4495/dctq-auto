@@ -751,7 +751,8 @@
           "description": "[Giao tranh] - [Canh bát trân]",
           "rect": { "top": 841, "left": 1753, "right": 1791, "bottom": 881},
           "search_rect":  { "top": 500, "left": 1110, "right": 1900, "bottom": 1070},
-          "threshold": 0.85,
+          "threshold": 0.95,
+          "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "da_dung_canh_bat_tran": {

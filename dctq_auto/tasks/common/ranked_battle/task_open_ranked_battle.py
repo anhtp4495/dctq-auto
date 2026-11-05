@@ -50,10 +50,10 @@ def _hero_position_group(screen, templates, account, log):
             grayscale=template.grayscale,
         )
     except (ValueError, cv2.error) as exc:
-        log(f"[{account.username}] Lỗi nhận diện Chiến thuật Tranh Bá: {exc}")
+        log(f"[{account.display_name}] Lỗi nhận diện Chiến thuật Tranh Bá: {exc}")
         return "quan_su.giao_tranh.danh_sach2"
     if found is not None:
-        report_template_match(log, context=f"[{account.username}]", template=template, match=found)
+        report_template_match(log, context=f"[{account.display_name}]", template=template, match=found)
         return "quan_su.giao_tranh.danh_sach2"
     return "quan_su.giao_tranh.danh_sach1"
 
@@ -61,19 +61,19 @@ def _hero_position_group(screen, templates, account, log):
 def run(self, account, device, ocr_client, log, current_try=1) -> bool:
     """Điều hướng đến màn hình Tranh Bá và xác nhận đã vào trận."""
     if current_try == 1:
-        log(f"[{account.username}] Bắt đầu mở màn hình Tranh Bá.")
+        log(f"[{account.display_name}] Bắt đầu mở màn hình Tranh Bá.")
     if current_try > _MAX_TRIES:
-        log(f"[{account.username}] Mở Tranh Bá thất bại: quá {_MAX_TRIES} lần kiểm tra.")
+        log(f"[{account.display_name}] Mở Tranh Bá thất bại: quá {_MAX_TRIES} lần kiểm tra.")
         return False
     if not self._wait_if_paused():
-        log(f"[{account.username}] Đã dừng khi đang mở Tranh Bá.")
+        log(f"[{account.display_name}] Đã dừng khi đang mở Tranh Bá.")
         return False
 
     templates = get_templates(_OPEN_TEMPLATES)
     try:
         screen = cv2.cvtColor(np.asarray(device.screenshot()), cv2.COLOR_RGB2BGR)
     except Exception as exc:
-        log(f"[{account.username}] Không chụp được màn hình khi mở Tranh Bá: {exc}")
+        log(f"[{account.display_name}] Không chụp được màn hình khi mở Tranh Bá: {exc}")
         return False
 
     positions = ButtonPositions()
@@ -88,21 +88,21 @@ def run(self, account, device, ocr_client, log, current_try=1) -> bool:
                 grayscale=template.grayscale,
             )
         except (ValueError, cv2.error) as exc:
-            log(f"[{account.username}] Lỗi matching {name}: {exc}")
+            log(f"[{account.display_name}] Lỗi matching {name}: {exc}")
             continue
         if found is None:
             continue
 
-        report_template_match(log, context=f"[{account.username}]", template=template, match=found)
+        report_template_match(log, context=f"[{account.display_name}]", template=template, match=found)
 
         if name == _TEMPLATE_MAIN_QUAN_SU:
             x, y = click_match(device, found)
             time.sleep(1.0)
-            log(f"[{account.username}] Click Quân Sự tại ({x}, {y}) để mở Tranh Bá.")
+            log(f"[{account.display_name}] Click Quân Sự tại ({x}, {y}) để mở Tranh Bá.")
         elif name == _TEMPLATE_QUAN_SU_TRANH_BA_LOI_VAO:
             x, y = click_match(device, found)
             time.sleep(1.0)
-            log(f"[{account.username}] Click Lối vào Tranh Bá tại ({x}, {y}).")
+            log(f"[{account.display_name}] Click Lối vào Tranh Bá tại ({x}, {y}).")
         elif name == _TEMPLATE_QUAN_SU_TRANH_BA_MUA_THE_LUC:
             if (
                 get_battle_config(self._config).refill
@@ -115,17 +115,17 @@ def run(self, account, device, ocr_client, log, current_try=1) -> bool:
                 x, y = positions.get("quan_su.tranh_ba", "huy_mua_the_luc")
                 action = "hủy mua thể lực"
             device.shell(f"input tap {x} {y}")
-            log(f"[{account.username}] Phát hiện hộp thoại mua thể lực; {action} tại ({x}, {y}).")
+            log(f"[{account.display_name}] Phát hiện hộp thoại mua thể lực; {action} tại ({x}, {y}).")
         elif name == _TEMPLATE_QUAN_SU_TRANH_BA_TIM_DOI_THU:
             x, y = click_match(device, found)
-            log(f"[{account.username}] Click Tìm đối thủ Tranh Bá tại ({x}, {y}).")
+            log(f"[{account.display_name}] Click Tìm đối thủ Tranh Bá tại ({x}, {y}).")
         elif name == _TEMPLATE_QUAN_SU_TRANH_BA_XUAT_CHIEN:
             self._battle_hero_position_group = _hero_position_group(
                 screen, templates, account, log
             )
             x, y = click_match(device, found)
             log(
-                f"[{account.username}] Chọn bộ tọa độ {self._battle_hero_position_group}; "
+                f"[{account.display_name}] Chọn bộ tọa độ {self._battle_hero_position_group}; "
                 f"click Xuất chiến tại ({x}, {y})."
             )
             time.sleep(1)
@@ -135,14 +135,14 @@ def run(self, account, device, ocr_client, log, current_try=1) -> bool:
             _TEMPLATE_QUAN_SU_TRANH_BA_THU_QUAN,
             _TEMPLATE_QUAN_SU_TRANH_BA_TRAN_SAU,
         ):
-            log(f"[{account.username}] Đã ở trong trận Tranh Bá; chuyển sang theo dõi trận.")
+            log(f"[{account.display_name}] Đã ở trong trận Tranh Bá; chuyển sang theo dõi trận.")
             return True
 
         time.sleep(0.8)
         return run(self, account, device, ocr_client, log, current_try=current_try + 1)
 
     log(
-        f"[{account.username}] Mở Tranh Bá — chưa nhận diện được trạng thái "
+        f"[{account.display_name}] Mở Tranh Bá — chưa nhận diện được trạng thái "
         f"(lần {current_try}/{_MAX_TRIES}); thử lại."
     )
     time.sleep(1)

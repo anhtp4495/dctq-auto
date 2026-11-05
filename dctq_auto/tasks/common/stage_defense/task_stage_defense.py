@@ -9,15 +9,15 @@ from dctq_auto.tasks.common.stage_defense import (
 
 def run(worker, account, device, ocr_client, log) -> bool:
     """Open Mưu Binh, then run until timeout or return to the main screen."""
-    log(f"[{account.username}] Bắt đầu quy trình Mưu Binh.")
+    log(f"[{account.display_name}] Bắt đầu quy trình Mưu Binh.")
     try:
         opened = task_open_stage_defense.run(worker, account, device, ocr_client, log)
         if not opened:
-            log(f"[{account.username}] Không mở được Mưu Binh; dừng tác vụ.")
+            log(f"[{account.display_name}] Không mở được Mưu Binh; dừng tác vụ.")
             return False
         return task_run_stage_defense.run(worker, account, device, log)
     except Exception as exc:
-        log(f"[{account.username}] Quy trình Mưu Binh phát sinh lỗi: {exc}")
+        log(f"[{account.display_name}] Quy trình Mưu Binh phát sinh lỗi: {exc}")
         return False
 
 

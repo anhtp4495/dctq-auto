@@ -1952,7 +1952,7 @@ class MainWindow(QMainWindow):
                     self._status_icon("·", "#6e7781")
                     if account.enabled else self._status_icon("×", "#8c959f")
                 )
-                item.setData(Qt.ItemDataRole.UserRole, account.username)
+                item.setData(Qt.ItemDataRole.UserRole, account.display_name)
                 item.setData(Qt.ItemDataRole.UserRole + 1, account.enabled)
                 self.clone_result_list.addItem(item)
         else:

@@ -46,7 +46,7 @@ def _handle_reward_dialog(device, account, log, templates, positions) -> bool:
     try:
         screen = screen_bgr(device)
     except Exception as exc:
-        log(f"[{account.username}] Không chụp được màn hình chọn thưởng Mưu Binh: {exc}")
+        log(f"[{account.display_name}] Không chụp được màn hình chọn thưởng Mưu Binh: {exc}")
         return False
 
     selected = None
@@ -60,18 +60,18 @@ def _handle_reward_dialog(device, account, log, templates, positions) -> bool:
     if selected is not None:
         reward_name, reward_match = selected
         x, y = click_match(device, reward_match)
-        log(f"[{account.username}] Chọn thưởng {reward_name.rsplit('/', 1)[-1]} tại ({x}, {y}).")
+        log(f"[{account.display_name}] Chọn thưởng {reward_name.rsplit('/', 1)[-1]} tại ({x}, {y}).")
     else:
         fallback_name = random.choice(_REWARD_FALLBACK_BUTTONS)
         try:
             point = positions.get("chien_tranh.muu_binh", fallback_name)
             tap(device, point, account=account, log=log)
             log(
-                f"[{account.username}] Không match 7 template thưởng; "
+                f"[{account.display_name}] Không match 7 template thưởng; "
                 f"chọn ngẫu nhiên {fallback_name} tại ({point[0]}, {point[1]})."
             )
         except (KeyError, ValueError) as exc:
-            log(f"[{account.username}] Không lấy được tọa độ thưởng Mưu Binh {fallback_name}: {exc}")
+            log(f"[{account.display_name}] Không lấy được tọa độ thưởng Mưu Binh {fallback_name}: {exc}")
             return False
 
     # Dùng lại ảnh đã chụp khi quét 7 lựa chọn, không chụp màn hình lần nữa.
@@ -79,17 +79,17 @@ def _handle_reward_dialog(device, account, log, templates, positions) -> bool:
     confirm_match = match(screen, confirm_template, account=account, log=log)
     if confirm_match is not None:
         x, y = click_match(device, confirm_match)
-        log(f"[{account.username}] Click Xác nhận thưởng vượt ải theo template tại ({x}, {y}).")
+        log(f"[{account.display_name}] Click Xác nhận thưởng vượt ải theo template tại ({x}, {y}).")
     else:
         try:
             point = positions.get("chien_tranh.muu_binh", "xac_nhan_thuong_vuot_ai")
             tap(device, point, account=account, log=log)
             log(
-                f"[{account.username}] Không match template xác nhận thưởng; "
+                f"[{account.display_name}] Không match template xác nhận thưởng; "
                 f"click tọa độ dự phòng tại ({point[0]}, {point[1]})."
             )
         except (KeyError, ValueError) as exc:
-            log(f"[{account.username}] Không lấy được tọa độ xác nhận thưởng Mưu Binh: {exc}")
+            log(f"[{account.display_name}] Không lấy được tọa độ xác nhận thưởng Mưu Binh: {exc}")
             return False
 
     return True
@@ -98,7 +98,7 @@ def _handle_reward_dialog(device, account, log, templates, positions) -> bool:
 def run(worker, account, device, log) -> bool:
     """Repeat Xuất chiến and reward selection until timeout or main screen."""
     deadline = time.monotonic() + _MAX_SECONDS
-    log(f"[{account.username}] Bắt đầu tự động vượt ải Mưu Binh (tối đa {_MAX_SECONDS // 60} phút).")
+    log(f"[{account.display_name}] Bắt đầu tự động vượt ải Mưu Binh (tối đa {_MAX_SECONDS // 60} phút).")
 
     templates = get_templates(
         _REWARD_TEMPLATES + (_TEMPLATE_MUU_BINH_XAC_NHAN_THUONG_VUOT_AI,)
@@ -107,7 +107,7 @@ def run(worker, account, device, log) -> bool:
 
     while time.monotonic() < deadline:
         if not worker._wait_if_paused():
-            log(f"[{account.username}] Đã dừng khi đang vượt ải Mưu Binh.")
+            log(f"[{account.display_name}] Đã dừng khi đang vượt ải Mưu Binh.")
             return False
 
         observation = poll(device, account, log)
@@ -115,7 +115,7 @@ def run(worker, account, device, log) -> bool:
             return False
 
         if observation["quan_su"] is not None:
-            log(f"[{account.username}] Đã hoàn thành Mưu Binh; phát hiện màn hình chính Quân Sự.")
+            log(f"[{account.display_name}] Đã hoàn thành Mưu Binh; phát hiện màn hình chính Quân Sự.")
             return True
 
         if observation["hop_thoai_thuong_vuot_ai"] is not None:
@@ -127,17 +127,17 @@ def run(worker, account, device, log) -> bool:
 
         if observation["tu_dong_den_ai_tiep_theo"] is not None:
             x, y = click_match(device, observation["tu_dong_den_ai_tiep_theo"])
-            log(f"[{account.username}] Click Tự động đến ải tiếp theo tại ({x}, {y}).")
+            log(f"[{account.display_name}] Click Tự động đến ải tiếp theo tại ({x}, {y}).")
             time.sleep(1)
             continue
 
         if observation["chien_dau"] is not None:
             x, y = click_match(device, observation["chien_dau"])
-            log(f"[{account.username}] Click Chiến đấu tại ({x}, {y}).")
+            log(f"[{account.display_name}] Click Chiến đấu tại ({x}, {y}).")
             time.sleep(1)
             continue
 
         time.sleep(3)
 
-    log(f"[{account.username}] Dừng Mưu Binh vì đã hết thời gian {_MAX_SECONDS // 60} phút.")
+    log(f"[{account.display_name}] Dừng Mưu Binh vì đã hết thời gian {_MAX_SECONDS // 60} phút.")
     return True

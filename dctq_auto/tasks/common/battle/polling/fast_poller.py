@@ -35,7 +35,7 @@ class FastPoller(BasePoller):
             )
             if found is not None:
                 context["log"](
-                    f"[{account.username}] Chế độ nhanh 1 cờ: đã phát hiện "
+                    f"[{account.display_name}] Chế độ nhanh 1 cờ: đã phát hiện "
                     f"{template_name.rsplit('/', 1)[-1]}."
                 )
                 observation["should_end"] = True

@@ -20,7 +20,7 @@ _MAX_TRY_OPEN_SHOP_WAR = 5
 def run(worker, account, steps, device, ocr_client, log, screenshot=None, current_try=1) -> bool:
     """Mở tab Shop Chiến Tranh; nhận diện tab đang chọn để xác nhận thành công."""
     if not worker._wait_if_paused():
-        log(f"[{account.username}] Đã dừng khi mở [Shop Chiến Tranh].")
+        log(f"[{account.display_name}] Đã dừng khi mở [Shop Chiến Tranh].")
         return False
 
     template_names = (
@@ -34,13 +34,13 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None, curren
             screenshot = device.screenshot()
         screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
     except Exception as exc:
-        log(f"[{account.username}] Không chụp được màn hình khi mở [Shop Chiến Tranh]: {exc}")
+        log(f"[{account.display_name}] Không chụp được màn hình khi mở [Shop Chiến Tranh]: {exc}")
         return False
 
     for template_name in template_names:
         template = templates.get(template_name)
         if template is None:
-            log(f"[{account.username}] Không tải được template {template_name}; bỏ qua.")
+            log(f"[{account.display_name}] Không tải được template {template_name}; bỏ qua.")
             continue
 
         try:
@@ -53,32 +53,32 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None, curren
                 grayscale=template.grayscale,
             )
         except (ValueError, cv2.error) as exc:
-            log(f"[{account.username}] Lỗi template matching {template_name}: {exc}")
+            log(f"[{account.display_name}] Lỗi template matching {template_name}: {exc}")
             continue
 
         if match is None:
             continue
 
         report_template_match(
-            log, context=f"[{account.username}]", template=template, match=match
+            log, context=f"[{account.display_name}]", template=template, match=match
         )
 
         if template_name == _TEMPLATE_CUA_HANG_DANG_CHON_SHOP_CHIEN_TRANH:
-            log(f"[{account.username}] Đã mở [Shop Chiến Tranh].")
+            log(f"[{account.display_name}] Đã mở [Shop Chiến Tranh].")
             return True
 
         if current_try >= _MAX_TRY_OPEN_SHOP_WAR:
-            log(f"[{account.username}] Đã hết số lần thử mở [Shop Chiến Tranh].")
+            log(f"[{account.display_name}] Đã hết số lần thử mở [Shop Chiến Tranh].")
             return False
 
         x = round((match.left + match.right) / 2)
         y = round((match.top + match.bottom) / 2)
-        log(f"[{account.username}] Click tab [Shop Chiến Tranh] tại ({x}, {y}).")
+        log(f"[{account.display_name}] Click tab [Shop Chiến Tranh] tại ({x}, {y}).")
         try:
             device.shell(f"input tap {x} {y}")
             time.sleep(1.0)
         except Exception as exc:
-            log(f"[{account.username}] Click mở [Shop Chiến Tranh] thất bại: {exc}")
+            log(f"[{account.display_name}] Click mở [Shop Chiến Tranh] thất bại: {exc}")
             return False
 
         return run(
@@ -88,7 +88,7 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None, curren
 
     if current_try < _MAX_TRY_OPEN_SHOP_WAR:
         log(
-            f"[{account.username}] Chưa nhận diện được trạng thái [Shop Chiến Tranh]; "
+            f"[{account.display_name}] Chưa nhận diện được trạng thái [Shop Chiến Tranh]; "
             f"thử lại lần {current_try + 1}."
         )
         time.sleep(0.7)
@@ -97,5 +97,5 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None, curren
             screenshot=None, current_try=current_try + 1,
         )
 
-    log(f"[{account.username}] Không mở/xác nhận được [Shop Chiến Tranh].")
+    log(f"[{account.display_name}] Không mở/xác nhận được [Shop Chiến Tranh].")
     return False

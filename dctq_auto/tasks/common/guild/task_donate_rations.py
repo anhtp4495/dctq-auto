@@ -44,7 +44,7 @@ def _find_template(screen_bgr, templates, template_names, account, log):
     for template_name in template_names:
         template = templates.get(template_name)
         if template is None:
-            log(f"[{account.username}] Không tải được template {template_name}; bỏ qua.")
+            log(f"[{account.display_name}] Không tải được template {template_name}; bỏ qua.")
             continue
         try:
             match = match_template(
@@ -56,12 +56,12 @@ def _find_template(screen_bgr, templates, template_names, account, log):
                 grayscale=template.grayscale,
             )
         except (ValueError, cv2.error) as exc:
-            log(f"[{account.username}] Lỗi template matching {template_name}: {exc}")
+            log(f"[{account.display_name}] Lỗi template matching {template_name}: {exc}")
             continue
         if match is not None:
             report_template_match(
                 log,
-                context=f"[{account.username}]",
+                context=f"[{account.display_name}]",
                 template=template,
                 match=match,
             )
@@ -73,7 +73,7 @@ def _tap_match_center(device, match, account, log):
     """Click trung điểm vùng template được nhận diện."""
     x = (match.left + match.right) // 2
     y = (match.top + match.bottom) // 2
-    log(f"[{account.username}] Click trung điểm template tại ({x}, {y}).")
+    log(f"[{account.display_name}] Click trung điểm template tại ({x}, {y}).")
     device.shell(f"input tap {x} {y}")
     time.sleep(0.7)
 
@@ -84,7 +84,7 @@ _MAX_TRY_DETECT_MAIN_SCREEN = 10
 
 def _finish_step(steps, account, log, message):
     """Ghi log và loại step đóng góp Lương thảo khỏi danh sách chạy."""
-    log(f"[{account.username}] {message}")
+    log(f"[{account.display_name}] {message}")
     if _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO in steps:
         steps.remove(_STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO)
     return steps
@@ -99,7 +99,7 @@ def _run(
         return steps
 
     if not worker._wait_if_paused():
-        log(f"[{account.username}] Đóng góp Lương thảo đã dừng theo yêu cầu.")
+        log(f"[{account.display_name}] Đóng góp Lương thảo đã dừng theo yêu cầu.")
         return steps
 
     try:
@@ -107,7 +107,7 @@ def _run(
             screenshot = device.screenshot()
         screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
     except Exception as exc:
-        log(f"[{account.username}] Không chụp được màn hình đóng góp Lương thảo: {exc}")
+        log(f"[{account.display_name}] Không chụp được màn hình đóng góp Lương thảo: {exc}")
         return steps
 
     template_names = get_template_names(steps)
@@ -116,7 +116,7 @@ def _run(
     )
     if template_name is None:
         log(
-            f"[{account.username}] Không nhận diện được trạng thái đóng góp "
+            f"[{account.display_name}] Không nhận diện được trạng thái đóng góp "
             "Lương thảo; giữ lại step để thử lại."
         )
         return steps
@@ -127,7 +127,7 @@ def _run(
         )
 
     if template_name == _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO:
-        log(f"[{account.username}] Click Đóng góp Lương thảo (mức 100).")
+        log(f"[{account.display_name}] Click Đóng góp Lương thảo (mức 100).")
         _tap_match_center(device, match, account, log)
         time.sleep(1.5)
         return _run(
@@ -138,7 +138,7 @@ def _run(
     if template_name == _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_KNB:
         tap_x, tap_y = ButtonPositions().get("quan_doan.luong_thao", "dong_man_hinh")
         log(
-            f"[{account.username}] Không đủ tài nguyên - [HỦY] đóng góp tại ({tap_x}, {tap_y})."
+            f"[{account.display_name}] Không đủ tài nguyên - [HỦY] đóng góp tại ({tap_x}, {tap_y})."
         )
         device.shell(f"input tap {tap_x} {tap_y}")
         time.sleep(1.5)
@@ -149,7 +149,7 @@ def _run(
 
     if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO:
         tap_x, tap_y = ButtonPositions().get("quan_doan.luong_thao", "dong_gop")
-        log(f"[{account.username}] Click đóng góp Lương thảo tại ({tap_x}, {tap_y}).")
+        log(f"[{account.display_name}] Click đóng góp Lương thảo tại ({tap_x}, {tap_y}).")
         device.shell(f"input tap {tap_x} {tap_y}")
         return _run(
             worker, account, steps, device, ocr_client, log, None,
@@ -157,7 +157,7 @@ def _run(
         )
 
     if template_name == _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO:
-        log(f"[{account.username}] Đang ở màn hình đóng góp Lương thảo; đóng màn hình.")
+        log(f"[{account.display_name}] Đang ở màn hình đóng góp Lương thảo; đóng màn hình.")
         _tap_match_center(device, match, account, log)
         return _run(
             worker, account, steps, device, ocr_client, log, None,
@@ -166,7 +166,7 @@ def _run(
 
     if template_name == _TEMPLATE_QUAN_DOAN_DUNG_NHANH:
         tap_x, tap_y = ButtonPositions().get("quan_doan.luong_thao", "xac_nhan")
-        log(f"[{account.username}] Dùng nhanh túi lúa tại ({tap_x}, {tap_y}).")
+        log(f"[{account.display_name}] Dùng nhanh túi lúa tại ({tap_x}, {tap_y}).")
         device.shell(f"input tap {tap_x} {tap_y}")
         return _run(
             worker, account, steps, device, ocr_client, log, None,
@@ -183,7 +183,7 @@ def _run(
         )
         
     if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH:
-        log(f"[{account.username}] Đã quay về màn hình chính Quân đoàn; kiểm tra lại.")
+        log(f"[{account.display_name}] Đã quay về màn hình chính Quân đoàn; kiểm tra lại.")
         
         _tap_match_center(device, match, account, log)
         return _run(
@@ -200,7 +200,7 @@ def run(
     if _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO not in steps:
         return steps
 
-    log(f"[{account.username}] Bắt đầu [Đóng góp Lương thảo] ...")
+    log(f"[{account.display_name}] Bắt đầu [Đóng góp Lương thảo] ...")
     templates = get_templates(get_template_names(steps))
     return _run(
         worker, account, steps, device, ocr_client, log, screenshot,
