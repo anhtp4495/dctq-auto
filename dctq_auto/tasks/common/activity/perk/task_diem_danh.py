@@ -21,6 +21,8 @@ from dctq_auto.vision.template_store import get_templates
 _TEMPLATE_NAMES = (
     _TEMPLATE_XAC_NHAN_DIEM_DANH_BU,
     _TEMPLATE_DANG_CHON_DIEM_DANH,
+    _TEMPLATE_DIEM_DANH_BU,
+    _TEMPLATE_DA_DIEM_DANH,
 )
 
 
