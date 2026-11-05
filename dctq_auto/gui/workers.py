@@ -15,6 +15,7 @@ from dctq_auto.tasks.common.ocr_worker import OcrWorkerMixin
 from dctq_auto.tasks.activity.worker import ActivityWorkerMixin
 from dctq_auto.tasks.guild.worker import GuildWorkerMixin
 from dctq_auto.tasks.runner import UtilityTaskRunnerMixin
+from dctq_auto.progress import ProgressInfo, ProgressManager, ProgressStatus
 
 
 class BotWorker(
@@ -32,6 +33,8 @@ class BotWorker(
     task_progress_item_added = Signal(str, int)
     clone_account_result = Signal(str, bool)
     clone_account_status = Signal(str, str)
+    progress_info_added = Signal(object)
+    progress_info_changed = Signal(object)
 
     def __init__(
         self,
@@ -50,6 +53,136 @@ class BotWorker(
         self._resume_event.set()
         self._progress_total = 1
         self._progress_completed = 0
+        self.progress_manager = ProgressManager()
+        self._progress_root_id: str | None = None
+        self._progress_items_by_key: dict[tuple[str, str], str] = {}
+        self._progress_accounts: dict[str, str] = {}
+        self._active_progress_account_id: str | None = None
+
+    def _ensure_progress_root(self) -> ProgressInfo:
+        """Create the root item lazily so each worker run owns one progress tree."""
+        if self._progress_root_id is None:
+            root = self.progress_manager.add(
+                ProgressInfo(name="Tiến trình", category="run")
+            )
+            self._progress_root_id = root.id
+            self.progress_info_added.emit(root)
+        root = self.progress_manager.get(self._progress_root_id)
+        assert root is not None
+        return root
+
+    def _emit_progress_item(self, item: ProgressInfo) -> None:
+        self.progress_info_changed.emit(item)
+
+    def _emit_overall_progress(
+        self, completed: int, total: int, message: str
+    ) -> None:
+        """Update the unified root progress and retain the legacy GUI signal."""
+        root = self._ensure_progress_root()
+        changes = {
+            "current": max(0, completed),
+            "total": max(0, total),
+            "message": message,
+        }
+        if root.status in (ProgressStatus.PENDING, ProgressStatus.PAUSED):
+            changes["status"] = ProgressStatus.RUNNING
+        updated = self.progress_manager.update(root.id, **changes)
+        self._emit_progress_item(updated)
+        self.progress_changed.emit(completed, total, message)
+
+    def _emit_task_progress(
+        self, name: str, state: str, current: int, total: int
+    ) -> None:
+        """Update a task node and retain the existing task progress signal."""
+        root = self._ensure_progress_root()
+        parent_id = self._active_progress_account_id or root.id
+        key = (parent_id, name)
+        progress_id = self._progress_items_by_key.get(key)
+        status_map = {
+            "running": ProgressStatus.RUNNING,
+            "done": ProgressStatus.SUCCESS,
+            "success": ProgressStatus.SUCCESS,
+            "failed": ProgressStatus.FAILED,
+            "ignored": ProgressStatus.SKIPPED,
+            "skipped": ProgressStatus.SKIPPED,
+            "stopped": ProgressStatus.STOPPED,
+        }
+        status = status_map.get(state, ProgressStatus.RUNNING)
+        if progress_id is None:
+            item = self.progress_manager.add(
+                ProgressInfo(
+                    id=f"task-{len(self._progress_items_by_key) + 1}",
+                    parent_id=parent_id,
+                    name=name,
+                    category="task",
+                    status=status,
+                    current=max(0, current),
+                    total=max(0, total),
+                    message=name,
+                )
+            )
+            self._progress_items_by_key[key] = item.id
+            self.progress_info_added.emit(item)
+        else:
+            item = self.progress_manager.update(
+                progress_id,
+                status=status,
+                current=max(0, current),
+                total=max(0, total),
+                message=name,
+            )
+            self._emit_progress_item(item)
+        self.task_progress_changed.emit(name, state, current, total)
+
+    def _emit_clone_account_status(self, display_name: str, state: str) -> None:
+        """Represent each Clone account as a child of the run progress."""
+        root = self._ensure_progress_root()
+        account_id = self._progress_accounts.get(display_name)
+        status = (
+            ProgressStatus.RUNNING if state == "running"
+            else ProgressStatus.SKIPPED if state == "disabled"
+            else ProgressStatus.PENDING
+        )
+        if account_id is None:
+            item = self.progress_manager.add(
+                ProgressInfo(
+                    name=display_name,
+                    category="account",
+                    parent_id=root.id,
+                    account=display_name,
+                    status=status,
+                    message=state,
+                )
+            )
+            self._progress_accounts[display_name] = item.id
+            self.progress_info_added.emit(item)
+            account_id = item.id
+        else:
+            item = self.progress_manager.update(
+                account_id, status=status, message=state
+            )
+            self._emit_progress_item(item)
+        if state == "running":
+            self._active_progress_account_id = account_id
+        self.clone_account_status.emit(display_name, state)
+
+    def _emit_clone_account_result(
+        self, display_name: str, succeeded: bool
+    ) -> None:
+        account_id = self._progress_accounts.get(display_name)
+        if account_id is not None:
+            item = self.progress_manager.update(
+                account_id,
+                status=(
+                    ProgressStatus.SUCCESS if succeeded
+                    else ProgressStatus.FAILED
+                ),
+                current=1 if succeeded else 0,
+                total=1,
+                message="Hoàn thành" if succeeded else "Thất bại",
+            )
+            self._emit_progress_item(item)
+        self.clone_account_result.emit(display_name, succeeded)
 
     def pause(self) -> None:
         self._resume_event.clear()
@@ -86,13 +219,13 @@ class BotWorker(
 
     def _emit_mock_progress(self, partial_units: int, status: str) -> None:
         value = min(self._progress_total, self._progress_completed + max(0, partial_units))
-        self.progress_changed.emit(value, self._progress_total, status)
+        self._emit_overall_progress(value, self._progress_total, status)
 
     def _simulate_battles(self, task: str, count: int, required_flags: int,
                           time_limit: int | None) -> bool:
         for number in range(1, count + 1):
             if self._config.get("utility_tasks_mode") and self._config.get("task_end_battle"):
-                self.task_progress_changed.emit(
+                self._emit_task_progress(
                     "Bắt đầu trận Giao Tranh", "running", number, count
                 )
             elapsed = 0
@@ -501,7 +634,7 @@ class BotWorker(
         enabled_index = 0
         for account in accounts:
             if not account.enabled:
-                self.clone_account_status.emit(account.display_name, "disabled")
+                self._emit_clone_account_status(account.display_name, "disabled")
                 self.log_message.emit(f"Tài khoản {account.display_name}: đã vô hiệu hóa, bỏ qua.")
                 continue
             enabled_index += 1
@@ -538,7 +671,7 @@ class BotWorker(
                     f"{account.display_name} - {label}", "done", 1, 1
                 )
             # Record the account only after its selected mock steps finish.
-            self.clone_account_result.emit(account.display_name, True)
+            self._emit_clone_account_result(account.display_name, True)
             self._progress_completed += 1
             progress_text = (
                 f"Tiến trình tài khoản [{self._progress_completed}/{len(accounts)}]"
