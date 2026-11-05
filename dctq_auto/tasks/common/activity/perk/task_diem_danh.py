@@ -212,6 +212,13 @@ def _scan_day_statuses(
         log(f"[{account.display_name}] Thiếu template trạng thái ngày điểm danh.")
         return None, None
 
+    try:
+        screenshot = device.screenshot()
+        screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
+    except Exception as exc:
+        log(f"[{account.display_name}] Không chụp được màn hình khi mở Điểm danh: {exc}")
+        return None, None
+
     already_days = set()
     log(f"[{account.display_name}] Bắt đầu quét trạng thái {len(day_regions)} ngày.")
 
@@ -226,8 +233,6 @@ def _scan_day_statuses(
         )
 
         try:
-            screenshot = device.screenshot()
-            screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
             already_match = _match_day_template(
                 screen_bgr, already_template, search_rect
             )
