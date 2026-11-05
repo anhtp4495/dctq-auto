@@ -2312,7 +2312,7 @@ class MainWindow(QMainWindow):
         }
         glyph, color = states.get(progress_info.status.value, ("·", "#6e7781"))
         # Child icon and label share the same indentation beneath the account row.
-        item.setIcon(self._status_icon(glyph, color, indent=12))
+        item.setIcon(self._status_icon(glyph, color, indent=20))
         item.setText(progress_info.name)
         details = [progress_info.message] if progress_info.message else []
         if progress_info.total > 1 or progress_info.current:
