@@ -128,28 +128,14 @@ def task_open_perk(
 
 
 def run_perk(worker, account, steps, device, ocr_client, log) -> list[str]:
-    """Chạy tuần tự các tác vụ con được chọn trong Phúc lợi."""
+    """Điều phối chạy các tác vụ con thuộc Phúc lợi."""
     for step, task, label in (
         (_STEP_DIEM_DANH, task_diem_danh, "Điểm danh"),
         (_STEP_QUOC_VAN, task_le_bao_quoc_van, "Lễ bao Quốc Vận"),
     ):
-        try:
-            success = bool(task.run(worker, account, steps, device, ocr_client, log))
-        except Exception as exc:
-            log(f"[{account.display_name}] {label} thất bại: {exc}")
-            success = False
-
-        # Step không có trong steps nghĩa là tác vụ con không được chọn.
-        if step not in steps:
-            continue
-        if success:
-            if step in steps:
-                steps.remove(step)
-        else:
-            log(f"[{account.display_name}] Giữ lại bước {label} để thử lại.")
+        task.run(worker, account, steps, device, ocr_client, log)
 
     return steps
-
 
 def run(
     worker, account, steps, device, ocr_client, log,
