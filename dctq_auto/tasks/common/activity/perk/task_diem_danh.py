@@ -12,6 +12,7 @@ from dctq_auto.config.constants import (
     _TEMPLATE_XAC_NHAN_DIEM_DANH_BU,
     _TEMPLATE_DIEM_DANH_BU,
     _TEMPLATE_DA_DIEM_DANH,
+    _STEP_DIEM_DANH,
 )
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
@@ -24,6 +25,11 @@ _TEMPLATE_NAMES = (
     _TEMPLATE_DIEM_DANH_BU,
     _TEMPLATE_DA_DIEM_DANH,
 )
+
+def pre_diem_danh(steps) -> bool:
+    """Cho biết tác vụ Điểm danh có được chọn hay không."""
+    return _STEP_DIEM_DANH in steps
+
 
 _SCREEN_TEMPLATE_NAMES = (
     _TEMPLATE_XAC_NHAN_DIEM_DANH_BU,
