@@ -138,6 +138,25 @@ class BotWorker(
             self._emit_progress_item(item)
         self.task_progress_changed.emit(name, state, current, total)
 
+        # Keep the Clone account row informative while its child task runs.
+        account_id = self._active_progress_account_id
+        if account_id is not None:
+            account_message = {
+                "running": f"Đang chạy: {name}",
+                "done": f"Hoàn thành: {name}",
+                "success": f"Hoàn thành: {name}",
+                "failed": f"Thất bại: {name}",
+                "ignored": f"Đã bỏ qua: {name}",
+                "skipped": f"Đã bỏ qua: {name}",
+                "stopped": f"Đã dừng: {name}",
+            }.get(state, f"Đang xử lý: {name}")
+            account_item = self.progress_manager.get(account_id)
+            if account_item is not None:
+                account_item = self.progress_manager.update(
+                    account_id, message=account_message
+                )
+                self._emit_progress_item(account_item)
+
     def _add_task_progress_item(self, name: str, total: int) -> None:
         """Register a pending task row while preserving the legacy list signal."""
         root = self._ensure_progress_root()
@@ -209,6 +228,8 @@ class BotWorker(
                 error=None if succeeded else "Tài khoản xử lý thất bại",
             )
             self._emit_progress_item(item)
+        if self._active_progress_account_id == account_id:
+            self._active_progress_account_id = None
         self.clone_account_result.emit(display_name, succeeded)
 
     def _set_root_status(self, status: ProgressStatus, message: str) -> None:
