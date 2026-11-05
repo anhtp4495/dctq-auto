@@ -220,6 +220,11 @@ def _scan_day_statuses(
             log(f"[{account.display_name}] Điểm danh đã dừng theo yêu cầu tại ngày {day}.")
             return None, None
 
+        log(
+            f"[{account.display_name}] Quét ngày {day} "
+            f"với region={search_rect}."
+        )
+
         try:
             screenshot = device.screenshot()
             screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
