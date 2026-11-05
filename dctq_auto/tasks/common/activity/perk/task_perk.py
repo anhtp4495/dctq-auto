@@ -130,8 +130,8 @@ def task_open_perk(
 def run_perk(worker, account, steps, device, ocr_client, log) -> list[str]:
     """Điều phối chạy các tác vụ con thuộc Phúc lợi."""
     for step, task, label in (
-        (_STEP_DIEM_DANH, task_diem_danh, "Điểm danh"),
         (_STEP_QUOC_VAN, task_le_bao_quoc_van, "Lễ bao Quốc Vận"),
+        (_STEP_DIEM_DANH, task_diem_danh, "Điểm danh"),
     ):
         task.run(worker, account, steps, device, ocr_client, log)
 

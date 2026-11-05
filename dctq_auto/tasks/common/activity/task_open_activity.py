@@ -16,7 +16,7 @@ from dctq_auto.vision.template_store import get_templates
 from dctq_auto.tasks.common.close_knowned_dialog import close_knowned_dialog
 
 
-_MAX_TRIES = 6
+_MAX_TRIES = 10
 
 
 def open_activity(
