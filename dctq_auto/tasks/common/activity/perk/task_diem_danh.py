@@ -121,118 +121,232 @@ def _match_day_template(screen_bgr, template, search_rect):
         grayscale=template.grayscale,
     )
 
-def _tap_confirmation_if_visible(worker, device, account, templates, log) -> bool:
-    """Kiểm tra và click xác nhận điểm danh bù nếu hộp thoại xuất hiện."""
-    if not worker._wait_if_paused():
-        return False
-
-    template = templates.get(_TEMPLATE_XAC_NHAN_DIEM_DANH_BU)
-    if template is None:
-        log(
-            f"[{account.display_name}] Không tải được template "
-            f"{_TEMPLATE_XAC_NHAN_DIEM_DANH_BU}; bỏ qua kiểm tra xác nhận."
-        )
-        return True
-
+def _read_screen_state(device, account, templates, log) -> str | None:
+    """Nhận diện trạng thái màn hình sau khi click một ngày."""
     screenshot = device.screenshot()
     screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
-    try:
-        match = match_template(
-            screen_bgr,
-            template.image,
-            threshold=template.threshold,
-            method=template.method,
-            search_rect=template.search_rect,
-            grayscale=template.grayscale,
-        )
-    except (ValueError, cv2.error) as exc:
-        log(
-            f"[{account.display_name}] Lỗi nhận diện xác nhận điểm danh bù: {exc}"
-        )
-        return True
 
-    if match is None:
-        return True
-
-    report_template_match(
-        log,
-        context=f"[{account.display_name}]",
-        template=template,
-        match=match,
+    template_name, match = _find_template(
+        screen_bgr, templates, account, log
     )
+    if template_name is None:
+        return None
+
+    return template_name
+
+
+def _tap_day(
+    worker, device, account, day, region, x, y, templates, log
+) -> str | None:
+    """Click một ngày và xác định đó là điểm danh thường hay điểm danh bù."""
     if not worker._wait_if_paused():
-        return False
+        return None
 
-    log(f"[{account.display_name}] Phát hiện hộp thoại xác nhận điểm danh bù.")
-    _tap_match_center(device, match, account, log)
-    return True
+    log(f"[{account.display_name}] Click ngày {day} tại ({x}, {y}).")
+    device.shell(f"input tap {x} {y}")
+    time.sleep(0.8)
+
+    try:
+        screen_state = _read_screen_state(device, account, templates, log)
+    except Exception as exc:
+        log(f"[{account.display_name}] Không kiểm tra được trạng thái sau khi click ngày {day}: {exc}")
+        return None
+
+    if screen_state == _TEMPLATE_XAC_NHAN_DIEM_DANH_BU:
+        log(f"[{account.display_name}] Ngày {day} yêu cầu xác nhận điểm danh bù.")
+        if not worker._wait_if_paused():
+            return None
+
+        template = templates.get(_TEMPLATE_XAC_NHAN_DIEM_DANH_BU)
+        if template is None:
+            log(f"[{account.display_name}] Thiếu template xác nhận điểm danh bù.")
+            return None
+
+        screenshot = device.screenshot()
+        screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
+        try:
+            match = match_template(
+                screen_bgr,
+                template.image,
+                threshold=template.threshold,
+                method=template.method,
+                search_rect=template.search_rect,
+                grayscale=template.grayscale,
+            )
+        except (ValueError, cv2.error) as exc:
+            log(f"[{account.display_name}] Lỗi nhận diện hộp thoại điểm danh bù ngày {day}: {exc}")
+            return None
+
+        if match is None:
+            log(f"[{account.display_name}] Hộp thoại xác nhận điểm danh bù ngày {day} đã biến mất.")
+            return None
+
+        report_template_match(
+            log,
+            context=f"[{account.display_name}]",
+            template=template,
+            match=match,
+        )
+        _tap_match_center(device, match, account, log)
+        return "catchup"
+
+    if screen_state == _TEMPLATE_DANG_CHON_DIEM_DANH:
+        return "normal"
+
+    log(f"[{account.display_name}] Không xác định được kết quả click ngày {day}.")
+    return None
 
 
-def _tap_all_days(
+def _scan_day_statuses(
     worker, device, account, screen_width, screen_height, templates, log
-) -> bool:
-    """Nhận diện trạng thái rồi chỉ click các ngày chưa điểm danh."""
+):
+    """Quét 30 ngày, trả về tập ngày đã điểm danh."""
     day_regions = _build_day_regions(screen_width, screen_height)
     already_template = templates.get(_TEMPLATE_DA_DIEM_DANH)
     catchup_template = templates.get(_TEMPLATE_DIEM_DANH_BU)
 
     if already_template is None or catchup_template is None:
         log(f"[{account.display_name}] Thiếu template trạng thái ngày điểm danh.")
-        return False
+        return None, None
 
-    log(f"[{account.display_name}] Bắt đầu kiểm tra {len(day_regions)} ngày điểm danh.")
+    already_days = set()
+    log(f"[{account.display_name}] Bắt đầu quét trạng thái {len(day_regions)} ngày.")
 
     for day, search_rect, x, y in day_regions:
         if not worker._wait_if_paused():
             log(f"[{account.display_name}] Điểm danh đã dừng theo yêu cầu tại ngày {day}.")
-            return False
+            return None, None
 
         try:
             screenshot = device.screenshot()
             screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
-
             already_match = _match_day_template(
                 screen_bgr, already_template, search_rect
             )
             if already_match is not None:
-                log(f"[{account.display_name}] Ngày {day} đã điểm danh; bỏ qua.")
+                already_days.add(day)
+                log(f"[{account.display_name}] Ngày {day} đã điểm danh.")
                 continue
 
             catchup_match = _match_day_template(
                 screen_bgr, catchup_template, search_rect
             )
+            if catchup_match is not None:
+                report_template_match(
+                    log,
+                    context=f"[{account.display_name}] Ngày {day}",
+                    template=catchup_template,
+                    match=catchup_match,
+                )
+                log(f"[{account.display_name}] Ngày {day} chưa điểm danh.")
         except (ValueError, cv2.error) as exc:
             log(f"[{account.display_name}] Lỗi nhận diện trạng thái ngày {day}: {exc}")
-            return False
+            return None, None
         except Exception as exc:
             log(f"[{account.display_name}] Không kiểm tra được ngày {day}: {exc}")
-            return False
+            return None, None
 
+    return already_days, day_regions
+
+
+def _tap_all_days(
+    worker, device, account, screen_width, screen_height, templates, log
+) -> bool:
+    """Ưu tiên điểm danh ngày kế tiếp, sau đó bù tối đa ba ngày còn thiếu."""
+    already_days, day_regions = _scan_day_statuses(
+        worker, device, account, screen_width, screen_height, templates, log
+    )
+    if already_days is None:
+        return False
+
+    region_by_day = {
+        day: (region, x, y)
+        for day, region, x, y in day_regions
+    }
+    target_day = max(already_days, default=0) + 1
+    if target_day > 30:
+        log(f"[{account.display_name}] Đã điểm danh đủ 30 ngày.")
+        return True
+
+    log(
+        f"[{account.display_name}] Ngày cần điểm danh được xác định là "
+        f"ngày {target_day}; sẽ ưu tiên xử lý ngày này trước."
+    )
+
+    catchup_count = 0
+    processed_catchup_days = set()
+
+    # Xử lý ngày kế tiếp trước. Nếu xuất hiện hộp thoại điểm danh bù,
+    # ngày đó được tính là một ngày bù và ngày cần điểm danh tăng lên.
+    while target_day <= 30:
         if not worker._wait_if_paused():
             return False
 
-        if catchup_match is not None:
-            report_template_match(
-                log,
-                context=f"[{account.display_name}] Ngày {day}",
-                template=catchup_template,
-                match=catchup_match,
-            )
-            log(f"[{account.display_name}] Ngày {day} là ngày điểm danh bù; click ({x}, {y}).")
-            device.shell(f"input tap {x} {y}")
-            time.sleep(1.0)
-
-            if not _tap_confirmation_if_visible(
-                worker, device, account, templates, log
-            ):
-                log(f"[{account.display_name}] Không xử lý được xác nhận điểm danh bù ngày {day}.")
-                return False
+        if target_day in already_days:
+            target_day += 1
             continue
 
-        log(f"[{account.display_name}] Ngày {day} chưa điểm danh; click ({x}, {y}).")
-        device.shell(f"input tap {x} {y}")
-        time.sleep(0.15)
+        region, x, y = region_by_day[target_day]
+        result = _tap_day(
+            worker, device, account, target_day, region, x, y, templates, log
+        )
+        if result is None:
+            return False
 
+        if result == "catchup":
+            catchup_count += 1
+            processed_catchup_days.add(target_day)
+            log(
+                f"[{account.display_name}] Đã xác nhận ngày {target_day} "
+                f"là ngày bù ({catchup_count}/3). Ngày cần điểm danh tiếp theo "
+                f"là ngày {target_day + 1}."
+            )
+            target_day += 1
+            if catchup_count >= 3:
+                log(f"[{account.display_name}] Đã đạt giới hạn 3 ngày điểm danh bù.")
+                break
+            continue
+
+        log(f"[{account.display_name}] Đã xử lý ngày cần điểm danh {target_day}.")
+        break
+
+    # Sau ngày cần điểm danh, bù các ngày chưa điểm danh nằm trước ngày đó.
+    # Tổng số ngày bù, kể cả ngày mục tiêu bất ngờ hiện hộp thoại bù, không quá 3.
+    if catchup_count < 3:
+        for day in range(1, min(target_day, 31)):
+            if catchup_count >= 3:
+                break
+            if day in already_days or day in processed_catchup_days:
+                continue
+
+            if not worker._wait_if_paused():
+                return False
+
+            region, x, y = region_by_day[day]
+            result = _tap_day(
+                worker, device, account, day, region, x, y, templates, log
+            )
+            if result is None:
+                return False
+
+            if result == "catchup":
+                catchup_count += 1
+                processed_catchup_days.add(day)
+                log(
+                    f"[{account.display_name}] Đã điểm danh bù ngày {day} "
+                    f"({catchup_count}/3)."
+                )
+            else:
+                log(
+                    f"[{account.display_name}] Ngày {day} không hiện hộp thoại "
+                    f"điểm danh bù; đã chuyển về trạng thái màn hình Điểm danh."
+                )
+
+    log(
+        f"[{account.display_name}] Hoàn tất lượt xử lý: "
+        f"1 ngày cần điểm danh và tối đa 3 ngày bù "
+        f"(đã bù {catchup_count} ngày)."
+    )
     return True
 
 
