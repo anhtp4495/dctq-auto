@@ -1,6 +1,7 @@
 """Background workers for GUI actions."""
 
 import shlex
+from dataclasses import replace
 import time
 from pathlib import Path
 from types import SimpleNamespace
@@ -67,13 +68,13 @@ class BotWorker(
                 ProgressInfo(name="Tiến trình", category="run")
             )
             self._progress_root_id = root.id
-            self.progress_info_added.emit(root)
+            self.progress_info_added.emit(replace(root))
         root = self.progress_manager.get(self._progress_root_id)
         assert root is not None
         return root
 
     def _emit_progress_item(self, item: ProgressInfo) -> None:
-        self.progress_info_changed.emit(item)
+        self.progress_info_changed.emit(replace(item))
 
     def _emit_overall_progress(
         self, completed: int, total: int, message: str
@@ -123,7 +124,7 @@ class BotWorker(
                 )
             )
             self._progress_items_by_key[key] = item.id
-            self.progress_info_added.emit(item)
+            self.progress_info_added.emit(replace(item))
         else:
             item = self.progress_manager.update(
                 progress_id,
