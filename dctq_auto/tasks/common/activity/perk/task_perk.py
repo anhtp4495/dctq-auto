@@ -6,6 +6,8 @@ import cv2
 import numpy as np
 
 from dctq_auto.config.constants import (
+    _STEP_DIEM_DANH,
+    _STEP_QUOC_VAN,
     _TEMPLATE_CHUA_CHON_PHUC_LOI,
     _TEMPLATE_DANG_CHON_PHUC_LOI,
 )
@@ -136,13 +138,13 @@ def run_perk(worker, account, steps, device, ocr_client, log) -> list[str]:
     for is_selected, step, task, label in (
         (
             task_diem_danh.pre_diem_danh(steps),
-            None,
+            _STEP_DIEM_DANH,
             task_diem_danh,
             "Điểm danh",
         ),
         (
             task_le_bao_quoc_van.pre_le_bao_quoc_van(steps),
-            None,
+            _STEP_QUOC_VAN,
             task_le_bao_quoc_van,
             "Lễ bao Quốc Vận",
         ),
@@ -159,13 +161,6 @@ def run_perk(worker, account, steps, device, ocr_client, log) -> list[str]:
             success = False
 
         if success:
-            # Mỗi tác vụ chỉ được loại khỏi steps sau khi hoàn tất thành công.
-            if label == "Điểm danh":
-                from dctq_auto.config.constants import _STEP_DIEM_DANH
-                step = _STEP_DIEM_DANH
-            else:
-                from dctq_auto.config.constants import _STEP_QUOC_VAN
-                step = _STEP_QUOC_VAN
             if step in steps:
                 steps.remove(step)
         else:
