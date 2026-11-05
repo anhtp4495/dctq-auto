@@ -1,6 +1,7 @@
 """Theo dõi và điều phối các trận Tranh Bá."""
 
 import time
+from pathlib import Path
 
 from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.tasks.common.battle.battle_utils import click_match
@@ -16,6 +17,22 @@ def run(self, account, device, ocr_client, log) -> bool:
     time_limit = battle_config.time_limit_seconds
     poller = NormalPoller()
     strategy = PincerBattle()
+    hero_position_group = (
+        getattr(self, "_battle_hero_position_group", None)
+        or "quan_su.giao_tranh.danh_sach1"
+    )
+    default_strategy_name = (
+        "pincer_battle_danh_sach2.json"
+        if hero_position_group.endswith("danh_sach2")
+        else "pincer_battle_danh_sach1.json"
+    )
+    strategy_path = self._config.get("battle_strategy_path") or (
+        Path(__file__).resolve().parents[1]
+        / "battle"
+        / "battle_strategies"
+        / "ranked"
+        / default_strategy_name
+    )
     positions = ButtonPositions()
     context = {
         "worker": self,
@@ -26,10 +43,8 @@ def run(self, account, device, ocr_client, log) -> bool:
         "log": log,
         "wait_if_paused": self._wait_if_paused,
         "battle_type": "championship",
-        "hero_position_group": (
-            getattr(self, "_battle_hero_position_group", None)
-            or "quan_su.giao_tranh.danh_sach1"
-        ),
+        "hero_position_group": hero_position_group,
+        "battle_strategy_path": strategy_path,
         "battle_started_at": None,
     }
 
