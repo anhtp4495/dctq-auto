@@ -2,6 +2,12 @@
 
 Chỉ hỗ trợ [Accounts] và [DisabledAccounts]. Không ghi mật khẩu vào log.
 Nếu username xuất hiện ở cả hai section, DisabledAccounts được ưu tiên.
+
+Mỗi dòng hỗ trợ:
+    username = password
+    username = password = display_name
+
+Nếu không khai báo display_name, giá trị mặc định bằng username.
 """
 import configparser
 from dataclasses import dataclass
@@ -13,6 +19,7 @@ class GameAccount:
     username: str
     password: str
     enabled: bool = True
+    display_name: str = ""
 
 
 def load_accounts(path: str | Path) -> list[GameAccount]:
@@ -32,8 +39,6 @@ def load_accounts(path: str | Path) -> list[GameAccount]:
     except configparser.Error as exc:
         raise ValueError(f"File tài khoản không phải INI hợp lệ: {exc}") from exc
 
-    # [Accounts] là bắt buộc; [DisabledAccounts] là tùy chọn.
-    # Nếu không khai báo [DisabledAccounts], tất cả tài khoản trong [Accounts] được bật.
     required = {"Accounts"}
     supported = {"Accounts", "DisabledAccounts"}
     missing = required - set(parser.sections())
@@ -54,21 +59,27 @@ def load_accounts(path: str | Path) -> list[GameAccount]:
         sections.append(("DisabledAccounts", disabled))
 
     for section, target in sections:
-        for username, password in parser.items(section, raw=True):
-            username, password = username.strip(), password.strip()
+        for raw_username, raw_value in parser.items(section, raw=True):
+            username = raw_username.strip()
+            # The first '=' separates password from the optional display name.
+            # With no second '=', retain the legacy username=password behavior.
+            parts = raw_value.split("=", 1)
+            password = parts[0].strip()
+            display_name = parts[1].strip() if len(parts) > 1 else username
             if not username or not password:
                 raise ValueError(f"Section [{section}] có tài khoản thiếu username hoặc password.")
             if username in target:
                 raise ValueError(f"Tài khoản '{username}' bị lặp trong [{section}].")
-            target[username] = password
+            target[username] = (password, display_name or username)
 
-    # DisabledAccounts wins if a username appears in both sections.
     accounts = [
-        GameAccount(username, password, True)
-        for username, password in active.items() if username not in disabled
+        GameAccount(username, password, True, display_name)
+        for username, (password, display_name) in active.items()
+        if username not in disabled
     ]
     accounts.extend(
-        GameAccount(username, password, False) for username, password in disabled.items()
+        GameAccount(username, password, False, display_name)
+        for username, (password, display_name) in disabled.items()
     )
     if not accounts:
         raise ValueError("File INI chưa có tài khoản hợp lệ trong [Accounts] hoặc [DisabledAccounts].")
