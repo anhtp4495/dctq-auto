@@ -135,22 +135,13 @@ def run_perk(worker, account, steps, device, ocr_client, log) -> list[str]:
     if not task_open_perk(worker, account, device, ocr_client, log):
         return steps
 
-    for is_selected, step, task, label in (
-        (
-            task_diem_danh.pre_diem_danh(steps),
-            _STEP_DIEM_DANH,
-            task_diem_danh,
-            "Điểm danh",
-        ),
-        (
-            task_le_bao_quoc_van.pre_le_bao_quoc_van(steps),
-            _STEP_QUOC_VAN,
-            task_le_bao_quoc_van,
-            "Lễ bao Quốc Vận",
-        ),
+    for step, task, label in (
+        (_STEP_DIEM_DANH, task_diem_danh, "Điểm danh"),
+        (_STEP_QUOC_VAN, task_le_bao_quoc_van, "Lễ bao Quốc Vận"),
     ):
-        if not is_selected:
-            continue
+        # Luôn gọi run của cả hai tác vụ; mỗi run tự kiểm tra precondition.
+        # Chỉ xử lý kết quả nếu step thực sự được chọn.
+        is_selected = step in steps
         if not worker._wait_if_paused():
             log(f"[{account.display_name}] Phúc lợi đã dừng theo yêu cầu.")
             break
@@ -160,6 +151,8 @@ def run_perk(worker, account, steps, device, ocr_client, log) -> list[str]:
             log(f"[{account.display_name}] {label} thất bại: {exc}")
             success = False
 
+        if not is_selected:
+            continue
         if success:
             if step in steps:
                 steps.remove(step)
