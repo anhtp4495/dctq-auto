@@ -735,7 +735,8 @@ class ScreenshotAnnotator(QDialog):
         self._strategy_steps = []
         self._refresh_strategy_files()
 
-    def _refresh_strategy_files(self, select_path: Path | None = None) -> None:        self._strategy_dir.mkdir(parents=True, exist_ok=True)
+    def _refresh_strategy_files(self, select_path: Path | None = None) -> None:
+        self._strategy_dir.mkdir(parents=True, exist_ok=True)
         self.strategy_combo.blockSignals(True)
         self.strategy_combo.clear()
         for path in sorted(self._strategy_dir.glob("*.json"), key=lambda p: p.name.casefold()):
