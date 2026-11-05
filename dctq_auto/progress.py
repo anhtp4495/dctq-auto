@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import StrEnum
+from enum import Enum
 from threading import RLock
 from typing import Any
 from uuid import uuid4
 
 
-class ProgressStatus(StrEnum):
+class ProgressStatus(str, Enum):
     """Lifecycle states shared by all progress items."""
 
     PENDING = "pending"
