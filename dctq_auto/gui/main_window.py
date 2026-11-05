@@ -1952,10 +1952,7 @@ class MainWindow(QMainWindow):
             self.clone_result_list.clear()
             for account in accounts:
                 label = account.display_name if account.enabled else f"{account.display_name} — Đã vô hiệu hóa"
-                item = QListWidgetItem(
-                    f"{account.display_name} — chưa chạy"
-                    if account.enabled else f"{account.display_name} — đã vô hiệu hóa"
-                )
+                item = QListWidgetItem(account.display_name)
                 item.setIcon(
                     self._status_icon("·", "#6e7781")
                     if account.enabled else self._status_icon("×", "#8c959f")
@@ -2164,25 +2161,25 @@ class MainWindow(QMainWindow):
     def _render_clone_account_status(self, username: str, state: str) -> None:
         """Render one status icon and plain text for a Clone account."""
         states = {
-            "pending": ("·", "#6e7781", f"{username} — chưa chạy"),
-            "running": ("→", "#0969da", f"{username} đang chạy"),
-            "failed": ("✗", "#d1242f", f"{username} — failed"),
-            "success": ("✓", "#22863a", f"{username} — thành công"),
-            "done": ("✓", "#22863a", f"{username} — thành công"),
-            "skipped": ("×", "#8c959f", f"{username} — đã vô hiệu hóa"),
-            "disabled": ("×", "#8c959f", f"{username} — đã vô hiệu hóa"),
-            "stopped": ("■", "#8c959f", f"{username} — đã dừng"),
-            "paused": ("Ⅱ", "#bf8700", f"{username} — tạm dừng"),
+            "pending": ("·", "#6e7781"),
+            "running": ("→", "#0969da"),
+            "failed": ("✗", "#d1242f"),
+            "success": ("✓", "#22863a"),
+            "done": ("✓", "#22863a"),
+            "skipped": ("×", "#8c959f"),
+            "disabled": ("×", "#8c959f"),
+            "stopped": ("■", "#8c959f"),
+            "paused": ("Ⅱ", "#bf8700"),
         }
         state_info = states.get(state)
         if state_info is None:
             return
-        glyph, color, label = state_info
+        glyph, color = state_info
         for index in range(self.clone_result_list.count()):
             item = self.clone_result_list.item(index)
             if item.data(Qt.ItemDataRole.UserRole) == username:
                 item.setIcon(self._status_icon(glyph, color))
-                item.setText(label)
+                item.setText(username)
                 if state == "running":
                     self.current_activity_label.setText(f"Đang xử lý: {username}")
                     self.clone_result_list.scrollToItem(
