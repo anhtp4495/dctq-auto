@@ -29,8 +29,19 @@ def test_worker_emits_unified_and_legacy_overall_progress():
     assert root.current == 2
     assert root.total == 5
     assert root.status is ProgressStatus.RUNNING
-    assert added == [root]
-    assert changed == [root]
+    # Added events are immutable snapshots captured before the first update.
+    assert len(added) == 1
+    assert added[0].id == root.id
+    assert added[0].status is ProgressStatus.PENDING
+    assert added[0].current == 0
+    assert added[0].total == 1
+
+    # Changed events contain the updated snapshot.
+    assert len(changed) == 1
+    assert changed[0].id == root.id
+    assert changed[0].status is ProgressStatus.RUNNING
+    assert changed[0].current == 2
+    assert changed[0].total == 5
     assert legacy == [(2, 5, "Đang chạy")]
 
 
