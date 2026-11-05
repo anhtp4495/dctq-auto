@@ -60,6 +60,8 @@ class BotWorker(
         self._progress_accounts: dict[str, str] = {}
         self._active_progress_account_id: str | None = None
         self._progress_failed = False
+        self._clone_progress_steps_only = False
+        self._clone_progress_force_emit = False
 
     def _ensure_progress_root(self) -> ProgressInfo:
         """Create the root item lazily so each worker run owns one progress tree."""
@@ -108,6 +110,9 @@ class BotWorker(
         self, name: str, state: str, current: int, total: int
     ) -> None:
         """Update a task node and retain the existing task progress signal."""
+        if self._clone_progress_steps_only and not self._clone_progress_force_emit:
+            self.task_progress_changed.emit(name, state, current, total)
+            return
         root = self._ensure_progress_root()
         parent_id = self._active_progress_account_id or root.id
         task_name = self._get_progress_task_name(name)
@@ -170,8 +175,22 @@ class BotWorker(
                 )
                 self._emit_progress_item(account_item)
 
+    def _emit_clone_step_progress(
+        self, name: str, state: str, current: int, total: int
+    ) -> None:
+        """Emit one selected Clone step while suppressing internal progress nodes."""
+        previous = self._clone_progress_force_emit
+        self._clone_progress_force_emit = True
+        try:
+            self._emit_task_progress(name, state, current, total)
+        finally:
+            self._clone_progress_force_emit = previous
+
     def _add_task_progress_item(self, name: str, total: int) -> None:
         """Register a pending task row while preserving the legacy list signal."""
+        if self._clone_progress_steps_only:
+            self.task_progress_item_added.emit(name, total)
+            return
         root = self._ensure_progress_root()
         parent_id = self._active_progress_account_id or root.id
         task_name = self._get_progress_task_name(name)
