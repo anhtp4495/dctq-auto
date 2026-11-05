@@ -200,7 +200,9 @@ def open_le_bao_quoc_van(worker, account, device, ocr_client, log, screenshot=No
 
 
 def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> bool:
-    """Mở mục Lễ bao Quốc Vận trước, sau đó chạy quy trình nhận lễ bao."""
+    """Kiểm tra precondition, mở mục Lễ bao Quốc Vận rồi nhận lễ bao."""
+    if not pre_le_bao_quoc_van(steps):
+        return False
     if not open_le_bao_quoc_van(
         worker, account, device, ocr_client, log, screenshot=screenshot
     ):
