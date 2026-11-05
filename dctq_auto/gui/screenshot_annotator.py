@@ -598,6 +598,7 @@ class ScreenshotAnnotator(QDialog):
 
         fields = QGridLayout()
         self.strategy_type_combo = QComboBox()
+        self.strategy_type_combo.addItem("None", "none")
         self.strategy_type_combo.addItem("Click", "click")
         self.strategy_type_combo.addItem("Swipe", "swipe")
         self.strategy_type_combo.addItem("Swipe Path", "swipe_path")
@@ -894,6 +895,7 @@ class ScreenshotAnnotator(QDialog):
 
     def _update_strategy_field_visibility(self, *_args) -> None:
         action = self.strategy_type_combo.currentData()
+        is_none = action == "none"
         is_click = action == "click"
         is_swipe = action == "swipe"
         is_path = action == "swipe_path"
@@ -909,6 +911,8 @@ class ScreenshotAnnotator(QDialog):
         self.strategy_duration.setEnabled(is_swipe or is_path)
         self.strategy_repeat.setEnabled(is_path)
         self.strategy_path_points_label.setEnabled(is_path)
+        self.strategy_step_description.setEnabled(not is_none)
+        self.strategy_delay.setEnabled(not is_none)
         self.strategy_capture_click_button.setEnabled(is_click)
         self.strategy_capture_from_button.setEnabled(is_swipe)
         self.strategy_capture_to_button.setEnabled(is_swipe)
@@ -1055,7 +1059,9 @@ class ScreenshotAnnotator(QDialog):
                 "type": self.strategy_type_combo.currentData(),
                 "description": self.strategy_step_description.text().strip() or "Bản nháp",
             }
-            if draft["type"] == "click":
+            if draft["type"] == "none":
+                pass
+            elif draft["type"] == "click":
                 draft.update({"x": self.strategy_x.value(), "y": self.strategy_y.value()})
             elif draft["type"] == "swipe":
                 draft.update({
@@ -1111,7 +1117,14 @@ class ScreenshotAnnotator(QDialog):
 
         step = self._strategy_steps[index]
         description = str(step.get("description") or f"Bước {index + 1}")
-        if step.get("type") == "click":
+        if step.get("type") == "none":
+            self.image_view.set_strategy_active_step(None)
+            interval = max(0, int(step.get("delay", 0)))
+            self.strategy_editor_status.setText(
+                f"Xem trước bước {index + 1}/{len(self._strategy_steps)}: "
+                f"{description} — None (không có điểm preview)"
+            )
+        elif step.get("type") == "click":
             self.image_view.set_strategy_active_step(index)
             coordinate = f"click ({step.get('x', 0)}, {step.get('y', 0)})"
             interval = max(0, int(step.get("delay", 0)))
@@ -1174,6 +1187,8 @@ class ScreenshotAnnotator(QDialog):
             "delay": self.strategy_delay.value(),
             "description": description,
         }
+        if step["type"] == "none":
+            return step
         if step["type"] == "click":
             step.update({"x": self.strategy_x.value(), "y": self.strategy_y.value()})
         elif step["type"] == "swipe":
