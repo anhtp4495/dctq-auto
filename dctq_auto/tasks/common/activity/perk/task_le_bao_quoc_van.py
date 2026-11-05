@@ -26,6 +26,11 @@ def pre_le_bao_quoc_van(steps) -> bool:
     return _STEP_QUOC_VAN in steps
 
 
+def post_le_bao_quoc_van(steps) -> None:
+    """Đánh dấu tác vụ Lễ bao Quốc Vận đã hoàn thành."""
+    steps.remove(_STEP_QUOC_VAN)
+
+
 _TEMPLATE_NAMES = (
     _TEMPLATE_NHAN_LE_BAO_MIEN_PHI,
     _TEMPLATE_DA_NHAN_LE_BAO_MIEN_PHI,
