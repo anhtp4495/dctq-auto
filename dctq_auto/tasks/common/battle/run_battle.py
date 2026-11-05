@@ -1,12 +1,13 @@
 """Điều phối chiến thuật và poller trong quy trình Giao Tranh."""
 
 import time
+from pathlib import Path
 
 from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.config.constants import (
     _TEMPLATE_QUAN_SU_GIAO_TRANH_DUNG_LUONG_THAO,
 )
-from dctq_auto.tasks.common.battle.battle_strategies.pincer_battle import PincerBattle
+from dctq_auto.tasks.common.battle.battle_strategies.custom_battle import CustomBattle
 from dctq_auto.tasks.common.battle.polling.fast_poller import FastPoller
 from dctq_auto.tasks.common.battle.polling.normal_poller import NormalPoller
 from dctq_auto.tasks.common.battle.polling.time_limit_poller import TimeLimitPoller
@@ -26,9 +27,26 @@ def run(self, account, device, ocr_client, log) -> bool:
     config = self._config
     battle = get_battle_config(config)
     mode = battle.mode
-    strategy = PincerBattle()
+    strategy = CustomBattle()
     poller = _create_poller(mode)
     positions = ButtonPositions()
+
+    # task_open_battle nhận diện danh sách võ tướng trước khi vào trận.
+    # Mỗi danh sách có một JSON mặc định; cấu hình có thể chỉ định file khác.
+    hero_position_group = (
+        getattr(self, "_battle_hero_position_group", None)
+        or "quan_su.giao_tranh.danh_sach1"
+    )
+    default_strategy_name = (
+        "pincer_battle_danh_sach2.json"
+        if hero_position_group.endswith("danh_sach2")
+        else "pincer_battle_danh_sach1.json"
+    )
+    strategy_path = config.get("battle_strategy_path") or (
+        Path(__file__).resolve().parent
+        / "battle_strategies"
+        / default_strategy_name
+    )
 
     context = {
         "worker": self,
@@ -37,13 +55,7 @@ def run(self, account, device, ocr_client, log) -> bool:
         "config": config,
         "battle_config": battle,
         "log": log,
-        "wait_if_paused": self._wait_if_paused,
-        # Bộ tọa độ được task_open_battle xác định trước khi click Xuất chiến.
-        # Nếu run_battle được gọi độc lập, mặc định dùng danh_sach1.
-        "hero_position_group": (
-            getattr(self, "_battle_hero_position_group", None)
-            or "quan_su.giao_tranh.danh_sach1"
-        ),
+        "battle_strategy_path": strategy_path,
         "battle_started_at": None,
     }
 
@@ -138,7 +150,7 @@ def run(self, account, device, ocr_client, log) -> bool:
         if retreat is not None and not hero_deployed:
             log(
                 f"[{account.display_name}] Phát hiện Rút lui; "
-                "bắt đầu triển khai đội hình theo chiến thuật gọng kìm."
+                "bắt đầu triển khai đội hình theo chiến thuật JSON."
             )
             context["mark_battle_started"] = (
                 lambda: context.__setitem__("battle_started_at", time.monotonic())
