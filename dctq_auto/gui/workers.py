@@ -132,6 +132,7 @@ class BotWorker(
                 current=max(0, current),
                 total=max(0, total),
                 message=name,
+                error="Tác vụ thất bại" if status == ProgressStatus.FAILED else None,
             )
             self._emit_progress_item(item)
         self.task_progress_changed.emit(name, state, current, total)
@@ -204,6 +205,7 @@ class BotWorker(
                 current=1 if succeeded else 0,
                 total=1,
                 message="Hoàn thành" if succeeded else "Thất bại",
+                error=None if succeeded else "Tài khoản xử lý thất bại",
             )
             self._emit_progress_item(item)
         self.clone_account_result.emit(display_name, succeeded)
