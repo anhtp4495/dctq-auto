@@ -380,7 +380,9 @@ def open_diem_danh(worker, account, device, ocr_client, log, screenshot=None) ->
 
 
 def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> bool:
-    """Mở mục Điểm danh trước, sau đó chạy quy trình điểm danh."""
+    """Kiểm tra precondition, mở mục Điểm danh rồi chạy quy trình điểm danh."""
+    if not pre_diem_danh(steps):
+        return False
     if not open_diem_danh(
         worker, account, device, ocr_client, log, screenshot=screenshot
     ):
