@@ -160,8 +160,7 @@ class CustomBattle(BaseBattle):
         )
 
         mark_started = context.get("mark_battle_started")
-        if mark_started:
-            mark_started()
+        battle_started = False
 
         for index, step in enumerate(steps, start=1):
             action = step["type"]
@@ -176,6 +175,11 @@ class CustomBattle(BaseBattle):
                 if delay:
                     time.sleep(delay / 1000)
                 continue
+
+            if not battle_started:
+                if mark_started:
+                    mark_started()
+                battle_started = True
 
             if action == "click":
                 x, y = step["x"], step["y"]
