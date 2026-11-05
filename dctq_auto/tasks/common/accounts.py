@@ -21,6 +21,11 @@ class GameAccount:
     enabled: bool = True
     display_name: str = ""
 
+    def __post_init__(self) -> None:
+        # Keep older GameAccount(username, password[, enabled]) callers compatible.
+        if not self.display_name:
+            object.__setattr__(self, "display_name", self.username)
+
 
 def load_accounts(path: str | Path) -> list[GameAccount]:
     """Đọc file INI UTF-8/UTF-8-BOM, trả về cả tài khoản bật và tắt."""
@@ -62,7 +67,6 @@ def load_accounts(path: str | Path) -> list[GameAccount]:
         for raw_username, raw_value in parser.items(section, raw=True):
             username = raw_username.strip()
             # The first '=' separates password from the optional display name.
-            # With no second '=', retain the legacy username=password behavior.
             parts = raw_value.split("=", 1)
             password = parts[0].strip()
             display_name = parts[1].strip() if len(parts) > 1 else username
