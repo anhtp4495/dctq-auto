@@ -67,14 +67,14 @@ class UtilityTaskRunnerMixin:
         selected = [(key, label) for key, label in task_labels if self._config.get(key)]
         total = len(selected)
         completed = 0
-        self.progress_changed.emit(0, max(1, total), "Bắt đầu tác vụ")
+        self._emit_overall_progress(0, max(1, total), "Bắt đầu tác vụ")
 
         # Mở/Tắt màn hình Hoạt động trong tab Tác vụ hiện chưa được triển khai.
         # Hai tác vụ Phúc lợi sẽ được gom thành steps và chạy qua task_activity.
         for key, label in selected:
             if key in ("task_open_activity", "task_close_activity"):
                 self.log_message.emit(f"{label}: IGNORE — chưa xử lý tác vụ này trong tab Tác vụ.")
-                self.task_progress_changed.emit(label, "ignored", 0, 1)
+                self._emit_task_progress(label, "ignored", 0, 1)
 
         # Gameplay automation for these actions is not implemented in the real
         # ADB flow yet. Report an explicit failed status for each selected task.
@@ -94,9 +94,9 @@ class UtilityTaskRunnerMixin:
             self.log_message.emit(
                 f"{label}: LỖI — tác vụ gameplay chưa được triển khai cho ADB thật."
             )
-            self.task_progress_changed.emit(label, "failed", 0, 1)
+            self._emit_task_progress(label, "failed", 0, 1)
             completed += 1
-            self.progress_changed.emit(
+            self._emit_overall_progress(
                 completed, max(1, total), f"Lỗi: {label} chưa triển khai"
             )
 
@@ -108,7 +108,7 @@ class UtilityTaskRunnerMixin:
             password = self._config.get("login_password", "")
             if not username or not password:
                 self.log_message.emit("Đăng nhập bị bỏ qua: thiếu username hoặc password.")
-                self.task_progress_changed.emit("Đăng nhập", "failed", 0, 1)
+                self._emit_task_progress("Đăng nhập", "failed", 0, 1)
                 return
             account = SimpleNamespace(username=username, password=password)
             try:
@@ -118,7 +118,7 @@ class UtilityTaskRunnerMixin:
                         "Không nhập thông tin vì OCR chưa xác nhận màn hình đăng nhập. "
                         "Hãy mở màn hình đăng nhập trong game rồi thử lại."
                     )
-                    self.task_progress_changed.emit("Đăng nhập", "failed", 0, 1)
+                    self._emit_task_progress("Đăng nhập", "failed", 0, 1)
                     return
                 from dctq_auto.tasks.common.login import submit_login_form, verify_login
                 self.log_message.emit(f"Đang đăng nhập tài khoản {username}.")
@@ -132,15 +132,15 @@ class UtilityTaskRunnerMixin:
                         "Đăng nhập chưa được xác minh thành công"
                         + (f": {observed_error}" if observed_error else ".")
                     )
-                    self.task_progress_changed.emit("Đăng nhập", "failed", 0, 1)
+                    self._emit_task_progress("Đăng nhập", "failed", 0, 1)
                     return
                 completed += 1
-                self.task_progress_changed.emit("Đăng nhập", "done", 1, 1)
-                self.progress_changed.emit(completed, max(1, total), "Đăng nhập thành công")
+                self._emit_task_progress("Đăng nhập", "done", 1, 1)
+                self._emit_overall_progress(completed, max(1, total), "Đăng nhập thành công")
                 self.log_message.emit(f"Đăng nhập tài khoản {username} đã được xác minh.")
             except Exception as exc:
                 self.log_message.emit(f"Không thể thực hiện đăng nhập: {exc}")
-                self.task_progress_changed.emit("Đăng nhập", "failed", 0, 1)
+                self._emit_task_progress("Đăng nhập", "failed", 0, 1)
                 return
             finally:
                 # Do not retain the password in the worker configuration after use.
@@ -148,15 +148,15 @@ class UtilityTaskRunnerMixin:
 
         if self._config.get("task_select_phuc_loi"):
             label = "Chọn Phúc Lợi"
-            self.task_progress_changed.emit(label, "running", 0, 1)
+            self._emit_task_progress(label, "running", 0, 1)
             if self._run_select_phuc_loi(device):
                 completed += 1
-                self.task_progress_changed.emit(label, "done", 1, 1)
-                self.progress_changed.emit(completed, max(1, total), "Đã chọn Phúc Lợi")
+                self._emit_task_progress(label, "done", 1, 1)
+                self._emit_overall_progress(completed, max(1, total), "Đã chọn Phúc Lợi")
             else:
                 completed += 1
-                self.task_progress_changed.emit(label, "failed", 0, 1)
-                self.progress_changed.emit(completed, max(1, total), "Lỗi: Chọn Phúc Lợi")
+                self._emit_task_progress(label, "failed", 0, 1)
+                self._emit_overall_progress(completed, max(1, total), "Lỗi: Chọn Phúc Lợi")
 
         activity_steps = []
         if self._config.get("nhan_le_bao_quoc_van"):
@@ -174,7 +174,7 @@ class UtilityTaskRunnerMixin:
             self.log_message.emit(
                 f"Hoạt động > Phúc lợi: gửi steps {before_steps} vào task_activity."
             )
-            self.task_progress_changed.emit("Hoạt động > Phúc lợi", "running", 0, len(before_steps))
+            self._emit_task_progress("Hoạt động > Phúc lợi", "running", 0, len(before_steps))
             try:
                 remaining_steps = task_activity.run(
                     self, activity_account, activity_steps, device, ocr_client,
@@ -188,46 +188,46 @@ class UtilityTaskRunnerMixin:
                         ("hoat_dong_phuc_loi_diem_danh", "Điểm danh"),
                     ):
                         if step in before_steps and step not in remaining_steps:
-                            self.task_progress_changed.emit(label, "done", 1, 1)
+                            self._emit_task_progress(label, "done", 1, 1)
                 for step, label in (
                     ("hoat_dong_phuc_loi_le_bao_quoc_van", "Nhận lễ bao quốc vận"),
                     ("hoat_dong_phuc_loi_diem_danh", "Điểm danh"),
                 ):
                     if step in remaining_steps:
-                        self.task_progress_changed.emit(label, "failed", 0, 1)
-                self.task_progress_changed.emit(
+                        self._emit_task_progress(label, "failed", 0, 1)
+                self._emit_task_progress(
                     "Hoạt động > Phúc lợi",
                     "done" if not remaining_steps else "failed",
                     completed_steps,
                     len(before_steps),
                 )
-                self.progress_changed.emit(
+                self._emit_overall_progress(
                     completed, max(1, total),
                     "Hoàn tất Hoạt động > Phúc lợi" if not remaining_steps
                     else "Hoạt động > Phúc lợi còn step chưa hoàn thành",
                 )
             except Exception as exc:
                 self.log_message.emit(f"Chạy task_activity thất bại: {exc}")
-                self.task_progress_changed.emit(
+                self._emit_task_progress(
                     "Hoạt động > Phúc lợi", "failed", 0, len(before_steps)
                 )
 
         if self._config.get("task_enter_guild"):
             label = "Vào quân đoàn"
-            self.task_progress_changed.emit(label, "running", 0, 1)
+            self._emit_task_progress(label, "running", 0, 1)
             if not self._wait_if_paused():
                 self.log_message.emit("Đã dừng trước khi vào Quân đoàn.")
                 return
             if self._run_enter_guild(device, ocr_client):
                 completed += 1
-                self.task_progress_changed.emit(label, "done", 1, 1)
-                self.progress_changed.emit(
+                self._emit_task_progress(label, "done", 1, 1)
+                self._emit_overall_progress(
                     completed, max(1, total), "Đã xác nhận vào Quân đoàn"
                 )
             else:
                 completed += 1
-                self.task_progress_changed.emit(label, "failed", 0, 1)
-                self.progress_changed.emit(
+                self._emit_task_progress(label, "failed", 0, 1)
+                self._emit_overall_progress(
                     completed, max(1, total), "Lỗi: Vào quân đoàn"
                 )
 
@@ -269,10 +269,10 @@ class UtilityTaskRunnerMixin:
             ):
                 if step_id in before_guild_steps:
                     status = "failed" if step_id in remaining_guild_steps else "done"
-                    self.task_progress_changed.emit(
+                    self._emit_task_progress(
                         label, status, 0 if status == "failed" else 1, 1
                     )
-            self.progress_changed.emit(
+            self._emit_overall_progress(
                 completed, max(1, total),
                 "Hoàn tất tác vụ Quân đoàn" if not remaining_guild_steps
                 else "Một số tác vụ Quân đoàn chưa hoàn tất",
@@ -285,7 +285,7 @@ class UtilityTaskRunnerMixin:
                 if not self._wait_if_paused():
                     self.log_message.emit("Đã dừng theo yêu cầu.")
                     return
-                self.progress_changed.emit(
+                self._emit_overall_progress(
                     completed, max(1, total), "Một số tác vụ Quân đoàn chưa hoàn tất"
                 )
 
@@ -315,7 +315,7 @@ class UtilityTaskRunnerMixin:
                 bool(self._config.get(key)) for key in battle_config_keys
             )
             completed += selected_battle_count - len(failed_battle_tasks)
-            self.progress_changed.emit(
+            self._emit_overall_progress(
                 completed, max(1, total),
                 "Hoàn tất Giao Tranh" if not failed_battle_tasks
                 else "Một số tác vụ Giao Tranh chưa hoàn tất",
@@ -323,7 +323,7 @@ class UtilityTaskRunnerMixin:
 
         if self._config.get("task_open_battle") and not battle_flow_handled:
             label = "Mở màn hình Giao Tranh"
-            self.task_progress_changed.emit(label, "running", 0, 1)
+            self._emit_task_progress(label, "running", 0, 1)
             try:
                 if not self._wait_if_paused():
                     self.log_message.emit("Đã dừng trước khi mở màn hình Giao Tranh.")
@@ -428,8 +428,8 @@ class UtilityTaskRunnerMixin:
                 )
 
                 completed += 1
-                self.task_progress_changed.emit(label, "done", 1, 1)
-                self.progress_changed.emit(
+                self._emit_task_progress(label, "done", 1, 1)
+                self._emit_overall_progress(
                     completed, max(1, total), "Đã click mục Giao Tranh"
                 )
                 self.log_message.emit(
@@ -438,8 +438,8 @@ class UtilityTaskRunnerMixin:
             except Exception as exc:
                 completed += 1
                 self.log_message.emit(f"{label} thất bại: {exc}")
-                self.task_progress_changed.emit(label, "failed", 0, 1)
-                self.progress_changed.emit(
+                self._emit_task_progress(label, "failed", 0, 1)
+                self._emit_overall_progress(
                     completed, max(1, total), f"Lỗi: {label}"
                 )
 
@@ -475,7 +475,7 @@ class UtilityTaskRunnerMixin:
                 if self._config.get(key)
             ]
             for _key, label in selected_ranked_tasks:
-                self.task_progress_changed.emit(label, "running", 0, 1)
+                self._emit_task_progress(label, "running", 0, 1)
 
             ranked_account = SimpleNamespace(
                 username=self._config.get("login_username") or self._serial or "Tác vụ"
@@ -492,12 +492,12 @@ class UtilityTaskRunnerMixin:
                 self.log_message.emit(f"Quy trình Tranh Bá thất bại: {exc}")
 
             for _key, label in selected_ranked_tasks:
-                self.task_progress_changed.emit(
+                self._emit_task_progress(
                     label, "done" if ranked_ok else "failed",
                     1 if ranked_ok else 0, 1,
                 )
             completed += len(selected_ranked_tasks)
-            self.progress_changed.emit(
+            self._emit_overall_progress(
                 completed, max(1, total),
                 "Hoàn tất Tranh Bá" if ranked_ok
                 else "Quy trình Tranh Bá chưa hoàn tất",
@@ -508,7 +508,7 @@ class UtilityTaskRunnerMixin:
 
         if self._config.get("thuc_hien_tranh_ba") and not ranked_battle_flow_handled:
             label = "Mở màn hình Tranh Bá"
-            self.task_progress_changed.emit(label, "running", 0, 1)
+            self._emit_task_progress(label, "running", 0, 1)
             try:
                 if not self._wait_if_paused():
                     self.log_message.emit("Đã dừng trước khi mở màn hình Tranh Bá.")
@@ -714,8 +714,8 @@ class UtilityTaskRunnerMixin:
                 )
 
                 completed += 1
-                self.task_progress_changed.emit(label, "done", 1, 1)
-                self.progress_changed.emit(
+                self._emit_task_progress(label, "done", 1, 1)
+                self._emit_overall_progress(
                     completed, max(1, total), "Đã xác nhận mở màn hình Tranh Bá"
                 )
                 self.log_message.emit(
@@ -727,8 +727,8 @@ class UtilityTaskRunnerMixin:
                 championship_screen_open_failed = True
                 completed += 1
                 self.log_message.emit(f"{label} thất bại: {exc}")
-                self.task_progress_changed.emit(label, "failed", 0, 1)
-                self.progress_changed.emit(
+                self._emit_task_progress(label, "failed", 0, 1)
+                self._emit_overall_progress(
                     completed, max(1, total), f"Lỗi: {label}"
                 )
                 dependent_championship_tasks = (
@@ -745,7 +745,7 @@ class UtilityTaskRunnerMixin:
 
         if self._config.get("task_find_championship_opponent") and not championship_screen_open_failed:
             label = "Tìm đối thủ Tranh Bá"
-            self.task_progress_changed.emit(label, "running", 0, 1)
+            self._emit_task_progress(label, "running", 0, 1)
             try:
                 import json
 
@@ -776,21 +776,21 @@ class UtilityTaskRunnerMixin:
                 time.sleep(0.5)
 
                 completed += 1
-                self.task_progress_changed.emit(label, "done", 1, 1)
-                self.progress_changed.emit(
+                self._emit_task_progress(label, "done", 1, 1)
+                self._emit_overall_progress(
                     completed, max(1, total), "Đã click Tìm đối thủ Tranh Bá"
                 )
             except Exception as exc:
                 completed += 1
                 self.log_message.emit(f"{label} thất bại: {exc}")
-                self.task_progress_changed.emit(label, "failed", 0, 1)
-                self.progress_changed.emit(
+                self._emit_task_progress(label, "failed", 0, 1)
+                self._emit_overall_progress(
                     completed, max(1, total), f"Lỗi: {label}"
                 )
 
         if self._config.get("task_use_bazhen") and not battle_flow_handled:
             label = "Sử dụng Canh Bát Trân"
-            self.task_progress_changed.emit(label, "running", 0, 1)
+            self._emit_task_progress(label, "running", 0, 1)
             try:
                 import json
 
@@ -817,21 +817,21 @@ class UtilityTaskRunnerMixin:
                 )
                 time.sleep(0.5)
                 completed += 1
-                self.task_progress_changed.emit(label, "done", 1, 1)
-                self.progress_changed.emit(
+                self._emit_task_progress(label, "done", 1, 1)
+                self._emit_overall_progress(
                     completed, max(1, total), "Đã hoàn tất Sử dụng Canh Bát Trân"
                 )
             except Exception as exc:
                 completed += 1
                 self.log_message.emit(f"{label} thất bại: {exc}")
-                self.task_progress_changed.emit(label, "failed", 0, 1)
-                self.progress_changed.emit(
+                self._emit_task_progress(label, "failed", 0, 1)
+                self._emit_overall_progress(
                     completed, max(1, total), f"Lỗi: {label}"
                 )
 
         if self._config.get("task_find_battle_opponent") and not battle_flow_handled:
             label = "Tìm đối thủ Giao Tranh"
-            self.task_progress_changed.emit(label, "running", 0, 1)
+            self._emit_task_progress(label, "running", 0, 1)
             try:
                 import json
 
@@ -889,21 +889,21 @@ class UtilityTaskRunnerMixin:
                     )
 
                 completed += 1
-                self.task_progress_changed.emit(label, "done", 1, 1)
-                self.progress_changed.emit(
+                self._emit_task_progress(label, "done", 1, 1)
+                self._emit_overall_progress(
                     completed, max(1, total), "Đã hoàn tất Tìm đối thủ Giao Tranh"
                 )
             except Exception as exc:
                 completed += 1
                 self.log_message.emit(f"{label} thất bại: {exc}")
-                self.task_progress_changed.emit(label, "failed", 0, 1)
-                self.progress_changed.emit(
+                self._emit_task_progress(label, "failed", 0, 1)
+                self._emit_overall_progress(
                     completed, max(1, total), f"Lỗi: {label}"
                 )
 
         if self._config.get("xuat_chien") and not battle_flow_handled:
             label = "Xuất chiến"
-            self.task_progress_changed.emit(label, "running", 0, 1)
+            self._emit_task_progress(label, "running", 0, 1)
             rect = (1433, 970, 1614, 1016)
             try:
                 # Thử OCR tối đa 3 lần; chỉ click khi OCR xác nhận được nút.
@@ -940,21 +940,21 @@ class UtilityTaskRunnerMixin:
                         f"Không phát hiện được 'xuat_chien' sau 3 lần OCR tại RECT {rect}."
                     )
                 completed += 1
-                self.task_progress_changed.emit(label, "done", 1, 1)
-                self.progress_changed.emit(
+                self._emit_task_progress(label, "done", 1, 1)
+                self._emit_overall_progress(
                     completed, max(1, total), "Đã hoàn tất Xuất chiến"
                 )
             except Exception as exc:
                 completed += 1
                 self.log_message.emit(f"{label} thất bại: {exc}")
-                self.task_progress_changed.emit(label, "failed", 0, 1)
-                self.progress_changed.emit(
+                self._emit_task_progress(label, "failed", 0, 1)
+                self._emit_overall_progress(
                     completed, max(1, total), f"Lỗi: {label}"
                 )
 
         if self._config.get("task_championship_xuat_chien") and not championship_screen_open_failed:
             label = "Xuất chiến Tranh Bá"
-            self.task_progress_changed.emit(label, "running", 0, 1)
+            self._emit_task_progress(label, "running", 0, 1)
             rect = (1433, 970, 1614, 1016)
             try:
                 # Sau khi bấm Tìm đối thủ, hết lượt có thể xuất hiện hộp thoại mua thể lực.
@@ -1060,8 +1060,8 @@ class UtilityTaskRunnerMixin:
                         f"Không phát hiện được 'xuat_chien' sau 3 lần OCR tại RECT {rect}."
                     )
                 completed += 1
-                self.task_progress_changed.emit(label, "done", 1, 1)
-                self.progress_changed.emit(
+                self._emit_task_progress(label, "done", 1, 1)
+                self._emit_overall_progress(
                     completed, max(1, total), (
                         "Đã xử lý hộp thoại mua thể lực Tranh Bá"
                         if mua_the_luc is not None else "Đã hoàn tất Xuất chiến Tranh Bá"
@@ -1070,8 +1070,8 @@ class UtilityTaskRunnerMixin:
             except Exception as exc:
                 completed += 1
                 self.log_message.emit(f"{label} thất bại: {exc}")
-                self.task_progress_changed.emit(label, "failed", 0, 1)
-                self.progress_changed.emit(
+                self._emit_task_progress(label, "failed", 0, 1)
+                self._emit_overall_progress(
                     completed, max(1, total), f"Lỗi: {label}"
                 )
 
@@ -1315,7 +1315,7 @@ class UtilityTaskRunnerMixin:
         if self._config.get("task_start_battle") and not battle_flow_handled:
             label = "Bắt đầu trận Giao Tranh"
             target_battles = max(1, int(self._config.get("task_open_battle_count", 1)))
-            self.task_progress_changed.emit(label, "running", 1, target_battles)
+            self._emit_task_progress(label, "running", 1, target_battles)
             try:
                 battle_number_for_start[0] = 1
                 if not run_start_battle_sequence():
@@ -1325,15 +1325,15 @@ class UtilityTaskRunnerMixin:
                 # Khi có tác vụ kết thúc trận, giữ mũi tên chạy cho đến khi
                 # OCR xác nhận hoàn tất toàn bộ số trận mục tiêu.
                 if not self._config.get("task_end_battle"):
-                    self.task_progress_changed.emit(label, "done", 1, 1)
-                self.progress_changed.emit(
+                    self._emit_task_progress(label, "done", 1, 1)
+                self._emit_overall_progress(
                     completed, max(1, total), "Đã bắt đầu trận Giao Tranh 1"
                 )
             except Exception as exc:
                 completed += 1
                 self.log_message.emit(f"{label} thất bại: {exc}")
-                self.task_progress_changed.emit(label, "failed", 0, target_battles)
-                self.progress_changed.emit(
+                self._emit_task_progress(label, "failed", 0, target_battles)
+                self._emit_overall_progress(
                     completed, max(1, total), f"Lỗi: {label}"
                 )
 
@@ -1343,7 +1343,7 @@ class UtilityTaskRunnerMixin:
             target_championship_battles = max(
                 1, int(self._config.get("tranh_ba", 1))
             )
-            self.task_progress_changed.emit(
+            self._emit_task_progress(
                 label, "running", 1, target_championship_battles
             )
             try:
@@ -1353,19 +1353,19 @@ class UtilityTaskRunnerMixin:
                     return
                 completed += 1
                 if not self._config.get("task_championship_end_battle"):
-                    self.task_progress_changed.emit(
+                    self._emit_task_progress(
                         label, "done", 1, target_championship_battles
                     )
-                self.progress_changed.emit(
+                self._emit_overall_progress(
                     completed, max(1, total), "Đã bắt đầu trận Tranh Bá 1"
                 )
             except Exception as exc:
                 completed += 1
                 self.log_message.emit(f"{label} thất bại: {exc}")
-                self.task_progress_changed.emit(
+                self._emit_task_progress(
                     label, "failed", 0, target_championship_battles
                 )
-                self.progress_changed.emit(
+                self._emit_overall_progress(
                     completed, max(1, total), f"Lỗi: {label}"
                 )
 
@@ -1493,20 +1493,20 @@ class UtilityTaskRunnerMixin:
 
         if self._config.get("task_start_battle") and self._config.get("task_battle_time_mode", False) and not battle_flow_handled:
             label = "Thời gian tối đa Giao Tranh"
-            self.task_progress_changed.emit(label, "running", 0, 1)
+            self._emit_task_progress(label, "running", 0, 1)
             try:
                 if not run_battle_time_limit_wait():
                     self.log_message.emit("Đã dừng tác vụ Thời gian tối đa Giao Tranh theo yêu cầu.")
                     return
                 completed += 1
-                self.task_progress_changed.emit(label, "done", 1, 1)
+                self._emit_task_progress(label, "done", 1, 1)
                 time_limit = int(self._config.get("task_battle_time_limit", 15))
-                self.progress_changed.emit(completed, max(1, total), f"Hoàn tất {label} ({time_limit} giây)")
+                self._emit_overall_progress(completed, max(1, total), f"Hoàn tất {label} ({time_limit} giây)")
             except Exception as exc:
                 completed += 1
                 self.log_message.emit(f"{label} thất bại: {exc}")
-                self.task_progress_changed.emit(label, "failed", 0, 1)
-                self.progress_changed.emit(completed, max(1, total), f"Lỗi: {label}")
+                self._emit_task_progress(label, "failed", 0, 1)
+                self._emit_overall_progress(completed, max(1, total), f"Lỗi: {label}")
         if (
             not ranked_battle_flow_handled
             and self._config.get("task_championship_start_battle")
@@ -1514,27 +1514,27 @@ class UtilityTaskRunnerMixin:
         ):
             label = "Thời gian tối đa Tranh Bá"
             target_battles = max(1, int(self._config.get("tranh_ba", 1)))
-            self.task_progress_changed.emit(label, "running", 0, target_battles)
+            self._emit_task_progress(label, "running", 0, target_battles)
             try:
                 if not run_battle_time_limit_wait(mode="tranh_ba"):
                     self.log_message.emit("Đã dừng tác vụ Thời gian tối đa Tranh Bá theo yêu cầu.")
                     return
                 completed += 1
-                self.task_progress_changed.emit(label, "done", 1, target_battles)
+                self._emit_task_progress(label, "done", 1, target_battles)
                 time_limit = int(self._config.get("thoi_gian_tranh_ba") or 15)
-                self.progress_changed.emit(
+                self._emit_overall_progress(
                     completed, max(1, total),
                     f"Hoàn tất {label} ({time_limit} giây)"
                 )
             except Exception as exc:
                 completed += 1
                 self.log_message.emit(f"{label} thất bại: {exc}")
-                self.task_progress_changed.emit(label, "failed", 0, target_battles)
-                self.progress_changed.emit(completed, max(1, total), f"Lỗi: {label}")
+                self._emit_task_progress(label, "failed", 0, target_battles)
+                self._emit_overall_progress(completed, max(1, total), f"Lỗi: {label}")
 
         if self._config.get("task_end_battle") and not battle_flow_handled:
             label = "Kết thúc trận Giao Tranh"
-            self.task_progress_changed.emit(label, "running", 0, 1)
+            self._emit_task_progress(label, "running", 0, 1)
             current_battle = 1
             try:
                 import json
@@ -1616,7 +1616,7 @@ class UtilityTaskRunnerMixin:
                 )
                 while current_battle <= target_battles:
                     if self._config.get("task_start_battle"):
-                        self.task_progress_changed.emit(
+                        self._emit_task_progress(
                             "Bắt đầu trận Giao Tranh", "running",
                             current_battle, target_battles
                         )
@@ -1721,7 +1721,7 @@ class UtilityTaskRunnerMixin:
                                 )
                                 current_battle += 1
                                 if self._config.get("task_start_battle"):
-                                    self.task_progress_changed.emit(
+                                    self._emit_task_progress(
                                         "Bắt đầu trận Giao Tranh", "running",
                                         current_battle, target_battles
                                     )
@@ -1764,30 +1764,30 @@ class UtilityTaskRunnerMixin:
                 if not finished:
                     raise RuntimeError("Chưa xác nhận được thao tác Hồi thành sau số trận mục tiêu.")
                 completed += 1
-                self.task_progress_changed.emit(label, "done", 1, 1)
+                self._emit_task_progress(label, "done", 1, 1)
                 if self._config.get("task_start_battle"):
-                    self.task_progress_changed.emit(
+                    self._emit_task_progress(
                         "Bắt đầu trận Giao Tranh", "done",
                         target_battles, target_battles
                     )
-                self.progress_changed.emit(
+                self._emit_overall_progress(
                     completed, max(1, total), "Đã kết thúc đủ số trận Giao Tranh"
                 )
             except Exception as exc:
                 completed += 1
                 self.log_message.emit(f"{label} thất bại: {exc}")
                 if self._config.get("task_start_battle"):
-                    self.task_progress_changed.emit(
+                    self._emit_task_progress(
                         "Bắt đầu trận Giao Tranh", "failed",
                         max(0, current_battle - 1), target_battles
                     )
-                self.task_progress_changed.emit(label, "failed", 0, 1)
-                self.progress_changed.emit(
+                self._emit_task_progress(label, "failed", 0, 1)
+                self._emit_overall_progress(
                     completed, max(1, total), f"Lỗi: {label}"
                 )
         if self._config.get("task_championship_end_battle") and not championship_screen_open_failed:
             label = "Kết thúc trận Tranh Bá"
-            self.task_progress_changed.emit(label, "running", 0, 1)
+            self._emit_task_progress(label, "running", 0, 1)
             current_battle = 1
             target_battles = max(1, int(self._config.get("tranh_ba", 1)))
             try:
@@ -1905,15 +1905,15 @@ class UtilityTaskRunnerMixin:
                 if not finished:
                     raise RuntimeError("Chưa xác nhận được thao tác Hồi thành sau số trận Tranh Bá mục tiêu.")
                 completed += 1
-                self.task_progress_changed.emit(label, "done", 1, 1)
-                self.progress_changed.emit(
+                self._emit_task_progress(label, "done", 1, 1)
+                self._emit_overall_progress(
                     completed, max(1, total), "Đã kết thúc đủ số trận Tranh Bá"
                 )
             except Exception as exc:
                 completed += 1
                 self.log_message.emit(f"{label} thất bại: {exc}")
-                self.task_progress_changed.emit(label, "failed", 0, 1)
-                self.progress_changed.emit(
+                self._emit_task_progress(label, "failed", 0, 1)
+                self._emit_overall_progress(
                     completed, max(1, total), f"Lỗi: {label}"
                 )
         if self._config.get("task_close_guild"):
@@ -1993,10 +1993,10 @@ class UtilityTaskRunnerMixin:
                     )
 
                 completed += 1
-                self.progress_changed.emit(
+                self._emit_overall_progress(
                     completed, max(1, total), "Đã xử lý trạng thái chat Quân đoàn"
                 )
-                self.task_progress_changed.emit(
+                self._emit_task_progress(
                     "Thoát màn hình Quân đoàn", "done", 1, 1
                 )
                 self.log_message.emit(
@@ -2007,7 +2007,7 @@ class UtilityTaskRunnerMixin:
                 self.log_message.emit(
                     f"Không đóng được giao diện Quân đoàn/chat: {exc}"
                 )
-                self.task_progress_changed.emit(
+                self._emit_task_progress(
                     "Thoát màn hình Quân đoàn", "failed", 0, 1
                 )
 
@@ -2023,7 +2023,7 @@ class UtilityTaskRunnerMixin:
             result = run_logout_flow(self, account, device, ocr_client)
             if result:
                 completed += 1
-                self.task_progress_changed.emit("Đổi tài khoản", "done", 1, 1)
+                self._emit_task_progress("Đổi tài khoản", "done", 1, 1)
                 self.log_message.emit(
                     "Tác vụ Đổi tài khoản đã hoàn tất và đã xác minh màn hình đăng nhập."
                 )
@@ -2034,8 +2034,8 @@ class UtilityTaskRunnerMixin:
                 self.log_message.emit(
                     "Tác vụ Đổi tài khoản chưa xác minh hoàn tất; kiểm tra nhật ký OCR."
                 )
-                self.task_progress_changed.emit("Đổi tài khoản", "failed", 0, 1)
-            self.progress_changed.emit(
+                self._emit_task_progress("Đổi tài khoản", "failed", 0, 1)
+            self._emit_overall_progress(
                 completed, max(1, total), "Đổi tài khoản đã xử lý"
             )
 
@@ -2048,14 +2048,14 @@ class UtilityTaskRunnerMixin:
             try:
                 device.shell(f"input tap {x} {y}")
                 completed += 1
-                self.task_progress_changed.emit("Click theo tọa độ", "done", 1, 1)
-                self.progress_changed.emit(
+                self._emit_task_progress("Click theo tọa độ", "done", 1, 1)
+                self._emit_overall_progress(
                     completed, max(1, total), f"Đã click tọa độ ({x}, {y})"
                 )
                 self.log_message.emit(f"Đã click theo tọa độ X={x}, Y={y}.")
             except Exception as exc:
-                self.task_progress_changed.emit("Click theo tọa độ", "failed", 0, 1)
-                self.progress_changed.emit(
+                self._emit_task_progress("Click theo tọa độ", "failed", 0, 1)
+                self._emit_overall_progress(
                     completed + 1, max(1, total), "Lỗi: Click theo tọa độ"
                 )
                 self.log_message.emit(f"Không thể click tọa độ ({x}, {y}): {exc}")

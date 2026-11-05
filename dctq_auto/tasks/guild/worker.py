@@ -246,7 +246,7 @@ class GuildWorkerMixin:
             "task_donate_knb": "Đóng góp KNB",
         }
         label = task_labels[task_key]
-        self.task_progress_changed.emit(label, "running", 0, 1)
+        self._emit_task_progress(label, "running", 0, 1)
         try:
             if not self._wait_if_paused():
                 self.log_message.emit(f"{label}: đã dừng theo yêu cầu.")
@@ -401,12 +401,12 @@ class GuildWorkerMixin:
                     "target trong regions.json và luồng xác nhận trước khi click."
                 )
 
-            self.task_progress_changed.emit(label, "done", 1, 1)
+            self._emit_task_progress(label, "done", 1, 1)
             self.log_message.emit(
                 f"Hoàn tất tác vụ '{label}'. Màn hình Quân đoàn vẫn được giữ nguyên."
             )
             return True
         except Exception as exc:
             self.log_message.emit(f"{label} thất bại: {exc}")
-            self.task_progress_changed.emit(label, "failed", 0, 1)
+            self._emit_task_progress(label, "failed", 0, 1)
             return False
