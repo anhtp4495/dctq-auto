@@ -13,6 +13,7 @@ from dctq_auto.config.constants import (
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
+from dctq_auto.tasks.common.close_knowned_dialog import close_knowned_dialog
 
 
 _MAX_TRIES = 6
@@ -107,6 +108,9 @@ def open_activity(
                 log(
                     f"[{account.username}] Chưa nhận diện được màn hình [Hoạt động]; "
                     f"thử lại ({attempt + 1}/{_MAX_TRIES})."
+                )
+                close_knowned_dialog(
+                    self, account, device, ocr_client, log, screen_bgr
                 )
             time.sleep(1.0)
 
