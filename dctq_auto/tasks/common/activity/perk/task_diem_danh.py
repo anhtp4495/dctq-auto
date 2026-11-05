@@ -361,58 +361,36 @@ def run_diem_danh(worker, account, steps, device, ocr_client, log, screenshot=No
         if screenshot is None:
             screenshot = device.screenshot()
         screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
-    except Exception as exc:
-        log(f"[{account.display_name}] Không chụp được màn hình để nhận diện Điểm danh: {exc}")
-        return False
-
-    template_name, match = _find_template(screen_bgr, templates, account, log)
-    if template_name is None:
-        log(f"[{account.display_name}] Không nhận diện được template Điểm danh; có thể đã chuyển sang màn hình khác.")
-        return False
-
-    if template_name == _TEMPLATE_DANG_CHON_DIEM_DANH:
-        try:
-            screen_height, screen_width = screen_bgr.shape[:2]
-            if not _tap_all_days(
-                worker, device, account, screen_width, screen_height, templates, log
-            ):
-                return False
-
-        except Exception as exc:
-            log(f"[{account.display_name}] Không hoàn tất được 31 ô điểm danh: {exc}")
+        screen_height, screen_width = screen_bgr.shape[:2]
+        if not _tap_all_days(
+            worker, device, account, screen_width, screen_height, templates, log
+        ):
             return False
 
-        positions = ButtonPositions()
-        for qua_diem_danh_count, button_name in enumerate((
-            "qua_diem_danh_10_ngay",
-            "qua_diem_danh_20_ngay",
-            "qua_diem_danh_30_ngay",
-        ), start=1):
-            try:
-                x, y = positions.get("hoat_dong", button_name)
-                log(
-                    f"[{account.display_name}] Nhận mốc quà Điểm danh "
-                    f"{qua_diem_danh_count * 10} ngày."
-                )
-                device.shell(f"input tap {x} {y}")
-                time.sleep(0.7)
-            except Exception as exc:
-                log(f"[{account.display_name}] Không click được {button_name}: {exc}")
-                return False
-
-        log(f"[{account.display_name}] Điểm danh hoàn tất.")
-        return True
-
-    try:
-        _tap_match_center(device, match, account, log)
     except Exception as exc:
-        log(f"[{account.display_name}] Không click được template {template_name}: {exc}")
+        log(f"[{account.display_name}] Không hoàn tất được 31 ô điểm danh: {exc}")
         return False
 
-    return run_diem_danh(
-        worker, account, steps, device, ocr_client, log,
-        screenshot=None,
-    )
+    positions = ButtonPositions()
+    for qua_diem_danh_count, button_name in enumerate((
+        "qua_diem_danh_10_ngay",
+        "qua_diem_danh_20_ngay",
+        "qua_diem_danh_30_ngay",
+    ), start=1):
+        try:
+            x, y = positions.get("hoat_dong", button_name)
+            log(
+                f"[{account.display_name}] Nhận mốc quà Điểm danh "
+                f"{qua_diem_danh_count * 10} ngày."
+            )
+            device.shell(f"input tap {x} {y}")
+            time.sleep(0.7)
+        except Exception as exc:
+            log(f"[{account.display_name}] Không click được {button_name}: {exc}")
+            return False
+
+    log(f"[{account.display_name}] Điểm danh hoàn tất.")
+    return True
 
 
 def open_diem_danh(worker, account, device, ocr_client, log, screenshot=None) -> bool:
