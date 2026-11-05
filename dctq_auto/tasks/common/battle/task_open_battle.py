@@ -23,6 +23,7 @@ from dctq_auto.vision.template_store import get_templates
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.tasks.common.battle.battle_utils import click_match as _click_match
+from dctq_auto.tasks.common.close_knowned_dialog import close_knowned_dialog
 
 
 _OPEN_TEMPLATES = (
@@ -297,6 +298,9 @@ def run(
     log(
         f"[{account.username}] Mở Giao Tranh — chưa nhận diện được trạng thái "
         f"(lần {current_try}/{_MAX_TRIES}); sẽ thử lại."
+    )
+    close_knowned_dialog(
+        self, account, device, ocr_client, log, screenshot
     )
     time.sleep(1)
     return run(
