@@ -26,7 +26,7 @@ def run_clone_flow(self, device) -> None:
     for account in accounts:
         if not account.enabled:
             self.clone_account_status.emit(account.username, "disabled")
-            self.log_message.emit(f"Tài khoản {account.username}: đã vô hiệu hóa, bỏ qua.")
+            self.log_message.emit(f"Tài khoản {account.display_name}: đã vô hiệu hóa, bỏ qua.")
     if total == 0:
         self.log_message.emit("Clone: tất cả tài khoản đều đã vô hiệu hóa; không có tài khoản để chạy.")
         self.progress_changed.emit(0, 0, "Không có tài khoản được bật")
@@ -167,14 +167,14 @@ def run_clone_flow(self, device) -> None:
         # Read only the top panel area and use a 75% fuzzy match for its title.
         profile_found = False
         self.log_message.emit(
-            f"[{account.username}] Đăng nhập có vẻ thành công; xác minh bằng cách mở mục profile."
+            f"[{account.display_name}] Đăng nhập có vẻ thành công; xác minh bằng cách mở mục profile."
         )
         try:
             ocr_client.tap_ocr_target("profile")
             time.sleep(1)
         except Exception as exc:
             self.log_message.emit(
-                f"[{account.username}] Không mở được mục profile bằng tọa độ OCR: {exc}"
+                f"[{account.display_name}] Không mở được mục profile bằng tọa độ OCR: {exc}"
             )
 
         # Rect lấy từ ảnh OCR debug ở độ phân giải chuẩn 1920x1080.
@@ -209,7 +209,7 @@ def run_clone_flow(self, device) -> None:
                 profile_text = self._screen_text_in_rect(device, scaled_rect)
             except Exception as exc:
                 self.log_message.emit(
-                    f"[{account.username}] Lỗi OCR khi chờ tiêu đề profile: {exc}"
+                    f"[{account.display_name}] Lỗi OCR khi chờ tiêu đề profile: {exc}"
                 )
                 continue
 
@@ -220,7 +220,7 @@ def run_clone_flow(self, device) -> None:
                     ocr_client.tap_ocr_target("close_dich_quan_tap_kich")
                     time.sleep(0.8)
                     self.log_message.emit(
-                        f"[{account.username}] OCR vùng profile phát hiện 'dich_quan_tap_kich'; "
+                        f"[{account.display_name}] OCR vùng profile phát hiện 'dich_quan_tap_kich'; "
                         "đã bấm đóng thông báo trước khi xử lý profile."
                     )
                     # Re-read the same small area after closing the notice.
@@ -228,7 +228,7 @@ def run_clone_flow(self, device) -> None:
                     normalized_profile = self._normalize_screen_text(profile_text)
                 except Exception as exc:
                     self.log_message.emit(
-                        f"[{account.username}] Không đóng được thông báo 'dich_quan_tap_kich': {exc}"
+                        f"[{account.display_name}] Không đóng được thông báo 'dich_quan_tap_kich': {exc}"
                     )
                     continue
 
@@ -238,12 +238,12 @@ def run_clone_flow(self, device) -> None:
                     time.sleep(0.7)
                     profile_found = True
                     self.log_message.emit(
-                        f"[{account.username}] Đã xác minh profile qua tiêu đề 'Thông tin của tôi' "
+                        f"[{account.display_name}] Đã xác minh profile qua tiêu đề 'Thông tin của tôi' "
                         "khớp OCR từ 75% trở lên và đóng bảng profile."
                     )
                 except Exception as exc:
                     self.log_message.emit(
-                        f"[{account.username}] Nhận diện được tiêu đề profile nhưng không đóng được bảng thông tin: {exc}"
+                        f"[{account.display_name}] Nhận diện được tiêu đề profile nhưng không đóng được bảng thông tin: {exc}"
                     )
                 break
 
@@ -253,7 +253,7 @@ def run_clone_flow(self, device) -> None:
             account_results.append((account.username, "FAILED — không thấy profile quan_chuc sau 60 giây"))
             self.clone_account_result.emit(account.username, False)
             self.log_message.emit(
-                f"[{account.username}] FAILED — không thấy profile 'quan_chuc' sau 60 giây; "
+                f"[{account.display_name}] FAILED — không thấy profile 'quan_chuc' sau 60 giây; "
                 "bỏ qua account này và thử account tiếp theo."
             )
             self.task_progress_changed.emit(
@@ -272,58 +272,58 @@ def run_clone_flow(self, device) -> None:
         # Dùng đúng flow đã được kiểm chứng ở tab Tác vụ; không nhầm checkbox này
         # với Điểm danh hằng ngày.
         if self._config.get("clone_receive_quoc_van"):
-            task_label = f"{account.username} - Nhận lễ bao quốc vận"
+            task_label = f"{account.display_name} - Nhận lễ bao quốc vận"
             self.task_progress_changed.emit(task_label, "running", 0, 1)
             if not self._wait_if_paused():
                 self.log_message.emit("Đã dừng theo yêu cầu trước khi nhận lễ bao Quốc vận.")
                 return
             self.log_message.emit(
-                f"[{account.username}] Bắt đầu nhận lễ bao Quốc vận."
+                f"[{account.display_name}] Bắt đầu nhận lễ bao Quốc vận."
             )
             try:
                 receive_quoc_van_ok = self._run_receive_quoc_van(device, ocr_client)
             except Exception as exc:
                 receive_quoc_van_ok = False
                 self.log_message.emit(
-                    f"[{account.username}] Lỗi khi nhận lễ bao Quốc vận: {exc}"
+                    f"[{account.display_name}] Lỗi khi nhận lễ bao Quốc vận: {exc}"
                 )
             if receive_quoc_van_ok:
                 self.task_progress_changed.emit(task_label, "done", 1, 1)
                 self.log_message.emit(
-                    f"[{account.username}] Đã chạy xong luồng nhận lễ bao Quốc vận."
+                    f"[{account.display_name}] Đã chạy xong luồng nhận lễ bao Quốc vận."
                 )
             else:
                 self.task_progress_changed.emit(task_label, "failed", 0, 1)
                 self.log_message.emit(
-                    f"[{account.username}] Nhận lễ bao Quốc vận thất bại; "
+                    f"[{account.display_name}] Nhận lễ bao Quốc vận thất bại; "
                     "tiếp tục các tác vụ Clone khác."
                 )
 
         if self._config.get("clone_daily_check_in"):
-            task_label = f"{account.username} - Điểm danh"
+            task_label = f"{account.display_name} - Điểm danh"
             self.task_progress_changed.emit(task_label, "running", 0, 1)
             if not self._wait_if_paused():
                 self.log_message.emit("Đã dừng theo yêu cầu.")
                 return
             self.log_message.emit(
-                f"[{account.username}] Bắt đầu điểm danh hằng ngày."
+                f"[{account.display_name}] Bắt đầu điểm danh hằng ngày."
             )
             try:
                 check_in_ok = self._run_daily_checkin(device, ocr_client)
             except Exception as exc:
                 check_in_ok = False
                 self.log_message.emit(
-                    f"[{account.username}] Lỗi khi chạy điểm danh hằng ngày: {exc}"
+                    f"[{account.display_name}] Lỗi khi chạy điểm danh hằng ngày: {exc}"
                 )
             if check_in_ok:
                 self.task_progress_changed.emit(task_label, "done", 1, 1)
                 self.log_message.emit(
-                    f"[{account.username}] Đã chạy xong luồng điểm danh hằng ngày."
+                    f"[{account.display_name}] Đã chạy xong luồng điểm danh hằng ngày."
                 )
             else:
                 self.task_progress_changed.emit(task_label, "failed", 0, 1)
                 self.log_message.emit(
-                    f"[{account.username}] Điểm danh hằng ngày thất bại; tiếp tục các tác vụ Clone khác."
+                    f"[{account.display_name}] Điểm danh hằng ngày thất bại; tiếp tục các tác vụ Clone khác."
                 )
 
         # Quân đoàn là một nhóm luồng chung: chỉ mở/đóng màn hình khi
@@ -340,10 +340,10 @@ def run_clone_flow(self, device) -> None:
         ]
         guild_screen_opened = False
         if selected_guild_tasks:
-            enter_label = f"{account.username} - Vào màn hình Quân đoàn"
+            enter_label = f"{account.display_name} - Vào màn hình Quân đoàn"
             self.task_progress_changed.emit(enter_label, "running", 0, 1)
             self.log_message.emit(
-                f"[{account.username}] Có chọn {len(selected_guild_tasks)} tác vụ Quân đoàn; "
+                f"[{account.display_name}] Có chọn {len(selected_guild_tasks)} tác vụ Quân đoàn; "
                 "bắt đầu flow Vào Quân đoàn dùng chung với tab Tác vụ."
             )
             guild_screen_opened = self._run_enter_guild(device, ocr_client)
@@ -358,21 +358,21 @@ def run_clone_flow(self, device) -> None:
                         self.log_message.emit("Đã dừng theo yêu cầu trong nhóm tác vụ Quân đoàn.")
                         return
                     self.log_message.emit(
-                        f"[{account.username}] Bắt đầu tác vụ Quân đoàn: {label}."
+                        f"[{account.display_name}] Bắt đầu tác vụ Quân đoàn: {label}."
                     )
                     task_ok = self._run_guild_screen_task(task_key, device, ocr_client)
                     if not task_ok:
                         self.log_message.emit(
-                            f"[{account.username}] {label} thất bại; tiếp tục tác vụ Quân đoàn kế tiếp."
+                            f"[{account.display_name}] {label} thất bại; tiếp tục tác vụ Quân đoàn kế tiếp."
                         )
 
                 # Close only after a successful, OCR-confirmed entry. Reuse the
                 # saved targets used by the standalone Tác vụ tab.
-                close_label = f"{account.username} - Thoát màn hình Quân đoàn"
+                close_label = f"{account.display_name} - Thoát màn hình Quân đoàn"
                 self.task_progress_changed.emit(close_label, "running", 0, 1)
                 try:
                     self.log_message.emit(
-                        f"[{account.username}] Thoát Quân đoàn — đóng màn hình bằng "
+                        f"[{account.display_name}] Thoát Quân đoàn — đóng màn hình bằng "
                         "close_quan_doan từ regions.json."
                     )
                     ocr_client.tap_ocr_target("close_quan_doan")
@@ -390,12 +390,12 @@ def run_clone_flow(self, device) -> None:
                         x, y = ocr_client.tap_ocr_target("thoat_chat_quan_doan")
                         time.sleep(0.8)
                         self.log_message.emit(
-                            f"[{account.username}] OCR thấy 'vao_quan_doan'; "
+                            f"[{account.display_name}] OCR thấy 'vao_quan_doan'; "
                             f"đã đóng chat tại ({x}, {y})."
                         )
                     else:
                         self.log_message.emit(
-                            f"[{account.username}] Đã đóng màn hình Quân đoàn; "
+                            f"[{account.display_name}] Đã đóng màn hình Quân đoàn; "
                             "OCR không thấy 'vao_quan_doan' nên không bấm đóng chat. "
                             f"OCR: {after_close_text[:180] or '(trống)'}"
                         )
@@ -403,23 +403,23 @@ def run_clone_flow(self, device) -> None:
                     self.task_progress_changed.emit(close_label, "done", 1, 1)
                 except Exception as exc:
                     self.log_message.emit(
-                        f"[{account.username}] Thoát màn hình Quân đoàn thất bại: {exc}"
+                        f"[{account.display_name}] Thoát màn hình Quân đoàn thất bại: {exc}"
                     )
                     self.task_progress_changed.emit(close_label, "failed", 0, 1)
             else:
                 self.log_message.emit(
-                    f"[{account.username}] Không xác nhận được màn hình Quân đoàn; "
+                    f"[{account.display_name}] Không xác nhận được màn hình Quân đoàn; "
                     "bỏ qua các thao tác con để tránh click nhầm."
                 )
                 for _config_key, _task_key, label in selected_guild_tasks:
                     self.task_progress_changed.emit(
-                        f"{account.username} - {label}", "failed", 0, 1
+                        f"{account.display_name} - {label}", "failed", 0, 1
                     )
 
         if self._config.get("clone_quoc_chien"):
             try:
                 self.log_message.emit(
-                    f"[{account.username}] Đang mở mục Chiến tranh để tìm Quốc chiến."
+                    f"[{account.display_name}] Đang mở mục Chiến tranh để tìm Quốc chiến."
                 )
                 ocr_client.tap_ocr_target("chien_tranh")
                 time.sleep(1.5)
@@ -433,34 +433,34 @@ def run_clone_flow(self, device) -> None:
                         found_quoc_chien = True
                         break
                     self.log_message.emit(
-                        f"[{account.username}] Chưa thấy Quốc chiến; kéo màn hình lần {attempt + 1}/3."
+                        f"[{account.display_name}] Chưa thấy Quốc chiến; kéo màn hình lần {attempt + 1}/3."
                     )
                     # Drag from A to B using the supplied 1920x1080 normalized points.
                     device.shell("input swipe 524 582 1574 564 500")
                     time.sleep(1.2)
                 if found_quoc_chien:
                     self.log_message.emit(
-                        f"[{account.username}] Đã tìm thấy mục Quốc chiến qua OCR."
+                        f"[{account.display_name}] Đã tìm thấy mục Quốc chiến qua OCR."
                     )
                 else:
                     self.log_message.emit(
-                        f"[{account.username}] Không tìm thấy mục Quốc chiến sau khi kéo."
+                        f"[{account.display_name}] Không tìm thấy mục Quốc chiến sau khi kéo."
                     )
             except Exception as exc:
                 self.log_message.emit(
-                    f"[{account.username}] Không thể mở/tìm Quốc chiến: {exc}"
+                    f"[{account.display_name}] Không thể mở/tìm Quốc chiến: {exc}"
                 )
                 break
 
         # Nhận thưởng - Quân Đoàn chạy cuối cùng, sau Quốc chiến, dùng lại flow đã có ở Tab Tác vụ.
         if self._config.get("clone_reward_guild"):
-            task_label = f"{account.username} - Nhận Thưởng - Quân Đoàn"
+            task_label = f"{account.display_name} - Nhận Thưởng - Quân Đoàn"
             self.task_progress_changed.emit(task_label, "running", 0, 1)
             if not self._wait_if_paused():
                 self.log_message.emit("Đã dừng trước khi nhận Thưởng - Quân Đoàn.")
                 return
             self.log_message.emit(
-                f"[{account.username}] Bắt đầu Nhận Thưởng - Quân Đoàn "
+                f"[{account.display_name}] Bắt đầu Nhận Thưởng - Quân Đoàn "
                 "bằng luồng đã triển khai ở Tab Tác vụ."
             )
             previous_reward_flag = self._config.get("reward_weekly_doan_chien", False)
@@ -474,17 +474,17 @@ def run_clone_flow(self, device) -> None:
                 if reward_result is None:
                     self.task_progress_changed.emit(task_label, "failed", 0, 1)
                     self.log_message.emit(
-                        f"[{account.username}] Luồng Nhận Thưởng - Quân Đoàn đã dừng hoặc chưa hoàn tất."
+                        f"[{account.display_name}] Luồng Nhận Thưởng - Quân Đoàn đã dừng hoặc chưa hoàn tất."
                     )
                 else:
                     self.log_message.emit(
-                        f"[{account.username}] Đã kết thúc luồng Nhận Thưởng - Quân Đoàn; "
+                        f"[{account.display_name}] Đã kết thúc luồng Nhận Thưởng - Quân Đoàn; "
                         "xem trạng thái OCR của tác vụ để biết thành công hay thất bại."
                     )
             except Exception as exc:
                 self.task_progress_changed.emit(task_label, "failed", 0, 1)
                 self.log_message.emit(
-                    f"[{account.username}] Nhận Thưởng - Quân Đoàn thất bại: {exc}"
+                    f"[{account.display_name}] Nhận Thưởng - Quân Đoàn thất bại: {exc}"
                 )
             finally:
                 self._config["reward_weekly_doan_chien"] = previous_reward_flag
@@ -511,7 +511,7 @@ def run_clone_flow(self, device) -> None:
                 f"{account.username} - Đăng nhập", "failed", 0, 1
             )
             self.log_message.emit(
-                f"[{account.username}] Dừng vòng lặp Clone để tránh đăng nhập account kế tiếp "
+                f"[{account.display_name}] Dừng vòng lặp Clone để tránh đăng nhập account kế tiếp "
                 "khi game chưa về màn hình đăng nhập."
             )
             break
@@ -521,7 +521,7 @@ def run_clone_flow(self, device) -> None:
         account_results.append((account.username, "SUCCESS"))
         self.clone_account_result.emit(account.username, True)
         self.log_message.emit(
-            f"[{account.username}] SUCCESS — đăng nhập thành công, profile đã tải "
+            f"[{account.display_name}] SUCCESS — đăng nhập thành công, profile đã tải "
             f"({success_count} thành công, {failed_count} thất bại)."
         )
         emit_account_progress(f"SUCCESS: {account.username}")
@@ -540,7 +540,7 @@ def run_clone_flow(self, device) -> None:
     processed_names = {username for username, _result in account_results}
     for account in accounts:
         if account.username not in processed_names:
-            self.log_message.emit(f"  {account.username}: NOT PROCESSED — chưa chạy")
+            self.log_message.emit(f"  {account.display_name}: NOT PROCESSED — chưa chạy")
     if self._config.get("clone_daily_check_in"):
         self.log_message.emit(
             "Lưu ý: điểm danh hằng ngày hiện chưa có thao tác gameplay hoàn chỉnh."
@@ -624,7 +624,7 @@ def run_clone_flow_optimize(self, device) -> None:
     for account in disabled_accounts:
         self.clone_account_status.emit(account.username, "disabled")
         self.log_message.emit(
-            f"Clone Optimize — tài khoản {account.username}: vô hiệu hóa, bỏ qua."
+            f"Clone Optimize — tài khoản {account.display_name}: vô hiệu hóa, bỏ qua."
         )
 
     if not enabled_accounts:
@@ -695,19 +695,19 @@ def run_clone_flow_optimize(self, device) -> None:
             try:
                 if not self._wait_if_paused():
                     self.log_message.emit(
-                        f"[{account.username}] Đã dừng trước khi đăng xuất."
+                        f"[{account.display_name}] Đã dừng trước khi đăng xuất."
                     )
                     return
                 logout_result, logout_error = logout_account(
                     self, account, device, ocr_client
                 )
             except Exception as exc:
-                self.log_message.emit(f"[{account.username}] Lỗi đăng xuất: {exc}")
+                self.log_message.emit(f"[{account.display_name}] Lỗi đăng xuất: {exc}")
                 logout_result, logout_error = False, str(exc)
 
             if logout_result is not True:
                 self.log_message.emit(
-                    f"[{account.username}] Đăng xuất thất bại"
+                    f"[{account.display_name}] Đăng xuất thất bại"
                     + (f": {logout_error}" if logout_error else ";")
                     + " đánh dấu tài khoản thất bại."
                 )
@@ -723,7 +723,7 @@ def run_clone_flow_optimize(self, device) -> None:
                 failed_count += 1
         else:
             self.log_message.emit(
-                f"Clone Optimize — {account.username}: chưa có kết quả xử lý."
+                f"Clone Optimize — {account.display_name}: chưa có kết quả xử lý."
             )
 
     self.progress_changed.emit(
@@ -748,20 +748,20 @@ def run_clone_flow_optimize_account(
     if _tong_steps is None:
         _tong_steps = len(steps)
         self.log_message.emit(
-            f"[{account.username}] Clone Optimize — bắt đầu tác vụ tài khoản {index}/{total}."
+            f"[{account.display_name}] Clone Optimize — bắt đầu tác vụ tài khoản {index}/{total}."
         )
         self._config["_clone_guild_screen_closed"] = False
         _ocr_client = AdbClient(serial=self._serial)
 
     if not steps:
         self.log_message.emit(
-            f"[{account.username}] Kết thúc các bước Clone Optimize: "
+            f"[{account.display_name}] Kết thúc các bước Clone Optimize: "
             f"{'thành công' if _tat_ca_thanh_cong else 'có ít nhất một bước thất bại'}."
         )
         return _tat_ca_thanh_cong
 
     if not self._wait_if_paused():
-        self.log_message.emit(f"[{account.username}] Đã dừng khi đang chạy tác vụ.")
+        self.log_message.emit(f"[{account.display_name}] Đã dừng khi đang chạy tác vụ.")
         return None
 
     # Chạy tuần tự các nhóm task dùng chung trước khi xử lý các nhóm khác.
@@ -828,12 +828,12 @@ def run_clone_flow_optimize_account(
         )
         for task_label, task_runner in common_tasks:
             if not self._wait_if_paused():
-                self.log_message.emit(f"[{account.username}] Đã dừng trước task {task_label}.")
+                self.log_message.emit(f"[{account.display_name}] Đã dừng trước task {task_label}.")
                 return None
             self.log_message.emit(
-                f"[{account.username}] Clone Optimize — bắt đầu task {task_label}."
+                f"[{account.display_name}] Clone Optimize — bắt đầu task {task_label}."
             )
-            progress_label = f"{account.username} - {task_label}"
+            progress_label = f"{account.display_name} - {task_label}"
             self.task_progress_changed.emit(progress_label, "running", 0, 1)
             try:
                 steps_before = list(steps)
@@ -851,14 +851,14 @@ def run_clone_flow_optimize_account(
                     1,
                 )
                 self.log_message.emit(
-                    f"[{account.username}] Task {task_label} "
+                    f"[{account.display_name}] Task {task_label} "
                     f"{'đã xử lý step' if task_changed else 'không có step hoàn tất'}."
                 )
             except Exception as exc:
                 _tat_ca_thanh_cong = False
                 self.task_progress_changed.emit(progress_label, "failed", 0, 1)
                 self.log_message.emit(
-                    f"[{account.username}] Task {task_label} gặp lỗi: {exc}; tiếp tục task kế tiếp."
+                    f"[{account.display_name}] Task {task_label} gặp lỗi: {exc}; tiếp tục task kế tiếp."
                 )
 
         return run_clone_flow_optimize_account(
@@ -881,7 +881,7 @@ def run_clone_flow_optimize_account(
         step_registry.get_label(step_id) for step_id in steps
     ]
     self.log_message.emit(
-        f"[{account.username}] WARNING — các step chưa được triển khai task runner: "
+        f"[{account.display_name}] WARNING — các step chưa được triển khai task runner: "
         + ", ".join(remaining_labels)
     )
     return False
