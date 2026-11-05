@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from enum import Enum
 from threading import RLock
@@ -96,9 +96,17 @@ class ProgressManager:
             if "status" in changes:
                 changes["status"] = ProgressStatus(changes["status"])
 
+            # Validate a candidate first so a bad update cannot partially mutate
+            # the live progress record.
+            candidate = replace(item, **changes)
+            if not candidate.name.strip():
+                raise ValueError("ProgressInfo.name không được để trống.")
+            if not candidate.category.strip():
+                raise ValueError("ProgressInfo.category không được để trống.")
+            candidate._validate_counts()
+
             for key, value in changes.items():
                 setattr(item, key, value)
-            item._validate_counts()
 
             if item.status == ProgressStatus.RUNNING and previous_status != ProgressStatus.RUNNING:
                 if item.started_at is None:
