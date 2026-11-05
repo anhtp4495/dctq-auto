@@ -2258,7 +2258,20 @@ class MainWindow(QMainWindow):
             if item.data(Qt.ItemDataRole.UserRole) == username:
                 item.setData(Qt.ItemDataRole.UserRole + 2, progress_info.id)
                 item.setData(Qt.ItemDataRole.UserRole + 3, progress_info.parent_id)
-                details = [progress_info.message] if progress_info.message else []
+                # Show the active child task directly under the account name.
+                # Generic lifecycle messages remain represented by the status icon.
+                message = (progress_info.message or "").strip()
+                generic_messages = {
+                    "pending", "running", "success", "failed", "disabled",
+                    "done", "skipped", "stopped", "paused",
+                    "Hoàn thành", "Thất bại",
+                }
+                item.setText(
+                    f"{username}\\n{message}"
+                    if message and message not in generic_messages
+                    else username
+                )
+                details = [message] if message else []
                 if progress_info.total > 1 or progress_info.current:
                     details.append(f"Tiến độ: {progress_info.current}/{progress_info.total}")
                 if progress_info.error:
