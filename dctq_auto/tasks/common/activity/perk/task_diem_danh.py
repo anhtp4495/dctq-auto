@@ -490,12 +490,16 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
     """Kiểm tra precondition, mở mục Điểm danh rồi chạy quy trình điểm danh."""
     if not pre_diem_danh(steps):
         return steps
+
     if not open_diem_danh(
         worker, account, device, ocr_client, log, screenshot=screenshot
     ):
-    return post_diem_danh(steps)
-    
-    run_diem_danh(
+        return steps
+
+    success = run_diem_danh(
         worker, account, steps, device, ocr_client, log, screenshot=None
     )
-    return post_diem_danh(steps)
+    if success:
+        return post_diem_danh(steps)
+
+    return steps
