@@ -932,6 +932,14 @@
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
+        "cuong_cong_10": {
+          "description": "[Mưu Binh] - [Thưởng vượt ải] - Tăng tấn công 10%",
+          "rect": { "top": 142, "left": 1582, "right": 1799, "bottom": 200},
+          "search_rect": { "top": 218, "left": 322, "right": 1540, "bottom": 753},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
         "cuong_cong_6": {
           "description": "[Mưu Binh] - [Thưởng vượt ải] - Tăng tấn công 6%",
           "rect": { "top": 111, "left": 398, "right": 648, "bottom": 215},
@@ -951,6 +959,14 @@
         "cuong_cong_2": {
           "description": "[Mưu Binh] - [Thưởng vượt ải]- Tăng tấn công 2%",
           "rect": { "top": 114, "left": 1153, "right": 1440, "bottom": 225},
+          "search_rect": { "top": 218, "left": 322, "right": 1540, "bottom": 753},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "truong_thanh_10": {
+          "description": "[Mưu Binh] - [Thưởng vượt ải]- Tăng máu 10%",
+          "rect": { "top": 655, "left": 57, "right": 287, "bottom": 699},
           "search_rect": { "top": 218, "left": 322, "right": 1540, "bottom": 753},
           "threshold": 0.95,
           "grayscale": false,

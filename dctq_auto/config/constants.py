@@ -50,9 +50,11 @@ _TEMPLATE_MUU_BINH_THUONG_VUOT_AI_2 = "chien_tranh.thuong_vuot_ai/thuong_vuot_ai
 _TEMPLATE_MUU_BINH_THUONG_VUOT_AI_3 = "chien_tranh.thuong_vuot_ai/thuong_vuot_ai_3"
 _TEMPLATE_MUU_BINH_XAC_NHAN_THUONG_VUOT_AI = "chien_tranh.muu_binh/xac_nhan_thuong_vuot_ai"
 _TEMPLATE_CHIEN_TRANH_THUONG_VUOT_AI_GIET_NHANH = "chien_tranh.thuong_vuot_ai/giet_nhanh"
+_TEMPLATE_CHIEN_TRANH_THUONG_VUOT_AI_CUONG_CONG_10 = "chien_tranh.thuong_vuot_ai/cuong_cong_10"
 _TEMPLATE_CHIEN_TRANH_THUONG_VUOT_AI_CUONG_CONG_6 = "chien_tranh.thuong_vuot_ai/cuong_cong_6"
 _TEMPLATE_CHIEN_TRANH_THUONG_VUOT_AI_CUONG_CONG_4 = "chien_tranh.thuong_vuot_ai/cuong_cong_4"
 _TEMPLATE_CHIEN_TRANH_THUONG_VUOT_AI_CUONG_CONG_2 = "chien_tranh.thuong_vuot_ai/cuong_cong_2"
+_TEMPLATE_CHIEN_TRANH_THUONG_VUOT_AI_TRUONG_THANH_10 = "chien_tranh.thuong_vuot_ai/truong_thanh_10"
 
 # Template dùng trong quy trình Giao Tranh.
 _TEMPLATE_MAIN_QUAN_SU = "main/quan_su"
