@@ -1947,7 +1947,10 @@ class MainWindow(QMainWindow):
             self.clone_result_list.clear()
             for account in accounts:
                 label = account.display_name if account.enabled else f"{account.display_name} — Đã vô hiệu hóa"
-                item = QListWidgetItem(label)
+                item = QListWidgetItem(
+                    f". {account.display_name} chưa chạy"
+                    if account.enabled else f"× {account.display_name} đã vô hiệu hóa"
+                )
                 item.setIcon(
                     self._status_icon("·", "#6e7781")
                     if account.enabled else self._status_icon("×", "#8c959f")
@@ -2154,40 +2157,33 @@ class MainWindow(QMainWindow):
             )
 
     def _update_clone_account_status(self, username: str, state: str) -> None:
-        """Show which account is currently being processed, like task progress."""
+        """Render an explicit textual state for each Clone account."""
+        states = {
+            "pending": ("·", "#6e7781", f". {username} chưa chạy"),
+            "running": ("→", "#0969da", f"→ {username} đang chạy"),
+            "failed": ("✗", "#d1242f", f"x {username} failed"),
+            "done": ("✓", "#22863a", f"v {username} thành công"),
+            "disabled": ("×", "#8c959f", f"× {username} đã vô hiệu hóa"),
+        }
+        state_info = states.get(state)
+        if state_info is None:
+            return
+        glyph, color, label = state_info
         for index in range(self.clone_result_list.count()):
             item = self.clone_result_list.item(index)
             if item.data(Qt.ItemDataRole.UserRole) == username:
-                if state == "disabled":
-                    item.setIcon(self._status_icon("×", "#8c959f"))
-                    item.setText(f"{username} — Đã vô hiệu hóa")
-                elif state == "running":
-                    item.setIcon(self._status_icon("→", "#0969da"))
-                    item.setText(username)
+                item.setIcon(self._status_icon(glyph, color))
+                item.setText(label)
+                if state == "running":
                     self.current_activity_label.setText(f"Đang xử lý: {username}")
                     self.clone_result_list.scrollToItem(
                         item, QAbstractItemView.ScrollHint.PositionAtCenter
                     )
-                elif state == "pending":
-                    item.setIcon(self._status_icon("·", "#6e7781"))
                 return
 
     def _update_clone_account_result(self, username: str, success: bool) -> None:
-        icon = (
-            self._status_icon("✓", "#22863a")
-            if success else self._status_icon("✗", "#d1242f")
-        )
-        for index in range(self.clone_result_list.count()):
-            item = self.clone_result_list.item(index)
-            if item.data(Qt.ItemDataRole.UserRole) == username:
-                item.setIcon(icon)
-                item.setText(username)
-                return
-        item = QListWidgetItem(username)
-        item.setIcon(icon)
-        item.setData(Qt.ItemDataRole.UserRole, username)
-        self.clone_result_list.addItem(item)
-        self.clone_result_list.scrollToBottom()
+        # Keep compatibility with workers that still emit the legacy result signal.
+        self._update_clone_account_status(username, "done" if success else "failed")
 
     def _update_task_progress(self, name: str, state: str, completed: int, total: int) -> None:
         self._render_task_progress(name, state, completed, total)
