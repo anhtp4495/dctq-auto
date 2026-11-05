@@ -903,7 +903,7 @@
         "tu_dong_den_ai_tiep_theo": {
           "description": "[Mưu Binh] - [Tự động khiêu chiến]",
           "rect": { "top": 643, "left": 1565, "right": 1599, "bottom": 673},
-          "search_rect": { "top": 626, "left": 1544, "right": 1841, "bottom": 808},
+          "search_rect": { "top": 592, "left": 1420, "right": 1908, "bottom": 836},
           "threshold": 0.95,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
