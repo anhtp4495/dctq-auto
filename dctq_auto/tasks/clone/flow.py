@@ -748,6 +748,8 @@ def run_clone_flow_optimize_account(
     step_registry = get_clone_step_registry()
     if _tong_steps is None:
         _tong_steps = len(steps)
+        # Clone Optimize chỉ hiển thị các step được chọn; ẩn node tiến trình nội bộ.
+        self._clone_progress_steps_only = True
         self.log_message.emit(
             f"[{account.display_name}] Clone Optimize — bắt đầu tác vụ tài khoản {index}/{total}."
         )
@@ -821,23 +823,31 @@ def run_clone_flow_optimize_account(
                 self._config = original_config
 
         common_tasks = (
-            ("Hoạt động", run_activity),
-            ("Quân đoàn", run_guild),
-            ("Cửa hàng", run_shop),
-            ("Chiến tranh - Giao tranh", run_raid_battle),
-            ("Chiến tranh - Tranh bá", run_ranked_battle),
+            ("Hoạt động", run_activity, {"hoat_dong_phuc_loi_le_bao_quoc_van", "hoat_dong_phuc_loi_diem_danh"}),
+            ("Quân đoàn", run_guild, {
+                "quan_doan_bao_danh", "quan_doan_tui_phuc", "quan_doan_cau_van",
+                "quan_doan_dong_gop_knb", "quan_doan_dong_gop_luong_thao",
+            }),
+            ("Cửa hàng", run_shop, {"cua_hang_danh_vong_mua_que_lanh"}),
+            ("Chiến tranh - Giao tranh", run_raid_battle, {"quan_su_giao_tranh"}),
+            ("Chiến tranh - Tranh bá", run_ranked_battle, {"quan_su_tranh_ba"}),
         )
-        for task_label, task_runner in common_tasks:
+        for task_label, task_runner, group_step_ids in common_tasks:
             if not self._wait_if_paused():
                 self.log_message.emit(f"[{account.display_name}] Đã dừng trước task {task_label}.")
                 return None
             self.log_message.emit(
                 f"[{account.display_name}] Clone Optimize — bắt đầu task {task_label}."
             )
-            progress_label = f"{account.display_name} - {task_label}"
-            self._emit_task_progress(progress_label, "running", 0, 1)
+            selected_group_steps = [
+                step_id for step_id in steps if step_id in group_step_ids
+            ]
+            steps_before = list(steps)
+            for step_id in selected_group_steps:
+                self._emit_clone_step_progress(
+                    step_registry.get_label(step_id), "running", 0, 1
+                )
             try:
-                steps_before = list(steps)
                 remaining_steps = task_runner(
                     self, account, steps, device, _ocr_client,
                     self.log_message.emit,
@@ -845,19 +855,24 @@ def run_clone_flow_optimize_account(
                 if remaining_steps is not None:
                     steps[:] = remaining_steps
                 task_changed = steps != steps_before
-                self._emit_task_progress(
-                    progress_label,
-                    "done" if task_changed or not steps else "failed",
-                    1 if task_changed or not steps else 0,
-                    1,
-                )
+                for step_id in selected_group_steps:
+                    completed = step_id not in steps
+                    self._emit_clone_step_progress(
+                        step_registry.get_label(step_id),
+                        "done" if completed else "failed",
+                        1 if completed else 0,
+                        1,
+                    )
                 self.log_message.emit(
                     f"[{account.display_name}] Task {task_label} "
                     f"{'đã xử lý step' if task_changed else 'không có step hoàn tất'}."
                 )
             except Exception as exc:
                 _tat_ca_thanh_cong = False
-                self._emit_task_progress(progress_label, "failed", 0, 1)
+                for step_id in selected_group_steps:
+                    self._emit_clone_step_progress(
+                        step_registry.get_label(step_id), "failed", 0, 1
+                    )
                 self.log_message.emit(
                     f"[{account.display_name}] Task {task_label} gặp lỗi: {exc}; tiếp tục task kế tiếp."
                 )
