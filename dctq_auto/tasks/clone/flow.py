@@ -750,6 +750,10 @@ def run_clone_flow_optimize_account(
         _tong_steps = len(steps)
         # Clone Optimize chỉ hiển thị các step được chọn; ẩn node tiến trình nội bộ.
         self._clone_progress_steps_only = True
+        for step_id in steps:
+            self._emit_clone_step_progress(
+                step_registry.get_label(step_id), "pending", 0, 1
+            )
         self.log_message.emit(
             f"[{account.display_name}] Clone Optimize — bắt đầu tác vụ tài khoản {index}/{total}."
         )
@@ -900,6 +904,10 @@ def run_clone_flow_optimize_account(
         f"[{account.display_name}] WARNING — các step chưa được triển khai task runner: "
         + ", ".join(remaining_labels)
     )
+    for step_id in steps:
+        self._emit_clone_step_progress(
+            step_registry.get_label(step_id), "failed", 0, 1
+        )
     return False
 
 
