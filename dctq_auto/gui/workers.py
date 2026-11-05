@@ -148,7 +148,7 @@ class BotWorker(
                     id=f"task-{len(self._progress_items_by_key) + 1}",
                     parent_id=parent_id,
                     name=name,
-                    category="task",
+                    category="standalone",
                     current=0,
                     total=max(0, total),
                     message=name,
