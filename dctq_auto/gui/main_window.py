@@ -1926,10 +1926,15 @@ class MainWindow(QMainWindow):
         )
         self._worker.log_message.connect(self._log)
         self._worker.progress_changed.connect(self._update_progress)
-        self._worker.task_progress_changed.connect(self._update_task_progress)
-        self._worker.task_progress_item_added.connect(self._add_task_progress_item)
-        self._worker.clone_account_result.connect(self._update_clone_account_result)
-        self._worker.clone_account_status.connect(self._update_clone_account_status)
+        if self._active_clone_mode:
+            # Clone renders account lifecycle from the unified progress tree.
+            # Keep legacy signals emitted for compatibility, but do not render
+            # them here as well (otherwise each state is applied twice).
+            self._worker.progress_info_added.connect(self._add_clone_progress_item)
+            self._worker.progress_info_changed.connect(self._update_clone_progress_item)
+        else:
+            self._worker.task_progress_changed.connect(self._update_task_progress)
+            self._worker.task_progress_item_added.connect(self._add_task_progress_item)
         self._init_task_progress(config)
         self._worker.finished.connect(self._on_worker_finished)
         self._set_settings_enabled(False)
@@ -1948,8 +1953,8 @@ class MainWindow(QMainWindow):
             for account in accounts:
                 label = account.display_name if account.enabled else f"{account.display_name} — Đã vô hiệu hóa"
                 item = QListWidgetItem(
-                    f". {account.display_name} chưa chạy"
-                    if account.enabled else f"× {account.display_name} đã vô hiệu hóa"
+                    f"{account.display_name} — chưa chạy"
+                    if account.enabled else f"{account.display_name} — đã vô hiệu hóa"
                 )
                 item.setIcon(
                     self._status_icon("·", "#6e7781")
@@ -2156,14 +2161,18 @@ class MainWindow(QMainWindow):
                 item, QAbstractItemView.ScrollHint.PositionAtCenter
             )
 
-    def _update_clone_account_status(self, username: str, state: str) -> None:
-        """Render an explicit textual state for each Clone account."""
+    def _render_clone_account_status(self, username: str, state: str) -> None:
+        """Render one status icon and plain text for a Clone account."""
         states = {
-            "pending": ("·", "#6e7781", f". {username} chưa chạy"),
-            "running": ("→", "#0969da", f"→ {username} đang chạy"),
-            "failed": ("✗", "#d1242f", f"x {username} failed"),
-            "done": ("✓", "#22863a", f"v {username} thành công"),
-            "disabled": ("×", "#8c959f", f"× {username} đã vô hiệu hóa"),
+            "pending": ("·", "#6e7781", f"{username} — chưa chạy"),
+            "running": ("→", "#0969da", f"{username} đang chạy"),
+            "failed": ("✗", "#d1242f", f"{username} — failed"),
+            "success": ("✓", "#22863a", f"{username} — thành công"),
+            "done": ("✓", "#22863a", f"{username} — thành công"),
+            "skipped": ("×", "#8c959f", f"{username} — đã vô hiệu hóa"),
+            "disabled": ("×", "#8c959f", f"{username} — đã vô hiệu hóa"),
+            "stopped": ("■", "#8c959f", f"{username} — đã dừng"),
+            "paused": ("Ⅱ", "#bf8700", f"{username} — tạm dừng"),
         }
         state_info = states.get(state)
         if state_info is None:
@@ -2181,9 +2190,31 @@ class MainWindow(QMainWindow):
                     )
                 return
 
+    def _add_clone_progress_item(self, progress_info) -> None:
+        if getattr(progress_info, "category", None) != "account":
+            return
+        username = getattr(progress_info, "account", None) or progress_info.name
+        if not any(
+            self.clone_result_list.item(index).data(Qt.ItemDataRole.UserRole) == username
+            for index in range(self.clone_result_list.count())
+        ):
+            item = QListWidgetItem()
+            item.setData(Qt.ItemDataRole.UserRole, username)
+            self.clone_result_list.addItem(item)
+        self._render_clone_account_status(username, progress_info.status.value)
+
+    def _update_clone_progress_item(self, progress_info) -> None:
+        if getattr(progress_info, "category", None) != "account":
+            return
+        username = getattr(progress_info, "account", None) or progress_info.name
+        self._render_clone_account_status(username, progress_info.status.value)
+
+    # Legacy renderers retained for callers outside the unified Clone GUI path.
+    def _update_clone_account_status(self, username: str, state: str) -> None:
+        self._render_clone_account_status(username, state)
+
     def _update_clone_account_result(self, username: str, success: bool) -> None:
-        # Keep compatibility with workers that still emit the legacy result signal.
-        self._update_clone_account_status(username, "done" if success else "failed")
+        self._render_clone_account_status(username, "success" if success else "failed")
 
     def _update_task_progress(self, name: str, state: str, completed: int, total: int) -> None:
         self._render_task_progress(name, state, completed, total)
