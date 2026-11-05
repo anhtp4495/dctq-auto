@@ -378,6 +378,22 @@
           "threshold": 0.95,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
+        },
+        "diem_danh_bu": {
+          "description": "Màn hình [Hoạt động] - [Phúc lợi] - [Điểm danh] - Điểm danh bù",
+          "rect": { "top": 403, "left": 483, "right": 1823, "bottom": 997},
+          "search_rect": { "top": 400, "left": 483, "right": 1823, "bottom": 1000},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "da_diem_danh": {
+          "description": "Màn hình [Hoạt động] - [Phúc lợi] - [Điểm danh] - Đã điểm danh",
+          "rect": { "top": 486, "left": 533, "right": 547, "bottom": 498},
+          "search_rect": { "top": 400, "left": 483, "right": 1823, "bottom": 1000},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
