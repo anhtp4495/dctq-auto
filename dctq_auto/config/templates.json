@@ -18,6 +18,13 @@
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
+        "tam_quoc_lenh": {
+          "description": "Màn hình chính - Lối vào [Tam Quốc Lệnh].",
+          "rect": { "top": 110, "left": 900, "right": 1150, "bottom": 190 },
+          "search_rect": { "top": 100, "left": 800, "right": 1500, "bottom": 350},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
         "quan_doan_mo_chat": {
           "description": "Màn hình chính - Mở trò chuyện.",
           "rect": { "top": 499, "left": 1877, "right": 1919, "bottom": 587},
@@ -732,6 +739,70 @@
           "description": "[Chiến tranh] - Lối vào [Mưu binh]",
           "rect": { "top": 462, "left": 400, "right": 597, "bottom": 635},
           "search_rect": { "top": 269, "left": 305, "right": 1613, "bottom": 887},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
+    "tam_quoc_lenh": {
+      "source_image": "resources/screens/tam_quoc_lenh/man_hinh_chinh.png",
+      "templates": {
+        "man_hinh_chinh": {
+          "description": "#[Tam Quốc Lệnh] - Màn hình chính",
+          "rect": { "top": 145, "left": 831, "right": 1085, "bottom": 207},
+          "search_rect":  { "top": 68, "left": 112, "right": 1709, "bottom": 971},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "da_diem_binh": {
+          "description": "#[Tam Quốc Lệnh] - Đã điểm binh",
+          "rect": { "top": 145, "left": 831, "right": 1085, "bottom": 207},
+          "search_rect":  { "top": 68, "left": 112, "right": 1709, "bottom": 971},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "chua_diem_binh": {
+          "description": "#[Tam Quốc Lệnh] - Chưa điểm binh",
+          "rect": { "top": 145, "left": 831, "right": 1085, "bottom": 207},
+          "search_rect":  { "top": 68, "left": 112, "right": 1709, "bottom": 971},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "da_que_boi": {
+          "description": "#[Tam Quốc Lệnh] - Đã nhận quẻ bói",
+          "rect": { "top": 145, "left": 831, "right": 1085, "bottom": 207},
+          "search_rect":  { "top": 68, "left": 112, "right": 1709, "bottom": 971},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "chua_que_boi": {
+          "description": "#[Tam Quốc Lệnh] - Chưa nhận quẻ bói",
+          "rect": { "top": 145, "left": 831, "right": 1085, "bottom": 207},
+          "search_rect":  { "top": 68, "left": 112, "right": 1709, "bottom": 971},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "chua_nhan_thuong": {
+          "description": "#[Tam Quốc Lệnh] - Tab nhận thưởng",
+          "rect": { "top": 145, "left": 831, "right": 1085, "bottom": 207},
+          "search_rect":  { "top": 68, "left": 112, "right": 1709, "bottom": 971},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "da_nhan_thuong": {
+          "description": "#[Tam Quốc Lệnh] - Tab nhận thưởng",
+          "rect": { "top": 145, "left": 831, "right": 1085, "bottom": 207},
+          "search_rect":  { "top": 68, "left": 112, "right": 1709, "bottom": 971},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "nhan_thuong_nhanh": {
+          "description": "#[Tam Quốc Lệnh] - Nhận thưởng nhanh",
+          "rect": { "top": 145, "left": 831, "right": 1085, "bottom": 207},
+          "search_rect":  { "top": 68, "left": 112, "right": 1709, "bottom": 971},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
