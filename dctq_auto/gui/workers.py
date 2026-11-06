@@ -78,29 +78,19 @@ class BotWorker(
     def _emit_progress_item(self, item: ProgressInfo) -> None:
         self.progress_info_changed.emit(replace(item))
 
-    def SearchProcessInfo(self, process_ids: list[str]) -> list[ProgressInfo]:
-        """Find registered progress items by their IDs, preserving the input order."""
-        found: list[ProgressInfo] = []
-        seen: set[str] = set()
-        for process_id in process_ids:
-            if not process_id or process_id in seen:
-                continue
-            seen.add(process_id)
-            item = self.progress_manager.get(process_id)
-            if item is not None:
-                found.append(item)
-        return found
+    def SearchProcessInfo(self, process_id: str) -> ProgressInfo | None:
+        """Find a registered progress item by its ID."""
+        return self.progress_manager.get(process_id)
 
-    def UpdateProcessMessage(
-        self, process_ids: list[str], message: str
-    ) -> list[ProgressInfo]:
-        """Update the message of every existing progress item in the ID list."""
-        updated: list[ProgressInfo] = []
-        for item in self.SearchProcessInfo(process_ids):
-            item = self.progress_manager.update(item.id, message=message)
-            self._emit_progress_item(item)
-            updated.append(replace(item))
-        return updated
+    def UpdateProcessMessage(self, process_id: str, message: str) -> bool:
+        """Update an existing progress item's message and notify the GUI."""
+        item = self.SearchProcessInfo(process_id)
+        if item is None:
+            return False
+
+        item = self.progress_manager.update(item.id, message=message)
+        self._emit_progress_item(item)
+        return True
 
     def _emit_overall_progress(
         self, completed: int, total: int, message: str
