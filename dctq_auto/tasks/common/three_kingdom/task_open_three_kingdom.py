@@ -4,7 +4,9 @@ import time
 
 from dctq_auto.config.constants import (
     _TEMPLATE_MAIN_TAM_QUOC_LENH,
+    _TEMPLATE_TAM_QUOC_LENH_DANG_MO_CHIEN_TRANH,
     _TEMPLATE_TAM_QUOC_LENH_MAN_HINH_CHINH,
+    _TEMPLATE_TAM_QUOC_LENH_CHUA_MO_CHIEN_TRANH,
 )
 from dctq_auto.tasks.common.battle.battle_utils import click_match, match, screen_bgr
 from dctq_auto.vision.template_store import get_templates
@@ -14,6 +16,8 @@ _MAX_TRIES = 20
 _OPEN_TEMPLATES = (
     _TEMPLATE_TAM_QUOC_LENH_MAN_HINH_CHINH,
     _TEMPLATE_MAIN_TAM_QUOC_LENH,
+    _TEMPLATE_TAM_QUOC_LENH_CHUA_MO_CHIEN_TRANH,
+    _TEMPLATE_TAM_QUOC_LENH_DANG_MO_CHIEN_TRANH,
 )
 
 
@@ -57,10 +61,40 @@ def run(worker, account, device, ocr_client, log) -> bool:
                 log(f"[{account.display_name}] Không click được lối vào Tam Quốc Lệnh: {exc}")
                 return False
         else:
-            log(
-                f"[{account.display_name}] Chưa nhận diện được lối vào hoặc màn hình "
-                f"Tam Quốc Lệnh (lần {current_try}/{_MAX_TRIES}); thử lại."
+            unopened_match = match(
+                screen,
+                templates.get(_TEMPLATE_TAM_QUOC_LENH_CHUA_MO_CHIEN_TRANH),
+                account=account,
+                log=log,
             )
+            if unopened_match is not None:
+                try:
+                    x, y = click_match(device, unopened_match)
+                    log(
+                        f"[{account.display_name}] Click mở sự kiện Tam Quốc Lệnh "
+                        f"tại ({x}, {y}); chờ nhận diện lối vào."
+                    )
+                except Exception as exc:
+                    log(
+                        f"[{account.display_name}] Không click được trạng thái chưa mở "
+                        f"chiến tranh Tam Quốc Lệnh: {exc}"
+                    )
+                    return False
+            elif current_try == _MAX_TRIES:
+                event_match = match(
+                    screen,
+                    templates.get(_TEMPLATE_TAM_QUOC_LENH_DANG_MO_CHIEN_TRANH),
+                    account=account,
+                    log=log,
+                )
+                if event_match is not None:
+                    log(f"[{account.display_name}] Sự kiện Tam Quốc Lệnh đã kết thúc.")
+                    return False
+            else:
+                log(
+                    f"[{account.display_name}] Chưa nhận diện được lối vào hoặc màn hình "
+                    f"Tam Quốc Lệnh (lần {current_try}/{_MAX_TRIES}); thử lại."
+                )
 
         time.sleep(1)
 
