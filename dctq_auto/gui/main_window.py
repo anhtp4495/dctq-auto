@@ -2022,7 +2022,9 @@ class MainWindow(QMainWindow):
         if config.get("state_war_mode"):
             return []
         if config.get("strategy_mode"):
-            return [(f"Ải {stage}", 1) for stage in range(1, 101)]
+            # Mưu Binh uses a single parent counter and two child progress rows.
+            # Do not pre-create one row for every stage.
+            return []
         if config.get("utility_tasks_mode"):
             task_labels = (
                 ("task_login", "Đăng nhập"),
