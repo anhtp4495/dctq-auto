@@ -2335,7 +2335,10 @@ class MainWindow(QMainWindow):
         glyph, color = states.get(progress_info.status.value, ("·", "#6e7781"))
         # Child icon and label share the same indentation beneath the account row.
         item.setIcon(self._status_icon(glyph, color, indent=20))
-        item.setText(progress_info.name)
+        display_text = progress_info.name
+        if progress_info.total > 1:
+            display_text = f"{display_text} [{progress_info.current}/{progress_info.total}]"
+        item.setText(display_text)
         details = [progress_info.message] if progress_info.message else []
         if progress_info.total > 1 or progress_info.current:
             details.append(f"Tiến độ: {progress_info.current}/{progress_info.total}")

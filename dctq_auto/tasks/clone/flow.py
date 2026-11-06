@@ -3,6 +3,7 @@
 Tách khỏi GUI worker để các tab/nhiệm vụ có thể gọi lại cùng một luồng.
 """
 import re
+import cv2
 from difflib import SequenceMatcher
 import shlex
 import time
@@ -15,7 +16,9 @@ from PIL import ImageOps
 from dctq_auto.adb.client import AdbClient
 from dctq_auto.automation.battle_testkit import BattleSnapshot, run_mock_battle
 from dctq_auto.tasks.common.accounts import load_accounts
+from dctq_auto.tasks.common.close_knowned_dialog import close_knowned_dialog
 from dctq_auto.config.step_registry import get_clone_step_registry
+from dctq_auto.progress import ProgressStatus
 
 
 def getProcessIdOfAccount(self, account) -> str | None:
@@ -691,12 +694,24 @@ def run_clone_flow_optimize(self, device) -> None:
             self._emit_clone_account_status(account.display_name, "failed")
             self._emit_clone_account_result(account.display_name, False)
             failed_count += 1
+            try:
+                screenshot = device.screenshot()
+                screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
+                close_knowned_dialog(self, account, device, ocr_client, self.log_message.emit, screen_bgr)
+            except Exception as exc:
+                log(
+                    f"[{account.display_name}] Không chụp được màn hình "
+                    f"để đóng các hộp thoại đã biết: {exc}"
+                )
+
             continue
 
         # Mỗi account cần danh sách step riêng vì các task sẽ loại step đã hoàn tất.
+        self._current_process_ids.clear()
         result = run_clone_flow_optimize_account(
             self, account, list(selected_steps), device, index, total
         )
+        self._current_process_ids.clear()
         if result is not None:
             try:
                 if not self._wait_if_paused():
@@ -756,8 +771,12 @@ def run_clone_flow_optimize_account(
         # Clone Optimize chỉ hiển thị các step được chọn; ẩn node tiến trình nội bộ.
         self._clone_progress_steps_only = True
         for step_id in steps:
-            self._emit_clone_step_progress(
-                step_registry.get_label(step_id), "pending", 0, 1
+            self._current_process_ids[step_id] = self.UpdateOrCreateProcessProgress(
+                name=step_registry.get_label(step_id),
+                status="running",
+                current=0,
+                total=1,
+                parent_id=getProcessIdOfAccount(self, account),
             )
         self.log_message.emit(
             f"[{account.display_name}] Clone Optimize — bắt đầu tác vụ tài khoản {index}/{total}."
@@ -853,8 +872,9 @@ def run_clone_flow_optimize_account(
             ]
             steps_before = list(steps)
             for step_id in selected_group_steps:
-                self._emit_clone_step_progress(
-                    step_registry.get_label(step_id), "running", 0, 1
+                self.UpdateProcessStatus(
+                    process_id=self._current_process_ids[step_id],
+                    status=ProgressStatus.RUNNING,
                 )
             try:
                 remaining_steps = task_runner(
@@ -866,11 +886,13 @@ def run_clone_flow_optimize_account(
                 task_changed = steps != steps_before
                 for step_id in selected_group_steps:
                     completed = step_id not in steps
-                    self._emit_clone_step_progress(
-                        step_registry.get_label(step_id),
-                        "done" if completed else "failed",
-                        1 if completed else 0,
-                        1,
+                    self.UpdateProcessStatus(
+                        process_id=self._current_process_ids[step_id],
+                        status=(
+                            ProgressStatus.DONE
+                            if completed
+                            else ProgressStatus.FAILED
+                        ),
                     )
                 self.log_message.emit(
                     f"[{account.display_name}] Task {task_label} "
@@ -879,8 +901,9 @@ def run_clone_flow_optimize_account(
             except Exception as exc:
                 _tat_ca_thanh_cong = False
                 for step_id in selected_group_steps:
-                    self._emit_clone_step_progress(
-                        step_registry.get_label(step_id), "failed", 0, 1
+                    self.UpdateProcessStatus(
+                        process_id=self._current_process_ids[step_id],
+                        status=ProgressStatus.FAILED,
                     )
                 self.log_message.emit(
                     f"[{account.display_name}] Task {task_label} gặp lỗi: {exc}; tiếp tục task kế tiếp."
@@ -910,8 +933,9 @@ def run_clone_flow_optimize_account(
         + ", ".join(remaining_labels)
     )
     for step_id in steps:
-        self._emit_clone_step_progress(
-            step_registry.get_label(step_id), "failed", 0, 1
+        self.UpdateProcessStatus(
+            process_id=self._current_process_ids[step_id],
+            status=ProgressStatus.FAILED,
         )
     return False
 

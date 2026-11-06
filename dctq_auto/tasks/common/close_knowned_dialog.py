@@ -7,6 +7,8 @@ from dctq_auto.config.constants import (
     _TEMPLATE_ACCOUNT_CLOSE_CAP_NHAT_THONG_TIN,
     _TEMPLATE_ACCOUNT_CAP_NHAT_THONG_TIN,
     _TEMPLATE_THONG_BAO_DICH_QUAN_TAP_KICH,
+    _TEMPLATE_QUAN_SU_GIAO_TRANH_HOI_THANH,
+    _TEMPLATE_QUAN_SU_TRANH_BA_HOI_THANH,
 )
 from dctq_auto.tasks.common.battle.battle_utils import click_match
 from dctq_auto.vision.template_matching import match_template
@@ -22,6 +24,8 @@ def close_knowned_dialog(
         _TEMPLATE_ACCOUNT_CLOSE_CAP_NHAT_THONG_TIN,
         _TEMPLATE_ACCOUNT_CAP_NHAT_THONG_TIN,
         _TEMPLATE_THONG_BAO_DICH_QUAN_TAP_KICH,
+        _TEMPLATE_QUAN_SU_GIAO_TRANH_HOI_THANH,
+        _TEMPLATE_QUAN_SU_TRANH_BA_HOI_THANH,
     )
     templates = get_templates(template_names)
     positions = ButtonPositions()
@@ -64,11 +68,13 @@ def close_knowned_dialog(
             x, y = positions.get("main.cap_nhat_thong_tin", "dong_man_hinh")
             device.shell(f"input tap {x} {y}")
             dialog_name = "Cập nhật thông tin"
-        else:
+        elif template_name == _TEMPLATE_THONG_BAO_DICH_QUAN_TAP_KICH:
             x, y = positions.get("main.dich_quan_tap_kich", "dong_man_hinh")
             device.shell(f"input tap {x} {y}")
             dialog_name = "Địch Quân Tập Kích"
-
+        else:
+            x, y = click_match(device, match)
+            dialog_name = template_name
         log(
             f"[{account.display_name}] Đã phát hiện {dialog_name}; "
             f"click đóng màn hình tại ({x}, {y})."

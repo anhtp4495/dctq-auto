@@ -5,6 +5,7 @@ from pathlib import Path
 
 from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.config.constants import (
+    _STEP_QUAN_SU_GIAO_TRANH,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_DUNG_LUONG_THAO,
 )
 from dctq_auto.tasks.common.battle.battle_strategies.custom_battle import CustomBattle
@@ -152,6 +153,11 @@ def run(self, account, device, ocr_client, log) -> bool:
             log(
                 f"[{account.display_name}] Phát hiện Rút lui; "
                 "bắt đầu triển khai đội hình theo chiến thuật JSON."
+            )
+            self.UpdateProcessInfo(
+                process_id=self._current_process_ids[_STEP_QUAN_SU_GIAO_TRANH],
+                current=completed_battles + 1,
+                total=target_battles,
             )
             context["mark_battle_started"] = (
                 lambda: context.__setitem__("battle_started_at", time.monotonic())

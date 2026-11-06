@@ -56,6 +56,7 @@ class BotWorker(
         self._progress_completed = 0
         self.progress_manager = ProgressManager()
         self._progress_root_id: str | None = None
+        self._current_process_ids: dict[str, str] = {}
         self._progress_items_by_key: dict[tuple[str, str], str] = {}
         self._progress_accounts: dict[str, str] = {}
         self._active_progress_account_id: str | None = None
@@ -101,6 +102,18 @@ class BotWorker(
             return False
 
         item = self.progress_manager.update(item.id, status=status)
+        self._emit_progress_item(item)
+        return True
+
+    def UpdateProcessInfo(
+        self, process_id: str, current: int, total: int,
+    ) -> bool:
+        """Update an existing progress item's status and notify the GUI."""
+        item = self.SearchProcessInfo(process_id)
+        if item is None:
+            return False
+
+        item = self.progress_manager.update(item.id, current=max(0, current), total=max(0, total))
         self._emit_progress_item(item)
         return True
 
