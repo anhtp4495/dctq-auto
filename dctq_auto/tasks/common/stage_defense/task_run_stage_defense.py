@@ -126,8 +126,10 @@ def run(worker, account, device, log) -> bool:
         if observation["quan_su"] is not None:
             worker._emit_task_progress("Chiến đấu", "success", 0, 0)
             worker._emit_task_progress("Nhận thưởng", "success", 0, 0)
-            worker._set_progress_root_message("Đã vượt ải 100")
-            log(f"[{account.display_name}] Đã hoàn thành Mưu Binh; phát hiện màn hình chính Quân Sự.")
+            log(
+                f"[{account.display_name}] Đã hoàn thành Mưu Binh; "
+                "phát hiện màn hình chính Quân Sự."
+            )
             return True
 
         if observation["hop_thoai_thuong_vuot_ai"] is not None:
