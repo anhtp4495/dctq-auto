@@ -268,6 +268,12 @@ class BotWorker(
             self._active_progress_account_id = None
         self.clone_account_result.emit(display_name, succeeded)
 
+    def _set_progress_root_message(self, message: str) -> None:
+        """Update the root row's message without changing overall progress counts."""
+        root = self._ensure_progress_root()
+        item = self.progress_manager.update(root.id, message=message)
+        self._emit_progress_item(item)
+
     def _set_root_status(self, status: ProgressStatus, message: str) -> None:
         if self._progress_root_id is None:
             return
@@ -422,11 +428,9 @@ class BotWorker(
         if self._config.get("strategy_mode"):
             total_stages = 100
             completed_stages = 0
+            self._set_progress_root_message("Ải đã vượt 0")
             self._emit_task_progress("Chiến đấu", "pending", 0, 0)
             self._emit_task_progress("Nhận thưởng", "pending", 0, 0)
-            self._emit_task_progress(
-                "Ải đã vượt", "running", 0, 0, message="Ải đã vượt 0"
-            )
 
             for stage in range(1, total_stages + 1):
                 self._emit_task_progress("Chiến đấu", "running", 0, 0)
@@ -444,21 +448,15 @@ class BotWorker(
                     return
 
                 completed_stages += 1
-                self._emit_task_progress(
-                    "Ải đã vượt",
-                    "running",
-                    0,
-                    0,
-                    message=f"Ải đã vượt {completed_stages}",
+                self._set_progress_root_message(
+                    f"Ải đã vượt {min(completed_stages, total_stages)}"
                 )
                 self._emit_task_progress("Chiến đấu", "running", 0, 0)
                 self._emit_task_progress("Nhận thưởng", "pending", 0, 0)
 
             self._emit_task_progress("Chiến đấu", "success", 0, 0)
             self._emit_task_progress("Nhận thưởng", "success", 0, 0)
-            self._emit_task_progress(
-                "Ải đã vượt", "success", 0, 0, message="Ải đã vượt 100"
-            )
+            self._set_progress_root_message("Ải đã vượt 100")
             self.log_message.emit(
                 "[Chạy thử] Hoàn tất mô phỏng Mưu Binh: đã vượt 100 ải. "
                 "Không gửi lệnh ADB."
