@@ -85,20 +85,8 @@ class CloneTab(QWidget):
             )
         )
         self.clone_receive_quoc_van.setChecked(False)
-        self.clone_reward_tam_quoc_lenh = QCheckBox(
-            step_registry.get_display_name_by_config_key(
-                "clone_reward_tam_quoc_lenh", "Nhận Thưởng - Tam quốc lệnh"
-            )
-        )
-        self.clone_reward_daily_missions = QCheckBox(
-            step_registry.get_display_name_by_config_key(
-                "clone_reward_daily_missions", "Nhận Thưởng - Nhiệm vụ hằng ngày"
-            )
-        )
         phuc_loi_layout.addWidget(self.clone_receive_quoc_van)
         phuc_loi_layout.addWidget(self.clone_daily_check_in)
-        phuc_loi_layout.addWidget(self.clone_reward_tam_quoc_lenh)
-        phuc_loi_layout.addWidget(self.clone_reward_daily_missions)
         layout.addWidget(phuc_loi_group)
 
         guild_group = QGroupBox("Quân đoàn")
@@ -330,6 +318,22 @@ class CloneTab(QWidget):
             )
         )
         layout.addWidget(self.clone_reward_guild)
+
+        reward_group = QGroupBox("Nhận thưởng")
+        reward_layout = QVBoxLayout(reward_group)
+        self.clone_reward_tam_quoc_lenh = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_reward_tam_quoc_lenh", "Nhận Thưởng - Tam quốc lệnh"
+            )
+        )
+        self.clone_reward_daily_missions = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_reward_daily_missions", "Nhận Thưởng - Nhiệm vụ hằng ngày"
+            )
+        )
+        reward_layout.addWidget(self.clone_reward_tam_quoc_lenh)
+        reward_layout.addWidget(self.clone_reward_daily_missions)
+        layout.addWidget(reward_group)
 
         layout.addStretch(1)
         # Giữ đủ chiều rộng tối thiểu cho các điều khiển; nếu cửa sổ hẹp,
