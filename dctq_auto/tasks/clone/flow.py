@@ -890,7 +890,7 @@ def run_clone_flow_optimize_account(
                     self.UpdateProcessStatus(
                         process_id=self._current_process_ids[step_id],
                         status=(
-                            ProgressStatus.DONE
+                            ProgressStatus.SUCCESS
                             if completed
                             else ProgressStatus.FAILED
                         ),
