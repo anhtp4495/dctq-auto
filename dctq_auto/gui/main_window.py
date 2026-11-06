@@ -2079,6 +2079,7 @@ class MainWindow(QMainWindow):
         self._render_task_progress(name, "pending", 0, count)
 
     def _init_task_progress(self, config: dict) -> None:
+        self._show_progress_root_row = bool(config.get("strategy_mode"))
         self.task_progress_list.clear()
         self.task_progress_labels.clear()
         is_clone = bool(config.get("clone_mode"))
@@ -2190,17 +2191,31 @@ class MainWindow(QMainWindow):
                 return
 
     def _add_standalone_progress_item(self, progress_info) -> None:
-        if progress_info.category != "standalone" or progress_info.parent_id is None:
+        if progress_info.category != "standalone":
             return
-        if progress_info.name not in self.task_progress_labels:
+        if progress_info.parent_id is None:
+            if not self._show_progress_root_row:
+                return
+            row_name = "__progress_root__"
+        else:
+            row_name = progress_info.name
+        if row_name not in self.task_progress_labels:
             item = QListWidgetItem()
             self.task_progress_list.addItem(item)
-            self.task_progress_labels[progress_info.name] = item
+            self.task_progress_labels[row_name] = item
         self._update_standalone_progress_item(progress_info)
 
     def _update_standalone_progress_item(self, progress_info) -> None:
-        if progress_info.category != "standalone" or progress_info.parent_id is None:
+        if progress_info.category != "standalone":
             return
+        if progress_info.parent_id is None:
+            if not self._show_progress_root_row:
+                return
+            row_name = "__progress_root__"
+            display_name = progress_info.message or "Đã vượt ải 0"
+        else:
+            row_name = progress_info.name
+            display_name = progress_info.name
         state = {
             "pending": "pending",
             "running": "running",
@@ -2211,9 +2226,9 @@ class MainWindow(QMainWindow):
             "stopped": "stopped",
         }.get(progress_info.status.value, "pending")
         self._render_task_progress(
-            progress_info.name, state, progress_info.current, progress_info.total
+            display_name, state, progress_info.current, progress_info.total
         )
-        item = self.task_progress_labels.get(progress_info.name)
+        item = self.task_progress_labels.get(row_name)
         if item is not None:
             item.setData(Qt.ItemDataRole.UserRole + 2, progress_info.id)
             item.setData(Qt.ItemDataRole.UserRole + 3, progress_info.parent_id)
