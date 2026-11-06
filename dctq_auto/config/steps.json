@@ -12,6 +12,18 @@
     "priority": 10001
   },
   {
+    "id": "hoat_dong_nhan_thuong_tam_quoc_lenh",
+    "config_key": "clone_reward_tam_quoc_lenh",
+    "display_name": "Nhận Thưởng - Tam quốc lệnh",
+    "priority": 10002
+  },
+  {
+    "id": "hoat_dong_nhan_thuong_nhiem_vu_hang_ngay",
+    "config_key": "clone_reward_daily_missions",
+    "display_name": "Nhận Thưởng - Nhiệm vụ hằng ngày",
+    "priority": 10003
+  },
+  {
     "id": "quan_doan_bao_danh",
     "config_key": "clone_guild_check_in",
     "display_name": "Báo danh quân đoàn",
