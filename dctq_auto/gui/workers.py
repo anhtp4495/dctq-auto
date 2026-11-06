@@ -132,19 +132,23 @@ class BotWorker(
         prefix = f"{account_name} - "
         return name[len(prefix):] if name.startswith(prefix) else name
 
-    def _emit_task_progress(
-        self, name: str, state: str, current: int, total: int,
+    def UpdateOrCreateProcessProgress(
+        self,
+        name: str,
+        status: ProgressStatus | str,
+        current: int,
+        total: int,
         message: str | None = None,
-    ) -> None:
-        """Update a task node and retain the existing task progress signal."""
-        if self._clone_progress_steps_only and not self._clone_progress_force_emit:
-            self.task_progress_changed.emit(name, state, current, total)
-            return
-        root = self._ensure_progress_root()
-        parent_id = self._active_progress_account_id or root.id
+        parent_id: str | None = None,
+    ) -> str:
+        """Update an existing progress item or create it, returning its ID."""
+        if parent_id is None:
+            parent_id = self._active_progress_account_id or self._ensure_progress_root().id
+
         task_name = self._get_progress_task_name(name)
         key = (parent_id, task_name)
         progress_id = self._progress_items_by_key.get(key)
+
         status_map = {
             "pending": ProgressStatus.PENDING,
             "running": ProgressStatus.RUNNING,
@@ -155,8 +159,22 @@ class BotWorker(
             "skipped": ProgressStatus.SKIPPED,
             "stopped": ProgressStatus.STOPPED,
         }
-        status = status_map.get(state, ProgressStatus.RUNNING)
+        progress_status = (
+            status_map.get(status, ProgressStatus.RUNNING)
+            if isinstance(status, str) else status
+        )
         progress_message = task_name if message is None else message
+        changes = {
+            "status": progress_status,
+            "current": max(0, current),
+            "total": max(0, total),
+            "message": progress_message,
+            "error": (
+                "Tác vụ thất bại"
+                if progress_status == ProgressStatus.FAILED else None
+            ),
+        }
+
         if progress_id is None:
             item = self.progress_manager.add(
                 ProgressInfo(
@@ -164,25 +182,33 @@ class BotWorker(
                     parent_id=parent_id,
                     name=task_name,
                     category="standalone",
-                    status=status,
-                    current=max(0, current),
-                    total=max(0, total),
-                    message=progress_message,
-                    error="Tác vụ thất bại" if status == ProgressStatus.FAILED else None,
+                    **changes,
                 )
             )
             self._progress_items_by_key[key] = item.id
             self.progress_info_added.emit(replace(item))
         else:
-            item = self.progress_manager.update(
-                progress_id,
-                status=status,
-                current=max(0, current),
-                total=max(0, total),
-                message=progress_message,
-                error="Tác vụ thất bại" if status == ProgressStatus.FAILED else None,
-            )
+            item = self.progress_manager.update(progress_id, **changes)
             self._emit_progress_item(item)
+
+        return item.id
+
+    def _emit_task_progress(
+        self, name: str, state: str, current: int, total: int,
+        message: str | None = None,
+    ) -> None:
+        """Update a task node and retain the existing task progress signal."""
+        if self._clone_progress_steps_only and not self._clone_progress_force_emit:
+            self.task_progress_changed.emit(name, state, current, total)
+            return
+
+        self.UpdateOrCreateProcessProgress(
+            name=name,
+            status=state,
+            current=current,
+            total=total,
+            message=message,
+        )
         self.task_progress_changed.emit(name, state, current, total)
 
         # Keep the Clone account row informative while its child task runs.
