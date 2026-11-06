@@ -119,8 +119,8 @@ def test_mock_muu_binh_uses_stage_defense_progress_flow():
     assert set(by_name) == {"Chiến đấu", "Nhận thưởng"}
     assert by_name["Chiến đấu"].status is ProgressStatus.SUCCESS
     assert by_name["Nhận thưởng"].status is ProgressStatus.SUCCESS
-    assert root.message == "Ải đã vượt 100"
+    assert root.message == "Đã vượt ải 1"
     assert any(
-        item.parent_id == root.id and item.message == "Ải đã vượt 1"
+        item.parent_id == root.id and item.message == "Đã vượt ải 1"
         for item in changed
     )
