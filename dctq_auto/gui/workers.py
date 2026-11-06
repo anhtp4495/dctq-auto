@@ -107,7 +107,8 @@ class BotWorker(
         return name[len(prefix):] if name.startswith(prefix) else name
 
     def _emit_task_progress(
-        self, name: str, state: str, current: int, total: int
+        self, name: str, state: str, current: int, total: int,
+        message: str | None = None,
     ) -> None:
         """Update a task node and retain the existing task progress signal."""
         if self._clone_progress_steps_only and not self._clone_progress_force_emit:
@@ -129,6 +130,7 @@ class BotWorker(
             "stopped": ProgressStatus.STOPPED,
         }
         status = status_map.get(state, ProgressStatus.RUNNING)
+        progress_message = task_name if message is None else message
         if progress_id is None:
             item = self.progress_manager.add(
                 ProgressInfo(
@@ -139,7 +141,7 @@ class BotWorker(
                     status=status,
                     current=max(0, current),
                     total=max(0, total),
-                    message=task_name,
+                    message=progress_message,
                     error="Tác vụ thất bại" if status == ProgressStatus.FAILED else None,
                 )
             )
@@ -151,7 +153,7 @@ class BotWorker(
                 status=status,
                 current=max(0, current),
                 total=max(0, total),
-                message=task_name,
+                message=progress_message,
                 error="Tác vụ thất bại" if status == ProgressStatus.FAILED else None,
             )
             self._emit_progress_item(item)
