@@ -97,3 +97,28 @@ def test_worker_pause_and_resume_update_root_status():
 
     worker.resume()
     assert root.status is ProgressStatus.RUNNING
+
+
+def test_mock_muu_binh_uses_stage_defense_progress_flow():
+    worker = BotWorker(
+        serial=None,
+        screenshot_dir=Path("."),
+        config={"strategy_mode": True},
+        mock_mode=True,
+    )
+    worker._mock_tick = lambda _message: True
+    changed = []
+    worker.progress_info_changed.connect(changed.append)
+
+    worker._run_mock()
+
+    root = worker.progress_manager.get(worker._progress_root_id)
+    children = worker.progress_manager.get_children(root.id)
+    by_name = {item.name: item for item in children}
+
+    assert set(by_name) == {"Chiến đấu", "Nhận thưởng", "Ải đã vượt"}
+    assert by_name["Chiến đấu"].status is ProgressStatus.SUCCESS
+    assert by_name["Nhận thưởng"].status is ProgressStatus.SUCCESS
+    assert by_name["Ải đã vượt"].status is ProgressStatus.SUCCESS
+    assert by_name["Ải đã vượt"].message == "Ải đã vượt 100"
+    assert any(item.message == "Ải đã vượt 1" for item in changed)
