@@ -85,8 +85,20 @@ class CloneTab(QWidget):
             )
         )
         self.clone_receive_quoc_van.setChecked(False)
+        self.clone_reward_tam_quoc_lenh = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_reward_tam_quoc_lenh", "Nhận Thưởng - Tam quốc lệnh"
+            )
+        )
+        self.clone_reward_daily_missions = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_reward_daily_missions", "Nhận Thưởng - Nhiệm vụ hằng ngày"
+            )
+        )
         phuc_loi_layout.addWidget(self.clone_receive_quoc_van)
         phuc_loi_layout.addWidget(self.clone_daily_check_in)
+        phuc_loi_layout.addWidget(self.clone_reward_tam_quoc_lenh)
+        phuc_loi_layout.addWidget(self.clone_reward_daily_missions)
         layout.addWidget(phuc_loi_group)
 
         guild_group = QGroupBox("Quân đoàn")
@@ -408,6 +420,8 @@ class CloneTab(QWidget):
             "clone_login": True,
             "clone_daily_check_in": self.clone_daily_check_in.isChecked(),
             "clone_receive_quoc_van": self.clone_receive_quoc_van.isChecked(),
+            "clone_reward_tam_quoc_lenh": self.clone_reward_tam_quoc_lenh.isChecked(),
+            "clone_reward_daily_missions": self.clone_reward_daily_missions.isChecked(),
             "clone_guild_check_in": self.clone_guild_check_in.isChecked(),
             "clone_receive_lucky_bag": self.clone_receive_lucky_bag.isChecked(),
             "clone_guild_fortune": self.clone_guild_fortune.isChecked(),
