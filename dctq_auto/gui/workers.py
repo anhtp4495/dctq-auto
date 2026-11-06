@@ -421,15 +421,48 @@ class BotWorker(
             return
         if self._config.get("strategy_mode"):
             total_stages = 100
-            self._emit_overall_progress(0, total_stages, "Chạy thử Mưu Binh")
+            completed_stages = 0
+            self._emit_task_progress("Chiến đấu", "pending", 0, 0)
+            self._emit_task_progress("Nhận thưởng", "pending", 0, 0)
+            self._emit_task_progress(
+                "Ải đã vượt", "running", 0, 0, message="Ải đã vượt 0"
+            )
+
             for stage in range(1, total_stages + 1):
-                label = f"Ải {stage}"
-                self._emit_task_progress(label, "running", 0, 1)
-                if not self._mock_tick(f"[Chạy thử] Mưu Binh: hoàn thành {label}."):
-                    self._emit_task_progress(label, "stopped", 0, 1)
+                self._emit_task_progress("Chiến đấu", "running", 0, 0)
+                if not self._mock_tick(
+                    f"[Chạy thử] Mưu Binh: chiến đấu ải {stage}."
+                ):
+                    self._emit_task_progress("Chiến đấu", "stopped", 0, 0)
                     return
-                self._emit_task_progress(label, "done", 1, 1)
-                self._emit_overall_progress(stage, total_stages, f"Chạy thử: {label}")
+
+                self._emit_task_progress("Nhận thưởng", "running", 0, 0)
+                if not self._mock_tick(
+                    f"[Chạy thử] Mưu Binh: nhận thưởng ải {stage}."
+                ):
+                    self._emit_task_progress("Nhận thưởng", "stopped", 0, 0)
+                    return
+
+                completed_stages += 1
+                self._emit_task_progress(
+                    "Ải đã vượt",
+                    "running",
+                    0,
+                    0,
+                    message=f"Ải đã vượt {completed_stages}",
+                )
+                self._emit_task_progress("Chiến đấu", "running", 0, 0)
+                self._emit_task_progress("Nhận thưởng", "pending", 0, 0)
+
+            self._emit_task_progress("Chiến đấu", "success", 0, 0)
+            self._emit_task_progress("Nhận thưởng", "success", 0, 0)
+            self._emit_task_progress(
+                "Ải đã vượt", "success", 0, 0, message="Ải đã vượt 100"
+            )
+            self.log_message.emit(
+                "[Chạy thử] Hoàn tất mô phỏng Mưu Binh: đã vượt 100 ải. "
+                "Không gửi lệnh ADB."
+            )
             return
         if self._config.get("utility_tasks_mode"):
             selected = []
