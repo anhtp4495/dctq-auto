@@ -2226,9 +2226,15 @@ class MainWindow(QMainWindow):
             "stopped": "stopped",
         }.get(progress_info.status.value, "pending")
         self._render_task_progress(
-            display_name, state, progress_info.current, progress_info.total
+            row_name, state, progress_info.current, progress_info.total
         )
         item = self.task_progress_labels.get(row_name)
+        if item is not None and progress_info.parent_id is None:
+            prefix = {
+                "pending": "· ",
+                "stopped": "■ ",
+            }.get(state, "")
+            item.setText(f"{prefix}{display_name}")
         if item is not None:
             item.setData(Qt.ItemDataRole.UserRole + 2, progress_info.id)
             item.setData(Qt.ItemDataRole.UserRole + 3, progress_info.parent_id)
