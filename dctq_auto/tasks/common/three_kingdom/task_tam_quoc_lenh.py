@@ -116,16 +116,6 @@ def receive_tam_quoc_lenh_reward(worker, account, device, log) -> bool:
             log(f"[{account.display_name}] Không chụp được màn hình nhận thưởng: {exc}")
             return False
 
-        received_match = match(
-            screen,
-            templates.get(_TEMPLATE_TAM_QUOC_LENH_DA_NHAN_THUONG),
-            account=account,
-            log=log,
-        )
-        if received_match is not None:
-            log(f"[{account.display_name}] Đã nhận thưởng Tam Quốc Lệnh.")
-            return True
-
         unopened_tab_match = match(
             screen,
             templates.get(_TEMPLATE_TAM_QUOC_LENH_CHUA_NHAN_THUONG),
@@ -163,6 +153,19 @@ def receive_tam_quoc_lenh_reward(worker, account, device, log) -> bool:
                 return False
             time.sleep(0.8)
             continue
+
+        selected_tab_match = match(
+            screen,
+            templates.get(_TEMPLATE_TAM_QUOC_LENH_DA_NHAN_THUONG),
+            account=account,
+            log=log,
+        )
+        if selected_tab_match is not None:
+            log(
+                f"[{account.display_name}] Tab nhận thưởng đã mở và "
+                "không còn nút nhận thưởng nhanh; xác nhận hoàn tất."
+            )
+            return True
 
         log(
             f"[{account.display_name}] Chưa nhận diện được trạng thái nhận thưởng "
