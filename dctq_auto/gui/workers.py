@@ -92,6 +92,18 @@ class BotWorker(
         self._emit_progress_item(item)
         return True
 
+    def UpdateProcessStatus(
+        self, process_id: str, status: ProgressStatus | str
+    ) -> bool:
+        """Update an existing progress item's status and notify the GUI."""
+        item = self.SearchProcessInfo(process_id)
+        if item is None:
+            return False
+
+        item = self.progress_manager.update(item.id, status=status)
+        self._emit_progress_item(item)
+        return True
+
     def _emit_overall_progress(
         self, completed: int, total: int, message: str
     ) -> None:
