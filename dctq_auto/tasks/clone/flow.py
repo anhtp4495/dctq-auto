@@ -18,6 +18,11 @@ from dctq_auto.tasks.common.accounts import load_accounts
 from dctq_auto.config.step_registry import get_clone_step_registry
 
 
+def getProcessIdOfAccount(self, account) -> str | None:
+    """Return the progress node ID associated with an account."""
+    return self._progress_accounts.get(account.display_name)
+
+
 def run_clone_flow(self, device) -> None:
     """Log in clone accounts using the confirmed login-screen OCR coordinates."""
     accounts = load_accounts(self._config.get("clone_account_file", ""))
