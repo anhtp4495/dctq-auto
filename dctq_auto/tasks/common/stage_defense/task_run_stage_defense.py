@@ -112,9 +112,7 @@ def run(worker, account, device, log) -> bool:
     completed_stages = 0
     worker._emit_task_progress("Chiến đấu", "pending", 0, 0)
     worker._emit_task_progress("Nhận thưởng", "pending", 0, 0)
-    worker._emit_task_progress(
-        "Ải đã vượt", "running", 0, 0, message="Ải đã vượt 0"
-    )
+    worker._set_progress_root_message("Ải đã vượt 0")
 
     while time.monotonic() < deadline:
         if not worker._wait_if_paused():
@@ -128,9 +126,7 @@ def run(worker, account, device, log) -> bool:
         if observation["quan_su"] is not None:
             worker._emit_task_progress("Chiến đấu", "success", 0, 0)
             worker._emit_task_progress("Nhận thưởng", "success", 0, 0)
-            worker._emit_task_progress(
-                "Ải đã vượt", "success", 0, 0, message="Ải đã vượt 100"
-            )
+            worker._set_progress_root_message("Ải đã vượt 100")
             log(f"[{account.display_name}] Đã hoàn thành Mưu Binh; phát hiện màn hình chính Quân Sự.")
             return True
 
@@ -138,12 +134,8 @@ def run(worker, account, device, log) -> bool:
             worker._emit_task_progress("Nhận thưởng", "running", 0, 0)
             _handle_reward_dialog(device, account, log, templates, positions)
             completed_stages += 1
-            worker._emit_task_progress(
-                "Ải đã vượt",
-                "running",
-                0,
-                0,
-                message=f"Ải đã vượt {completed_stages}",
+            worker._set_progress_root_message(
+                f"Ải đã vượt {min(completed_stages, 100)}"
             )
             worker._emit_task_progress("Chiến đấu", "running", 0, 0)
             worker._emit_task_progress("Nhận thưởng", "pending", 0, 0)
