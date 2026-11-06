@@ -426,7 +426,7 @@ class BotWorker(
             )
             return
         if self._config.get("strategy_mode"):
-            self._set_progress_root_message("Ải đã vượt 0")
+            self._set_progress_root_message("Đã vượt ải 0")
             self._emit_task_progress("Chiến đấu", "pending", 0, 0)
             self._emit_task_progress("Nhận thưởng", "pending", 0, 0)
 
@@ -440,11 +440,11 @@ class BotWorker(
                 self._emit_task_progress("Nhận thưởng", "stopped", 0, 0)
                 return
 
-            self._set_progress_root_message("Ải đã vượt 100")
+            self._set_progress_root_message("Đã vượt ải 1")
             self._emit_task_progress("Chiến đấu", "success", 0, 0)
             self._emit_task_progress("Nhận thưởng", "success", 0, 0)
             self.log_message.emit(
-                "[Chạy thử] Hoàn tất mô phỏng Mưu Binh: đã vượt 100 ải. "
+                "[Chạy thử] Hoàn tất mô phỏng Mưu Binh: đã vượt 1 ải. "
                 "Không gửi lệnh ADB."
             )
             return
