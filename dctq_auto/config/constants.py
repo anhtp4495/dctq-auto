@@ -42,6 +42,8 @@ _TEMPLATE_CHIEN_TRANH_MUU_BINH = "chien_tranh/muu_binh"
 # Template dùng trong quy trình nhận thưởng Tam Quốc Lệnh.
 _TEMPLATE_MAIN_TAM_QUOC_LENH = "main/tam_quoc_lenh"
 _TEMPLATE_TAM_QUOC_LENH_MAN_HINH_CHINH = "tam_quoc_lenh/man_hinh_chinh"
+_TEMPLATE_TAM_QUOC_LENH_CHUA_MO_CHIEN_TRANH = "tam_quoc_lenh/chua_mo_chien_tranh"
+_TEMPLATE_TAM_QUOC_LENH_DANG_MO_CHIEN_TRANH = "tam_quoc_lenh/dang_mo_chien_tranh"
 _TEMPLATE_TAM_QUOC_LENH_CHUA_NHAN_THUONG = "tam_quoc_lenh/chua_nhan_thuong"
 _TEMPLATE_TAM_QUOC_LENH_DA_NHAN_THUONG = "tam_quoc_lenh/da_nhan_thuong"
 _TEMPLATE_TAM_QUOC_LENH_NHAN_THUONG_NHANH = "tam_quoc_lenh/nhan_thuong_nhanh"
