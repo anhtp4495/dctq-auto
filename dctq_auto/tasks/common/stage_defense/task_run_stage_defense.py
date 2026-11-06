@@ -109,6 +109,13 @@ def run(worker, account, device, log) -> bool:
     )
     positions = ButtonPositions()
 
+    completed_stages = 0
+    worker._emit_task_progress("Chiến đấu", "pending", 0, 0)
+    worker._emit_task_progress("Nhận thưởng", "pending", 0, 0)
+    worker._emit_task_progress(
+        "Ải đã vượt", "running", 0, 0, message="Ải đã vượt 0"
+    )
+
     while time.monotonic() < deadline:
         if not worker._wait_if_paused():
             log(f"[{account.display_name}] Đã dừng khi đang vượt ải Mưu Binh.")
@@ -119,14 +126,28 @@ def run(worker, account, device, log) -> bool:
             return False
 
         if observation["quan_su"] is not None:
+            worker._emit_task_progress("Chiến đấu", "success", 0, 0)
+            worker._emit_task_progress("Nhận thưởng", "success", 0, 0)
+            worker._emit_task_progress(
+                "Ải đã vượt", "success", 0, 0, message="Ải đã vượt 100"
+            )
             log(f"[{account.display_name}] Đã hoàn thành Mưu Binh; phát hiện màn hình chính Quân Sự.")
             return True
 
         if observation["hop_thoai_thuong_vuot_ai"] is not None:
-            if _handle_reward_dialog(device, account, log, templates, positions):
-                time.sleep(1)
-            else:
-                time.sleep(0.5)
+            worker._emit_task_progress("Nhận thưởng", "running", 0, 0)
+            _handle_reward_dialog(device, account, log, templates, positions)
+            completed_stages += 1
+            worker._emit_task_progress(
+                "Ải đã vượt",
+                "running",
+                0,
+                0,
+                message=f"Ải đã vượt {completed_stages}",
+            )
+            worker._emit_task_progress("Chiến đấu", "running", 0, 0)
+            worker._emit_task_progress("Nhận thưởng", "pending", 0, 0)
+            time.sleep(1)
             continue
 
         if observation["tu_dong_den_ai_tiep_theo"] is not None:
@@ -136,6 +157,8 @@ def run(worker, account, device, log) -> bool:
             continue
 
         if observation["chien_dau"] is not None:
+            worker._emit_task_progress("Chiến đấu", "running", 0, 0)
+            worker._emit_task_progress("Nhận thưởng", "pending", 0, 0)
             x, y = click_match(device, observation["chien_dau"])
             log(f"[{account.display_name}] Click Chiến đấu tại ({x}, {y}).")
             time.sleep(1)
