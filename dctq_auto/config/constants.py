@@ -39,6 +39,13 @@ _TEMPLATE_MAIN_CHIEN_TRANH = "main/chien_tranh"
 _TEMPLATE_CHIEN_TRANH_MAN_HINH_CHINH = "chien_tranh/man_hinh_chinh"
 _TEMPLATE_CHIEN_TRANH_MUU_BINH = "chien_tranh/muu_binh"
 
+# Template dùng trong quy trình nhận thưởng Tam Quốc Lệnh.
+_TEMPLATE_MAIN_TAM_QUOC_LENH = "main/tam_quoc_lenh"
+_TEMPLATE_TAM_QUOC_LENH_MAN_HINH_CHINH = "tam_quoc_lenh/man_hinh_chinh"
+_TEMPLATE_TAM_QUOC_LENH_CHUA_NHAN_THUONG = "tam_quoc_lenh/chua_nhan_thuong"
+_TEMPLATE_TAM_QUOC_LENH_DA_NHAN_THUONG = "tam_quoc_lenh/da_nhan_thuong"
+_TEMPLATE_TAM_QUOC_LENH_NHAN_THUONG_NHANH = "tam_quoc_lenh/nhan_thuong_nhanh"
+
 # Template dùng trong quy trình Mưu Binh.
 _TEMPLATE_MUU_BINH_MAN_HINH_CHINH = "chien_tranh.muu_binh/man_hinh_chinh"
 _TEMPLATE_MUU_BINH_BAT_DAU = "chien_tranh.muu_binh/bat_dau"
