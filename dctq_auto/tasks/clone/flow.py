@@ -799,7 +799,7 @@ def run_clone_flow_optimize_account(
     # Chạy tuần tự các nhóm task dùng chung trước khi xử lý các nhóm khác.
     if not _common_tasks_done:
         from dctq_auto.tasks.common.activity.task_activity import run as run_activity
-        from dctq_auto.tasks.common.three_kingdom.task_tam_quoc_lenh import run as run_tam_quoc_lenh
+        from dctq_auto.tasks.common.three_kingdom.task_three_kingdom import run as run_three_kingdom
         from dctq_auto.tasks.common.guild.task_guild import run as run_guild
         from dctq_auto.tasks.common.shop.task_shop import run as run_shop
 
@@ -853,7 +853,7 @@ def run_clone_flow_optimize_account(
                 self._config = original_config
 
         common_tasks = (
-            ("Tam Quốc Lệnh", run_tam_quoc_lenh, {"hoat_dong_nhan_thuong_tam_quoc_lenh"}),
+            ("Tam Quốc Lệnh", run_three_kingdom, {"hoat_dong_nhan_thuong_tam_quoc_lenh"}),
             ("Hoạt động", run_activity, {"hoat_dong_phuc_loi_le_bao_quoc_van", "hoat_dong_phuc_loi_diem_danh"}),
             ("Quân đoàn", run_guild, {
                 "quan_doan_bao_danh", "quan_doan_tui_phuc", "quan_doan_cau_van",
