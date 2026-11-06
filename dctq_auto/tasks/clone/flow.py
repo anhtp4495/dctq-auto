@@ -4,6 +4,7 @@ Tách khỏi GUI worker để các tab/nhiệm vụ có thể gọi lại cùng 
 """
 import re
 import cv2
+import numpy as np
 from difflib import SequenceMatcher
 import shlex
 import time
@@ -699,7 +700,7 @@ def run_clone_flow_optimize(self, device) -> None:
                 screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
                 close_knowned_dialog(self, account, device, ocr_client, self.log_message.emit, screen_bgr)
             except Exception as exc:
-                log(
+                self.log_message.emit(
                     f"[{account.display_name}] Không chụp được màn hình "
                     f"để đóng các hộp thoại đã biết: {exc}"
                 )
