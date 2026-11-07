@@ -182,12 +182,16 @@ def run_knb(worker, account, device, log) -> bool:
         if screen_bgr is None:
             return False
 
-        template_names = tuple(
-            name for name in _RUN_TEMPLATES if name not in skipped_templates
-        )
         template_name, match = _find_template(
-            screen_bgr, templates, template_names, account, log
+            screen_bgr, templates, _RUN_TEMPLATES, account, log
         )
+
+        if template_name in skipped_templates:
+            log(
+                f"[{account.display_name}] Template {template_name} đã được xử lý trước đó; "
+                "xem như đã hoàn tất đóng góp KNB."
+            )
+            return True
 
         if template_name == _TEMPLATE_QUAN_DOAN_CHUA_DU_DIEU_KIEN_DONG_GOP_KNB:
             log(f"[{account.display_name}] Không đủ điều kiện đóng góp KNB.")
