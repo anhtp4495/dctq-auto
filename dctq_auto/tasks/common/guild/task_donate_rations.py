@@ -210,6 +210,7 @@ def run_donate_rations(worker, account, device, log) -> bool:
             if not _tap_button(device, account, log, "dong_man_hinh", "Đóng thông báo không đủ Lương thảo"):
                 return False
             log(f"[{account.display_name}] Không đủ tài nguyên; kết thúc thao tác đóng góp.")
+            time.sleep(1.5)
             return True
         elif template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO:
             if not _tap_button(device, account, log, "dong_gop", "Thực hiện đóng góp Lương thảo"):
