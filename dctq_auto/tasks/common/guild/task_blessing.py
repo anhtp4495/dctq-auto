@@ -7,12 +7,12 @@ import numpy as np
 
 from dctq_auto.config.constants import (
     _STEP_QUAN_DOAN_CAU_VAN,
-    #
     _TEMPLATE_QUAN_DOAN_CAU_VAN,
     _TEMPLATE_QUAN_DOAN_CO_THE_CAU_VAN,
     _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN1,
     _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN2,
     _TEMPLATE_QUAN_DOAN_MAN_HINH_CAU_VAN,
+    _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
 )
 from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.vision.template_matching import match_template
@@ -20,31 +20,41 @@ from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
 
 
-# Số lần tối đa thử nhận diện trạng thái Cầu vận.
-_MAX_TRY_DETECT_BLESSING = 10
+_MAX_TRIES = 10
+_OPEN_TEMPLATES = (
+    _TEMPLATE_QUAN_DOAN_CAU_VAN,
+    _TEMPLATE_QUAN_DOAN_MAN_HINH_CAU_VAN,
+)
+_RUN_TEMPLATES = (
+    _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN1,
+    _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN2,
+    _TEMPLATE_QUAN_DOAN_CO_THE_CAU_VAN,
+    _TEMPLATE_QUAN_DOAN_MAN_HINH_CAU_VAN,
+)
+_CLOSE_TEMPLATES = (
+    _TEMPLATE_QUAN_DOAN_MAN_HINH_CAU_VAN,
+    _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
+)
 
 
-def get_template_names(steps) -> list[str]:
-    """Lấy danh sách template cần nhận diện theo step Cầu vận."""
+def pre_blessing(steps, log) -> bool:
+    """Kiểm tra Clone Optimize có chọn tác vụ Cầu vận hay không."""
     if _STEP_QUAN_DOAN_CAU_VAN not in steps:
-        return []
+        log("Cầu vận Quân đoàn: không có step trong danh sách; bỏ qua.")
+        return False
 
-    return [
-        _TEMPLATE_QUAN_DOAN_CAU_VAN,
-        _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN1,
-        _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN2,
-        _TEMPLATE_QUAN_DOAN_CO_THE_CAU_VAN,
-        _TEMPLATE_QUAN_DOAN_MAN_HINH_CAU_VAN,
-    ]
+    log("Cầu vận Quân đoàn: tìm thấy step; bắt đầu thực hiện.")
+    return True
 
 
 def _find_template(screen_bgr, templates, template_names, account, log):
-    """Trả về template khớp đầu tiên theo thứ tự ưu tiên."""
+    """Trả về template và vị trí khớp đầu tiên theo thứ tự ưu tiên."""
     for template_name in template_names:
         template = templates.get(template_name)
         if template is None:
             log(f"[{account.display_name}] Không tải được template {template_name}; bỏ qua.")
             continue
+
         try:
             match = match_template(
                 screen_bgr,
@@ -57,6 +67,7 @@ def _find_template(screen_bgr, templates, template_names, account, log):
         except (ValueError, cv2.error) as exc:
             log(f"[{account.display_name}] Lỗi template matching {template_name}: {exc}")
             continue
+
         if match is not None:
             report_template_match(
                 log,
@@ -65,125 +76,205 @@ def _find_template(screen_bgr, templates, template_names, account, log):
                 match=match,
             )
             return template_name, match
+
     return None, None
 
 
-def _tap_match_center(device, match, account, log, label):
-    """Click trung điểm vùng template được nhận diện."""
+def _capture_screen(device, account, log, action: str):
+    """Chụp màn hình và chuyển sang BGR; lỗi được trả về cho caller xử lý."""
+    try:
+        screenshot = device.screenshot()
+        return cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
+    except Exception as exc:
+        log(f"[{account.display_name}] Không chụp được màn hình {action}: {exc}")
+        return None
+
+
+def _tap_match_center(device, match, account, log, label: str) -> bool:
+    """Click trung điểm template; không tiếp tục nếu thao tác ADB lỗi."""
     x = (match.left + match.right) // 2
     y = (match.top + match.bottom) // 2
+    try:
+        device.shell(f"input tap {x} {y}")
+    except Exception as exc:
+        log(f"[{account.display_name}] Không click được {label} tại ({x}, {y}): {exc}")
+        return False
+
     log(f"[{account.display_name}] Click trung điểm {label} tại ({x}, {y}).")
-    device.shell(f"input tap {x} {y}")
-    time.sleep(0.7)
+    return True
 
 
-def _close_blessing_screen(device, account, log):
-    """Đóng màn hình Cầu vận theo tọa độ đã cấu hình."""
-    tap_x, tap_y = ButtonPositions().get("quan_doan.cau_van", "dong_man_hinh")
+def open_blessing(worker, account, device, log) -> bool:
+    """Mở màn hình Cầu vận và chỉ thành công khi xác nhận được màn hình đích."""
+    log(f"[{account.display_name}] Bắt đầu mở màn hình Cầu vận Quân đoàn.")
+    templates = get_templates(_OPEN_TEMPLATES)
+
+    for current_try in range(1, _MAX_TRIES + 1):
+        if not worker._wait_if_paused():
+            log(f"[{account.display_name}] Đã dừng khi đang mở màn hình Cầu vận.")
+            return False
+
+        screen_bgr = _capture_screen(device, account, log, "khi mở Cầu vận")
+        if screen_bgr is None:
+            return False
+
+        template_name, match = _find_template(
+            screen_bgr,
+            templates,
+            (_TEMPLATE_QUAN_DOAN_MAN_HINH_CAU_VAN, _TEMPLATE_QUAN_DOAN_CAU_VAN),
+            account,
+            log,
+        )
+
+        if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_CAU_VAN:
+            log(f"[{account.display_name}] Đã xác nhận mở màn hình Cầu vận.")
+            return True
+
+        if template_name == _TEMPLATE_QUAN_DOAN_CAU_VAN:
+            if not _tap_match_center(device, match, account, log, "lối vào Cầu vận"):
+                return False
+            log(f"[{account.display_name}] Đã chọn Cầu vận; chờ xác nhận màn hình đích.")
+            time.sleep(0.8)
+            continue
+
+        log(
+            f"[{account.display_name}] Chưa nhận diện được màn hình Cầu vận "
+            f"(lần {current_try}/{_MAX_TRIES})."
+        )
+        time.sleep(0.8)
+
+    log(f"[{account.display_name}] Mở màn hình Cầu vận thất bại sau {_MAX_TRIES} lần thử.")
+    return False
+
+
+def run_blessing(worker, account, device, log) -> bool:
+    """Thực hiện Cầu vận; chỉ trả về True khi xác nhận trạng thái hết lượt."""
+    templates = get_templates(_RUN_TEMPLATES)
+
+    for current_try in range(1, _MAX_TRIES + 1):
+        if not worker._wait_if_paused():
+            log(f"[{account.display_name}] Cầu vận đã dừng theo yêu cầu.")
+            return False
+
+        screen_bgr = _capture_screen(device, account, log, "Cầu vận")
+        if screen_bgr is None:
+            return False
+
+        template_name, match = _find_template(
+            screen_bgr, templates, _RUN_TEMPLATES, account, log
+        )
+
+        if template_name in (
+            _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN1,
+            _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN2,
+        ):
+            log(f"[{account.display_name}] Đã xác nhận Cầu vận hết lượt.")
+            return True
+
+        if template_name == _TEMPLATE_QUAN_DOAN_CO_THE_CAU_VAN:
+            if not _tap_match_center(device, match, account, log, "nút Cầu vận"):
+                return False
+            time.sleep(0.8)
+            continue
+
+        if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_CAU_VAN:
+            log(
+                f"[{account.display_name}] Đang ở màn hình Cầu vận nhưng chưa nhận diện "
+                f"được trạng thái thao tác (lần {current_try}/{_MAX_TRIES})."
+            )
+        else:
+            log(
+                f"[{account.display_name}] Không nhận diện được trạng thái Cầu vận "
+                f"(lần {current_try}/{_MAX_TRIES})."
+            )
+
+        time.sleep(0.8)
+
     log(
-        f"[{account.display_name}] Đóng màn hình Cầu vận "
-        f"theo ButtonPositions tại ({tap_x}, {tap_y})."
+        f"[{account.display_name}] Không xác nhận được Cầu vận hoàn tất "
+        f"sau {_MAX_TRIES} lần thử; giữ nguyên step."
     )
-    device.shell(f"input tap {tap_x} {tap_y}")
-    time.sleep(0.7)
+    return False
 
 
-def _finish_step(steps, account, log, message):
-    """Ghi log và loại step Cầu vận khỏi danh sách chạy."""
-    log(f"[{account.display_name}] {message}")
+def close_blessing(worker, account, device, log) -> bool:
+    """Đóng màn hình Cầu vận và xác nhận đã trở về giao diện Quân đoàn."""
+    templates = get_templates(_CLOSE_TEMPLATES)
+
+    for current_try in range(1, _MAX_TRIES + 1):
+        if not worker._wait_if_paused():
+            log(f"[{account.display_name}] Đã dừng khi đóng màn hình Cầu vận.")
+            return False
+
+        screen_bgr = _capture_screen(device, account, log, "khi đóng Cầu vận")
+        if screen_bgr is None:
+            return False
+
+        template_name, _ = _find_template(
+            screen_bgr, templates, _CLOSE_TEMPLATES, account, log
+        )
+
+        if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH:
+            log(f"[{account.display_name}] Đã xác nhận thoát màn hình Cầu vận.")
+            return True
+
+        if template_name != _TEMPLATE_QUAN_DOAN_MAN_HINH_CAU_VAN:
+            log(
+                f"[{account.display_name}] Không xác định được màn hình hiện tại; "
+                "không click đóng để tránh thao tác nhầm."
+            )
+            return False
+
+        try:
+            tap_x, tap_y = ButtonPositions().get(
+                "quan_doan.cau_van", "dong_man_hinh"
+            )
+            device.shell(f"input tap {tap_x} {tap_y}")
+        except Exception as exc:
+            log(f"[{account.display_name}] Không đóng được màn hình Cầu vận: {exc}")
+            return False
+
+        log(
+            f"[{account.display_name}] Click đóng màn hình Cầu vận "
+            f"tại ({tap_x}, {tap_y}); chờ xác nhận."
+        )
+        time.sleep(0.8)
+
+    log(
+        f"[{account.display_name}] Không xác nhận được đã đóng màn hình Cầu vận "
+        f"sau {_MAX_TRIES} lần thử."
+    )
+    return False
+
+
+def post_blessing(steps, account, log) -> list[str]:
+    """Loại step Cầu vận sau khi đã hoàn tất và đóng màn hình thành công."""
     if _STEP_QUAN_DOAN_CAU_VAN in steps:
         steps.remove(_STEP_QUAN_DOAN_CAU_VAN)
+    log(f"[{account.display_name}] Hoàn tất tác vụ Cầu vận Quân đoàn.")
     return steps
 
 
-def _run(
-    worker, account, steps, device, ocr_client, log, screenshot,
-    templates, try_time: int = 1,
-) -> list[str]:
-    if _STEP_QUAN_DOAN_CAU_VAN not in steps:
+def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> list[str]:
+    """Điều phối đầy đủ quy trình Cầu vận: pre, open, run, close và post."""
+    if not pre_blessing(steps, log):
         return steps
 
-    if not worker._wait_if_paused():
-        log(f"[{account.display_name}] Cầu vận tạm dừng theo yêu cầu.")
-        return steps
+    log(f"[{account.display_name}] Bắt đầu quy trình Cầu vận Quân đoàn.")
 
     try:
-        if screenshot is None:
-            screenshot = device.screenshot()
-        screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
+        if not open_blessing(worker, account, device, log):
+            log(f"[{account.display_name}] Không mở được Cầu vận; giữ nguyên step.")
+            return steps
+
+        if not run_blessing(worker, account, device, log):
+            return steps
+
+        if not close_blessing(worker, account, device, log):
+            log(f"[{account.display_name}] Chưa đóng được Cầu vận; giữ nguyên step.")
+            return steps
+
+        return post_blessing(steps, account, log)
     except Exception as exc:
-        if try_time < _MAX_TRY_DETECT_BLESSING:
-            log(
-                f"[{account.display_name}] Không chụp được màn hình Cầu vận ({exc}); "
-                f"thử lại lần {try_time}/{_MAX_TRY_DETECT_BLESSING}."
-            )
-            time.sleep(0.7)
-            return _run(
-                worker, account, steps, device, ocr_client, log, None,
-                templates, try_time=try_time + 1,
-            )
-        return _finish_step(
-            steps, account, log,
-            f"Không chụp được màn hình Cầu vận sau {_MAX_TRY_DETECT_BLESSING} lần; bỏ step.",
-        )
-
-    template_name, match = _find_template(
-        screen_bgr, templates, get_template_names(steps), account, log
-    )
-
-    if template_name == _TEMPLATE_QUAN_DOAN_CAU_VAN:
-        _tap_match_center(device, match, account, log, "Bắt đầu Cầu vận")
-    elif template_name == _TEMPLATE_QUAN_DOAN_CO_THE_CAU_VAN:
-        _tap_match_center(device, match, account, log, "nút Cầu vận")
-    elif template_name in (
-        _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN1,
-        _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN2,
-    ):
-        log(f"[{account.display_name}] Đã Cầu vận xong.")
-        _close_blessing_screen(device, account, log)
-        return _finish_step(
-            steps, account, log, "Hoàn tất tác vụ Cầu vận Quân đoàn."
-        )
-    elif template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_CAU_VAN:
-        _close_blessing_screen(device, account, log)
-        return _finish_step(
-            steps, account, log, "Đã xử lý màn hình Cầu vận; kết thúc step."
-        )
-    else:
-        if try_time >= _MAX_TRY_DETECT_BLESSING:
-            return _finish_step(
-                steps, account, log,
-                f"Không xác định được trạng thái Cầu vận sau {_MAX_TRY_DETECT_BLESSING} lần; bỏ step.",
-            )
-        log(
-            f"[{account.display_name}] Chưa xác định được trạng thái Cầu vận; "
-            f"thử lại lần {try_time}/{_MAX_TRY_DETECT_BLESSING}."
-        )
-
-    if try_time >= _MAX_TRY_DETECT_BLESSING:
-        return _finish_step(
-            steps, account, log,
-            f"Đã thử Cầu vận {_MAX_TRY_DETECT_BLESSING} lần; kết thúc step.",
-        )
-
-    return _run(
-        worker, account, steps, device, ocr_client, log, None,
-        templates, try_time=try_time + 1,
-    )
-
-
-def run(
-    worker, account, steps, device, ocr_client, log, screenshot=None,
-) -> list[str]:
-    """Nhận diện trạng thái và thực hiện Cầu vận Quân đoàn."""
-    if _STEP_QUAN_DOAN_CAU_VAN not in steps:
+        log(f"[{account.display_name}] Quy trình Cầu vận phát sinh lỗi: {exc}")
         return steps
-
-    log(f"[{account.display_name}] Bắt đầu [Cầu vận Quân đoàn] ...")
-    template_names = get_template_names(steps)
-    templates = get_templates(template_names)
-
-    return _run(
-        worker, account, steps, device, ocr_client, log, screenshot,
-        templates,
-    )
