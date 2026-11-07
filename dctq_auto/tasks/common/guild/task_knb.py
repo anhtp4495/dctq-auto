@@ -168,10 +168,11 @@ def open_knb(worker, account, device, log, screenshot=None) -> bool:
     return False
 
 
-def run_knb(worker, account, device, log) -> bool:
+def run_knb(worker, account, device, log, skipped_templates=None) -> bool:
     """Thực hiện lần lượt các mức đóng góp; chỉ thành công khi xác nhận trạng thái kết thúc."""
     templates = get_templates(_RUN_TEMPLATES)
-    skipped_templates = set()
+    if skipped_templates is None:
+        skipped_templates = set()
 
     for current_try in range(1, _MAX_TRIES + 1):
         if not worker._wait_if_paused():
@@ -230,9 +231,11 @@ def run_knb(worker, account, device, log) -> bool:
     return False
 
 
-def close_knb(worker, account, device, log) -> bool:
+def close_knb(worker, account, device, log, skipped_templates=None) -> bool:
     """Xác nhận đã đóng giao diện KNB và trở về màn hình chính Quân đoàn."""
-    templates = get_templates(_CLOSE_TEMPLATES)
+    skipped_templates = skipped_templates or set()
+    close_templates = (*_CLOSE_TEMPLATES, *skipped_templates)
+    templates = get_templates(close_templates)
 
     for current_try in range(1, _MAX_TRIES + 1):
         if not worker._wait_if_paused():
@@ -244,7 +247,7 @@ def close_knb(worker, account, device, log) -> bool:
             return False
 
         template_name, _ = _find_template(
-            screen_bgr, templates, _CLOSE_TEMPLATES, account, log
+            screen_bgr, templates, close_templates, account, log
         )
 
         if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH:
@@ -255,6 +258,13 @@ def close_knb(worker, account, device, log) -> bool:
             # Giữ nguyên hành vi cũ: thông báo không đủ điều kiện là trạng thái kết thúc,
             # không thực hiện thao tác đóng popup.
             log(f"[{account.display_name}] Kết thúc do không đủ điều kiện đóng góp KNB.")
+            return True
+
+        if template_name in skipped_templates:
+            log(
+                f"[{account.display_name}] Template {template_name} đã được xử lý trước đó; "
+                "xem như đã hoàn tất đóng góp KNB."
+            )
             return True
 
         log(
@@ -287,10 +297,11 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
             log(f"[{account.display_name}] Không mở được giao diện đóng góp KNB; giữ nguyên step.")
             return steps
 
-        if not run_knb(worker, account, device, log):
+        skipped_templates = set()
+        if not run_knb(worker, account, device, log, skipped_templates):
             return steps
 
-        if not close_knb(worker, account, device, log):
+        if not close_knb(worker, account, device, log, skipped_templates):
             log(f"[{account.display_name}] Chưa xác nhận được màn hình Quân đoàn; giữ nguyên step.")
             return steps
 
