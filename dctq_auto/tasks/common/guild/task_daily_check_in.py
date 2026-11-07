@@ -24,8 +24,8 @@ def get_template_names(steps) -> list[str]:
         return []
 
     return [
-        _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH,
         _TEMPLATE_QUAN_DOAN_DA_BAO_DANH,
+        _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH,
         _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
     ]
 

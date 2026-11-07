@@ -8,7 +8,8 @@
           "description": "Màn hình chính - Lối vào [Hoạt Động].",
           "rect": { "top": 751, "left": 28, "right": 82, "bottom": 823 },
           "search_rect": { "top": 700, "left": 0, "right": 200, "bottom": 900},
-          "threshold": 0.85,
+          "threshold": 0.95,
+          "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "chien_tranh": {
@@ -275,7 +276,7 @@
         },
         "dang_chon_le_bao_quoc_van": {
           "description": "Màn hình [Hoạt động] - [Phúc lợi] - Đang chọn [Lễ bao Quốc vận].",
-          "rect": { "top": 305, "left": 528, "right": 736, "bottom": 400},
+          "rect": { "top": 308, "left": 583, "right": 726, "bottom": 357},
           "search_rect": { "top": 0, "left": 150, "right": 500, "bottom": 1050},
           "threshold": 0.95,
           "grayscale": false,
@@ -283,7 +284,7 @@
         },
         "chua_chon_le_bao_quoc_van": {
           "description": "Màn hình [Hoạt động] - [Phúc lợi] - Chưa chọn [Lễ bao Quốc vận].",
-          "rect": { "top": 290, "left": 245, "right": 439, "bottom": 407},
+          "rect": { "top": 316, "left": 293, "right": 434, "bottom": 349},
           "search_rect": { "top": 0, "left": 150, "right": 500, "bottom": 1050},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
@@ -476,7 +477,8 @@
           "description": "Màn hình [Quân Đoàn] - Đã [Báo danh].",
           "rect": { "top": 852, "left": 578, "right": 704, "bottom": 952},
           "search_rect": { "top": 786, "left": 1048, "right": 1888, "bottom": 1050},
-          "threshold": 0.85,
+          "threshold": 0.95,
+          "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "quan_doan_da_dong_gop_luong_thao": {

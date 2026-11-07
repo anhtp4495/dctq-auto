@@ -879,6 +879,18 @@ def run_clone_flow_optimize_account(
                     process_id=self._current_process_ids[step_id],
                     status=ProgressStatus.RUNNING,
                 )
+
+            
+            try:
+                screenshot = device.screenshot()
+                screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
+                close_knowned_dialog(self, account, device, _ocr_client, self.log_message.emit, screen_bgr)
+            except Exception as exc:
+                self.log_message.emit(
+                    f"[{account.display_name}] Không chụp được màn hình "
+                    f"để đóng các hộp thoại đã biết: {exc}"
+                )
+
             try:
                 remaining_steps = task_runner(
                     self, account, steps, device, _ocr_client,

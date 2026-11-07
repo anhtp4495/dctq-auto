@@ -3,6 +3,7 @@
 import time
 from pathlib import Path
 
+from dctq_auto.config.constants import _STEP_QUAN_SU_TRANH_BA
 from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.tasks.common.battle.battle_utils import click_match
 from dctq_auto.tasks.common.battle.battle_strategies.pincer_battle import PincerBattle
@@ -142,6 +143,11 @@ def run(self, account, device, ocr_client, log) -> bool:
 
         if retreat is not None and not hero_deployed:
             log(f"[{account.display_name}] Phát hiện Rút lui; triển khai đội hình.")
+            self.UpdateProcessInfo(
+                process_id=self._current_process_ids[_STEP_QUAN_SU_TRANH_BA],
+                current=completed + 1,
+                total=target,
+            )
             context["mark_battle_started"] = (
                 lambda: context.__setitem__("battle_started_at", time.monotonic())
             )
