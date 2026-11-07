@@ -25,16 +25,13 @@ _MAX_TRIES = 10
 _OPEN_TEMPLATES = (
     _TEMPLATE_QUAN_DOAN_DONG_GOP_KNB,
     _TEMPLATE_QUAN_DOAN_CHUA_DU_DIEU_KIEN_DONG_GOP_KNB,
-    _TEMPLATE_QUAN_DOAN_DONG_GOP_10_KNB,
-    _TEMPLATE_QUAN_DOAN_DONG_GOP_20_KNB,
-    _TEMPLATE_QUAN_DOAN_DONG_GOP_40_KNB,
-    _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_KNB,
 )
 _RUN_TEMPLATES = (
     _TEMPLATE_QUAN_DOAN_CHUA_DU_DIEU_KIEN_DONG_GOP_KNB,
     _TEMPLATE_QUAN_DOAN_DONG_GOP_40_KNB,
-    _TEMPLATE_QUAN_DOAN_DONG_GOP_10_KNB,
     _TEMPLATE_QUAN_DOAN_DONG_GOP_20_KNB,
+    _TEMPLATE_QUAN_DOAN_DONG_GOP_10_KNB,
+    _TEMPLATE_QUAN_DOAN_DONG_GOP_KNB,
     _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_KNB,
 )
 _CLOSE_TEMPLATES = (
@@ -149,14 +146,12 @@ def open_knb(worker, account, device, log, screenshot=None) -> bool:
         )
 
         if template_name == _TEMPLATE_QUAN_DOAN_DONG_GOP_KNB:
-            if not _tap_match_center(device, match, account, log, "nút đóng góp KNB"):
-                return False
-            time.sleep(0.8)
-            continue
-
-        if template_name in _OPEN_TEMPLATES[1:]:
             log(f"[{account.display_name}] Đã nhận diện được giao diện đóng góp KNB.")
             return True
+
+        if template_name == _TEMPLATE_QUAN_DOAN_CHUA_DU_DIEU_KIEN_DONG_GOP_KNB:
+            log(f"[{account.display_name}] Chưa đủ điều kiện đóng góp KNB.")
+            return False
 
         log(
             f"[{account.display_name}] Chưa nhận diện được giao diện đóng góp KNB "
@@ -187,11 +182,19 @@ def run_knb(worker, account, device, log) -> bool:
         )
 
         if template_name in skipped_templates:
+            if not _tap_close_button(device, account, log):
+                return False
             log(
                 f"[{account.display_name}] Template {template_name} đã được xử lý trước đó; "
                 "xem như đã hoàn tất đóng góp KNB."
             )
             return True
+
+        if template_name == _TEMPLATE_QUAN_DOAN_DONG_GOP_KNB:
+            if not _tap_match_center(device, match, account, log, "nút đóng góp KNB"):
+                return False
+            time.sleep(0.8)
+            continue
 
         if template_name == _TEMPLATE_QUAN_DOAN_CHUA_DU_DIEU_KIEN_DONG_GOP_KNB:
             log(f"[{account.display_name}] Không đủ điều kiện đóng góp KNB.")
@@ -208,7 +211,7 @@ def run_knb(worker, account, device, log) -> bool:
             _TEMPLATE_QUAN_DOAN_DONG_GOP_20_KNB,
         ):
             if not _tap_match_center(
-                device, match, account, log, f"mức đóng góp {template_name}"
+                device, match, account, log, f"mức đóng góp [{template_name}]"
             ):
                 return False
             skipped_templates.add(template_name)

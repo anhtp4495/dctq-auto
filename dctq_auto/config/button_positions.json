@@ -41,6 +41,10 @@
     "qua_diem_danh_30_ngay": {
       "x": 1689,
       "y": 310
+    },
+    "nhan_le_bao_mien_phi": {
+      "x": 700, 
+      "y": 227
     }
   },
   "quan_doan": {

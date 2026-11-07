@@ -343,7 +343,7 @@
       "templates": {
         "chua_nhan_le_bao_mien_phi": {
           "description": "Màn hình [Hoạt động] - [Phúc lợi] - [Lễ bao Quốc vận] - Chưa nhận Lễ bao miễn phí",
-          "rect": { "top": 200, "left": 899, "right": 1021, "bottom": 279},
+          "rect": { "top": 200, "left": 900, "right": 1020, "bottom": 275},
           "search_rect": { "top": 154, "left": 548, "right": 1003, "bottom": 386},
           "threshold": 0.95,
           "grayscale": false,

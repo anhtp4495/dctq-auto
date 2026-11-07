@@ -38,6 +38,7 @@ _TEMPLATE_NAMES = (
     _TEMPLATE_DA_NHAN_LE_BAO_MIEN_PHI,
     _TEMPLATE_TAT_THONG_BAO_NHAN_LE_BAO_MIEN_PHI1,
     _TEMPLATE_TAT_THONG_BAO_NHAN_LE_BAO_MIEN_PHI2,
+    _TEMPLATE_DANG_CHON_LE_BAO_QUOC_VAN,
 )
 
 
@@ -106,6 +107,13 @@ def run_le_bao_quoc_van(worker, account, steps, device, ocr_client, log, screens
 
     if template_name == _TEMPLATE_DA_NHAN_LE_BAO_MIEN_PHI:
         log(f"[{account.display_name}] Đã nhận lễ bao Quốc Vận.")
+        return True
+
+    if template_name == _TEMPLATE_DANG_CHON_LE_BAO_QUOC_VAN:
+        tap_x, tap_y = ButtonPositions().get("hoat_dong", "nhan_le_bao_mien_phi")
+        device.shell(f"input tap {tap_x} {tap_y}")
+        log(f"[{account.display_name}] Nhận lễ bao miễn phí tại ({tap_x}, {tap_y}); ")
+        time.sleep(0.7)
         return True
 
     try:
