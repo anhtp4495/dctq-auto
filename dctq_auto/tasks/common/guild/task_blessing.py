@@ -13,6 +13,8 @@ from dctq_auto.config.constants import (
     _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN2,
     _TEMPLATE_QUAN_DOAN_MAN_HINH_CAU_VAN,
     _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
+    _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH,
+    _TEMPLATE_QUAN_DOAN_DA_BAO_DANH,
 )
 from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.vision.template_matching import match_template
@@ -34,6 +36,8 @@ _RUN_TEMPLATES = (
 _CLOSE_TEMPLATES = (
     _TEMPLATE_QUAN_DOAN_MAN_HINH_CAU_VAN,
     _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
+    _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH,
+    _TEMPLATE_QUAN_DOAN_DA_BAO_DANH,
 )
 
 
@@ -212,7 +216,7 @@ def close_blessing(worker, account, device, log) -> bool:
     """Đóng màn hình Cầu vận và xác nhận đã trở về giao diện Quân đoàn."""
     templates = get_templates(_CLOSE_TEMPLATES)
 
-    for current_try in range(1, _MAX_TRIES + 1):
+    for current_try in range(1, 3):
         if not worker._wait_if_paused():
             log(f"[{account.display_name}] Đã dừng khi đóng màn hình Cầu vận.")
             return False
@@ -225,31 +229,17 @@ def close_blessing(worker, account, device, log) -> bool:
             screen_bgr, templates, _CLOSE_TEMPLATES, account, log
         )
 
-        if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH:
-            log(f"[{account.display_name}] Đã xác nhận thoát màn hình Cầu vận.")
-            return True
-
-        if template_name != _TEMPLATE_QUAN_DOAN_MAN_HINH_CAU_VAN:
-            log(
-                f"[{account.display_name}] Không xác định được màn hình hiện tại; "
-                "không click đóng để tránh thao tác nhầm."
-            )
-            return False
-
-        try:
+        if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_CAU_VAN:
             tap_x, tap_y = ButtonPositions().get(
                 "quan_doan.cau_van", "dong_man_hinh"
             )
             device.shell(f"input tap {tap_x} {tap_y}")
-        except Exception as exc:
-            log(f"[{account.display_name}] Không đóng được màn hình Cầu vận: {exc}")
-            return False
+            log(f"[{account.display_name}] Đóng màn hình Cầu vận tại ({tap_x}, {tap_y}); Chờ xác nhận")
+        elif template_name in (_TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH, _TEMPLATE_QUAN_DOAN_DA_BAO_DANH,)
+            log(f"[{account.display_name}] Màn hình cầu vận đã đóng; ")
+            return True
 
-        log(
-            f"[{account.display_name}] Click đóng màn hình Cầu vận "
-            f"tại ({tap_x}, {tap_y}); chờ xác nhận."
-        )
-        time.sleep(0.8)
+        time.sleep(1)
 
     log(
         f"[{account.display_name}] Không xác nhận được đã đóng màn hình Cầu vận "
