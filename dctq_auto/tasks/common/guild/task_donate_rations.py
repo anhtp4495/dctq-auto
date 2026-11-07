@@ -13,7 +13,6 @@ from dctq_auto.config.constants import (
     _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_KNB,
     _TEMPLATE_QUAN_DOAN_DUNG_NHANH,
     _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO,
-    _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
     _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH,
     _TEMPLATE_QUAN_DOAN_DA_BAO_DANH,
 )
@@ -202,7 +201,7 @@ def run_donate_rations(worker, account, device, log) -> bool:
         elif template_name == _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_KNB:
             if not _tap_button(device, account, log, "dong_man_hinh", "Hủy thông báo không đủ Lương thảo"):
                 return False
-            time.sleep(0.7)
+            time.sleep(1.5)
             if not _tap_button(device, account, log, "dong_man_hinh", "Đóng thông báo không đủ Lương thảo"):
                 return False
             log(f"[{account.display_name}] Không đủ tài nguyên; kết thúc thao tác đóng góp.")
@@ -246,7 +245,6 @@ def close_donate_rations(worker, account, device, log) -> bool:
         )
 
         if template_name in (
-            _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
             _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH,
             _TEMPLATE_QUAN_DOAN_DA_BAO_DANH,
         ):
