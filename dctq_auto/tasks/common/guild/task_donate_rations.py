@@ -164,6 +164,11 @@ def open_donate_rations(worker, account, device, log, screenshot=None) -> bool:
         elif template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO:
             if not _tap_button(device, account, log, "dong_gop", "Mở phần đóng góp Lương thảo"):
                 return False
+        elif template_name == _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO:
+            if not _tap_match_center(
+                device, matched, account, log, "nút đóng màn hình đóng góp Lương thảo"
+            ):
+                return False
         else:
             log(f"[{account.display_name}] Đã nhận diện được giao diện đóng góp Lương thảo.")
             return True
