@@ -74,6 +74,25 @@
         }
       }
     },
+    "main.su_kien": {
+      "source_image": "resources/screens/main/su_kien.png",
+      "templates": {
+        "tang_qua_hang_ngay": {
+          "description": "[Sự kiện] - Tặng quà hằng ngày",
+          "rect": { "top": 204, "left": 169, "right": 408, "bottom": 438},
+          "search_rect": { "top": 211, "left": 773, "right": 1354, "bottom": 980},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "an_cho_trong_de_thoat": {
+          "description": "[Sự kiện] - Ấn chỗ trống để thoát",
+          "rect": { "top": 799, "left": 1054, "right": 1493, "bottom": 861},
+          "search_rect":  { "top": 780, "left": 615, "right": 1353, "bottom": 984},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
     "accounts1": {
       "source_image": "resources/screens/accounts/waiting.png",
       "templates": {

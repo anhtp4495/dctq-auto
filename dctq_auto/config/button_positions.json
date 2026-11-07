@@ -253,12 +253,12 @@
       "y": 144
     },
     "xac_nhan_mua_the_luc": {
-      "x": 731,
-      "y": 713
-    },
-    "huy_mua_the_luc": {
       "x": 1204,
       "y": 702
+    },
+    "huy_mua_the_luc": {
+      "x": 731,
+      "y": 713
     }
   },
   "chien_tranh.muu_binh": {
