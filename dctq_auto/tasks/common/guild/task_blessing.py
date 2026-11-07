@@ -104,7 +104,7 @@ def _tap_match_center(device, match, account, log, label: str) -> bool:
     return True
 
 
-def open_blessing(worker, account, device, log) -> bool:
+def open_blessing(worker, account, device, log, screenshot=None) -> bool:
     """Mở màn hình Cầu vận và chỉ thành công khi xác nhận được màn hình đích."""
     log(f"[{account.display_name}] Bắt đầu mở màn hình Cầu vận Quân đoàn.")
     templates = get_templates(_OPEN_TEMPLATES)
@@ -114,9 +114,20 @@ def open_blessing(worker, account, device, log) -> bool:
             log(f"[{account.display_name}] Đã dừng khi đang mở màn hình Cầu vận.")
             return False
 
-        screen_bgr = _capture_screen(device, account, log, "khi mở Cầu vận")
-        if screen_bgr is None:
-            return False
+        if current_try == 1 and screenshot is not None:
+            try:
+                screen_bgr = cv2.cvtColor(
+                    np.asarray(screenshot), cv2.COLOR_RGB2BGR
+                )
+            except Exception as exc:
+                log(
+                    f"[{account.display_name}] Không xử lý được screenshot khi mở Cầu vận: {exc}"
+                )
+                return False
+        else:
+            screen_bgr = _capture_screen(device, account, log, "khi mở Cầu vận")
+            if screen_bgr is None:
+                return False
 
         template_name, match = _find_template(
             screen_bgr,
@@ -263,7 +274,7 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
     log(f"[{account.display_name}] Bắt đầu quy trình Cầu vận Quân đoàn.")
 
     try:
-        if not open_blessing(worker, account, device, log):
+        if not open_blessing(worker, account, device, log, screenshot=screenshot):
             log(f"[{account.display_name}] Không mở được Cầu vận; giữ nguyên step.")
             return steps
 
