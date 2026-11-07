@@ -163,6 +163,7 @@ def run_daily_check_in(worker, account, device, log) -> bool:
 
         if template_name == _TEMPLATE_QUAN_DOAN_DA_BAO_DANH:
             log(f"[{account.display_name}] Đã xác nhận báo danh Quân đoàn.")
+            time.sleep(0.8)
             return True
 
         if template_name == _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH:
