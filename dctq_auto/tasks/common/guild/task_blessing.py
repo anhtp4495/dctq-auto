@@ -235,7 +235,7 @@ def close_blessing(worker, account, device, log) -> bool:
             )
             device.shell(f"input tap {tap_x} {tap_y}")
             log(f"[{account.display_name}] Đóng màn hình Cầu vận tại ({tap_x}, {tap_y}); Chờ xác nhận")
-        elif template_name in (_TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH, _TEMPLATE_QUAN_DOAN_DA_BAO_DANH,)
+        elif template_name in (_TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH, _TEMPLATE_QUAN_DOAN_DA_BAO_DANH,):
             log(f"[{account.display_name}] Màn hình cầu vận đã đóng; ")
             return True
 

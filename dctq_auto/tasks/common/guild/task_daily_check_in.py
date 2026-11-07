@@ -17,7 +17,7 @@ from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
 
 
-_MAX_TRIES = 10
+_MAX_TRIES = 3
 _OPEN_TEMPLATES = (_TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,)
 _RUN_TEMPLATES = (
     _TEMPLATE_QUAN_DOAN_DA_BAO_DANH,
