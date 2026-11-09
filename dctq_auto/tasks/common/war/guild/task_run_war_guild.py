@@ -18,7 +18,7 @@ from dctq_auto.vision.template_store import get_templates
 from dctq_auto.vision.template_report import report_template_match
 
 
-_MAX_TRIES = 10
+_MAX_TRIES = 3
 _POLL_INTERVAL = 1.0
 _TEMPLATES = (
     _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_DA_NHAN_THUONG,
@@ -85,6 +85,11 @@ def run(worker, account, device, log, current_try=1) -> bool:
             
         x, y = click_match(device, match_template)
         log(f"[{account.display_name}] Click trung điểm [{template_name}] tại ({x}, {y}).")
+        return run(worker, account, device, log)
 
+    log(
+        f"[{account.display_name}] Không xác nhận được trạng thái đã nhận thưởng sau;"
+        f"thử lại {current_try}/{_MAX_TRIES}; "
+    )
     time.sleep(_POLL_INTERVAL)
     return run(worker, account, device, log, current_try=current_try + 1)

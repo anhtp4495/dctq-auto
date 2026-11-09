@@ -11,7 +11,7 @@ from dctq_auto.tasks.common.battle.battle_utils import click_match, match, scree
 from dctq_auto.vision.template_store import get_templates
 
 
-_MAX_TRIES = 30
+_MAX_TRIES = 5
 _TEMPLATE_NAMES = (
     _TEMPLATE_CHIEN_TRANH_MAN_HINH_CHINH,
     _TEMPLATE_MAIN_QUAN_SU,
