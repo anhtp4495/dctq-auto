@@ -48,7 +48,7 @@
     "priority": 10400,
     "templates": [
       "chien_tranh2/doan_chien",
-      "chien_tranh_doan_chien/man_hinh_chinh"
+      "chien_tranh.doan_chien/man_hinh_chinh"
     ]
   },
   {

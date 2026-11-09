@@ -1,6 +1,7 @@
 """Đóng các dialog đã biết đang mở trên màn hình game."""
 
 import cv2
+import time
 
 from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.config.constants import (
@@ -79,6 +80,7 @@ def close_knowned_dialog(
         else:
             x, y = click_match(device, match)
             dialog_name = template_name
+            time.sleep(1.5)
         log(
             f"[{account.display_name}] Đã phát hiện {dialog_name}; "
             f"click đóng màn hình tại ({x}, {y})."

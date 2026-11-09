@@ -46,14 +46,14 @@ _TEMPLATE_CHIEN_TRANH_MUU_BINH = "chien_tranh/muu_binh"
 
 # Template dùng trong quy trình nhận thưởng Đoàn Chiến.
 _TEMPLATE_CHIEN_TRANH2_DOAN_CHIEN = "chien_tranh2/doan_chien"
-_TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_MAN_HINH_CHINH = "chien_tranh_doan_chien/man_hinh_chinh"
-_TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_DONG_MAN_HINH = "chien_tranh_doan_chien/dong_man_hinh_doan_chien"
-_TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_DA_NHAN_THUONG = "chien_tranh_doan_chien/da_nhan_thuong"
-_TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_CHUA_NHAN_THUONG = "chien_tranh_doan_chien/chua_nhan_thuong"
-_TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_AN_CHO_TRONG_DE_NHAN_THUONG = "chien_tranh_doan_chien/an_cho_trong_de_nhan_thuong"
-_TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_AN_CHO_TRONG_DE_THOAT = "chien_tranh_doan_chien/an_cho_trong_de_thoat"
-_TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_TONG_KET = "chien_tranh_doan_chien/tong_ket_doan_chien"
-_TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_DONG_TONG_KET = "chien_tranh_doan_chien/dong_tong_ket_doan_chien"
+_TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_MAN_HINH_CHINH = "chien_tranh.doan_chien/man_hinh_chinh"
+_TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_DONG_MAN_HINH = "chien_tranh.doan_chien/dong_man_hinh_doan_chien"
+_TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_DA_NHAN_THUONG = "chien_tranh.doan_chien/da_nhan_thuong"
+_TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_CHUA_NHAN_THUONG = "chien_tranh.doan_chien/chua_nhan_thuong"
+_TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_AN_CHO_TRONG_DE_NHAN_THUONG = "chien_tranh.doan_chien/an_cho_trong_de_nhan_thuong"
+_TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_AN_CHO_TRONG_DE_THOAT = "chien_tranh.doan_chien/an_cho_trong_de_thoat"
+_TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_TONG_KET = "chien_tranh.doan_chien/tong_ket_doan_chien"
+_TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_DONG_TONG_KET = "chien_tranh.doan_chien/dong_tong_ket_doan_chien"
 
 # Template dùng trong quy trình nhận thưởng Tam Quốc Lệnh.
 _TEMPLATE_MAIN_TAM_QUOC_LENH = "main/tam_quoc_lenh"
