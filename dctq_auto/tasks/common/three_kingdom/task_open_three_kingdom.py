@@ -3,26 +3,25 @@
 import time
 
 from dctq_auto.config.constants import (
+    _TEMPLATE_MAIN_DA_NHAN_TAM_QUOC_LENH,
     _TEMPLATE_MAIN_TAM_QUOC_LENH,
-    _TEMPLATE_TAM_QUOC_LENH_DANG_MO_CHIEN_TRANH,
     _TEMPLATE_TAM_QUOC_LENH_MAN_HINH_CHINH,
-    _TEMPLATE_TAM_QUOC_LENH_CHUA_MO_CHIEN_TRANH,
 )
 from dctq_auto.tasks.common.battle.battle_utils import click_match, match, screen_bgr
 from dctq_auto.vision.template_store import get_templates
 
 
 _MAX_TRIES = 20
+_POLL_INTERVAL = 1
 _OPEN_TEMPLATES = (
-    _TEMPLATE_TAM_QUOC_LENH_MAN_HINH_CHINH,
+    _TEMPLATE_MAIN_DA_NHAN_TAM_QUOC_LENH,
     _TEMPLATE_MAIN_TAM_QUOC_LENH,
-    _TEMPLATE_TAM_QUOC_LENH_CHUA_MO_CHIEN_TRANH,
-    _TEMPLATE_TAM_QUOC_LENH_DANG_MO_CHIEN_TRANH,
+    _TEMPLATE_TAM_QUOC_LENH_MAN_HINH_CHINH,
 )
 
 
-def run(worker, account, device, ocr_client, log) -> bool:
-    """Mở Tam Quốc Lệnh; trả về True khi nhận diện được màn hình đích."""
+def run(worker, account, device, ocr_client, log) -> bool | None:
+    """Mở Tam Quốc Lệnh; None nếu phần thưởng đã được nhận trước đó."""
     log(f"[{account.display_name}] Bắt đầu mở màn hình Tam Quốc Lệnh.")
     templates = get_templates(_OPEN_TEMPLATES)
 
@@ -34,69 +33,61 @@ def run(worker, account, device, ocr_client, log) -> bool:
         try:
             screen = screen_bgr(device)
         except Exception as exc:
-            log(f"[{account.display_name}] Không chụp được màn hình khi mở Tam Quốc Lệnh: {exc}")
+            log(
+                f"[{account.display_name}] Không chụp được màn hình "
+                f"khi mở Tam Quốc Lệnh: {exc}"
+            )
             return False
 
-        page_match = match(
-            screen,
-            templates.get(_TEMPLATE_TAM_QUOC_LENH_MAN_HINH_CHINH),
-            account=account,
-            log=log,
-        )
-        if page_match is not None:
-            log(f"[{account.display_name}] Đã mở màn hình Tam Quốc Lệnh.")
-            return True
+        for template_name in _OPEN_TEMPLATES:
+            template = templates.get(template_name)
+            if template is None:
+                log(
+                    f"[{account.display_name}] Không tải được template "
+                    f"{template_name}; bỏ qua."
+                )
+                continue
 
-        entry_match = match(
-            screen,
-            templates.get(_TEMPLATE_MAIN_TAM_QUOC_LENH),
-            account=account,
-            log=log,
-        )
-        if entry_match is not None:
-            try:
-                x, y = click_match(device, entry_match)
-                log(f"[{account.display_name}] Click lối vào Tam Quốc Lệnh tại ({x}, {y}).")
-            except Exception as exc:
-                log(f"[{account.display_name}] Không click được lối vào Tam Quốc Lệnh: {exc}")
-                return False
-        else:
-            unopened_match = match(
-                screen,
-                templates.get(_TEMPLATE_TAM_QUOC_LENH_CHUA_MO_CHIEN_TRANH),
-                account=account,
-                log=log,
-            )
-            if unopened_match is not None:
+            found = match(screen, template, account=account, log=log)
+            if found is None:
+                continue
+
+            if template_name == _TEMPLATE_MAIN_DA_NHAN_TAM_QUOC_LENH:
+                log(
+                    f"[{account.display_name}] Tam Quốc Lệnh đã nhận thưởng; "
+                    "không cần thực hiện lại."
+                )
+                return None
+
+            if template_name == _TEMPLATE_TAM_QUOC_LENH_MAN_HINH_CHINH:
+                log(f"[{account.display_name}] Đã mở màn hình Tam Quốc Lệnh.")
+                return True
+
+            if template_name == _TEMPLATE_MAIN_TAM_QUOC_LENH:
                 try:
-                    x, y = click_match(device, unopened_match)
+                    x, y = click_match(device, found)
                     log(
-                        f"[{account.display_name}] Click mở sự kiện Tam Quốc Lệnh "
-                        f"tại ({x}, {y}); chờ nhận diện lối vào."
+                        f"[{account.display_name}] Click lối vào Tam Quốc Lệnh "
+                        f"tại ({x}, {y})."
                     )
                 except Exception as exc:
                     log(
-                        f"[{account.display_name}] Không click được trạng thái chưa mở "
-                        f"chiến tranh Tam Quốc Lệnh: {exc}"
+                        f"[{account.display_name}] Không click được lối vào "
+                        f"Tam Quốc Lệnh: {exc}"
                     )
                     return False
-            elif current_try == _MAX_TRIES:
-                event_match = match(
-                    screen,
-                    templates.get(_TEMPLATE_TAM_QUOC_LENH_DANG_MO_CHIEN_TRANH),
-                    account=account,
-                    log=log,
-                )
-                if event_match is not None:
-                    log(f"[{account.display_name}] Sự kiện Tam Quốc Lệnh đã kết thúc.")
-                    return False
-            else:
-                log(
-                    f"[{account.display_name}] Chưa nhận diện được lối vào hoặc màn hình "
-                    f"Tam Quốc Lệnh (lần {current_try}/{_MAX_TRIES}); thử lại."
-                )
+                break
 
-        time.sleep(1)
+        else:
+            log(
+                f"[{account.display_name}] Chưa nhận diện được trạng thái "
+                f"Tam Quốc Lệnh (lần {current_try}/{_MAX_TRIES}); thử lại."
+            )
 
-    log(f"[{account.display_name}] Mở Tam Quốc Lệnh thất bại sau {_MAX_TRIES} lần kiểm tra.")
+        time.sleep(_POLL_INTERVAL)
+
+    log(
+        f"[{account.display_name}] Mở Tam Quốc Lệnh thất bại "
+        f"sau {_MAX_TRIES} lần kiểm tra."
+    )
     return False
