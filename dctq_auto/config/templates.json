@@ -477,7 +477,7 @@
           "description": "Màn hình [Quân Đoàn] - Đã [Báo danh].",
           "rect": { "top": 866, "left": 597, "right": 690, "bottom": 929},
           "search_rect": { "top": 786, "left": 1048, "right": 1888, "bottom": 1050},
-          "threshold": 0.90,
+          "threshold": 0.95,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },

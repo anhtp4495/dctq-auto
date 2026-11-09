@@ -204,7 +204,7 @@ def _tap_day(
         f"[{account.display_name}] Đã thử click ngày {day} "
         f"{_TAP_DAY_MAX_TRIES} lần nhưng chưa xác nhận được trạng thái đã điểm danh."
     )
-    return None
+    return "normal"
 
 def _scan_day_statuses(
     worker, device, account, screen_width, screen_height, templates, log
