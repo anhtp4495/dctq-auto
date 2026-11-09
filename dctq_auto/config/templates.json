@@ -765,6 +765,18 @@
         }
       }
     },
+    "chien_tranh2": {
+      "source_image": "resources/screens/chien_tranh/man_hinh_chinh2.png",
+      "templates": {
+        "doan_chien": {
+          "description": "[Chiến tranh] - Lối vào [Đoàn chiến]",
+          "rect": { "top": 447, "left": 449, "right": 596, "bottom": 593},
+          "search_rect": { "top": 269, "left": 305, "right": 1613, "bottom": 887},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
     "tam_quoc_lenh": {
       "source_image": "resources/screens/tam_quoc_lenh/man_hinh_chinh.png",
       "templates": {
