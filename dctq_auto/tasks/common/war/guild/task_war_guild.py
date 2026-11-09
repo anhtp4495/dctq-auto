@@ -9,8 +9,6 @@ from dctq_auto.tasks.common.war.guild import (
     task_run_war_guild,
 )
 
-
-
 def pre_war_guild(steps, log) -> bool:
     """Chỉ nhận thưởng Đoàn Chiến vào thứ Hai hoặc thứ Ba khi step được chọn."""
     if _STEP_CHIEN_TRANH_QUAN_DOAN_NHAN_THUONG not in steps:
@@ -33,6 +31,7 @@ def post_war_guild(steps, log) -> list[str]:
         steps.remove(_STEP_CHIEN_TRANH_QUAN_DOAN_NHAN_THUONG)
         log("Đoàn Chiến: đã gỡ step nhận thưởng khỏi danh sách steps.")
     return steps
+
 
 def run(worker, account, device, log) -> bool:
     """Chạy trọn quy trình nhận thưởng Đoàn Chiến bằng Template Matching."""

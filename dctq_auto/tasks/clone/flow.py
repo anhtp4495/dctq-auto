@@ -790,12 +790,18 @@ def run_clone_flow_optimize_account(
 
         def run_guild_war_reward(self, account, steps, device, ocr_client, log):
             """Nhận thưởng Đoàn Chiến bằng Template Matching."""
-            from dctq_auto.config.constants import _STEP_CHIEN_TRANH_QUAN_DOAN_NHAN_THUONG
+            from dctq_auto.tasks.common.war.guild.task_war_guild import (
+                post_war_guild,
+                pre_war_guild,
+            )
 
-            if _STEP_CHIEN_TRANH_QUAN_DOAN_NHAN_THUONG not in steps:
-                return steps
-            if run_war_guild(self, account, device, log):
-                steps.remove(_STEP_CHIEN_TRANH_QUAN_DOAN_NHAN_THUONG)
+            if not pre_war_guild(steps, log):
+                return post_war_guild(steps, log)
+
+            try:
+                run_war_guild(self, account, device, log)
+            finally:
+                post_war_guild(steps, log)
             return steps
 
         def run_raid_battle(self, account, steps, device, ocr_client, log):
