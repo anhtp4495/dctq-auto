@@ -816,10 +816,24 @@
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
+        "que_boi_diem_binh_mien_phi": {
+          "description": "[Tam Quốc Lệnh] - Quẻ bói/Điểm Binh",
+          "rect": { "top": 271, "left": 663, "right": 706, "bottom": 311},
+          "search_rect": { "top": 83, "left": 74, "right": 443, "bottom": 574},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
         "que_boi": {
           "description": "[Tam Quốc Lệnh] - Quẻ bói",
           "rect": { "top": 298, "left": 170, "right": 372, "bottom": 377},
-          "search_rect": { "top": 114, "left": 111, "right": 420, "bottom": 583},
+          "search_rect": { "top": 83, "left": 74, "right": 443, "bottom": 574},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "diem_binh": {
+          "description": "[Tam Quốc Lệnh] - Điểm binh",
+          "rect": { "top": 464, "left": 170, "right": 373, "bottom": 526},
+          "search_rect": { "top": 83, "left": 74, "right": 443, "bottom": 574},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
@@ -837,13 +851,6 @@
           "search_rect": { "top": 723, "left": 534, "right": 957, "bottom": 969},
           "threshold": 0.95,
           "grayscale": false,
-          "match_method": "TM_CCOEFF_NORMED"
-        },
-        "diem_binh": {
-          "description": "[Tam Quốc Lệnh] - Điểm binh",
-          "rect": { "top": 464, "left": 170, "right": 373, "bottom": 526},
-          "search_rect": { "top": 114, "left": 111, "right": 420, "bottom": 583},
-          "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "hop_thoai_su_dung_knb": {
