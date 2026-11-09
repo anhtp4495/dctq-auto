@@ -33,17 +33,25 @@ def post_war_guild(steps, log) -> list[str]:
     return steps
 
 
-def run(worker, account, device, log) -> bool:
-    """Chạy trọn quy trình nhận thưởng Đoàn Chiến bằng Template Matching."""
+def run(worker, account, steps: list[str], device, log) -> list[str]:
+    """Điều phối nhận thưởng Đoàn Chiến và cập nhật danh sách steps."""
+    if not pre_war_guild(steps, log):
+        return post_war_guild(steps, log)
+
     log(f"[{account.display_name}] Bắt đầu quy trình nhận thưởng Đoàn Chiến.")
-    if not task_open_war_guild.run(worker, account, device, log):
-        return False
-
     try:
-        received = task_run_war_guild.run(worker, account, device, log)
-    finally:
-        closed = task_close_war_guild.run(worker, account, device, log)
+        if not task_open_war_guild.run(worker, account, device, log):
+            return steps
 
-    if not closed:
-        log(f"[{account.display_name}] Chưa xác nhận đóng được màn hình Đoàn Chiến.")
-    return received and closed
+        try:
+            received = task_run_war_guild.run(worker, account, device, log)
+        finally:
+            closed = task_close_war_guild.run(worker, account, device, log)
+
+        if not closed:
+            log(f"[{account.display_name}] Chưa xác nhận đóng được màn hình Đoàn Chiến.")
+        elif received:
+            log(f"[{account.display_name}] Đã hoàn tất nhận thưởng Đoàn Chiến.")
+        return steps
+    finally:
+        post_war_guild(steps, log)

@@ -790,19 +790,7 @@ def run_clone_flow_optimize_account(
 
         def run_guild_war_reward(self, account, steps, device, ocr_client, log):
             """Nhận thưởng Đoàn Chiến bằng Template Matching."""
-            from dctq_auto.tasks.common.war.guild.task_war_guild import (
-                post_war_guild,
-                pre_war_guild,
-            )
-
-            if not pre_war_guild(steps, log):
-                return post_war_guild(steps, log)
-
-            try:
-                run_war_guild(self, account, device, log)
-            finally:
-                post_war_guild(steps, log)
-            return steps
+            return run_war_guild(self, account, steps, device, log)
 
         def run_raid_battle(self, account, steps, device, ocr_client, log):
             """Chạy Giao Tranh bằng cấu hình BattleConfig của Clone Optimize."""
