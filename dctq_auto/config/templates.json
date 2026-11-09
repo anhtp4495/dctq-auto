@@ -26,6 +26,14 @@
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
+        "da_nhan_tam_quoc_lenh": {
+          "description": "Màn hình chính - [Tam Quốc Lệnh] - Đã nhận",
+          "rect": { "top": 105, "left": 881, "right": 969, "bottom": 182},
+          "search_rect": { "top": 100, "left": 800, "right": 1500, "bottom": 350},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
         "quan_doan_mo_chat": {
           "description": "Màn hình chính - Mở trò chuyện.",
           "rect": { "top": 499, "left": 1877, "right": 1919, "bottom": 587},
@@ -788,61 +796,67 @@
       "source_image": "resources/screens/tam_quoc_lenh/man_hinh_chinh.png",
       "templates": {
         "man_hinh_chinh": {
-          "description": "#[Tam Quốc Lệnh] - Màn hình chính",
-          "rect": { "top": 145, "left": 831, "right": 1085, "bottom": 207},
-          "search_rect":  { "top": 68, "left": 112, "right": 1709, "bottom": 971},
+          "description": "[Tam Quốc Lệnh] - Màn hình chính",
+          "rect": { "top": 37, "left": 786, "right": 1114, "bottom": 94},
+          "search_rect": { "top": 0, "left": 609, "right": 1329, "bottom": 140},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
-        "da_diem_binh": {
-          "description": "#[Tam Quốc Lệnh] - Đã điểm binh",
-          "rect": { "top": 145, "left": 831, "right": 1085, "bottom": 207},
-          "search_rect":  { "top": 68, "left": 112, "right": 1709, "bottom": 971},
-          "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED"
-        },
-        "chua_diem_binh": {
-          "description": "#[Tam Quốc Lệnh] - Chưa điểm binh",
-          "rect": { "top": 145, "left": 831, "right": 1085, "bottom": 207},
-          "search_rect":  { "top": 68, "left": 112, "right": 1709, "bottom": 971},
-          "threshold": 0.95,
-          "grayscale": false,
-          "match_method": "TM_CCOEFF_NORMED"
-        },
-        "da_que_boi": {
-          "description": "#[Tam Quốc Lệnh] - Đã nhận quẻ bói",
-          "rect": { "top": 145, "left": 831, "right": 1085, "bottom": 207},
-          "search_rect":  { "top": 68, "left": 112, "right": 1709, "bottom": 971},
-          "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED"
-        },
-        "chua_que_boi": {
-          "description": "#[Tam Quốc Lệnh] - Chưa nhận quẻ bói",
-          "rect": { "top": 145, "left": 831, "right": 1085, "bottom": 207},
-          "search_rect":  { "top": 68, "left": 112, "right": 1709, "bottom": 971},
-          "threshold": 0.95,
-          "grayscale": false,
-          "match_method": "TM_CCOEFF_NORMED"
-        },
-        "chua_nhan_thuong": {
-          "description": "#[Tam Quốc Lệnh] - Tab nhận thưởng",
-          "rect": { "top": 145, "left": 831, "right": 1085, "bottom": 207},
-          "search_rect":  { "top": 68, "left": 112, "right": 1709, "bottom": 971},
-          "threshold": 0.95,
-          "grayscale": false,
-          "match_method": "TM_CCOEFF_NORMED"
-        },
-        "da_nhan_thuong": {
-          "description": "#[Tam Quốc Lệnh] - Tab nhận thưởng",
-          "rect": { "top": 145, "left": 831, "right": 1085, "bottom": 207},
-          "search_rect":  { "top": 68, "left": 112, "right": 1709, "bottom": 971},
+        "dong_man_hinh_chinh": {
+          "description": "[Tam Quốc Lệnh] - Đóng",
+          "rect": { "top": 26, "left": 1734, "right": 1789, "bottom": 106},
+          "search_rect": { "top": 6, "left": 1654, "right": 1917, "bottom": 194},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "nhan_thuong_nhanh": {
-          "description": "#[Tam Quốc Lệnh] - Nhận thưởng nhanh",
-          "rect": { "top": 145, "left": 831, "right": 1085, "bottom": 207},
-          "search_rect":  { "top": 68, "left": 112, "right": 1709, "bottom": 971},
+          "description": "[Tam Quốc Lệnh] - Nhận thưởng nhanh",
+          "rect": { "top": 948, "left": 979, "right": 1178, "bottom": 1022},
+          "search_rect": { "top": 931, "left": 942, "right": 1208, "bottom": 1047},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "que_boi": {
+          "description": "[Tam Quốc Lệnh] - Quẻ bói",
+          "rect": { "top": 298, "left": 170, "right": 372, "bottom": 377},
+          "search_rect": { "top": 114, "left": 111, "right": 420, "bottom": 583},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "mien_phi": {
+          "description": "[Tam Quốc Lệnh] - Miễn phí",
+          "rect": { "top": 883, "left": 291, "right": 443, "bottom": 937},
+          "search_rect": { "top": 723, "left": 534, "right": 957, "bottom": 969},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "100knb": {
+          "description": "[Tam Quốc Lệnh] - 100knb",
+          "rect": { "top": 880, "left": 751, "right": 820, "bottom": 929},
+          "search_rect": { "top": 723, "left": 534, "right": 957, "bottom": 969},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "diem_binh": {
+          "description": "[Tam Quốc Lệnh] - Điểm binh",
+          "rect": { "top": 464, "left": 170, "right": 373, "bottom": 526},
+          "search_rect": { "top": 114, "left": 111, "right": 420, "bottom": 583},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "hop_thoai_su_dung_knb": {
+          "description": "[Tam Quốc Lệnh] - Hộp thoại sử dụng KNB",
+          "rect": { "top": 797, "left": 1303, "right": 1523, "bottom": 849},
+          "search_rect": { "top": 123, "left": 429, "right": 1546, "bottom": 429},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "hop_thoai_su_dung_knb_dong": {
+          "description": "[Tam Quốc Lệnh] - Đóng hộp thoại sử dụng KNB",
+          "rect": { "top": 783, "left": 1826, "right": 1883, "bottom": 846},
+          "search_rect": { "top": 123, "left": 429, "right": 1546, "bottom": 429},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
