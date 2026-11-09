@@ -52,6 +52,7 @@ def run(worker, account, device, log, current_try=1) -> bool:
         return False
 
     templates = get_templates(_TEMPLATES)
+    screen = screen_bgr(device)
 
     for template_name in _TEMPLATES:
         template = templates.get(template_name)
@@ -59,7 +60,6 @@ def run(worker, account, device, log, current_try=1) -> bool:
             log(f"[{account.display_name}] Không tải được template ; bỏ qua.")
             continue
 
-        screen = screen_bgr(device)
         match_template = match(screen, template, account=account, log=log)
         if match_template is None:
             continue
@@ -85,6 +85,7 @@ def run(worker, account, device, log, current_try=1) -> bool:
             
         x, y = click_match(device, match_template)
         log(f"[{account.display_name}] Click trung điểm [{template_name}] tại ({x}, {y}).")
+        time.sleep(_POLL_INTERVAL)
         return run(worker, account, device, log)
 
     log(
