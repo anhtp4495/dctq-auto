@@ -61,12 +61,26 @@ _TEMPLATE_CHIEN_TRANH_TAM_QUAN_DONG_TONG_KET = "chien_tranh.doan_chien/dong_tong
 
 # Template dùng trong quy trình nhận thưởng Tam Quốc Lệnh.
 _TEMPLATE_MAIN_TAM_QUOC_LENH = "main/tam_quoc_lenh"
+_TEMPLATE_MAIN_DA_NHAN_TAM_QUOC_LENH = "main/da_nhan_tam_quoc_lenh"
+_TEMPLATE_MAIN_TAM_QUOC_LENH_CHUA_MO_CHIEN_TRANH = "main/chua_mo_chien_tranh"
+_TEMPLATE_MAIN_TAM_QUOC_LENH_DANG_MO_CHIEN_TRANH = "main/dang_mo_chien_tranh"
+
 _TEMPLATE_TAM_QUOC_LENH_MAN_HINH_CHINH = "tam_quoc_lenh/man_hinh_chinh"
-_TEMPLATE_TAM_QUOC_LENH_CHUA_MO_CHIEN_TRANH = "tam_quoc_lenh/chua_mo_chien_tranh"
-_TEMPLATE_TAM_QUOC_LENH_DANG_MO_CHIEN_TRANH = "tam_quoc_lenh/dang_mo_chien_tranh"
-_TEMPLATE_TAM_QUOC_LENH_CHUA_NHAN_THUONG = "tam_quoc_lenh/chua_nhan_thuong"
-_TEMPLATE_TAM_QUOC_LENH_DA_NHAN_THUONG = "tam_quoc_lenh/da_nhan_thuong"
+_TEMPLATE_TAM_QUOC_LENH_DONG_MAN_HINH_CHINH = "tam_quoc_lenh/dong_man_hinh_chinh"
 _TEMPLATE_TAM_QUOC_LENH_NHAN_THUONG_NHANH = "tam_quoc_lenh/nhan_thuong_nhanh"
+_TEMPLATE_TAM_QUOC_LENH_QUE_BOI_DIEM_BINH_MIEN_PHI = "tam_quoc_lenh/que_boi_diem_binh_mien_phi"
+_TEMPLATE_TAM_QUOC_LENH_QUE_BOI = "tam_quoc_lenh/que_boi"
+_TEMPLATE_TAM_QUOC_LENH_DIEM_BINH = "tam_quoc_lenh/diem_binh"
+_TEMPLATE_TAM_QUOC_LENH_MIEN_PHI = "tam_quoc_lenh/mien_phi"
+_TEMPLATE_TAM_QUOC_LENH_100_KNB = "tam_quoc_lenh/100knb"
+_TEMPLATE_TAM_QUOC_LENH_HOP_THOAI_SU_DUNG_KNB = "tam_quoc_lenh/hop_thoai_su_dung_knb"
+_TEMPLATE_TAM_QUOC_LENH_HOP_THOAI_SU_DUNG_KNB_DONG = "tam_quoc_lenh/hop_thoai_su_dung_knb_dong"
+
+# Tên cũ được giữ để các task hiện tại không lỗi import.
+_TEMPLATE_TAM_QUOC_LENH_CHUA_MO_CHIEN_TRANH = _TEMPLATE_MAIN_TAM_QUOC_LENH_CHUA_MO_CHIEN_TRANH
+_TEMPLATE_TAM_QUOC_LENH_DANG_MO_CHIEN_TRANH = _TEMPLATE_MAIN_TAM_QUOC_LENH_DANG_MO_CHIEN_TRANH
+_TEMPLATE_TAM_QUOC_LENH_CHUA_NHAN_THUONG = _TEMPLATE_TAM_QUOC_LENH_MIEN_PHI
+_TEMPLATE_TAM_QUOC_LENH_DA_NHAN_THUONG = _TEMPLATE_MAIN_DA_NHAN_TAM_QUOC_LENH
 
 # Template dùng trong quy trình Mưu Binh.
 _TEMPLATE_MUU_BINH_MAN_HINH_CHINH = "chien_tranh.muu_binh/man_hinh_chinh"
