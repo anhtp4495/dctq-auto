@@ -6,6 +6,7 @@ from dctq_auto.config.constants import (
 )
 from dctq_auto.tasks.common.battle.battle_utils import match, screen_bgr
 from dctq_auto.tasks.common.three_kingdom import (
+    task_close_three_kingdom,
     task_open_three_kingdom,
     task_run_three_kingdom,
 )
@@ -73,6 +74,13 @@ def run(worker, account, steps, device, ocr_client, log) -> list[str]:
         if not received:
             log(f"[{account.display_name}] Nhận thưởng Tam Quốc Lệnh chưa hoàn tất; giữ nguyên step.")
             return steps
+
+        closed = task_close_three_kingdom.run(worker, account, device, log)
+        if not closed:
+            log(
+                f"[{account.display_name}] Đã nhận thưởng Tam Quốc Lệnh nhưng "
+                "không đóng được màn hình; vẫn hoàn tất step nhận thưởng."
+            )
 
         return post_three_kingdom(steps)
     except Exception as exc:
