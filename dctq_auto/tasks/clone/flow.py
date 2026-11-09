@@ -461,46 +461,30 @@ def run_clone_flow(self, device) -> None:
                 )
                 break
 
-        # Nhận thưởng - Quân Đoàn chạy cuối cùng, sau Quốc chiến, dùng lại flow đã có ở Tab Tác vụ.
+        # Nhận thưởng - Quân Đoàn dùng chung luồng Template Matching.
         if self._config.get("clone_reward_guild"):
             task_label = f"{account.display_name} - Nhận Thưởng - Quân Đoàn"
             self._emit_task_progress(task_label, "running", 0, 1)
             if not self._wait_if_paused():
                 self.log_message.emit("Đã dừng trước khi nhận Thưởng - Quân Đoàn.")
                 return
-            self.log_message.emit(
-                f"[{account.display_name}] Bắt đầu Nhận Thưởng - Quân Đoàn "
-                "bằng luồng đã triển khai ở Tab Tác vụ."
-            )
-            previous_reward_flag = self._config.get("reward_weekly_doan_chien", False)
-            previous_reward_label = self._config.get("_clone_reward_guild_label")
             try:
-                from dctq_auto.tasks.reward_weekly_doan_chien import run_reward_weekly_doan_chien
-                self._config["reward_weekly_doan_chien"] = True
-                # Reuse the existing task's own progress reporting, with the Clone label.
-                self._config["_clone_reward_guild_label"] = task_label
-                reward_result = run_reward_weekly_doan_chien(self, device, 0, 1)
-                if reward_result is None:
-                    self._emit_task_progress(task_label, "failed", 0, 1)
+                from dctq_auto.tasks.common.war.guild.task_war_guild import run as run_war_guild
+
+                reward_ok = run_war_guild(self, account, device, self.log_message.emit)
+                self._emit_task_progress(
+                    task_label, "done" if reward_ok else "failed",
+                    1 if reward_ok else 0, 1,
+                )
+                if not reward_ok:
                     self.log_message.emit(
-                        f"[{account.display_name}] Luồng Nhận Thưởng - Quân Đoàn đã dừng hoặc chưa hoàn tất."
-                    )
-                else:
-                    self.log_message.emit(
-                        f"[{account.display_name}] Đã kết thúc luồng Nhận Thưởng - Quân Đoàn; "
-                        "xem trạng thái OCR của tác vụ để biết thành công hay thất bại."
+                        f"[{account.display_name}] Nhận Thưởng - Quân Đoàn chưa hoàn tất."
                     )
             except Exception as exc:
                 self._emit_task_progress(task_label, "failed", 0, 1)
                 self.log_message.emit(
                     f"[{account.display_name}] Nhận Thưởng - Quân Đoàn thất bại: {exc}"
                 )
-            finally:
-                self._config["reward_weekly_doan_chien"] = previous_reward_flag
-                if previous_reward_label is None:
-                    self._config.pop("_clone_reward_guild_label", None)
-                else:
-                    self._config["_clone_reward_guild_label"] = previous_reward_label
 
         # Close the guild panel after all selected guild-related actions,
         # then log out so the next account starts from the login screen.
@@ -802,6 +786,17 @@ def run_clone_flow_optimize_account(
         from dctq_auto.tasks.common.three_kingdom.task_three_kingdom import run as run_three_kingdom
         from dctq_auto.tasks.common.guild.task_guild import run as run_guild
         from dctq_auto.tasks.common.shop.task_shop import run as run_shop
+        from dctq_auto.tasks.common.war.guild.task_war_guild import run as run_war_guild
+
+        def run_guild_war_reward(self, account, steps, device, ocr_client, log):
+            """Nhận thưởng Đoàn Chiến bằng Template Matching."""
+            from dctq_auto.config.constants import _STEP_CHIEN_TRANH_QUAN_DOAN_NHAN_THUONG
+
+            if _STEP_CHIEN_TRANH_QUAN_DOAN_NHAN_THUONG not in steps:
+                return steps
+            if run_war_guild(self, account, device, log):
+                steps.remove(_STEP_CHIEN_TRANH_QUAN_DOAN_NHAN_THUONG)
+            return steps
 
         def run_raid_battle(self, account, steps, device, ocr_client, log):
             """Chạy Giao Tranh bằng cấu hình BattleConfig của Clone Optimize."""
@@ -859,6 +854,7 @@ def run_clone_flow_optimize_account(
                 "quan_doan_bao_danh", "quan_doan_tui_phuc", "quan_doan_cau_van",
                 "quan_doan_dong_gop_knb", "quan_doan_dong_gop_luong_thao",
             }),
+            ("Chiến tranh - Nhận thưởng Đoàn Chiến", run_guild_war_reward, {"chien_tranh_quan_doan_nhan_thuong"}),
             ("Cửa hàng", run_shop, {"cua_hang_danh_vong_mua_que_lanh"}),
             ("Chiến tranh - Giao tranh", run_raid_battle, {"quan_su_giao_tranh"}),
             ("Chiến tranh - Tranh bá", run_ranked_battle, {"quan_su_tranh_ba"}),
@@ -954,10 +950,3 @@ def run_clone_flow_optimize_account(
         )
     return False
 
-
-def _run_clone_reward_guild_step(self, device) -> bool:
-    """Chạy lại tác vụ nhận thưởng Quân đoàn hiện có."""
-    from dctq_auto.tasks.reward_weekly_doan_chien import run_reward_weekly_doan_chien
-
-    result = run_reward_weekly_doan_chien(self, device, 0, 1)
-    return result is not None

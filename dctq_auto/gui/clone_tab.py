@@ -312,13 +312,6 @@ class CloneTab(QWidget):
             step_registry.get_display_name_by_config_key("clone_quoc_chien", "Quốc chiến")
         )
         layout.addWidget(self.clone_quoc_chien)
-        self.clone_reward_guild = QCheckBox(
-            step_registry.get_display_name_by_config_key(
-                "clone_reward_guild", "Nhận Thưởng - Quân Đoàn"
-            )
-        )
-        layout.addWidget(self.clone_reward_guild)
-
         reward_group = QGroupBox("Nhận thưởng")
         reward_layout = QVBoxLayout(reward_group)
         self.clone_reward_tam_quoc_lenh = QCheckBox(
@@ -333,6 +326,12 @@ class CloneTab(QWidget):
         )
         reward_layout.addWidget(self.clone_reward_tam_quoc_lenh)
         reward_layout.addWidget(self.clone_reward_daily_missions)
+        self.clone_reward_guild = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_reward_guild", "Nhận Thưởng - Quân Đoàn"
+            )
+        )
+        reward_layout.addWidget(self.clone_reward_guild)
         layout.addWidget(reward_group)
 
         layout.addStretch(1)
