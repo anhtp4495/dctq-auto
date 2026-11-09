@@ -3,7 +3,6 @@
 import time
 
 from dctq_auto.config.constants import (
-    _TEMPLATE_MAIN_DA_NHAN_TAM_QUOC_LENH,
     _TEMPLATE_MAIN_TAM_QUOC_LENH,
     _TEMPLATE_TAM_QUOC_LENH_MAN_HINH_CHINH,
 )
@@ -14,14 +13,13 @@ from dctq_auto.vision.template_store import get_templates
 _MAX_TRIES = 20
 _POLL_INTERVAL = 1
 _OPEN_TEMPLATES = (
-    _TEMPLATE_MAIN_DA_NHAN_TAM_QUOC_LENH,
     _TEMPLATE_MAIN_TAM_QUOC_LENH,
     _TEMPLATE_TAM_QUOC_LENH_MAN_HINH_CHINH,
 )
 
 
-def run(worker, account, device, ocr_client, log) -> bool | None:
-    """Mở Tam Quốc Lệnh; None nếu phần thưởng đã được nhận trước đó."""
+def run(worker, account, device, ocr_client, log) -> bool:
+    """Mở Tam Quốc Lệnh; trả về True khi nhận diện được màn hình đích."""
     log(f"[{account.display_name}] Bắt đầu mở màn hình Tam Quốc Lệnh.")
     templates = get_templates(_OPEN_TEMPLATES)
 
@@ -52,32 +50,23 @@ def run(worker, account, device, ocr_client, log) -> bool | None:
             if found is None:
                 continue
 
-            if template_name == _TEMPLATE_MAIN_DA_NHAN_TAM_QUOC_LENH:
-                log(
-                    f"[{account.display_name}] Tam Quốc Lệnh đã nhận thưởng; "
-                    "không cần thực hiện lại."
-                )
-                return None
-
             if template_name == _TEMPLATE_TAM_QUOC_LENH_MAN_HINH_CHINH:
                 log(f"[{account.display_name}] Đã mở màn hình Tam Quốc Lệnh.")
                 return True
 
-            if template_name == _TEMPLATE_MAIN_TAM_QUOC_LENH:
-                try:
-                    x, y = click_match(device, found)
-                    log(
-                        f"[{account.display_name}] Click lối vào Tam Quốc Lệnh "
-                        f"tại ({x}, {y})."
-                    )
-                except Exception as exc:
-                    log(
-                        f"[{account.display_name}] Không click được lối vào "
-                        f"Tam Quốc Lệnh: {exc}"
-                    )
-                    return False
-                break
-
+            try:
+                x, y = click_match(device, found)
+                log(
+                    f"[{account.display_name}] Click lối vào Tam Quốc Lệnh "
+                    f"tại ({x}, {y})."
+                )
+            except Exception as exc:
+                log(
+                    f"[{account.display_name}] Không click được lối vào "
+                    f"Tam Quốc Lệnh: {exc}"
+                )
+                return False
+            break
         else:
             log(
                 f"[{account.display_name}] Chưa nhận diện được trạng thái "

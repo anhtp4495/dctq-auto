@@ -1,23 +1,55 @@
 """Điều phối mở giao diện và nhận thưởng Tam Quốc Lệnh."""
 
-from dctq_auto.config.constants import _STEP_NHAN_THUONG_TAM_QUOC_LENH
+from dctq_auto.config.constants import (
+    _STEP_NHAN_THUONG_TAM_QUOC_LENH,
+    _TEMPLATE_MAIN_DA_NHAN_TAM_QUOC_LENH,
+)
+from dctq_auto.tasks.common.battle.battle_utils import match, screen_bgr
 from dctq_auto.tasks.common.three_kingdom import (
     task_open_three_kingdom,
     task_run_three_kingdom,
 )
+from dctq_auto.vision.template_store import get_templates
 
 
-def pre_three_kingdom(steps, log) -> bool:
-    """Kiểm tra Clone Optimize có chọn nhận thưởng Tam Quốc Lệnh hay không."""
+def pre_three_kingdom(steps, account, device, log) -> bool:
+    """Kiểm tra step và bỏ qua nếu Tam Quốc Lệnh đã nhận thưởng."""
     if _STEP_NHAN_THUONG_TAM_QUOC_LENH not in steps:
         log("Tam Quốc Lệnh: không có step nhận thưởng trong danh sách; bỏ qua.")
         return False
-    log("Tam Quốc Lệnh: tìm thấy step nhận thưởng; bắt đầu thực hiện.")
+
+    templates = get_templates((_TEMPLATE_MAIN_DA_NHAN_TAM_QUOC_LENH,))
+    template = templates.get(_TEMPLATE_MAIN_DA_NHAN_THUONG_TAM_QUOC_LENH)
+    if template is None:
+        log(
+            f"[{account.display_name}] Không tải được template "
+            f"{_TEMPLATE_MAIN_DA_NHAN_TAM_QUOC_LENH}; tiếp tục kiểm tra Tam Quốc Lệnh."
+        )
+        return True
+
+    try:
+        screen = screen_bgr(device)
+    except Exception as exc:
+        log(
+            f"[{account.display_name}] Không chụp được màn hình để kiểm tra "
+            f"trạng thái Tam Quốc Lệnh: {exc}; tiếp tục quy trình."
+        )
+        return True
+
+    if match(screen, template, account=account, log=log) is not None:
+        log(
+            f"[{account.display_name}] Tam Quốc Lệnh đã nhận thưởng; "
+            "loại step và bỏ qua."
+        )
+        steps.remove(_STEP_NHAN_THUONG_TAM_QUOC_LENH)
+        return False
+
+    log(f"[{account.display_name}] Chưa nhận thưởng Tam Quốc Lệnh; bắt đầu thực hiện.")
     return True
 
 
 def post_three_kingdom(steps) -> list[str]:
-    """Loại step sau khi mở giao diện và nhận thưởng thành công."""
+    """Loại step sau khi nhận thưởng thành công."""
     if _STEP_NHAN_THUONG_TAM_QUOC_LENH in steps:
         steps.remove(_STEP_NHAN_THUONG_TAM_QUOC_LENH)
     return steps
@@ -25,11 +57,11 @@ def post_three_kingdom(steps) -> list[str]:
 
 def run(worker, account, steps, device, ocr_client, log) -> list[str]:
     """Mở Tam Quốc Lệnh, nhận thưởng rồi cập nhật danh sách step còn lại."""
-    if not pre_three_kingdom(steps, log):
-        return steps
-
-    log(f"[{account.display_name}] Bắt đầu quy trình Tam Quốc Lệnh.")
     try:
+        if not pre_three_kingdom(steps, account, device, log):
+            return steps
+
+        log(f"[{account.display_name}] Bắt đầu quy trình Tam Quốc Lệnh.")
         opened = task_open_three_kingdom.run(
             worker, account, device, ocr_client, log
         )
