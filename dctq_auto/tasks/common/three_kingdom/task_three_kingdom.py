@@ -19,7 +19,7 @@ def pre_three_kingdom(steps, account, device, log) -> bool:
         return False
 
     templates = get_templates((_TEMPLATE_MAIN_DA_NHAN_TAM_QUOC_LENH,))
-    template = templates.get(_TEMPLATE_MAIN_DA_NHAN_THUONG_TAM_QUOC_LENH)
+    template = templates.get(_TEMPLATE_MAIN_DA_NHAN_TAM_QUOC_LENH_TAM_QUOC_LENH)
     if template is None:
         log(
             f"[{account.display_name}] Không tải được template "
