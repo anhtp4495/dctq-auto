@@ -114,5 +114,6 @@ def close_knowned_dialog(
                 f"[{account.display_name}] Đã phát hiện {dialog_name}; "
                 f"click đóng màn hình tại ({x}, {y})."
             )
+            break
 
     return False
