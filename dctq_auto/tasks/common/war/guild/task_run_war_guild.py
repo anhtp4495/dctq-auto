@@ -12,6 +12,7 @@ from dctq_auto.config.constants import (
 )
 from dctq_auto.tasks.common.battle.battle_utils import click_match, match, screen_bgr
 from dctq_auto.vision.template_store import get_templates
+from dctq_auto.vision.template_report import report_template_match
 
 
 _MAX_TRIES = 10
@@ -34,7 +35,7 @@ def run(worker, account, device, log, current_try=1) -> bool:
         
     if current_try > _MAX_TRIES:
         log(
-            f"[{account.display_name}] Không xác nhận được trạng thái đã nhận thưởng sau {_MAX_POLLS} lần; "
+            f"[{account.display_name}] Không xác nhận được trạng thái đã nhận thưởng sau {_MAX_TRIES} lần; "
             "giữ nguyên trạng thái thất bại để tránh báo hoàn tất sai."
         )
         return False
