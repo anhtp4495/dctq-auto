@@ -88,7 +88,14 @@
         "an_cho_trong_de_thoat": {
           "description": "[Sự kiện] - Ấn chỗ trống để thoát",
           "rect": { "top": 799, "left": 1054, "right": 1493, "bottom": 861},
-          "search_rect":  { "top": 780, "left": 615, "right": 1353, "bottom": 984},
+          "search_rect": { "top": 780, "left": 615, "right": 1353, "bottom": 984},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "dong_tang_qua_hang_ngay": {
+          "description": "[Sự kiện] - Thoát",
+          "rect": { "top": 831, "left": 119, "right": 412, "bottom": 883},
+          "search_rect": { "top": 733, "left": 772, "right": 1357, "bottom": 968},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }

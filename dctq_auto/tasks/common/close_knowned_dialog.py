@@ -11,10 +11,15 @@ from dctq_auto.config.constants import (
     _TEMPLATE_THONG_BAO_DICH_QUAN_TAP_KICH,
     _TEMPLATE_MAIN_SU_KIEN_TANG_QUA_HANG_NGAY,
     _TEMPLATE_MAIN_SU_KIEN_AN_CHO_TRONG_DE_THOAT,
+    _TEMPLATE_MAIN_SU_KIEN_THOAT,
     _TEMPLATE_QUAN_SU_GIAO_TRANH_HOI_THANH,
     _TEMPLATE_QUAN_SU_TRANH_BA_HOI_THANH,
 )
-from dctq_auto.tasks.common.battle.battle_utils import click_match
+from dctq_auto.tasks.common.battle.battle_utils import (
+    click_match as _click_match,
+    match as _match,
+    screen_bgr as _screen_bgr,
+)
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
@@ -31,6 +36,7 @@ def close_knowned_dialog(
         _TEMPLATE_THONG_BAO_DICH_QUAN_TAP_KICH,
         _TEMPLATE_MAIN_SU_KIEN_TANG_QUA_HANG_NGAY,
         _TEMPLATE_MAIN_SU_KIEN_AN_CHO_TRONG_DE_THOAT,
+        _TEMPLATE_MAIN_SU_KIEN_THOAT,
         _TEMPLATE_QUAN_SU_GIAO_TRANH_HOI_THANH,
         _TEMPLATE_QUAN_SU_TRANH_BA_HOI_THANH,
         _TEMPLATE_MAIN_HOAT_DONG,
@@ -80,7 +86,7 @@ def close_knowned_dialog(
                 return True
 
             if template_name == _TEMPLATE_ACCOUNT_CLOSE_CAP_NHAT_THONG_TIN:
-                x, y = click_match(device, match)
+                x, y = _click_match(device, match)
                 dialog_name = "Đóng cập nhật thông tin"
             elif template_name == _TEMPLATE_ACCOUNT_CAP_NHAT_THONG_TIN:
                 x, y = positions.get("main.cap_nhat_thong_tin", "dong_man_hinh")
@@ -90,12 +96,17 @@ def close_knowned_dialog(
                 x, y = positions.get("main.dich_quan_tap_kich", "dong_man_hinh")
                 device.shell(f"input tap {x} {y}")
                 dialog_name = "Địch Quân Tập Kích"
-            elif template_name in ( _TEMPLATE_MAIN_SU_KIEN_TANG_QUA_HANG_NGAY, _TEMPLATE_MAIN_SU_KIEN_AN_CHO_TRONG_DE_THOAT, ):
-                x, y = click_match(device, match)
-                dialog_name = "Tặng quà sự kiện"
+            elif template_name in ( _TEMPLATE_MAIN_SU_KIEN_TANG_QUA_HANG_NGAY, _TEMPLATE_MAIN_SU_KIEN_AN_CHO_TRONG_DE_THOAT, _TEMPLATE_MAIN_SU_KIEN_THOAT,):
+                x, y = _click_match(device, match)
+                dialog_name = "Tặng quà sự kiện1"
+                log(
+                    f"[{account.display_name}] Đã phát hiện {dialog_name}; "
+                    f"click đóng màn hình tại ({x}, {y})."
+                )
                 time.sleep(4)
+                return close_knowned_dialog(self, account, device, ocr_client, log, screen_bgr=_screen_bgr(device))
             else:
-                x, y = click_match(device, match)
+                x, y = _click_match(device, match)
                 dialog_name = template_name
                 time.sleep(1.5)
 

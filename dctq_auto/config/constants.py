@@ -13,6 +13,7 @@ _TEMPLATE_ACCOUNT_DANG_NHAP = "accounts3/dang_nhap"
 # Template màn hình đã biết
 _TEMPLATE_MAIN_SU_KIEN_TANG_QUA_HANG_NGAY = "main.su_kien/tang_qua_hang_ngay"
 _TEMPLATE_MAIN_SU_KIEN_AN_CHO_TRONG_DE_THOAT = "main.su_kien/an_cho_trong_de_thoat"
+_TEMPLATE_MAIN_SU_KIEN_THOAT = "main.su_kien/dong_tang_qua_hang_ngay"
 
 # Step được chọn từ cấu hình tác vụ.
 _STEP_NHAN_THUONG_TAM_QUOC_LENH = "hoat_dong_nhan_thuong_tam_quoc_lenh"
