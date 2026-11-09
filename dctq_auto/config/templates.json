@@ -1099,6 +1099,68 @@
         }
       }
     },
+    "chien_tranh.doan_chien": {
+      "source_image": "resources/screens/chien_tranh/doan_chien.png",
+      "templates": {
+        "man_hinh_chinh": {
+          "description": "[Đoàn Chiến] - [Màn hình chính]",
+          "rect": { "top": 46, "left": 685, "right": 1241, "bottom": 122},
+          "search_rect": { "top": 0, "left": 400, "right": 1400, "bottom": 200},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "dong_man_hinh_doan_chien": {
+          "description": "[Đoàn Chiến] - [Màn hình chính] - Đóng",
+          "rect": { "top": 221, "left": 1748, "right": 1804, "bottom": 293},
+          "search_rect": { "top": 45, "left": 1671, "right": 1817, "bottom": 178},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "da_nhan_thuong": {
+          "description": "[Đoàn Chiến] - Đã nhận thưởng",
+          "rect": { "top": 937, "left": 1436, "right": 1620, "bottom": 1004},
+          "search_rect": { "top": 774, "left": 1088, "right": 1368, "bottom": 1022},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "chua_nhan_thuong": {
+          "description": "[Đoàn Chiến] - Chưa nhận thưởng",
+          "rect": { "top": 901, "left": 1100, "right": 1335, "bottom": 1002},
+          "search_rect": { "top": 774, "left": 1088, "right": 1368, "bottom": 1022},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "an_cho_trong_de_nhan_thuong": {
+          "description": "[Đoàn Chiến] - Ấn chỗ trống để nhận thưởng",
+          "rect": { "top": 433, "left": 797, "right": 1239, "bottom": 485},
+          "search_rect": { "top": 750, "left": 450, "right": 1500, "bottom": 1079},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "an_cho_trong_de_thoat": {
+          "description": "[Đoàn Chiến] - Ấn chỗ trống để thoát",
+          "rect": { "top": 600, "left": 727, "right": 1148, "bottom": 668},
+          "search_rect": { "top": 750, "left": 450, "right": 1500, "bottom": 1079},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "tong_ket_doan_chien": {
+          "description": "[Đoàn Chiến] - [Màn hình tổng Kết Đoàn chiến]",
+          "rect": { "top": 535, "left": 103, "right": 396, "bottom": 624},
+          "search_rect": { "top": 1, "left": 1215, "right": 1907, "bottom": 805},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "dong_tong_ket_doan_chien": {
+          "description": "[Đoàn Chiến] - [Màn hình tổng Kết Đoàn chiến] - Đóng",
+          "rect": { "top": 221, "left": 1748, "right": 1804, "bottom": 293},
+          "search_rect": { "top": 0, "left": 1802, "right": 1919, "bottom": 117},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
     "quan_su.tranh_ba": {
       "source_image": "resources/screens/tranh_ba/man_hinh_chinh.png",
       "templates": {
