@@ -73,6 +73,7 @@ _TEMPLATE_TAM_QUOC_LENH_QUE_BOI = "tam_quoc_lenh/que_boi"
 _TEMPLATE_TAM_QUOC_LENH_DIEM_BINH = "tam_quoc_lenh/diem_binh"
 _TEMPLATE_TAM_QUOC_LENH_MIEN_PHI = "tam_quoc_lenh/mien_phi"
 _TEMPLATE_TAM_QUOC_LENH_100_KNB = "tam_quoc_lenh/100knb"
+_TEMPLATE_TAM_QUOC_LENH_AN_CHO_TRONG_DE_THOAT = "tam_quoc_lenh/an_cho_trong_de_thoat"
 _TEMPLATE_TAM_QUOC_LENH_HOP_THOAI_SU_DUNG_KNB = "tam_quoc_lenh/hop_thoai_su_dung_knb"
 _TEMPLATE_TAM_QUOC_LENH_HOP_THOAI_SU_DUNG_KNB_DONG = "tam_quoc_lenh/hop_thoai_su_dung_knb_dong"
 

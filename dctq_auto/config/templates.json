@@ -867,6 +867,13 @@
           "search_rect": { "top": 123, "left": 429, "right": 1546, "bottom": 429},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
+        },
+        "an_cho_trong_de_thoat": {
+          "description": "[Tam Quốc Lệnh] - Ấn trống để thoát",
+          "rect": { "top": 655, "left": 935, "right": 1348, "bottom": 710},
+          "search_rect": { "top": 753, "left": 650, "right": 1267, "bottom": 995},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
