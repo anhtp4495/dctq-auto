@@ -6,6 +6,7 @@ from dctq_auto.config.constants import (
     _TEMPLATE_MAIN_QUAN_SU,
     _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_DONG_MAN_HINH,
     _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_DONG_TONG_KET,
+    _TEMPLATE_CHIEN_TRANH_TAM_QUAN_DONG_TONG_KET,
 )
 from dctq_auto.tasks.common.battle.battle_utils import click_match, match, screen_bgr
 from dctq_auto.vision.template_store import get_templates
