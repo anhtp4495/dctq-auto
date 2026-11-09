@@ -8,6 +8,8 @@ from dctq_auto.tasks.common.war.guild import (
     task_open_war_guild,
     task_run_war_guild,
 )
+from dctq_auto.tasks.common.war.three_kingdom import task_run_three_kingdom
+
 
 def pre_war_guild(steps, log) -> bool:
     """Chỉ nhận thưởng Đoàn Chiến vào thứ Hai hoặc thứ Ba khi step được chọn."""
@@ -34,7 +36,7 @@ def post_war_guild(steps, log) -> list[str]:
 
 
 def run(worker, account, steps: list[str], device, log) -> list[str]:
-    """Điều phối nhận thưởng Đoàn Chiến và cập nhật danh sách steps."""
+    """Điều phối nhận thưởng Đoàn Chiến, Tam Quan và cập nhật danh sách steps."""
     if not pre_war_guild(steps, log):
         return post_war_guild(steps, log)
 
@@ -44,14 +46,20 @@ def run(worker, account, steps: list[str], device, log) -> list[str]:
             return steps
 
         try:
-            received = task_run_war_guild.run(worker, account, device, log)
+            received_guild = task_run_war_guild.run(worker, account, device, log)
+            received_three_kingdom = task_run_three_kingdom.run(
+                worker, account, device, log
+            )
         finally:
             closed = task_close_war_guild.run(worker, account, device, log)
 
         if not closed:
             log(f"[{account.display_name}] Chưa xác nhận đóng được màn hình Đoàn Chiến.")
-        elif received:
-            log(f"[{account.display_name}] Đã hoàn tất nhận thưởng Đoàn Chiến.")
+        else:
+            if received_guild:
+                log(f"[{account.display_name}] Đã hoàn tất nhận thưởng Đoàn Chiến.")
+            if received_three_kingdom:
+                log(f"[{account.display_name}] Đã hoàn tất nhận thưởng Tam Quan.")
         return steps
     finally:
         post_war_guild(steps, log)
