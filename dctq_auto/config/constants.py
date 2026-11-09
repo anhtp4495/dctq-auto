@@ -61,7 +61,7 @@ _TEMPLATE_CHIEN_TRANH_TAM_QUAN_DONG_TONG_KET = "chien_tranh.doan_chien/dong_tong
 
 # Template dùng trong quy trình nhận thưởng Tam Quốc Lệnh.
 _TEMPLATE_MAIN_TAM_QUOC_LENH = "main/tam_quoc_lenh"
-_TEMPLATE_MAIN_DA_NHAN_TAM_QUOC_LENH = "main/da_nhan_tam_quoc_lenh"
+_TEMPLATE_MAIN_CHUA_NHAN_TAM_QUOC_LENH = "main/chua_nhan_tam_quoc_lenh"
 _TEMPLATE_MAIN_TAM_QUOC_LENH_CHUA_MO_CHIEN_TRANH = "main/chua_mo_chien_tranh"
 _TEMPLATE_MAIN_TAM_QUOC_LENH_DANG_MO_CHIEN_TRANH = "main/dang_mo_chien_tranh"
 

@@ -2,7 +2,7 @@
 
 from dctq_auto.config.constants import (
     _STEP_NHAN_THUONG_TAM_QUOC_LENH,
-    _TEMPLATE_MAIN_DA_NHAN_TAM_QUOC_LENH,
+    _TEMPLATE_MAIN_CHUA_NHAN_TAM_QUOC_LENH,
 )
 from dctq_auto.tasks.common.battle.battle_utils import match, screen_bgr
 from dctq_auto.tasks.common.three_kingdom import (
@@ -19,16 +19,10 @@ def pre_three_kingdom(steps, account, device, log) -> bool:
         log("Tam Quốc Lệnh: không có step nhận thưởng trong danh sách; bỏ qua.")
         return False
 
-    templates = get_templates((_TEMPLATE_MAIN_DA_NHAN_TAM_QUOC_LENH,))
-    template = templates.get(_TEMPLATE_MAIN_DA_NHAN_TAM_QUOC_LENH)
-    if template is None:
-        log(
-            f"[{account.display_name}] Không tải được template "
-            f"{_TEMPLATE_MAIN_DA_NHAN_TAM_QUOC_LENH}; tiếp tục kiểm tra Tam Quốc Lệnh."
-        )
-        return True
 
     try:
+        templates = get_templates((_TEMPLATE_MAIN_CHUA_NHAN_TAM_QUOC_LENH,))
+        template = templates.get(_TEMPLATE_MAIN_CHUA_NHAN_TAM_QUOC_LENH)
         screen = screen_bgr(device)
     except Exception as exc:
         log(
@@ -38,15 +32,15 @@ def pre_three_kingdom(steps, account, device, log) -> bool:
         return True
 
     if match(screen, template, account=account, log=log) is not None:
-        log(
-            f"[{account.display_name}] Tam Quốc Lệnh đã nhận thưởng; "
-            "loại step và bỏ qua."
-        )
-        steps.remove(_STEP_NHAN_THUONG_TAM_QUOC_LENH)
-        return False
-
-    log(f"[{account.display_name}] Chưa nhận thưởng Tam Quốc Lệnh; bắt đầu thực hiện.")
-    return True
+        log(f"[{account.display_name}] Chưa nhận thưởng Tam Quốc Lệnh; bắt đầu thực hiện.")
+        return True
+    
+    log(
+        f"[{account.display_name}] Tam Quốc Lệnh đã nhận thưởng; "
+        "loại step và bỏ qua."
+    )
+    steps.remove(_STEP_NHAN_THUONG_TAM_QUOC_LENH)
+    return False
 
 
 def post_three_kingdom(steps) -> list[str]:

@@ -21,12 +21,12 @@
         },
         "tam_quoc_lenh": {
           "description": "Màn hình chính - Lối vào [Tam Quốc Lệnh].",
-          "rect": { "top": 110, "left": 900, "right": 1150, "bottom": 190 },
+          "rect": { "top": 125, "left": 882, "right": 938, "bottom": 172},
           "search_rect": { "top": 100, "left": 800, "right": 1500, "bottom": 350},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
-        "da_nhan_tam_quoc_lenh": {
+        "chua_nhan_tam_quoc_lenh": {
           "description": "Màn hình chính - [Tam Quốc Lệnh] - Đã nhận",
           "rect": { "top": 105, "left": 881, "right": 969, "bottom": 182},
           "search_rect": { "top": 100, "left": 800, "right": 1500, "bottom": 350},
@@ -811,15 +811,16 @@
         },
         "nhan_thuong_nhanh": {
           "description": "[Tam Quốc Lệnh] - Nhận thưởng nhanh",
-          "rect": { "top": 948, "left": 979, "right": 1178, "bottom": 1022},
+          "rect": { "top": 948, "left": 1307, "right": 1487, "bottom": 1020},
           "search_rect": { "top": 931, "left": 942, "right": 1208, "bottom": 1047},
-          "threshold": 0.85,
+          "threshold": 0.98,
+          "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "que_boi_diem_binh_mien_phi": {
           "description": "[Tam Quốc Lệnh] - Quẻ bói/Điểm Binh",
           "rect": { "top": 271, "left": 663, "right": 706, "bottom": 311},
-          "search_rect": { "top": 83, "left": 74, "right": 443, "bottom": 574},
+          "search_rect": { "top": 235, "left": 105, "right": 435, "bottom": 578},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },

@@ -5,6 +5,7 @@ import time
 from dctq_auto.config.constants import (
     _TEMPLATE_MAIN_TAM_QUOC_LENH,
     _TEMPLATE_TAM_QUOC_LENH_MAN_HINH_CHINH,
+    _TEMPLATE_MAIN_CHUA_NHAN_TAM_QUOC_LENH,
 )
 from dctq_auto.tasks.common.battle.battle_utils import click_match, match, screen_bgr
 from dctq_auto.vision.template_store import get_templates
@@ -15,6 +16,7 @@ _POLL_INTERVAL = 1
 _OPEN_TEMPLATES = (
     _TEMPLATE_MAIN_TAM_QUOC_LENH,
     _TEMPLATE_TAM_QUOC_LENH_MAN_HINH_CHINH,
+    _TEMPLATE_MAIN_CHUA_NHAN_TAM_QUOC_LENH,
 )
 
 
