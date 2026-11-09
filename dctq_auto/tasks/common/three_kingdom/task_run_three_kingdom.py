@@ -12,76 +12,86 @@ from dctq_auto.vision.template_store import get_templates
 
 
 _MAX_TRIES = 10
-_REWARD_TEMPLATES = (
+_POLL_INTERVAL = 0.8
+_TEMPLATES = (
     _TEMPLATE_TAM_QUOC_LENH_DA_NHAN_THUONG,
     _TEMPLATE_TAM_QUOC_LENH_CHUA_NHAN_THUONG,
     _TEMPLATE_TAM_QUOC_LENH_NHAN_THUONG_NHANH,
 )
 
 
-def run(worker, account, device, log) -> bool:
+def run(worker, account, device, log, current_try=1) -> bool:
     """Mở tab chưa nhận, nhấn nhận nhanh và xác nhận trạng thái đã nhận."""
-    log(f"[{account.display_name}] Bắt đầu nhận thưởng Tam Quốc Lệnh.")
-    templates = get_templates(_REWARD_TEMPLATES)
 
-    for current_try in range(1, _MAX_TRIES + 1):
-        if not worker._wait_if_paused():
-            log(f"[{account.display_name}] Đã dừng khi đang nhận thưởng Tam Quốc Lệnh.")
-            return False
+    if current_try == 1:
+        log(f"[{account.display_name}] Bắt đầu nhận thưởng Tam Quốc Lệnh.")
 
-        try:
-            screen = screen_bgr(device)
-        except Exception as exc:
-            log(f"[{account.display_name}] Không chụp được màn hình nhận thưởng: {exc}")
-            return False
-
-        unopened_tab = match(
-            screen,
-            templates.get(_TEMPLATE_TAM_QUOC_LENH_CHUA_NHAN_THUONG),
-            account=account,
-            log=log,
+    if current_try > _MAX_TRIES:
+        log(
+            f"[{account.display_name}] Không xác nhận được hoàn tất nhận thưởng "
+            f"Tam Quốc Lệnh sau {_MAX_TRIES} lần."
         )
-        if unopened_tab is not None:
-            try:
-                x, y = click_match(device, unopened_tab)
-                log(f"[{account.display_name}] Click tab chưa nhận thưởng tại ({x}, {y}).")
-            except Exception as exc:
-                log(f"[{account.display_name}] Không mở được tab chưa nhận thưởng: {exc}")
-                return False
-            time.sleep(0.7)
+        return False
+
+    if not worker._wait_if_paused():
+        log(f"[{account.display_name}] Đã dừng khi đang nhận thưởng Tam Quốc Lệnh.")
+        return False
+
+    templates = get_templates(_TEMPLATES)
+
+    try:
+        screen = screen_bgr(device)
+    except Exception as exc:
+        log(f"[{account.display_name}] Không chụp được màn hình nhận thưởng: {exc}")
+        return False
+
+    for template_name in _TEMPLATES:
+        template = templates.get(template_name)
+        if template is None:
+            log(
+                f"[{account.display_name}] Không tải được template "
+                f"{template_name}; bỏ qua."
+            )
             continue
 
-        quick_reward = match(
-            screen,
-            templates.get(_TEMPLATE_TAM_QUOC_LENH_NHAN_THUONG_NHANH),
-            account=account,
-            log=log,
-        )
-        if quick_reward is not None:
-            try:
-                x, y = click_match(device, quick_reward)
-                log(f"[{account.display_name}] Click nhận thưởng nhanh tại ({x}, {y}).")
-            except Exception as exc:
-                log(f"[{account.display_name}] Không click được nhận thưởng nhanh: {exc}")
-                return False
-            time.sleep(0.8)
+        match_template = match(screen, template, account=account, log=log)
+        if match_template is None:
             continue
 
-        claimed_tab = match(
-            screen,
-            templates.get(_TEMPLATE_TAM_QUOC_LENH_DA_NHAN_THUONG),
-            account=account,
-            log=log,
-        )
-        if claimed_tab is not None:
+        if template_name == _TEMPLATE_TAM_QUOC_LENH_DA_NHAN_THUONG:
             log(f"[{account.display_name}] Đã xác nhận trạng thái nhận thưởng Tam Quốc Lệnh.")
             return True
 
-        log(
-            f"[{account.display_name}] Chưa nhận diện được trạng thái nhận thưởng "
-            f"(lần {current_try}/{_MAX_TRIES}); thử lại."
-        )
-        time.sleep(0.8)
+        try:
+            x, y = click_match(device, match_template)
+            action = (
+                "tab chưa nhận thưởng"
+                if template_name == _TEMPLATE_TAM_QUOC_LENH_CHUA_NHAN_THUONG
+                else "nhận thưởng nhanh"
+            )
+            log(f"[{account.display_name}] Click {action} tại ({x}, {y}).")
+        except Exception as exc:
+            log(f"[{account.display_name}] Không click được [{template_name}]: {exc}")
+            return False
 
-    log(f"[{account.display_name}] Không xác nhận được hoàn tất nhận thưởng Tam Quốc Lệnh.")
-    return False
+        time.sleep(_POLL_INTERVAL)
+        return run(
+            worker,
+            account,
+            device,
+            log,
+            current_try=current_try + 1,
+        )
+
+    log(
+        f"[{account.display_name}] Chưa nhận diện được trạng thái nhận thưởng "
+        f"(lần {current_try}/{_MAX_TRIES}); thử lại."
+    )
+    time.sleep(_POLL_INTERVAL)
+    return run(
+        worker,
+        account,
+        device,
+        log,
+        current_try=current_try + 1,
+    )
