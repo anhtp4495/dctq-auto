@@ -42,12 +42,19 @@ def run(worker, account, device, log) -> bool:
 
         summary = match(screen, templates.get(_TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_TONG_KET), account=account, log=log)
         if summary is not None:
-            close_summary = match(screen, templates.get(_TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_DONG_TONG_KET), account=account, log=log)
+            close_summary = match(
+                screen,
+                templates.get(_TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_DONG_TONG_KET),
+                account=account,
+                log=log,
+            )
             if close_summary is not None:
                 x, y = click_match(device, close_summary)
                 log(f"[{account.display_name}] Đóng bảng tổng kết Đoàn Chiến tại ({x}, {y}).")
-                time.sleep(0.8)
-                continue
+            else:
+                log(f"[{account.display_name}] Đang ở bảng tổng kết; chờ nút đóng xuất hiện.")
+            time.sleep(0.8)
+            continue
 
         already = match(screen, templates.get(_TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_DA_NHAN_THUONG), account=account, log=log)
         if already is not None:

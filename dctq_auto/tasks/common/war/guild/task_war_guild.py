@@ -13,11 +13,11 @@ def run(worker, account, device, log) -> bool:
     if not task_open_war_guild.run(worker, account, device, log):
         return False
 
-    received = False
     try:
         received = task_run_war_guild.run(worker, account, device, log)
-        return received
     finally:
         closed = task_close_war_guild.run(worker, account, device, log)
-        if not closed:
-            log(f"[{account.display_name}] Cảnh báo: chưa xác nhận đóng được màn hình Đoàn Chiến.")
+
+    if not closed:
+        log(f"[{account.display_name}] Chưa xác nhận đóng được màn hình Đoàn Chiến.")
+    return received and closed
