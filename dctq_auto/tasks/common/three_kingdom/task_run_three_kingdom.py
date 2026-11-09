@@ -12,7 +12,7 @@ from dctq_auto.tasks.common.battle.battle_utils import click_match, match, scree
 from dctq_auto.vision.template_store import get_templates
 
 
-_MAX_TRIES = 20
+_MAX_TRIES = 5
 _POLL_INTERVAL = 0.8
 _TEMPLATES = (
     _TEMPLATE_TAM_QUOC_LENH_NHAN_THUONG_NHANH,
