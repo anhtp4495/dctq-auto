@@ -44,7 +44,7 @@
   {
     "id": "chien_tranh_quan_doan_nhan_thuong",
     "config_key": "clone_reward_guild",
-    "display_name": "Nhận Thưởng - Quân Đoàn",
+    "display_name": "Nhận Thưởng - Đoàn Chiến/Tam Quân",
     "priority": 10400,
     "templates": [
       "chien_tranh2/doan_chien",
