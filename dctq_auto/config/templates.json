@@ -1165,8 +1165,30 @@
           "match_method": "TM_CCOEFF_NORMED"
         },
         "dong_tong_ket_doan_chien": {
-          "description": "[Đoàn Chiến] - [Màn hình tổng Kết Đoàn chiến] - Đóng",
+          "description": "[Đoàn Chiến] - [Tổng kết] - Đóng",
           "rect": { "top": 221, "left": 1748, "right": 1804, "bottom": 293},
+          "search_rect": { "top": 0, "left": 1802, "right": 1919, "bottom": 117},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "da_nhan_thuong_tam_quan": {
+          "description": "[Tam Quân Chi Dịch] - Đã nhận thưởng",
+          "rect": { "top": 258, "left": 184, "right": 331, "bottom": 303},
+          "search_rect": { "top": 799, "left": 682, "right": 1280, "bottom": 1038},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "chua_nhan_thuong_tam_quan": {
+          "description": "[Tam Quân Chi Dịch] - Chưa nhận thưởng",
+          "rect": { "top": 67, "left": 151, "right": 360, "bottom": 128},
+          "search_rect": { "top": 799, "left": 682, "right": 1280, "bottom": 1038},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "dong_tong_ket_tam_quan": {
+          "description": "[Tam Quân Chi Dịch] - [Tổng kết] - Đóng",
+          "rect": { "top": 238, "left": 591, "right": 646, "bottom": 288},
           "search_rect": { "top": 0, "left": 1802, "right": 1919, "bottom": 117},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"

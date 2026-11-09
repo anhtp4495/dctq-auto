@@ -54,6 +54,9 @@ _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_AN_CHO_TRONG_DE_NHAN_THUONG = "chien_tranh.doan
 _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_AN_CHO_TRONG_DE_THOAT = "chien_tranh.doan_chien/an_cho_trong_de_thoat"
 _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_TONG_KET = "chien_tranh.doan_chien/tong_ket_doan_chien"
 _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_DONG_TONG_KET = "chien_tranh.doan_chien/dong_tong_ket_doan_chien"
+_TEMPLATE_CHIEN_TRANH_TAM_QUAN_DA_NHAN_THUONG = "chien_tranh.doan_chien/da_nhan_thuong_tam_quan"
+_TEMPLATE_CHIEN_TRANH_TAM_QUAN_CHUA_NHAN_THUONG = "chien_tranh.doan_chien/chua_nhan_thuong_tam_quan"
+_TEMPLATE_CHIEN_TRANH_TAM_QUAN_DONG_TONG_KET = "chien_tranh.doan_chien/dong_tong_ket_tam_quan"
 
 # Template dùng trong quy trình nhận thưởng Tam Quốc Lệnh.
 _TEMPLATE_MAIN_TAM_QUOC_LENH = "main/tam_quoc_lenh"
