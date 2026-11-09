@@ -14,7 +14,7 @@ from dctq_auto.vision.template_store import get_templates
 
 
 _MAX_TRIES = 10
-_POLL_INTERVAL = 1.8
+_POLL_INTERVAL = 2.5
 _TEMPLATES = (
     _TEMPLATE_TAM_QUOC_LENH_MIEN_PHI,
     _TEMPLATE_TAM_QUOC_LENH_AN_CHO_TRONG_DE_THOAT,
