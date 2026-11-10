@@ -591,6 +591,8 @@ class MainWindow(QMainWindow):
                 "clone_quan_su_giao_tranh",
                 "clone_quan_su_tranh_ba",
                 "clone_quoc_chien",
+                "clone_reward_tam_quoc_lenh",
+                "clone_reward_daily_missions",
                 "clone_reward_guild",
             )
         }
