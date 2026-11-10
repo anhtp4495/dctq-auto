@@ -3,6 +3,10 @@
     "profile": {
       "x": 65,
       "y": 65
+    }, 
+    "open_menu_game": {
+      "x": 1477,
+      "y": 158
     }
   },
   "main.dich_quan_tap_kich": {
