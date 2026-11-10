@@ -120,6 +120,9 @@ def handle_post_login(
 
     main_template = get_templates((_TEMPLATE_MAIN_QUAN_SU,)).get(_TEMPLATE_MAIN_QUAN_SU)
     if main_template is None:
+        close_knowned_dialog(
+            worker, account, device, ocr_client, worker.log_message.emit, screen_bgr
+        )
         return False, "Không tải được template màn hình Quân Sự"
 
     try:
@@ -177,6 +180,9 @@ def handle_post_login(
         worker.log_message.emit(
             f"[{account.display_name}] Không thể đóng menu game: {exc}"
         )
+        close_knowned_dialog(
+            worker, account, device, ocr_client, worker.log_message.emit, screen_bgr
+        )
         return False, "Không thao tác được menu game"
 
     if match_main_templates(screen_bgr):
@@ -197,6 +203,9 @@ def handle_post_login(
     except Exception as exc:
         worker.log_message.emit(
             f"[{account.display_name}] Không thể mở lại menu game: {exc}"
+        )
+        close_knowned_dialog(
+            worker, account, device, ocr_client, worker.log_message.emit, screen_bgr
         )
         return False, "Không thao tác được menu game"
 
