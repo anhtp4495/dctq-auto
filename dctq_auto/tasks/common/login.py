@@ -9,6 +9,9 @@ from dctq_auto.config.constants import (
     _TEMPLATE_ACCOUNT_CAP_NHAT_THONG_TIN,
     _TEMPLATE_ACCOUNT_CLOSE_CAP_NHAT_THONG_TIN,
     _TEMPLATE_ACCOUNT_DANG_NHAP,
+    _TEMPLATE_MAIN_QUAN_SU,
+    _TEMPLATE_MAIN_CHIEN_TRANH,
+    _TEMPLATE_MAIN_TAM_QUOC_LENH,
     _TEMPLATE_THONG_BAO_DICH_QUAN_TAP_KICH,
     _TEMPLATE_ACCOUNT_MAN_HINH_CHINH,
     _TEMPLATE_ACCOUNT_THONG_TIN_DANG_NHAP_KHONG_DUNG,
@@ -17,6 +20,7 @@ from dctq_auto.config.constants import (
 )
 from dctq_auto.tasks.base import TaskSpec
 from dctq_auto.tasks.common.logout import logout_account
+from dctq_auto.tasks.common.close_knowned_dialog import close_knowned_dialog
 from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_store import get_templates
@@ -72,103 +76,144 @@ _MAX_TRY_DETECT_MAIN_SCREEN = 20
 def handle_post_login(
     worker, account, device, ocr_client, current_try: int = 1
 ) -> tuple[bool | None, str | None]:
-    """Xử lý trạng thái sau khi gửi đăng nhập bằng template matching.
-
-    waiting: chờ 3 giây rồi kiểm tra lại bằng đệ quy.
-    update_information: đóng hộp thoại rồi kiểm tra lại.
-    profile: xác nhận đăng nhập thành công.
-    """
+    """Xác nhận game đã vào màn hình chính và menu game hoạt động bình thường."""
     if not worker._wait_if_paused():
         worker.log_message.emit("Đã dừng theo yêu cầu.")
         return None, None
 
-    try:
+    def capture_screen():
         screenshot = device.screenshot()
-        screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
+        return cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
+
+    def match_main_templates(screen_bgr):
+        template_names = (_TEMPLATE_MAIN_CHIEN_TRANH, _TEMPLATE_MAIN_TAM_QUOC_LENH)
+        templates = get_templates(template_names)
+        detected = []
+        for template_name in template_names:
+            template = templates.get(template_name)
+            if template is None:
+                continue
+            try:
+                match = _match_account_template(screen_bgr, template)
+            except (ValueError, cv2.error) as exc:
+                worker.log_message.emit(
+                    f"[{account.display_name}] Lỗi template matching {template_name}: {exc}"
+                )
+                continue
+            if match is not None:
+                report_template_match(
+                    worker.log_message.emit,
+                    context=f"[{account.display_name}]",
+                    template=template,
+                    match=match,
+                )
+                detected.append(template_name)
+        return len(detected) == len(template_names)
+
+    try:
+        screen_bgr = capture_screen()
     except Exception as exc:
         worker.log_message.emit(
             f"[{account.display_name}] Không chụp được màn hình hậu đăng nhập: {exc}"
         )
         return False, "Không xác minh được trạng thái sau đăng nhập"
 
-    template_names = (
-        _TEMPLATE_THONG_BAO_DICH_QUAN_TAP_KICH,
-        _TEMPLATE_ACCOUNT_WAITING,
-        _TEMPLATE_ACCOUNT_CAP_NHAT_THONG_TIN,
-        _TEMPLATE_ACCOUNT_CLOSE_CAP_NHAT_THONG_TIN,
-        _TEMPLATE_ACCOUNT_MAN_HINH_CHINH,
-    )
-    templates = get_templates(template_names)
+    main_template = get_templates((_TEMPLATE_MAIN_QUAN_SU,)).get(_TEMPLATE_MAIN_QUAN_SU)
+    if main_template is None:
+        return False, "Không tải được template màn hình Quân Sự"
 
-    for template_name in template_names:
-        template = templates.get(template_name)
-        if template is None:
-            continue
-
-        try:
-            match = _match_account_template(screen_bgr, template)
-        except (ValueError, cv2.error) as exc:
-            worker.log_message.emit(
-                f"[{account.display_name}] Lỗi template matching {template_name}: {exc}"
-            )
-            continue
-
-        if match is None:
-            continue
-
-        report_template_match(
-            worker.log_message.emit,
-            context=f"[{account.display_name}]",
-            template=template,
-            match=match,
+    try:
+        main_match = _match_account_template(screen_bgr, main_template)
+    except (ValueError, cv2.error) as exc:
+        worker.log_message.emit(
+            f"[{account.display_name}] Lỗi nhận diện màn hình Quân Sự: {exc}"
         )
+        main_match = None
 
-        if template.id  == "thong_bao_bi_tan_cong":
+    if main_match is None:
+        if current_try < _MAX_TRY_DETECT_MAIN_SCREEN:
             worker.log_message.emit(
-                f"[{account.display_name}] Phát hiện Địch Quân Tập Kích; đang đóng cửa sổ."
+                f"[{account.display_name}] Đang chờ màn hình Quân Sự "
+                f"(lần {current_try}/{_MAX_TRY_DETECT_MAIN_SCREEN})."
             )
-            tap_x, tap_y = ButtonPositions().get("main.dich_quan_tap_kich", "dong_man_hinh")
-            worker.log_message.emit(
-                f"[{account.display_name}] Đóng màn hình Địch Quân Tập Kích "
-                f"theo ButtonPositions tại ({tap_x}, {tap_y})."
-            )
-            device.shell(f"input tap {tap_x} {tap_y}")
             time.sleep(1)
-            return handle_post_login(worker, account, device, ocr_client)
-
-        if template.id == "waiting":
-            worker.log_message.emit(
-                f"[{account.display_name}] Đang chờ đăng nhập hoàn tất; kiểm tra lại sau 3 giây."
+            return handle_post_login(
+                worker, account, device, ocr_client, current_try + 1
             )
-            time.sleep(3)
-            return handle_post_login(worker, account, device, ocr_client)
 
-        if template.id == "cap_nhat_thong_tin" or template.id == "close_cap_nhat_thong_tin":
-            worker.log_message.emit(
-                f"[{account.display_name}] Phát hiện hộp thoại cập nhật thông tin; đang đóng hộp thoại."
-            )
-            try:
-                ocr_client.tap_ocr_target("close_cap_nhat_thong_tin_ca_nhan")
-            except Exception as exc:
-                worker.log_message.emit(
-                    f"[{account.display_name}] Không đóng được hộp thoại cập nhật thông tin: {exc}"
-                )
-                return False, "Không đóng được hộp thoại cập nhật thông tin"
-            time.sleep(1)
-            return handle_post_login(worker, account, device, ocr_client)
+        worker.log_message.emit(
+            f"[{account.display_name}] Hết lượt chờ màn hình Quân Sự; "
+            "thử đóng dialog đã biết."
+        )
+        close_knowned_dialog(
+            worker, account, device, ocr_client, worker.log_message.emit, screen_bgr
+        )
+        return False, "Không nhận diện được màn hình Quân Sự"
 
-        if template.id == "man_hinh_chinh":
-            worker.log_message.emit(f"[{account.display_name}] Đăng nhập thành công.")
-            return True, None
+    report_template_match(
+        worker.log_message.emit,
+        context=f"[{account.display_name}]",
+        template=main_template,
+        match=main_match,
+    )
 
-    if current_try < _MAX_TRY_DETECT_MAIN_SCREEN:
-        worker.log_message.emit(f"[{account.display_name}] Chưa xác định đã tải game thành công - Thử lại lần {current_try}.")
-        return handle_post_login(worker, account, device, ocr_client, current_try + 1)
+    # Xác nhận menu đang mở và có đủ hai mục trước khi thử đóng/mở.
+    if not match_main_templates(screen_bgr):
+        worker.log_message.emit(
+            f"[{account.display_name}] Không nhận diện đủ mục Chiến Tranh và "
+            "Tam Quốc Lệnh; thử đóng dialog đã biết."
+        )
+        close_knowned_dialog(
+            worker, account, device, ocr_client, worker.log_message.emit, screen_bgr
+        )
+        return False, "Menu game không ở trạng thái mong đợi"
+
+    try:
+        tap_x, tap_y = ButtonPositions().get("main", "open_menu_game")
+        device.shell(f"input tap {tap_x} {tap_y}")
+        time.sleep(1)
+        screen_bgr = capture_screen()
+    except Exception as exc:
+        worker.log_message.emit(
+            f"[{account.display_name}] Không thể đóng menu game: {exc}"
+        )
+        return False, "Không thao tác được menu game"
+
+    if match_main_templates(screen_bgr):
+        worker.log_message.emit(
+            f"[{account.display_name}] Menu game vẫn hiển thị sau thao tác đóng; "
+            "thử đóng dialog đã biết."
+        )
+        close_knowned_dialog(
+            worker, account, device, ocr_client, worker.log_message.emit, screen_bgr
+        )
+        return False, "Không đóng được menu game"
+
+    try:
+        tap_x, tap_y = ButtonPositions().get("main", "open_menu_game")
+        device.shell(f"input tap {tap_x} {tap_y}")
+        time.sleep(1)
+        screen_bgr = capture_screen()
+    except Exception as exc:
+        worker.log_message.emit(
+            f"[{account.display_name}] Không thể mở lại menu game: {exc}"
+        )
+        return False, "Không thao tác được menu game"
+
+    if not match_main_templates(screen_bgr):
+        worker.log_message.emit(
+            f"[{account.display_name}] Không mở lại được menu game; "
+            "thử đóng dialog đã biết."
+        )
+        close_knowned_dialog(
+            worker, account, device, ocr_client, worker.log_message.emit, screen_bgr
+        )
+        return False, "Không mở lại được menu game"
 
     worker.log_message.emit(
-        f"[{account.display_name}] Không nhận diện được trạng thái hậu đăng nhập từ {len(templates)} template."
+        f"[{account.display_name}] Đăng nhập thành công; menu game đóng/mở bình thường."
     )
-    return False, "Không xác định được trạng thái sau đăng nhập"
+    return True, None
 
 
 def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str | None]:
