@@ -17,7 +17,6 @@ from PIL import ImageOps
 from dctq_auto.adb.client import AdbClient
 from dctq_auto.automation.battle_testkit import BattleSnapshot, run_mock_battle
 from dctq_auto.tasks.common.accounts import CURRENT_ACCOUNT, GameAccount, load_accounts
-from dctq_auto.tasks.common.close_knowned_dialog import close_knowned_dialog
 from dctq_auto.config.step_registry import get_clone_step_registry
 from dctq_auto.progress import ProgressStatus
 
@@ -687,15 +686,6 @@ def run_clone_flow_optimize(self, device) -> None:
                 self._emit_clone_account_status(account.display_name, "failed")
                 self._emit_clone_account_result(account.display_name, False)
                 failed_count += 1
-                try:
-                    screenshot = device.screenshot()
-                    screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
-                    close_knowned_dialog(self, account, device, ocr_client, self.log_message.emit, screen_bgr)
-                except Exception as exc:
-                    self.log_message.emit(
-                        f"[{account.display_name}] Không chụp được màn hình "
-                        f"để đóng các hộp thoại đã biết: {exc}"
-                    )
                 continue
         else:
             self.log_message.emit(f"[{account.display_name}] Bắt đầu tác vụ bằng phiên đăng nhập hiện tại.")
@@ -879,17 +869,6 @@ def run_clone_flow_optimize_account(
                 self.UpdateProcessStatus(
                     process_id=self._current_process_ids[step_id],
                     status=ProgressStatus.RUNNING,
-                )
-
-            
-            try:
-                screenshot = device.screenshot()
-                screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
-                close_knowned_dialog(self, account, device, _ocr_client, self.log_message.emit, screen_bgr)
-            except Exception as exc:
-                self.log_message.emit(
-                    f"[{account.display_name}] Không chụp được màn hình "
-                    f"để đóng các hộp thoại đã biết: {exc}"
                 )
 
             try:
