@@ -41,6 +41,7 @@ from dctq_auto.config.settings import Settings
 from dctq_auto.gui.clone_tab import CloneTab
 from dctq_auto.gui.screenshot_annotator import ScreenshotAnnotator
 from dctq_auto.tasks.clone.accounts import load_accounts
+from dctq_auto.tasks.common.accounts import CURRENT_ACCOUNT, GameAccount
 from dctq_auto.tasks.common.state_war.task_run_state_war import list_battle_strategies
 
 
@@ -1884,15 +1885,20 @@ class MainWindow(QMainWindow):
         self._clone_total_accounts = 0
         if self._active_clone_mode:
             account_file = config.get("clone_account_file", "")
-            try:
-                accounts = load_accounts(account_file)
-            except (OSError, UnicodeError, ValueError) as exc:
-                QMessageBox.warning(
-                    self,
-                    "Danh sách tài khoản không hợp lệ",
-                    str(exc),
-                )
-                return
+            if account_file == CURRENT_ACCOUNT:
+                accounts = [GameAccount("", "", True, "Tài khoản hiện tại")]
+                config["clone_login"] = False
+                config["clone_logout"] = False
+            else:
+                try:
+                    accounts = load_accounts(account_file)
+                except (OSError, UnicodeError, ValueError) as exc:
+                    QMessageBox.warning(
+                        self,
+                        "Danh sách tài khoản không hợp lệ",
+                        str(exc),
+                    )
+                    return
             self._clone_total_accounts = sum(account.enabled for account in accounts)
             selected_tasks = [
                 key for key in (
