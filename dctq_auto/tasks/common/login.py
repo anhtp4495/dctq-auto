@@ -160,49 +160,11 @@ def handle_post_login(
         match=main_match,
     )
 
-    # Menu có thể đang mở hoặc đóng ở thời điểm bắt đầu.
-    # Luôn click một lần, sau đó xác định trạng thái thực tế để kiểm tra toggle.
-    menu_visible = match_main_templates(screen_bgr)
-    try:
-        tap_x, tap_y = ButtonPositions().get("main", "open_menu_game")
-        device.shell(f"input tap {tap_x} {tap_y}")
-        time.sleep(1)
-        screen_bgr = capture_screen()
-    except Exception as exc:
+    # Menu có thể đang mở hoặc đóng; trạng thái kết thúc bắt buộc phải là mở.
+    if not match_main_templates(screen_bgr):
         worker.log_message.emit(
-            f"[{account.display_name}] Không thể thao tác menu game: {exc}"
+            f"[{account.display_name}] Menu game đang đóng; đang mở menu."
         )
-        close_knowned_dialog(
-            worker, account, device, ocr_client, worker.log_message.emit, screen_bgr
-        )
-        return False, "Không thao tác được menu game"
-
-    after_first_click = match_main_templates(screen_bgr)
-
-    if menu_visible:
-        # Menu đang mở lúc đầu: click đầu tiên phải đóng menu.
-        if after_first_click:
-            worker.log_message.emit(
-                f"[{account.display_name}] Menu game vẫn hiển thị sau thao tác đóng; "
-                "thử đóng dialog đã biết."
-            )
-            close_knowned_dialog(
-                worker, account, device, ocr_client, worker.log_message.emit, screen_bgr
-            )
-            return False, "Không đóng được menu game"
-    else:
-        # Menu đang đóng lúc đầu: click đầu tiên phải mở được menu.
-        if not after_first_click:
-            worker.log_message.emit(
-                f"[{account.display_name}] Menu game không xuất hiện sau thao tác mở; "
-                "thử đóng dialog đã biết."
-            )
-            close_knowned_dialog(
-                worker, account, device, ocr_client, worker.log_message.emit, screen_bgr
-            )
-            return False, "Không mở được menu game"
-
-        # Đã mở được menu từ trạng thái đóng; click lần nữa để xác nhận đóng được.
         try:
             tap_x, tap_y = ButtonPositions().get("main", "open_menu_game")
             device.shell(f"input tap {tap_x} {tap_y}")
@@ -210,51 +172,25 @@ def handle_post_login(
             screen_bgr = capture_screen()
         except Exception as exc:
             worker.log_message.emit(
-                f"[{account.display_name}] Không thể đóng menu game: {exc}"
+                f"[{account.display_name}] Không thể mở menu game: {exc}"
             )
             close_knowned_dialog(
                 worker, account, device, ocr_client, worker.log_message.emit, screen_bgr
             )
-            return False, "Không thao tác được menu game"
-
-        if match_main_templates(screen_bgr):
-            worker.log_message.emit(
-                f"[{account.display_name}] Menu game vẫn hiển thị sau thao tác đóng; "
-                "thử đóng dialog đã biết."
-            )
-            close_knowned_dialog(
-                worker, account, device, ocr_client, worker.log_message.emit, screen_bgr
-            )
-            return False, "Không đóng được menu game"
-
-    # Tại đây menu đã được xác nhận ở trạng thái đóng. Mở lại và yêu cầu
-    # nhận diện được cả Chiến Tranh lẫn Tam Quốc Lệnh.
-    try:
-        tap_x, tap_y = ButtonPositions().get("main", "open_menu_game")
-        device.shell(f"input tap {tap_x} {tap_y}")
-        time.sleep(1)
-        screen_bgr = capture_screen()
-    except Exception as exc:
-        worker.log_message.emit(
-            f"[{account.display_name}] Không thể mở lại menu game: {exc}"
-        )
-        close_knowned_dialog(
-            worker, account, device, ocr_client, worker.log_message.emit, screen_bgr
-        )
-        return False, "Không thao tác được menu game"
+            return False, "Không mở được menu game"
 
     if not match_main_templates(screen_bgr):
         worker.log_message.emit(
-            f"[{account.display_name}] Không mở lại được menu game; "
-            "thử đóng dialog đã biết."
+            f"[{account.display_name}] Menu game chưa mở hoặc không nhận diện đủ "
+            "Chiến Tranh và Tam Quốc Lệnh; thử đóng dialog đã biết."
         )
         close_knowned_dialog(
             worker, account, device, ocr_client, worker.log_message.emit, screen_bgr
         )
-        return False, "Không mở lại được menu game"
+        return False, "Không xác nhận được menu game đang mở"
 
     worker.log_message.emit(
-        f"[{account.display_name}] Đăng nhập thành công; menu game đóng/mở bình thường."
+        f"[{account.display_name}] Đăng nhập thành công; menu game đang mở."
     )
     return True, None
 
