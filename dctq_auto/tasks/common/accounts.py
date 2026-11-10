@@ -14,6 +14,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
+CURRENT_ACCOUNT = "__current_account__"
+
+
 @dataclass(frozen=True)
 class GameAccount:
     username: str

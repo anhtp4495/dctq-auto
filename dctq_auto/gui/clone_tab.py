@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from dctq_auto.tasks.common.accounts import load_accounts
+from dctq_auto.tasks.common.accounts import CURRENT_ACCOUNT, load_accounts
 from dctq_auto.config.step_registry import get_clone_step_registry
 from dctq_auto.tasks.common.battle.battle_config import BattleConfig
 
@@ -51,6 +51,7 @@ class CloneTab(QWidget):
 
         file_row = QHBoxLayout()
         self.account_file_combo = QComboBox()
+        self.account_file_combo.addItem("Tài khoản hiện tại", CURRENT_ACCOUNT)
         self.account_file_combo.setMinimumContentsLength(12)
         self.account_file_combo.setSizeAdjustPolicy(
             QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
@@ -364,6 +365,7 @@ class CloneTab(QWidget):
         """Restore previously used file paths from application settings."""
         self.account_file_combo.blockSignals(True)
         self.account_file_combo.clear()
+        self.account_file_combo.addItem("Tài khoản hiện tại", CURRENT_ACCOUNT)
         seen = set()
         for filename in filenames:
             if not filename:
@@ -379,7 +381,7 @@ class CloneTab(QWidget):
                 self.account_file_combo.addItem(path, path)
                 index = self.account_file_combo.count() - 1
             self.account_file_combo.setCurrentIndex(index)
-        elif self.account_file_combo.count():
+        else:
             self.account_file_combo.setCurrentIndex(0)
         self.account_file_combo.blockSignals(False)
         self._update_account_status()
@@ -395,10 +397,16 @@ class CloneTab(QWidget):
         return [
             str(self.account_file_combo.itemData(index) or self.account_file_combo.itemText(index))
             for index in range(self.account_file_combo.count())
+            if self.account_file_combo.itemData(index) != CURRENT_ACCOUNT
         ]
 
     def _update_account_status(self, *_args) -> None:
         filename = self.account_file()
+        if filename == CURRENT_ACCOUNT:
+            self.account_status.setText(
+                "Sử dụng tài khoản đang đăng nhập trên thiết bị; bỏ qua đăng nhập và đăng xuất."
+            )
+            return
         if not filename:
             self.account_status.setText("Chưa chọn file tài khoản.")
             return

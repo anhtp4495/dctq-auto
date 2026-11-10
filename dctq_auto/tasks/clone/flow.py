@@ -16,7 +16,7 @@ from PIL import ImageOps
 
 from dctq_auto.adb.client import AdbClient
 from dctq_auto.automation.battle_testkit import BattleSnapshot, run_mock_battle
-from dctq_auto.tasks.common.accounts import load_accounts
+from dctq_auto.tasks.common.accounts import CURRENT_ACCOUNT, GameAccount, load_accounts
 from dctq_auto.tasks.common.close_knowned_dialog import close_knowned_dialog
 from dctq_auto.config.step_registry import get_clone_step_registry
 from dctq_auto.progress import ProgressStatus
@@ -597,14 +597,21 @@ def run_clone_flow_optimize(self, device) -> None:
         self._emit_overall_progress(0, 0, "Chưa chọn file tài khoản Clone")
         return
 
-    try:
-        accounts = load_accounts(account_file)
-    except (OSError, UnicodeError, ValueError) as exc:
+    use_current_account = account_file == CURRENT_ACCOUNT
+    if use_current_account:
+        accounts = [GameAccount("", "", True, "Tài khoản hiện tại")]
         self.log_message.emit(
-            f"Clone Optimize — không đọc được file tài khoản {account_file!r}: {exc}"
+            "Clone Optimize — sử dụng phiên đăng nhập hiện tại; bỏ qua đăng nhập và đăng xuất."
         )
-        self._emit_overall_progress(0, 0, "Không đọc được file tài khoản Clone")
-        return
+    else:
+        try:
+            accounts = load_accounts(account_file)
+        except (OSError, UnicodeError, ValueError) as exc:
+            self.log_message.emit(
+                f"Clone Optimize — không đọc được file tài khoản {account_file!r}: {exc}"
+            )
+            self._emit_overall_progress(0, 0, "Không đọc được file tài khoản Clone")
+            return
 
     enabled_accounts = [account for account in accounts if account.enabled]
     disabled_accounts = [account for account in accounts if not account.enabled]
@@ -663,33 +670,35 @@ def run_clone_flow_optimize(self, device) -> None:
         )
         self._emit_clone_account_status(account.display_name, "running")
         ocr_client = AdbClient(serial=self._serial)
-        self.log_message.emit(f"[{account.display_name}] Bắt đầu đăng nhập.")
-        try:
-            login_result, login_error = login_account(self, account, device, ocr_client)
-        except Exception as exc:
-            login_result, login_error = False, str(exc)
-
-        if login_result is None:
-            self.log_message.emit(f"[{account.display_name}] Đăng nhập bị dừng; bỏ qua tài khoản.")
-            continue
-        if login_result is not True:
-            self.log_message.emit(
-                f"[{account.display_name}] Đăng nhập thất bại: {login_error or 'không rõ nguyên nhân'}."
-            )
-            self._emit_clone_account_status(account.display_name, "failed")
-            self._emit_clone_account_result(account.display_name, False)
-            failed_count += 1
+        if not use_current_account:
+            self.log_message.emit(f"[{account.display_name}] Bắt đầu đăng nhập.")
             try:
-                screenshot = device.screenshot()
-                screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
-                close_knowned_dialog(self, account, device, ocr_client, self.log_message.emit, screen_bgr)
+                login_result, login_error = login_account(self, account, device, ocr_client)
             except Exception as exc:
-                self.log_message.emit(
-                    f"[{account.display_name}] Không chụp được màn hình "
-                    f"để đóng các hộp thoại đã biết: {exc}"
-                )
+                login_result, login_error = False, str(exc)
 
-            continue
+            if login_result is None:
+                self.log_message.emit(f"[{account.display_name}] Đăng nhập bị dừng; bỏ qua tài khoản.")
+                continue
+            if login_result is not True:
+                self.log_message.emit(
+                    f"[{account.display_name}] Đăng nhập thất bại: {login_error or 'không rõ nguyên nhân'}."
+                )
+                self._emit_clone_account_status(account.display_name, "failed")
+                self._emit_clone_account_result(account.display_name, False)
+                failed_count += 1
+                try:
+                    screenshot = device.screenshot()
+                    screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
+                    close_knowned_dialog(self, account, device, ocr_client, self.log_message.emit, screen_bgr)
+                except Exception as exc:
+                    self.log_message.emit(
+                        f"[{account.display_name}] Không chụp được màn hình "
+                        f"để đóng các hộp thoại đã biết: {exc}"
+                    )
+                continue
+        else:
+            self.log_message.emit(f"[{account.display_name}] Bắt đầu tác vụ bằng phiên đăng nhập hiện tại.")
 
         # Mỗi account cần danh sách step riêng vì các task sẽ loại step đã hoàn tất.
         self._current_process_ids.clear()
@@ -698,18 +707,20 @@ def run_clone_flow_optimize(self, device) -> None:
         )
         self._current_process_ids.clear()
         if result is not None:
-            try:
-                if not self._wait_if_paused():
-                    self.log_message.emit(
-                        f"[{account.display_name}] Đã dừng trước khi đăng xuất."
+            logout_result, logout_error = True, None
+            if not use_current_account:
+                try:
+                    if not self._wait_if_paused():
+                        self.log_message.emit(
+                            f"[{account.display_name}] Đã dừng trước khi đăng xuất."
+                        )
+                        return
+                    logout_result, logout_error = logout_account(
+                        self, account, device, ocr_client
                     )
-                    return
-                logout_result, logout_error = logout_account(
-                    self, account, device, ocr_client
-                )
-            except Exception as exc:
-                self.log_message.emit(f"[{account.display_name}] Lỗi đăng xuất: {exc}")
-                logout_result, logout_error = False, str(exc)
+                except Exception as exc:
+                    self.log_message.emit(f"[{account.display_name}] Lỗi đăng xuất: {exc}")
+                    logout_result, logout_error = False, str(exc)
 
             if logout_result is not True:
                 self.log_message.emit(
