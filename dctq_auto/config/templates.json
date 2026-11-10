@@ -1323,6 +1323,46 @@
           "match_method": "TM_CCOEFF_NORMED"
         }
       }
+    },
+    "nhiem_vu_hang_ngay": {
+      "source_image": "resources/screens/nhiem_vu_hang_ngay/man_hinh_chinh.png",
+      "templates": {
+        "xa_giao": {
+          "description": "[Màn hình chính] - Xã giao",
+          "rect": { "top": 964, "left": 353, "right": 400, "bottom": 1022},
+          "search_rect":  { "top": 600, "left": 0, "right": 600, "bottom": 1070},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "ban_be": {
+          "description": "[Tranh Bá] - Lối vào [Bạn bè]",
+          "rect": { "top": 176, "left": 114, "right": 399, "bottom": 263},
+          "search_rect":  { "top": 851, "left": 552, "right": 1784, "bottom": 1073},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "ban_be_man_hinh_chinh": {
+          "description": "[Tranh Bá] - [Bạn bè] - Màn hình chính",
+          "rect": { "top": 176, "left": 114, "right": 399, "bottom": 263},
+          "search_rect":  { "top": 851, "left": 552, "right": 1784, "bottom": 1073},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "ban_be_tang_tim": {
+          "description": "[Tranh Bá] - [Bạn bè] - Tặng tim",
+          "rect": { "top": 176, "left": 114, "right": 399, "bottom": 263},
+          "search_rect":  { "top": 851, "left": 552, "right": 1784, "bottom": 1073},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "ban_be_man_hinh_chinh_thoat": {
+          "description": "[Tranh Bá] - [Bạn bè] - Thoát",
+          "rect": { "top": 176, "left": 114, "right": 399, "bottom": 263},
+          "search_rect":  { "top": 851, "left": 552, "right": 1784, "bottom": 1073},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
     }
   }
 }
