@@ -68,6 +68,18 @@
           "search_rect": { "top": 100, "left": 1400, "right": 1550, "bottom": 300},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
+        },
+        "truong_thanh": {
+          "description": "[Màn hình chính] - Lối vào [Trưởng Thành].",
+          "search_rect": { "top": 478, "left": 0, "right": 626, "bottom": 854},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "bao_vat": {
+          "description": "[Màn hình chính] - Lối vào [Bảo Vật].",
+          "search_rect": { "top": 478, "left": 0, "right": 626, "bottom": 854},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
