@@ -842,16 +842,16 @@ def run_clone_flow_optimize_account(
                 self._config = original_config
 
         common_tasks = (
-            ("Tam Quốc Lệnh", run_three_kingdom, {"hoat_dong_nhan_thuong_tam_quoc_lenh"}),
+            ("Chiến tranh - Nhận thưởng Đoàn Chiến", run_guild_war_reward, {"chien_tranh_quan_doan_nhan_thuong"}),
             ("Hoạt động", run_activity, {"hoat_dong_phuc_loi_le_bao_quoc_van", "hoat_dong_phuc_loi_diem_danh"}),
             ("Quân đoàn", run_guild, {
                 "quan_doan_bao_danh", "quan_doan_tui_phuc", "quan_doan_cau_van",
                 "quan_doan_dong_gop_knb", "quan_doan_dong_gop_luong_thao",
             }),
-            ("Chiến tranh - Nhận thưởng Đoàn Chiến", run_guild_war_reward, {"chien_tranh_quan_doan_nhan_thuong"}),
             ("Cửa hàng", run_shop, {"cua_hang_danh_vong_mua_que_lanh"}),
             ("Chiến tranh - Giao tranh", run_raid_battle, {"quan_su_giao_tranh"}),
             ("Chiến tranh - Tranh bá", run_ranked_battle, {"quan_su_tranh_ba"}),
+            ("Tam Quốc Lệnh", run_three_kingdom, {"hoat_dong_nhan_thuong_tam_quoc_lenh"}),
         )
         for task_label, task_runner, group_step_ids in common_tasks:
             if not self._wait_if_paused():
