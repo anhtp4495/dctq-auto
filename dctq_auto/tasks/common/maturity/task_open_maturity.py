@@ -1,4 +1,4 @@
-"""Mở giao diện Trưởng Thành."""
+"""Open the Maturity interface."""
 
 
 def run(worker, account, device, ocr_client, log) -> bool:
