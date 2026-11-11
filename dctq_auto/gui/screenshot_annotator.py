@@ -561,7 +561,8 @@ class ScreenshotAnnotator(QDialog):
         layout.addLayout(file_row)
 
         meta_row = QHBoxLayout()
-        self.strategy_name_input = QLineEdit()        self.strategy_name_input.setPlaceholderText("Tên hiển thị chiến thuật")
+        self.strategy_name_input = QLineEdit()
+        self.strategy_name_input.setPlaceholderText("Tên hiển thị chiến thuật")
         self.strategy_description_input = QLineEdit()
         self.strategy_description_input.setPlaceholderText("Mô tả chiến thuật")
         meta_row.addWidget(self.strategy_name_input, 1)
