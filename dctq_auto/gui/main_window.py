@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer, QSettings, QThread, Signal
-from PySide6.QtGui import QColor, QFont, QGuiApplication, QIcon, QIntValidator, QPainter, QPixmap
+from PySide6.QtGui import QColor, QFont, QGuiApplication, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import (
     QAbstractButton,
     QAbstractItemView,
@@ -17,12 +17,10 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QLineEdit,
     QGroupBox,
-    QGridLayout,
     QHBoxLayout,
     QLabel,
     QMainWindow,
     QMessageBox,
-    QInputDialog,
     QListWidget,
     QListWidgetItem,
     QPlainTextEdit,
