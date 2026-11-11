@@ -300,8 +300,6 @@ def prepare_login(
         _TEMPLATE_ACCOUNT_DANG_NHAP,
         _TEMPLATE_ACCOUNT_WAITING,
         _TEMPLATE_ACCOUNT_TRANG_CA_NHAN,
-        _TEMPLATE_ACCOUNT_CAP_NHAT_THONG_TIN,
-        _TEMPLATE_ACCOUNT_CLOSE_CAP_NHAT_THONG_TIN,
         _TEMPLATE_ACCOUNT_MAN_HINH_CHINH,
     )
     templates = get_templates(template_names)
@@ -375,20 +373,6 @@ def prepare_login(
             f"[{account.display_name}] Màn hình đang chờ; kiểm tra lại sau 3 giây."
         )
         time.sleep(3)
-        return prepare_login(worker, account, device, ocr_client)
-
-    if detected_state == "cap_nhat_thong_tin" or detected_state == "close_cap_nhat_thong_tin":
-        worker.log_message.emit(
-            f"[{account.display_name}] Phát hiện hộp thoại cập nhật thông tin; đang đóng hộp thoại."
-        )
-        try:
-            ocr_client.tap_ocr_target("close_cap_nhat_thong_tin_ca_nhan")
-        except Exception as exc:
-            worker.log_message.emit(
-                f"[{account.display_name}] Không đóng được hộp thoại cập nhật thông tin: {exc}"
-            )
-            return False, "Không đóng được hộp thoại cập nhật thông tin"
-        time.sleep(1)
         return prepare_login(worker, account, device, ocr_client)
 
     worker.log_message.emit(
