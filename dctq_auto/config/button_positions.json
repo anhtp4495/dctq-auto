@@ -1,4 +1,18 @@
 {
+  "login_form": {
+    "username": {
+      "x": 625,
+      "y": 400
+    },
+    "password": {
+      "x": 625,
+      "y": 480
+    },
+    "login": {
+      "x": 960,
+      "y": 599
+    }
+  },
   "main": {
     "profile": {
       "x": 65,
