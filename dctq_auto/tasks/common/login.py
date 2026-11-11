@@ -166,7 +166,24 @@ def handle_post_login(
     # Ghi nhận trạng thái ban đầu, sau đó luôn kiểm tra cả đóng và mở menu.
     menu_visible = match_main_templates(screen_bgr)
 
-    def toggle_menu(expected_visible: bool, action: str) -> bool:
+    def retry_post_login(reason: str):
+        if current_try >= _MAX_TRY_DETECT_MAIN_SCREEN:
+            worker.log_message.emit(
+                f"[{account.display_name}] Đã hết {_MAX_TRY_DETECT_MAIN_SCREEN} "
+                f"lần thử xác nhận menu game: {reason}."
+            )
+            return False, "Không xác nhận được trạng thái menu game"
+
+        worker.log_message.emit(
+            f"[{account.display_name}] {reason}; "
+            f"thử lại toàn bộ bước xác nhận (lần "
+            f"{current_try + 1}/{_MAX_TRY_DETECT_MAIN_SCREEN})."
+        )
+        return handle_post_login(
+            worker, account, device, ocr_client, current_try + 1
+        )
+
+    def toggle_menu(expected_visible: bool, action: str) -> bool | None:
         nonlocal screen_bgr
         try:
             tap_x, tap_y = ButtonPositions().get("main", "open_menu_game")
@@ -183,31 +200,44 @@ def handle_post_login(
             return False
 
         if match_main_templates(screen_bgr) != expected_visible:
+            expected_state = "đang mở" if expected_visible else "đã đóng"
             worker.log_message.emit(
-                f"[{account.display_name}] Không xác nhận được menu game "
-                f"{'đang mở' if expected_visible else 'đã đóng'}; "
-                "thử đóng dialog đã biết."
+                f"[{account.display_name}] Nhận diện menu sai trạng thái "
+                f"(mong đợi {expected_state}); gọi đóng dialog đã biết."
             )
             close_knowned_dialog(
                 worker, account, device, ocr_client, worker.log_message.emit, screen_bgr
             )
-            return False
+            return None
         return True
 
     if menu_visible:
         # Menu đang mở: bắt buộc đóng rồi mở lại.
-        if not toggle_menu(False, "đóng"):
-            return False, "Không đóng được menu game"
+        result = toggle_menu(False, "đóng")
+        if result is None:
+            return retry_post_login("Nhận diện sai trạng thái sau thao tác đóng menu")
+        if not result:
+            return False, "Không thể thao tác đóng menu game"
     else:
         # Menu đang đóng: mở trước để có thể kiểm tra thao tác đóng/mở.
-        if not toggle_menu(True, "mở"):
-            return False, "Không mở được menu game"
-        if not toggle_menu(False, "đóng"):
-            return False, "Không đóng được menu game"
+        result = toggle_menu(True, "mở")
+        if result is None:
+            return retry_post_login("Nhận diện sai trạng thái sau thao tác mở menu")
+        if not result:
+            return False, "Không thể thao tác mở menu game"
+
+        result = toggle_menu(False, "đóng")
+        if result is None:
+            return retry_post_login("Nhận diện sai trạng thái sau thao tác đóng menu")
+        if not result:
+            return False, "Không thể thao tác đóng menu game"
 
     # Cả hai trạng thái ban đầu đều phải kết thúc bằng thao tác mở menu.
-    if not toggle_menu(True, "mở lại"):
-        return False, "Không mở lại được menu game"
+    result = toggle_menu(True, "mở lại")
+    if result is None:
+        return retry_post_login("Nhận diện sai trạng thái sau thao tác mở lại menu")
+    if not result:
+        return False, "Không thể mở lại menu game"
 
     worker.log_message.emit(
         f"[{account.display_name}] Đăng nhập thành công; menu game đã được xác nhận đóng/mở và hiện đang mở."
