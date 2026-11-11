@@ -36,7 +36,8 @@ SPEC = TaskSpec(
 
 def submit_login_form(worker, account, device, ocr_client) -> bool:
     """Điền username/password và gửi đăng nhập; False nếu có yêu cầu dừng."""
-    ocr_client.tap_ocr_target("ten_dang_nhap")
+    tap_x, tap_y = ButtonPositions().get("login_form", "username")
+    device.shell(f"input tap {tap_x} {tap_y}")
     time.sleep(0.25)
     worker._replace_focused_text(device, account.username)
 
@@ -44,7 +45,8 @@ def submit_login_form(worker, account, device, ocr_client) -> bool:
         worker.log_message.emit("Đã dừng theo yêu cầu.")
         return False
 
-    ocr_client.tap_ocr_target("mat_khau")
+    tap_x, tap_y = ButtonPositions().get("login_form", "password")
+    device.shell(f"input tap {tap_x} {tap_y}")
     time.sleep(0.25)
     worker._replace_password_text(device, account.password)
 
@@ -53,7 +55,8 @@ def submit_login_form(worker, account, device, ocr_client) -> bool:
         return False
 
     time.sleep(0.3)
-    ocr_client.tap_ocr_target("dang_nhap")
+    tap_x, tap_y = ButtonPositions().get("login_form", "login")
+    device.shell(f"input tap {tap_x} {tap_y}")
     worker.log_message.emit(
         f"[{account.display_name}] Đã gửi yêu cầu đăng nhập; đang xác minh kết quả bằng template matching."
     )
