@@ -677,50 +677,6 @@ class BotWorker(
         )
 
     @staticmethod
-    def _is_login_screen(text: str) -> bool:
-        normalized = BotWorker._normalize_screen_text(text)
-        has_password = "mat khau" in normalized
-        has_username_hint = any(
-            marker in normalized
-            for marker in ("ten dang nhap", "so dien thoai", "email", "tai khoan")
-        )
-        has_login_button = "dang nhap" in normalized
-
-        # Preferred path: OCR identifies the actual form labels/button.
-        if has_login_button and (has_password or has_username_hint):
-            return True
-
-        # Fallback for the known Vietnamese login page: OCR sometimes misses
-        # the input labels and button but still reads both navigation links.
-        # Requiring BOTH links is more conservative than accepting either one
-        # alone, and lets the caller use the saved, resolution-scaled regions.
-        has_sign_up_link = "dang ky" in normalized
-        has_forgot_password_link = "quen mat khau" in normalized
-        return has_sign_up_link and has_forgot_password_link
-
-    @staticmethod
-    def _login_error(text: str) -> str | None:
-        """Return a generic login error category without exposing credentials."""
-        normalized = BotWorker._normalize_screen_text(text)
-        error_phrases = (
-            ("sai mat khau", "Mật khẩu không đúng"),
-            ("mat khau sai", "Mật khẩu không đúng"),
-            ("tai khoan khong ton tai", "Tài khoản không tồn tại"),
-            ("tai khoan hoac mat khau", "Tài khoản hoặc mật khẩu không đúng"),
-            ("dang nhap that bai", "Đăng nhập thất bại"),
-            ("ten dang nhap khong hop le", "Tên đăng nhập không hợp lệ"),
-            ("mat khau khong duoc de trong", "Chưa nhập mật khẩu"),
-            ("vui long nhap mat khau", "Chưa nhập mật khẩu"),
-            ("ket noi that bai", "Kết nối thất bại"),
-            ("connection failed", "Kết nối thất bại"),
-            ("network error", "Lỗi mạng"),
-        )
-        for phrase, message in error_phrases:
-            if phrase in normalized:
-                return message
-        return None
-
-    @staticmethod
     def _clear_focused_text(device) -> None:
         """Select and delete all text in the currently focused input field."""
         # Apply the same clearing sequence to both username and password fields.
