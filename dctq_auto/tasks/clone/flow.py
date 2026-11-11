@@ -11,7 +11,6 @@ import time
 import unicodedata
 from pathlib import Path
 
-import pytesseract
 from PIL import ImageOps
 
 from dctq_auto.adb.client import AdbClient
