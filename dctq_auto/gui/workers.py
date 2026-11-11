@@ -15,7 +15,6 @@ from dctq_auto.tasks.common.accounts import load_accounts
 from dctq_auto.tasks.common.ocr_worker import OcrWorkerMixin
 from dctq_auto.tasks.activity.worker import ActivityWorkerMixin
 from dctq_auto.tasks.guild.worker import GuildWorkerMixin
-from dctq_auto.tasks.runner import UtilityTaskRunnerMixin
 from dctq_auto.progress import ProgressInfo, ProgressManager, ProgressStatus
 
 
@@ -23,7 +22,6 @@ class BotWorker(
     OcrWorkerMixin,
     ActivityWorkerMixin,
     GuildWorkerMixin,
-    UtilityTaskRunnerMixin,
     QThread,
 ):
     """Run test battle logic or the current ADB preparation flow."""
@@ -390,10 +388,6 @@ class BotWorker(
     def _simulate_battles(self, task: str, count: int, required_flags: int,
                           time_limit: int | None) -> bool:
         for number in range(1, count + 1):
-            if self._config.get("utility_tasks_mode") and self._config.get("task_end_battle"):
-                self._emit_task_progress(
-                    "Bắt đầu trận Giao Tranh", "running", number, count
-                )
             elapsed = 0
             while True:
                 if not self._wait_if_paused():
@@ -512,185 +506,6 @@ class BotWorker(
                 "[Chạy thử] Hoàn tất mô phỏng Mưu Binh: đã vượt 1 ải. "
                 "Không gửi lệnh ADB."
             )
-            return
-        if self._config.get("utility_tasks_mode"):
-            selected = []
-            if self._config.get("task_login"):
-                selected.append("Đăng nhập")
-            if self._config.get("task_open_activity"):
-                selected.append("Mở màn hình Hoạt động")
-            if self._config.get("task_select_phuc_loi"):
-                selected.append("Chọn Phúc Lợi")
-            if self._config.get("nhan_le_bao_quoc_van"):
-                selected.append("Nhận lễ bao quốc vận")
-            if self._config.get("diem_danh"):
-                selected.append("Điểm danh")
-            if self._config.get("task_close_activity"):
-                selected.append("Tắt màn hình Hoạt động")
-            if self._config.get("bao_danh_quan_doan"):
-                selected.append("Báo danh quân đoàn")
-            if self._config.get("dong_gop_knb"):
-                selected.append("Đóng góp KNB")
-            if self._config.get("tham_do_lanh_dia"):
-                selected.append("Thăm dò lãnh địa")
-            if self._config.get("nhiem_vu_luu_ly_thap"):
-                selected.append("Lưu Ly Tháp")
-            if self._config.get("task_open_battle"):
-                selected.append("Mở màn hình Giao Tranh")
-            if self._config.get("task_use_bazhen"):
-                selected.append("Sử dụng Canh Bát Trân")
-            if self._config.get("task_find_battle_opponent"):
-                selected.append("Tìm đối thủ Giao Tranh")
-            if self._config.get("xuat_chien"):
-                selected.append("Xuất chiến")
-            if self._config.get("task_start_battle") or self._config.get("thuc_hien_giao_tranh"):
-                selected.append("Bắt đầu trận Giao Tranh")
-                if self._config.get("task_battle_time_mode"):
-                    selected.append("Thời gian tối đa Giao Tranh")
-                elif self._config.get("giao_tranh_nhanh_1_co"):
-                    selected.append("Chờ Giao Tranh nhanh 1 cờ")
-                else:
-                    selected.append("Chờ Giao Tranh bình thường 3 cờ")
-            if self._config.get("task_end_battle"):
-                selected.append("Kết thúc trận Giao Tranh")
-            # Tranh Bá phải phát trạng thái cho từng dòng của tab Tác vụ;
-            # không dùng nhãn chung "Tranh bá" vì nhãn đó không có dòng tương ứng.
-            if self._config.get("thuc_hien_tranh_ba"):
-                selected.append("Mở màn hình Tranh Bá")
-            if self._config.get("mua_luot_knb"):
-                selected.append("Mua lượt Tranh Bá bằng KNB")
-            if self._config.get("tranh_ba_luot_mien_phi"):
-                selected.append("Sử dụng lượt Tranh Bá miễn phí")
-            if self._config.get("task_find_championship_opponent"):
-                selected.append("Tìm đối thủ Tranh Bá")
-            if self._config.get("task_championship_xuat_chien"):
-                selected.append("Xuất chiến Tranh Bá")
-            if self._config.get("task_championship_start_battle"):
-                selected.append("Bắt đầu trận Tranh Bá")
-            if self._config.get("task_championship_time_mode") or self._config.get("thoi_gian_tranh_ba"):
-                selected.append("Thời gian tối đa Tranh Bá")
-            if self._config.get("task_championship_end_battle"):
-                selected.append("Kết thúc trận Tranh Bá")
-            reward_tasks = (
-                ("reward_weekly_doan_chien", "Nhận thưởng - Đoàn Chiến"),
-                ("reward_weekly_quoc_chien", "Nhận thưởng - Quốc Chiến"),
-                ("reward_weekly_lanh_dia_chien", "Nhận thưởng - Lãnh Địa Chiến"),
-                ("reward_shop_than_binh_nguyen_linh_ngoc", "Shop - Thần Binh - Đổi Nguyên Linh Ngọc"),
-                ("reward_shop_danh_vong_que_lanh", "Shop - Danh Vọng - Đổi Quẻ Lành"),
-                ("reward_daily_tam_quoc_lenh", "Nhận thưởng - Tam Quốc Lệnh"),
-                ("reward_shop_uu_dai_free", "Shop - Ưu đãi - Nhận miễn phí"),
-                ("reward_shop_tuong_hon_kinh_thu", "Shop - Tướng hồn - Mua Kinh Thư"),
-                ("reward_gift_friend_hearts", "Tặng tim bạn bè"),
-                ("reward_gift_affinity_hearts", "Tặng tim hảo cảm"),
-                ("reward_share_profile", "Chia sẻ trang cá nhân"),
-                ("reward_daily_missions", "Nhận thưởng nhiệm vụ hằng ngày"),
-            )
-            for key, label in reward_tasks:
-                if self._config.get(key):
-                    selected.append(label)
-            if self._config.get("task_close_guild"):
-                selected.append("Thoát màn hình Quân đoàn")
-            if self._config.get("task_switch_account"):
-                selected.append("Đổi tài khoản")
-            if self._config.get("task_click_coordinates"):
-                selected.append("Click theo tọa độ")
-            self._emit_overall_progress(0, max(1, len(selected)), "Bắt đầu tác vụ")
-            for index, task in enumerate(selected, start=1):
-                self._emit_task_progress(task, "running", 0, 1)
-                if not self._mock_tick(f"[Chạy thử] Thực hiện: {task}"):
-                    self._emit_task_progress(task, "stopped", 0, 1)
-                    return
-                if task in ("Bắt đầu trận Giao Tranh", "Thời gian tối đa Giao Tranh") or task.startswith("Chờ Giao Tranh "):
-                    count = max(1, int(self._config.get("task_open_battle_count", 1)))
-                    if self._config.get("task_battle_time_mode"):
-                        time_limit = int(self._config.get("task_battle_time_limit", 15))
-                        flags = 3
-                    elif self._config.get("giao_tranh_nhanh_1_co"):
-                        time_limit = None
-                        flags = 1
-                    else:
-                        time_limit = None
-                        flags = 3
-                    self.log_message.emit(
-                        f"[Chạy thử] Giao Tranh: mô phỏng {count} trận; "
-                        f"chế độ={'thời gian tối đa ' + str(time_limit) + ' giây' if time_limit is not None else str(flags) + ' cờ'}."
-                    )
-                    if task == "Bắt đầu trận Giao Tranh":
-                        self._emit_task_progress(
-                            task, "running", 1, count
-                        )
-                        self.log_message.emit(
-                            f"[Chạy thử] Mô phỏng thao tác bắt đầu trận Giao Tranh 1/{count}."
-                        )
-                    elif task == "Thời gian tối đa Giao Tranh" or task.startswith("Chờ Giao Tranh "):
-                        if not self._simulate_battles("Giao tranh", count, flags, time_limit):
-                            self._emit_task_progress(task, "stopped", 0, count)
-                            return
-                elif task in ("Bắt đầu trận Tranh Bá", "Thời gian tối đa Tranh Bá"):
-                    count = max(1, int(self._config.get("tranh_ba", 6)))
-                    time_mode = bool(
-                        self._config.get("task_championship_time_mode")
-                        or self._config.get("thoi_gian_tranh_ba")
-                    )
-                    if time_mode:
-                        time_limit = int(self._config.get("task_championship_time_limit", 15))
-                        flags = 4
-                    elif self._config.get("task_championship_fast_one_flag"):
-                        time_limit = None
-                        flags = 1
-                    else:
-                        time_limit = None
-                        flags = 4
-                    if task == "Bắt đầu trận Tranh Bá":
-                        self._emit_task_progress(task, "running", 1, count)
-                        self.log_message.emit(
-                            f"[Chạy thử] Mô phỏng thao tác bắt đầu trận Tranh Bá 1/{count}."
-                        )
-                    # Mô phỏng trận đúng một lần: ở dòng thời gian tối đa nếu được chọn,
-                    # nếu không thì ngay tại bước bắt đầu trận.
-                    if task == "Thời gian tối đa Tranh Bá" or not time_mode:
-                        self.log_message.emit(
-                            f"[Chạy thử] Tranh Bá: mô phỏng {count} trận; "
-                            f"chế độ={'thời gian tối đa ' + str(time_limit) + ' giây' if time_limit is not None else str(flags) + ' cờ'}."
-                        )
-                        if not self._simulate_battles("Tranh bá", count, flags, time_limit):
-                            self._emit_task_progress(task, "stopped", 0, count)
-                            return
-                if task == "Bắt đầu trận Giao Tranh" and self._config.get("task_end_battle"):
-                    # Dòng bắt đầu trận giữ mũi tên đến khi mô phỏng kết thúc trận.
-                    pass
-                elif task == "Bắt đầu trận Tranh Bá" and (
-                    self._config.get("task_championship_end_battle")
-                    or self._config.get("task_championship_time_mode")
-                    or self._config.get("thoi_gian_tranh_ba")
-                ):
-                    # Giữ trạng thái đang chạy và [1/N] cho đến khi hết trận.
-                    pass
-                elif task == "Thời gian tối đa Tranh Bá":
-                    if (
-                        self._config.get("task_championship_start_battle")
-                        and not self._config.get("task_championship_end_battle")
-                    ):
-                        count = max(1, int(self._config.get("tranh_ba", 6)))
-                        self._emit_task_progress(
-                            "Bắt đầu trận Tranh Bá", "done", count, count
-                        )
-                    self._emit_task_progress(task, "done", 1, 1)
-                else:
-                    if task == "Kết thúc trận Giao Tranh" and self._config.get("task_start_battle"):
-                        count = max(1, int(self._config.get("task_open_battle_count", 1)))
-                        self._emit_task_progress(
-                            "Bắt đầu trận Giao Tranh", "done", count, count
-                        )
-                    if task == "Kết thúc trận Tranh Bá" and self._config.get("task_championship_start_battle"):
-                        count = max(1, int(self._config.get("tranh_ba", 6)))
-                        self._emit_task_progress(
-                            "Bắt đầu trận Tranh Bá", "done", count, count
-                        )
-                    self._emit_task_progress(task, "done", 1, 1)
-                self._emit_overall_progress(index, max(1, len(selected)), task)
-            if not selected:
-                self.log_message.emit("Tab Tác vụ: chưa chọn tác vụ nào.")
             return
         if self._config.get("clone_mode"):
             self._run_clone_mock()
@@ -1025,9 +840,6 @@ class BotWorker(
                     self.log_message.emit,
                 )
                 self.log_message.emit("Mưu Binh: đã kết thúc quy trình Chiến Tranh.")
-                return
-            if self._config.get("utility_tasks_mode"):
-                self._run_utility_tasks(device)
                 return
             if self._config.get("clone_mode"):
                 self._run_clone_login(device)
