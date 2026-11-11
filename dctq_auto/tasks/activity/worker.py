@@ -23,67 +23,6 @@ class ActivityWorkerMixin:
         normalized = self._normalize_screen_text(detected_text)
         return any(self._normalize_screen_text(marker) in normalized for marker in markers), detected_text
 
-    def run_open_activity(self, device, screenshot=None) -> bool:
-        """Open Hoạt động only when OCR does not already show its Phúc lợi screen."""
-        try:
-            if not self._wait_if_paused():
-                return False
-            visible, detected_text = self._activity_phuc_loi_visible(device, screenshot=screenshot)
-            if visible:
-                self.log_message.emit("Hoạt động đã mở sẵn; không click mở lần nữa.")
-                return True
-            screenshot = device.screenshot()
-            screen_width, screen_height = screenshot.size
-            x = round(0.035937 * screen_width)
-            y = round(0.732407 * screen_height)
-            self.log_message.emit(f"Mở màn hình Hoạt động tại ({x}, {y}).")
-            device.shell(f"input tap {x} {y}")
-            time.sleep(3.0)
-            visible, detected_text = self._activity_phuc_loi_visible(device)
-            if not visible:
-                raise RuntimeError(
-                    "OCR chưa xác nhận được màn hình Phúc lợi: "
-                    f"{detected_text[:180] or '(trống)'}"
-                )
-            self.log_message.emit("Đã xác nhận mở màn hình Hoạt động > Phúc lợi.")
-            return True
-        except Exception as exc:
-            self.log_message.emit(f"Mở màn hình Hoạt động thất bại: {exc}")
-            return False
-
-    def _run_select_phuc_loi(self, device) -> bool:
-        """Select Phúc Lợi by OCR after ensuring Hoạt động is open."""
-        try:
-            if not self._wait_if_paused():
-                return False
-            visible, detected_text = self._activity_phuc_loi_visible(device)
-            if visible:
-                self.log_message.emit("Đã ở mục Phúc Lợi; không cần chọn lại.")
-                return True
-            if not self.run_open_activity(device):
-                return False
-            time.sleep(1.0)
-            if not self._wait_if_paused():
-                return False
-            screenshot = device.screenshot()
-            screen_width, screen_height = screenshot.size
-            full_rect = (0, 0, screen_width, screen_height)
-            self.log_message.emit("Tìm và chọn mục Phúc Lợi bằng OCR.")
-            if not self._tap_ocr_phrase_in_rect(device, ("phuc loi",), full_rect):
-                raise RuntimeError("OCR không tìm thấy mục Phúc Lợi để chọn.")
-            time.sleep(2.0)
-            visible, detected_text = self._activity_phuc_loi_visible(device)
-            if not visible:
-                raise RuntimeError(
-                    "Đã click Phúc Lợi nhưng OCR chưa xác nhận được màn hình Phúc Lợi: "
-                    f"{detected_text[:180] or '(trống)'}"
-                )
-            self.log_message.emit("Đã chọn và xác nhận mục Phúc Lợi.")
-            return True
-        except Exception as exc:
-            self.log_message.emit(f"Chọn Phúc Lợi thất bại: {exc}")
-            return False
-
     def _run_close_activity(self, device) -> bool:
         """Close Hoạt động and verify closure using the Quan chức profile marker."""
         try:
@@ -147,17 +86,9 @@ class ActivityWorkerMixin:
             )
             visible, detected_text = self._activity_phuc_loi_visible(device)
             if not visible:
-                self.log_message.emit(
-                    "Chưa ở màn hình Phúc lợi; mở Hoạt động trước khi tiếp tục."
-                )
-                if not self.run_open_activity(device):
-                    return False
-                time.sleep(2.0)
-                visible, detected_text = self._activity_phuc_loi_visible(device)
-            if not visible:
                 raise RuntimeError(
-                    "OCR không xác nhận được cac_tinh_nang của hoat_dong.phuc_loi. "
-                    f"OCR: {detected_text[:180] or '(trống)'}"
+                    "Chưa ở màn hình Hoạt động > Phúc lợi; tác vụ yêu cầu "
+                    "màn hình Phúc lợi đã được mở trước."
                 )
 
             if not self._wait_if_paused():
