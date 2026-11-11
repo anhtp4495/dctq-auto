@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer, QSettings, QThread, Signal
-from PySide6.QtGui import QColor, QFont, QGuiApplication, QIcon, QPainter, QPixmap
+from PySide6.QtGui import QColor, QFont, QGuiApplication, QIcon, QIntValidator, QPainter, QPixmap
 from PySide6.QtWidgets import (
     QAbstractButton,
     QAbstractItemView,
@@ -709,6 +709,19 @@ class MainWindow(QMainWindow):
         note = QLabel("Tự động vượt lần lượt Ải 1 đến Ải 100.")
         note.setWordWrap(True)
         layout.addWidget(note)
+
+        capture_row = QHBoxLayout()
+        self.muu_binh_save_screenshot = QCheckBox("Lưu màn hình")
+        capture_row.addWidget(self.muu_binh_save_screenshot)
+        capture_row.addWidget(QLabel("Ải:"))
+        self.muu_binh_stage_number = QLineEdit("1")
+        self.muu_binh_stage_number.setValidator(QIntValidator(1, 10000, self))
+        self.muu_binh_stage_number.setMaximumWidth(72)
+        self.muu_binh_stage_number.setAlignment(Qt.AlignmentFlag.AlignRight)
+        capture_row.addWidget(self.muu_binh_stage_number)
+        capture_row.addStretch(1)
+        layout.addLayout(capture_row)
+
         layout.addStretch(1)
         return self._make_scrollable_tab(page)
 
@@ -998,6 +1011,8 @@ class MainWindow(QMainWindow):
             config.update({
                 "strategy_mode": True,
                 "chien_tranh_muu_binh": True,
+                "muu_binh_save_screenshot": self.muu_binh_save_screenshot.isChecked(),
+                "muu_binh_stage_number": int(self.muu_binh_stage_number.text() or "1"),
             })
             return config
         if self.tabs.tabText(self.tabs.currentIndex()) == "Quốc chiến":
