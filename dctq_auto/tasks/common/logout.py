@@ -5,18 +5,11 @@ import time
 import cv2
 import numpy as np
 
-from dctq_auto.tasks.base import TaskSpec
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_store import get_templates
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.config.button_positions import ButtonPositions
 
-SPEC = TaskSpec(
-    key="clone_logout",
-    label="Đăng xuất",
-    description="Đăng xuất sau khi hoàn tất các nhiệm vụ của tài khoản.",
-    category="clone",
-)
 
 def _tap_match_center(device, match, account, log):
     """Click trung điểm vùng template được nhận diện."""

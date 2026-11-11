@@ -18,21 +18,12 @@ from dctq_auto.config.constants import (
     _TEMPLATE_ACCOUNT_TRANG_CA_NHAN,
     _TEMPLATE_ACCOUNT_WAITING,
 )
-from dctq_auto.tasks.base import TaskSpec
 from dctq_auto.tasks.common.logout import logout_account
 from dctq_auto.tasks.common.close_knowned_dialog import close_knowned_dialog
 from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_store import get_templates
 from dctq_auto.vision.template_report import report_template_match
-
-SPEC = TaskSpec(
-    key="clone_login",
-    label="Đăng nhập",
-    description="Đăng nhập vào tài khoản đang được xử lý.",
-    category="clone",
-)
-
 
 def submit_login_form(worker, account, device, ocr_client) -> bool:
     """Điền username/password và gửi đăng nhập; False nếu có yêu cầu dừng."""
