@@ -296,9 +296,7 @@ def prepare_login(
         return False, "Đã dừng theo yêu cầu"
 
     template_names = (
-        _TEMPLATE_THONG_BAO_DICH_QUAN_TAP_KICH,
         _TEMPLATE_ACCOUNT_DANG_NHAP,
-        _TEMPLATE_ACCOUNT_WAITING,
         _TEMPLATE_ACCOUNT_TRANG_CA_NHAN,
         _TEMPLATE_ACCOUNT_MAN_HINH_CHINH,
     )
@@ -341,19 +339,6 @@ def prepare_login(
         detected_state = template.id
         break
 
-    if detected_state == "thong_bao_bi_tan_cong":
-        worker.log_message.emit(
-            f"[{account.display_name}] Phát hiện Địch Quân Tập Kích; đang đóng cửa sổ."
-        )
-        tap_x, tap_y = ButtonPositions().get("main.dich_quan_tap_kich", "dong_man_hinh")
-        worker.log_message.emit(
-            f"[{account.display_name}] Đóng màn hình Địch Quân Tập Kích "
-            f"theo ButtonPositions tại ({tap_x}, {tap_y})."
-        )
-        device.shell(f"input tap {tap_x} {tap_y}")
-        time.sleep(1)
-        return prepare_login(worker, account, device, ocr_client)
-
     if detected_state == "dang_nhap":
         return True, None
 
@@ -366,13 +351,6 @@ def prepare_login(
         )
         if logout_result is not True:
             return logout_result, logout_error
-        return prepare_login(worker, account, device, ocr_client)
-
-    if detected_state == "waiting":
-        worker.log_message.emit(
-            f"[{account.display_name}] Màn hình đang chờ; kiểm tra lại sau 3 giây."
-        )
-        time.sleep(3)
         return prepare_login(worker, account, device, ocr_client)
 
     worker.log_message.emit(
