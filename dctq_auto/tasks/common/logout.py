@@ -33,29 +33,9 @@ def prepare_logout(worker, account, device, ocr_client) -> tuple[bool | None, st
         worker.log_message.emit("Đã dừng theo yêu cầu.")
         return None, None
 
-    if (
-        not worker._config.get("_clone_guild_screen_closed")
-        and any(
-            worker._config.get(key)
-            for key in (
-                "clone_guild_check_in",
-                "clone_receive_lucky_bag",
-                "clone_guild_fortune",
-            )
-        )
-    ):
-        try:
-            ocr_client.tap_ocr_target("close_quan_doan")
-            time.sleep(0.8)
-            worker.log_message.emit(
-                f"[{account.display_name}] Đã gửi thao tác đóng màn hình quân đoàn."
-            )
-        except Exception as exc:
-            worker.log_message.emit(
-                f"[{account.display_name}] Không bấm được nút đóng quân đoàn: {exc}; "
-                "vẫn tiếp tục quy trình đăng xuất."
-            )
-
+    worker.log_message.emit(
+        f"[{account.display_name}] Chuẩn bị đăng xuất."
+    )
     return True, None
 
 
