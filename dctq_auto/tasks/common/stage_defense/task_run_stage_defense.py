@@ -108,7 +108,18 @@ def _save_stage_screenshot(device, account, log, stage_number: int) -> None:
             raise ValueError(
                 f"Kích thước màn hình không đủ để cắt vùng 1219x96: {image.width}x{image.height}"
             )
-        cropped = image.crop((710, 0, 1219, 96))
+        cropped = image.crop((710, 0, 1219, 96)).convert("RGBA")
+        # Giữ các pixel trắng/gần trắng; chuyển độ sáng thành alpha để giữ viền chữ mượt.
+        pixels = []
+        for red, green, blue, _alpha in cropped.getdata():
+            darkest = min(red, green, blue)
+            brightest = max(red, green, blue)
+            if darkest >= 180 and brightest - darkest <= 60:
+                alpha = min(255, max(0, int((darkest - 160) * 255 / 95)))
+                pixels.append((255, 255, 255, alpha))
+            else:
+                pixels.append((0, 0, 0, 0))
+        cropped.putdata(pixels)
         output_dir = Path("artifacts/screenshots")
         output_dir.mkdir(parents=True, exist_ok=True)
         output_path = output_dir / f"ai_{stage_number}.png"
