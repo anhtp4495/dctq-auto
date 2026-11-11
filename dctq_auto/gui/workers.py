@@ -14,14 +14,12 @@ from dctq_auto.tasks.registry import get_enabled_tasks
 from dctq_auto.tasks.common.accounts import load_accounts
 from dctq_auto.tasks.common.ocr_worker import OcrWorkerMixin
 from dctq_auto.tasks.activity.worker import ActivityWorkerMixin
-from dctq_auto.tasks.guild.worker import GuildWorkerMixin
 from dctq_auto.progress import ProgressInfo, ProgressManager, ProgressStatus
 
 
 class BotWorker(
     OcrWorkerMixin,
     ActivityWorkerMixin,
-    GuildWorkerMixin,
     QThread,
 ):
     """Run test battle logic or the current ADB preparation flow."""
