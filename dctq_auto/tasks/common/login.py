@@ -356,6 +356,10 @@ def prepare_login(
     worker.log_message.emit(
         f"[{account.display_name}] Không nhận diện được trạng thái tiền đăng nhập."
     )
+    
+    if close_knowned_dialog(worker, account, device, ocr_client, worker.log_message.emit, screen_bgr):
+        return prepare_login(worker, account, device, ocr_client)
+
     return False, "Không xác định được trạng thái trước đăng nhập"
 
 def login_account(
