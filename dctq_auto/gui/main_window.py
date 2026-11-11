@@ -1180,32 +1180,6 @@ class MainWindow(QMainWindow):
             if credentials is None:
                 return
             config["login_username"], config["login_password"] = credentials
-        if config.get("utility_tasks_mode") and not any(
-            config.get(key) for key in (
-                "task_login",
-                "task_close_guild", "task_switch_account",
-                "task_open_battle",
-                "task_find_battle_opponent", "task_start_battle", "task_end_battle", "xuat_chien", "task_use_bazhen",
-                "task_enter_guild", "task_receive_lucky_bag", "task_guild_fortune",
-                "diem_danh", "nhan_le_bao_quoc_van", "bao_danh_quan_doan", "dong_gop_knb",
-                "tham_do_lanh_dia", "nhiem_vu_luu_ly_thap",
-                "thuc_hien_tranh_ba", "task_find_championship_opponent",
-                "task_championship_xuat_chien", "task_championship_start_battle",
-                "task_championship_end_battle",
-                "reward_weekly_doan_chien", "reward_weekly_quoc_chien",
-                "reward_weekly_lanh_dia_chien", "reward_shop_than_binh_nguyen_linh_ngoc",
-                "reward_shop_danh_vong_que_lanh", "reward_daily_tam_quoc_lenh",
-                "reward_shop_uu_dai_free", "reward_shop_tuong_hon_kinh_thu",
-                "reward_gift_friend_hearts", "reward_gift_affinity_hearts",
-                "reward_share_profile", "reward_daily_missions",
-                "task_click_coordinates",
-            )
-        ):
-            QMessageBox.warning(
-                self, "Chưa chọn tác vụ",
-                "Hãy chọn ít nhất một tác vụ trong tab Tác vụ.",
-            )
-            return
         self._active_clone_mode = bool(config.get("clone_mode"))
         self._active_mock_mode = mock_mode
         self._clone_total_accounts = 0
@@ -1359,47 +1333,6 @@ class MainWindow(QMainWindow):
             # Mưu Binh uses a single parent counter and two child progress rows.
             # Do not pre-create one row for every stage.
             return []
-        if config.get("utility_tasks_mode"):
-            task_labels = (
-                ("task_login", "Đăng nhập"),
-                ("nhan_le_bao_quoc_van", "Nhận lễ bao quốc vận"),
-                ("diem_danh", "Điểm danh"),
-                ("task_enter_guild", "Vào quân đoàn"),
-                ("bao_danh_quan_doan", "Báo danh quân đoàn"),
-                ("task_receive_lucky_bag", "Nhận túi phúc"),
-                ("task_guild_fortune", "Cầu vận quân đoàn (5 lần)"),
-                ("dong_gop_knb", "Đóng góp KNB"),
-                ("tham_do_lanh_dia", "Thăm dò lãnh địa"),
-                ("nhiem_vu_luu_ly_thap", "Lưu Ly Tháp"),
-                # Giữ thứ tự tiến trình đồng nhất với thứ tự tác vụ trên giao diện.
-                ("task_open_battle", "Mở màn hình Giao Tranh"),
-                ("task_use_bazhen", "Sử dụng Canh Bát Trân"),
-                ("task_find_battle_opponent", "Tìm đối thủ Giao Tranh"),
-                ("xuat_chien", "Xuất chiến"),
-                ("task_start_battle", "Bắt đầu trận Giao Tranh"),
-                ("task_battle_time_mode", "Thời gian tối đa Giao Tranh"),
-                ("task_end_battle", "Kết thúc trận Giao Tranh"),
-                # Các bước Tranh Bá cũng hiển thị riêng trong danh sách tiến trình.
-                ("thuc_hien_tranh_ba", "Mở màn hình Tranh Bá"),
-                # Mua lượt KNB / lượt miễn phí là thao tác chuẩn bị, không tạo dòng Tiến trình.
-                ("task_find_championship_opponent", "Tìm đối thủ Tranh Bá"),
-                ("task_championship_xuat_chien", "Xuất chiến Tranh Bá"),
-                ("task_championship_start_battle", "Bắt đầu trận Tranh Bá"),
-                ("thoi_gian_tranh_ba", "Thời gian tối đa Tranh Bá"),
-                ("task_championship_end_battle", "Kết thúc trận Tranh Bá"),
-                ("task_close_guild", "Thoát màn hình Quân đoàn"),
-                ("task_switch_account", "Đổi tài khoản"),
-                ("task_click_coordinates", "Click theo tọa độ"),
-            )
-            return [
-                (label, 1)
-                for key, label in task_labels
-                if (
-                    config.get("thuc_hien_giao_tranh")
-                    if key == "task_battle_wait"
-                    else config.get(key)
-                )
-            ]
         from dctq_auto.tasks.registry import get_enabled_tasks
         return [(spec.label, count) for spec, count in get_enabled_tasks(config)]
 
