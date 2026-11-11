@@ -287,8 +287,12 @@ def verify_login(worker, account, device, ocr_client) -> tuple[bool | None, str 
     )
     return True, None
 
+# Số lần tối đa thử xử lý trạng thái tiền đăng nhập.
+_MAX_TRY_PREPARE_LOGIN = 10
+
+
 def prepare_login(
-    worker, account, device, ocr_client
+    worker, account, device, ocr_client, current_try: int = 1
 ) -> tuple[bool, str | None]:
     """Nhận diện và xử lý trạng thái màn hình trước khi đăng nhập."""
     if not worker._wait_if_paused():
@@ -357,8 +361,23 @@ def prepare_login(
         f"[{account.display_name}] Không nhận diện được trạng thái tiền đăng nhập."
     )
     
-    if close_knowned_dialog(worker, account, device, ocr_client, worker.log_message.emit, screen_bgr):
-        return prepare_login(worker, account, device, ocr_client)
+    if current_try >= _MAX_TRY_PREPARE_LOGIN:
+        worker.log_message.emit(
+            f"[{account.display_name}] Đã thử xử lý trạng thái tiền đăng nhập "
+            f"{_MAX_TRY_PREPARE_LOGIN} lần nhưng vẫn không xác định được màn hình."
+        )
+        return False, "Không xác định được trạng thái trước đăng nhập"
+
+    worker.log_message.emit(
+        f"[{account.display_name}] Thử xử lý dialog đã biết "
+        f"(lần {current_try}/{_MAX_TRY_PREPARE_LOGIN})."
+    )
+    if close_knowned_dialog(
+        worker, account, device, ocr_client, worker.log_message.emit, screen_bgr
+    ):
+        return prepare_login(
+            worker, account, device, ocr_client, current_try + 1
+        )
 
     return False, "Không xác định được trạng thái trước đăng nhập"
 
