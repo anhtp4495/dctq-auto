@@ -1205,7 +1205,13 @@ class MainWindow(QMainWindow):
         else:
             self._worker.progress_info_added.connect(self._add_standalone_progress_item)
             self._worker.progress_info_changed.connect(self._update_standalone_progress_item)
-        self._init_task_progress(config)
+        self._show_progress_root_row = bool(config.get("strategy_mode"))
+        self.task_progress_list.clear()
+        self.task_progress_labels.clear()
+        is_clone = bool(config.get("clone_mode"))
+        self.clone_result_list.clear()
+        self.clone_result_list.setVisible(is_clone)
+        self.task_progress_list.setVisible(not is_clone)
         self._worker.finished.connect(self._on_worker_finished)
         self._set_settings_enabled(False)
         self.device_combo.setEnabled(False)
@@ -1286,43 +1292,6 @@ class MainWindow(QMainWindow):
             self.pause_button.setEnabled(False)
             self.stop_button.setEnabled(False)
             self._log("Đã gửi yêu cầu dừng hẳn; worker sẽ dừng tại điểm kiểm tra tiếp theo.")
-
-    @staticmethod
-    def _task_specs(config: dict) -> list[tuple[str, int]]:
-        """Return progress rows using the exact labels emitted by the worker."""
-        if config.get("state_war_mode"):
-            return []
-        if config.get("strategy_mode"):
-            # Mưu Binh uses a single parent counter and two child progress rows.
-            # Do not pre-create one row for every stage.
-            return []
-        from dctq_auto.tasks.registry import get_enabled_tasks
-        return [(spec.label, count) for spec, count in get_enabled_tasks(config)]
-
-    def _add_task_progress_item(self, name: str, count: int = 1) -> None:
-        """Append one progress row requested by a running worker."""
-        if name in self.task_progress_labels:
-            return
-        item = QListWidgetItem()
-        self.task_progress_list.addItem(item)
-        self.task_progress_labels[name] = item
-        self._render_task_progress(name, "pending", 0, count)
-
-    def _init_task_progress(self, config: dict) -> None:
-        self._show_progress_root_row = bool(config.get("strategy_mode"))
-        self.task_progress_list.clear()
-        self.task_progress_labels.clear()
-        is_clone = bool(config.get("clone_mode"))
-        self.clone_result_list.clear()
-        self.clone_result_list.setVisible(is_clone)
-        self.task_progress_list.setVisible(not is_clone)
-        if is_clone:
-            return
-        for name, count in self._task_specs(config):
-            item = QListWidgetItem()
-            self.task_progress_list.addItem(item)
-            self.task_progress_labels[name] = item
-            self._render_task_progress(name, "pending", 0, count)
 
     @staticmethod
     def _status_icon(glyph: str, color: str, indent: int = 0) -> QIcon:
