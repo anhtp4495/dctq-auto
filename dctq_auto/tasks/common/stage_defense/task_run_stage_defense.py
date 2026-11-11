@@ -2,6 +2,7 @@
 
 import random
 import time
+from pathlib import Path
 
 from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.config.constants import (
@@ -99,6 +100,35 @@ def _handle_reward_dialog(device, account, log, templates, positions) -> bool:
     return True
 
 
+def _save_stage_screenshot(device, account, log, stage_number: int) -> None:
+    """Save the configured top status strip after a stage reward is confirmed."""
+    try:
+        image = device.screenshot()
+        if image.width < 1219 or image.height < 96:
+            raise ValueError(
+                f"Kích thước màn hình không đủ để cắt vùng 1219x96: {image.width}x{image.height}"
+            )
+        cropped = image.crop((710, 0, 1219, 96)).convert("RGBA")
+        # Giữ các pixel trắng/gần trắng; chuyển độ sáng thành alpha để giữ viền chữ mượt.
+        pixels = []
+        for red, green, blue, _alpha in cropped.getdata():
+            darkest = min(red, green, blue)
+            brightest = max(red, green, blue)
+            if darkest >= 180 and brightest - darkest <= 60:
+                alpha = min(255, max(0, int((darkest - 160) * 255 / 95)))
+                pixels.append((255, 255, 255, alpha))
+            else:
+                pixels.append((0, 0, 0, 0))
+        cropped.putdata(pixels)
+        output_dir = Path("artifacts/screenshots")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_path = output_dir / f"ai_{stage_number}.png"
+        cropped.save(output_path, format="PNG")
+        log(f"[{account.display_name}] Đã lưu ảnh ải {stage_number}: {output_path}")
+    except Exception as exc:
+        log(f"[{account.display_name}] Không lưu được ảnh ải {stage_number}: {exc}")
+
+
 def run(worker, account, device, log) -> bool:
     """Repeat Xuất chiến and reward selection until timeout or main screen."""
     deadline = time.monotonic() + _MAX_SECONDS
@@ -108,6 +138,13 @@ def run(worker, account, device, log) -> bool:
         _REWARD_TEMPLATES + (_TEMPLATE_MUU_BINH_XAC_NHAN_THUONG_VUOT_AI,)
     )
     positions = ButtonPositions()
+
+    config = getattr(worker, "_config", {}) or {}
+    save_screenshot = bool(config.get("muu_binh_save_screenshot", False))
+    try:
+        stage_number = max(1, int(config.get("muu_binh_stage_number", 1)))
+    except (TypeError, ValueError):
+        stage_number = 1
 
     completed_stages = 0
     worker._emit_task_progress("Chiến đấu", "pending", 0, 0)
@@ -134,7 +171,15 @@ def run(worker, account, device, log) -> bool:
 
         if observation["hop_thoai_thuong_vuot_ai"] is not None:
             worker._emit_task_progress("Nhận thưởng", "running", 0, 0)
-            _handle_reward_dialog(device, account, log, templates, positions)
+            reward_confirmed = _handle_reward_dialog(
+                device, account, log, templates, positions
+            )
+            if reward_confirmed and save_screenshot:
+                # Chờ giao diện đóng hộp thoại nhận thưởng rồi mới chụp màn hình.
+                time.sleep(0.5)
+                _save_stage_screenshot(device, account, log, stage_number)
+            if reward_confirmed:
+                stage_number += 1
             completed_stages += 1
             worker._set_progress_root_message(
                 f"Đã vượt ải {min(completed_stages, 100)}"
