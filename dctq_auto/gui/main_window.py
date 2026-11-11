@@ -349,10 +349,10 @@ class MainWindow(QMainWindow):
         self.tranh_ba_group = QGroupBox("Tranh bá")
         self.tranh_ba_group.setCheckable(True)
         self.tranh_ba_group.setChecked(True)
+        self.clone_tab = CloneTab()
+        self.tabs.addTab(self.clone_tab, "Tổng hợp")
         self.tabs.addTab(self._build_strategy_tab(), "Mưu Binh")
         self.tabs.addTab(self._build_war_tab(), "Quốc chiến")
-        self.clone_tab = CloneTab()
-        self.tabs.addTab(self.clone_tab, "Clone")
 
         progress_group = QGroupBox("Tiến trình")
         progress_layout = QVBoxLayout(progress_group)
