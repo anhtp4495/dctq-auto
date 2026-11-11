@@ -1,0 +1,11 @@
+{
+  "display_name": "none",
+  "description": "Không Chọn",
+  "steps": [
+    {
+      "type": "none",
+      "delay": 0,
+      "description": "None"
+    }
+  ]
+}
