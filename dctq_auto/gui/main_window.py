@@ -372,7 +372,7 @@ class MainWindow(QMainWindow):
         )
         self._update_luu_ly_thap_description()
 
-        self.tabs.addTab(self._build_daily_tab(), "Nhiệm vụ hằng ngày")
+        self._daily_tab = self._build_daily_tab()
         self.tabs.addTab(self._build_strategy_tab(), "Mưu Binh")
         self.tabs.addTab(self._build_war_tab(), "Quốc chiến")
         self.clone_tab = CloneTab()
@@ -386,7 +386,7 @@ class MainWindow(QMainWindow):
             "Mở hồ sơ → Tùy chọn → Cài đặt người dùng → Đổi tài khoản; "
             "chỉ xác nhận khi nhận diện đúng hộp thoại."
         )
-        self.tabs.addTab(self._build_tasks_tab(), "Tác vụ")
+        self._tasks_tab = self._build_tasks_tab()
 
         progress_group = QGroupBox("Tiến trình")
         progress_layout = QVBoxLayout(progress_group)
