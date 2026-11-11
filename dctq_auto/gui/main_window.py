@@ -1143,11 +1143,6 @@ class MainWindow(QMainWindow):
                 "Hãy thêm/chọn một file JSON chiến thuật trong tab Quốc chiến.",
             )
             return
-        if config.get("task_login"):
-            credentials = self._prompt_login_credentials()
-            if credentials is None:
-                return
-            config["login_username"], config["login_password"] = credentials
         self._active_clone_mode = bool(config.get("clone_mode"))
         self._active_mock_mode = mock_mode
         self._clone_total_accounts = 0
