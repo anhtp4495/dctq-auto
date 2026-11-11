@@ -10,7 +10,6 @@ from PySide6.QtCore import QThread, Signal
 
 from dctq_auto.adb.client import AdbClient
 from dctq_auto.automation.battle_testkit import BattleSnapshot, run_mock_battle
-from dctq_auto.tasks.registry import get_enabled_tasks
 from dctq_auto.tasks.common.accounts import load_accounts
 from dctq_auto.tasks.activity.worker import ActivityWorkerMixin
 from dctq_auto.progress import ProgressInfo, ProgressManager, ProgressStatus
@@ -506,74 +505,6 @@ class BotWorker(
         if self._config.get("clone_mode"):
             self._run_clone_mock()
             return
-        tasks = [(spec.label, count) for spec, count in get_enabled_tasks(self._config)]
-
-        # Count every configured run, not estimated seconds or task groups.
-        total = sum(count for _task, count in tasks)
-        if total == 0:
-            self.log_message.emit("Không có nhiệm vụ nào được chọn.")
-            self._emit_overall_progress(0, 0, "Không có nhiệm vụ được chọn")
-            return
-
-        self._progress_total = total
-        self._progress_completed = 0
-        self._emit_overall_progress(0, self._progress_total, "Bắt đầu")
-        self.log_message.emit(
-            f"Bắt đầu chạy thử {len(tasks)} nhóm nhiệm vụ, tổng cộng {total} lượt. "
-            f"Không kết nối ADB và không điều khiển game."
-        )
-        for task, count in tasks:
-            self._emit_task_progress(task, "running", 0, count)
-            if not self._wait_if_paused():
-                self.log_message.emit("Đã dừng theo yêu cầu.")
-                return
-            if task in ("Giao tranh", "Tranh bá"):
-                is_giao_tranh = task == "Giao tranh"
-                if is_giao_tranh:
-                    if self._config.get("ha_chien_cong"):
-                        if not self._mock_tick(
-                            f"Hạ chiến công: chạy thử mục tiêu {self._config.get('chien_cong', 200)}."
-                        ):
-                            return
-                    elif self._config.get("chon_nha_npc"):
-                        if not self._mock_tick("Chọn nhà NPC: chạy thử chọn mục tiêu."):
-                            return
-                    if self._config.get("su_dung_canh_bat_tran"):
-                        if not self._mock_tick("Canh Bát Trân: chạy thử kích hoạt."):
-                            return
-                    flags = 1 if self._config.get("giao_tranh_nhanh_1_co") else 3
-                    limit = self._config.get("thoi_gian_giao_tranh")
-                else:
-                    if self._config.get("mua_luot_knb"):
-                        if not self._mock_tick("Tranh bá: chạy thử mua lượt bằng KNB."):
-                            return
-                    flags = int(self._config.get("tranh_ba_fast_mode", 4))
-                    limit = self._config.get("thoi_gian_tranh_ba")
-                if not self._simulate_battles(task, count, flags, limit):
-                    return
-            else:
-                for number in range(1, count + 1):
-                    if task == "Nhiệm vụ Lưu Ly Tháp" and self._config.get("luu_ly_thap_knb"):
-                        if not self._mock_tick(
-                            f"{task}: chạy thử mua lượt bằng KNB ({number}/{count})."
-                        ):
-                            return
-                    extras = []
-                    if task == "Đóng góp KNB":
-                        extras.append(f"lượt {number}/{count}")
-                    if task == "Thăm dò lãnh địa":
-                        extras.append(
-                            "có mua lượt bằng KNB" if self._config.get("tham_do_lanh_dia_knb")
-                            else "chỉ dùng lượt miễn phí"
-                        )
-                    suffix = f" ({', '.join(extras)})" if extras else ""
-                    if not self._mock_tick(f"{task}: chạy thử hoàn tất{suffix}."):
-                        return
-                    self._emit_task_progress(task, "running", number, count)
-                    self._progress_completed += 1
-                    self._emit_mock_progress(0, f"Hoàn thành lượt {self._progress_completed}/{total}: {task} {number}/{count}")
-            self._emit_task_progress(task, "done", count, count)
-        self.log_message.emit("Hoàn tất chạy thử tất cả nhiệm vụ.")
 
     def _run_clone_mock(self) -> None:
         """Chạy thử thứ tự tài khoản/nhiệm vụ, tuyệt đối không kết nối game."""
