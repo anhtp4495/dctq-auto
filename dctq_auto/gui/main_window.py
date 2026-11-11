@@ -874,7 +874,6 @@ class MainWindow(QMainWindow):
 
         dialog = ScreenshotAnnotator(
             serial, self,
-            on_ocr_result=self._log_ocr_results,
             on_location_result=self._log_coordinate_result,
             initial_image=initial_image,
         )
@@ -929,37 +928,6 @@ class MainWindow(QMainWindow):
             f"ratio=({ratio_x:.6f}, {ratio_y:.6f})"
         )
 
-    def _log_ocr_results(
-        self, items: list[str], normalized: list[str], locations: list[dict] | None = None
-    ) -> None:
-        self._log("Kết quả OCR:")
-        if not items:
-            self._log("Không nhận diện được text đủ tin cậy.")
-            return
-        locations = locations or []
-        for index, text in enumerate(items):
-            name = normalized[index] if index < len(normalized) else ""
-            element = locations[index] if index < len(locations) else {}
-            bounds = element.get("bounds", {})
-            x = int(bounds.get("left", 0))
-            y = int(bounds.get("top", 0))
-            width = int(bounds.get("right", x)) - x
-            height = int(bounds.get("bottom", y)) - y
-            self._log(f"Rect: ({x}, {y}, {width}, {height})")
-            if element.get("matched") and element.get("highlight_bounds"):
-                red_bounds = element["highlight_bounds"]
-                red_x = int(red_bounds.get("left", 0))
-                red_y = int(red_bounds.get("top", 0))
-                red_width = int(red_bounds.get("right", red_x)) - red_x
-                red_height = int(red_bounds.get("bottom", red_y)) - red_y
-                self._log(
-                    f"RECT đỏ (khớp): ({red_x}, {red_y}, "
-                    f"{red_width}, {red_height})"
-                )
-            self._log(f"Text-original: {text}")
-            self._log(f"Text-chuan hoá: {name}")
-            if index < len(items) - 1:
-                self._log("---")
 
     def _selected_device_serial(self):
         return self.device_combo.currentData()
