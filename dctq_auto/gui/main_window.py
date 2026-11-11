@@ -245,31 +245,6 @@ class MainWindow(QMainWindow):
         self.chien_cong.setKeyboardTracking(False)
         self.chien_cong.editingFinished.connect(self.chien_cong.clearFocus)
 
-        self.giao_tranh_options = QWidget()
-        options_layout = QGridLayout(self.giao_tranh_options)
-        options_layout.setContentsMargins(0, 0, 0, 0)
-        options_layout.setHorizontalSpacing(16)
-        options_layout.setVerticalSpacing(4)
-        options_layout.addWidget(self.chon_nha_npc, 0, 0)
-        options_layout.addWidget(self.su_dung_canh_bat_tran, 0, 1)
-        self.thoi_gian_giao_tranh_control = self._build_seconds_control(
-            self.thoi_gian_giao_tranh
-        )
-        giao_tranh_mode_row = self._build_mode_row(
-            self.giao_tranh_nhanh_1_co,
-            self.ba_co,
-            self.thoi_gian_mode,
-            self.thoi_gian_giao_tranh_control,
-        )
-        options_layout.addWidget(giao_tranh_mode_row, 1, 0, 1, 5)
-        options_layout.addWidget(self.giao_tranh_mode_description, 2, 0, 1, 5)
-
-        self.chien_cong_row = QWidget()
-        chien_cong_layout = QHBoxLayout(self.chien_cong_row)
-        chien_cong_layout.setContentsMargins(0, 0, 0, 0)
-        chien_cong_layout.addWidget(QLabel("Chiến công cần hạ:"))
-        chien_cong_layout.addWidget(self.chien_cong)
-        chien_cong_layout.addStretch(1)
         self.chien_cong.setEnabled(False)
         self.ha_chien_cong.toggled.connect(self._toggle_chien_cong_mode)
 
@@ -296,9 +271,6 @@ class MainWindow(QMainWindow):
         self.tranh_ba_thoi_gian.setEnabled(False)
         self.tranh_ba_thoi_gian_mode.toggled.connect(
             self.tranh_ba_thoi_gian.setEnabled
-        )
-        self.tranh_ba_thoi_gian_control = self._build_seconds_control(
-            self.tranh_ba_thoi_gian
         )
         self.tranh_ba_thoi_gian_mode.setToolTip(
             "Kết thúc trận khi đạt giới hạn thời gian đã chọn."
