@@ -87,6 +87,8 @@ class MainWindow(QMainWindow):
         )
         self._settings = Settings.from_env()
         self._worker = None
+        self._workers: dict[str, object] = {}
+        self._selected_serial: str | None = None
         self._paused = False
         self._run_started_at: float | None = None
         self._pause_started_at: float | None = None
@@ -797,12 +799,90 @@ class MainWindow(QMainWindow):
         self.state_war_description.setText("Không đọc được thông tin chiến thuật đã chọn.")
 
     def _on_device_changed(self, *_args) -> None:
-        mock_mode = self.device_combo.currentData() == "mock"
+        serial = self.device_combo.currentData()
+        self._selected_serial = str(serial) if serial is not None else None
+        self._worker = self._workers.get(self._selected_serial)
+        self._refresh_selected_worker_view()
         self.scan_button.setEnabled(True)
-        if mock_mode:
+        if serial == "mock":
             self._log("Đã chọn chế độ chạy thử, không kết nối ADB.")
-        elif self.device_combo.currentData():
-            self._log(f"Đã chọn thiết bị ADB: {self.device_combo.currentData()}")
+        elif serial:
+            self._log(f"Đã chọn thiết bị ADB: {serial}")
+
+    def _refresh_selected_worker_view(self) -> None:
+        worker = self._worker
+        running = worker is not None and worker.isRunning()
+        clone = bool(getattr(worker, "_gui_clone_mode", False))
+        self._active_clone_mode = clone
+        self._active_mock_mode = bool(getattr(worker, "_gui_mock_mode", False))
+        self._clone_total_accounts = int(getattr(worker, "_gui_clone_total_accounts", 0))
+        self._paused = bool(getattr(worker, "_gui_paused", False))
+        self._run_started_at = getattr(worker, "_gui_started_at", None)
+        self._pause_started_at = getattr(worker, "_gui_pause_started_at", None)
+        self._paused_duration = float(getattr(worker, "_gui_paused_duration", 0.0))
+        stopping = bool(getattr(worker, "_gui_stopping", False))
+        self.start_button.setEnabled(not running)
+        self.pause_button.setEnabled(running and not stopping)
+        self.stop_button.setEnabled(running and not stopping)
+        self.pause_button.setText("▶" if self._paused else "⏸")
+        self.pause_button.setToolTip("Tiếp tục" if self._paused else "Tạm dừng")
+        (self.elapsed_timer.start if running else self.elapsed_timer.stop)()
+        self.task_progress_list.clear()
+        self.task_progress_labels.clear()
+        self.clone_result_list.clear()
+        self.clone_result_list.setVisible(clone)
+        self.task_progress_list.setVisible(not clone)
+        self._show_progress_root_row = bool(getattr(worker, "_gui_show_progress_root", False))
+        if worker is None:
+            self.progress_bar.setRange(0, 100)
+            self.progress_bar.setValue(0)
+            self.progress_bar.setFormat("%p%")
+            self.current_activity_label.setText("Đang xử lý: Chưa chạy")
+            self.elapsed_time_label.setText("Thời gian đã chạy: 00:00:00")
+            self.eta_label.setText("Dự kiến kết thúc: Chưa ước tính")
+            return
+        total = max(1, int(getattr(worker, "_progress_total", 1)))
+        completed = max(0, int(getattr(worker, "_progress_completed", 0)))
+        if clone:
+            total = max(1, self._clone_total_accounts)
+        self.progress_bar.setRange(0, total)
+        self.progress_bar.setFormat("%v/%m (%p%)")
+        self.progress_bar.setValue(min(total, completed))
+        self.current_activity_label.setText("Đang xử lý: " + ("Chuẩn bị…" if running else "Đã kết thúc"))
+        manager = getattr(worker, "progress_manager", None)
+        if manager is not None:
+            for info in manager.get_all():
+                if clone:
+                    self._add_clone_progress_item(info)
+                else:
+                    self._add_standalone_progress_item(info)
+        if self._run_started_at is not None:
+            self._update_elapsed_time()
+        else:
+            self.elapsed_time_label.setText("Thời gian đã chạy: 00:00:00")
+        if not running:
+            self.eta_label.setText("Dự kiến kết thúc: Chưa ước tính")
+
+    def _handle_worker_log(self, serial: str, message: str) -> None:
+        if serial == self._selected_serial:
+            self._log(f"[{serial}] {message}")
+
+    def _handle_worker_progress(self, serial: str, completed: int, total: int, status: str) -> None:
+        if serial == self._selected_serial:
+            self._update_progress(completed, total, status)
+
+    def _handle_worker_progress_info(self, serial: str, info, added: bool, clone: bool) -> None:
+        if serial != self._selected_serial:
+            return
+        if clone:
+            (self._add_clone_progress_item if added else self._update_clone_progress_item)(info)
+        else:
+            (self._add_standalone_progress_item if added else self._update_standalone_progress_item)(info)
+
+    def _handle_worker_stage_number(self, serial: str, value: int) -> None:
+        if serial == self._selected_serial:
+            self.muu_binh_stage_number.setText(str(value))
+            self._save_settings()
 
     def capture_screenshot_to_file(self) -> None:
         """Save one screenshot per click and disable the camera icon until saving ends."""
@@ -1109,179 +1189,126 @@ class MainWindow(QMainWindow):
         return user, secret
 
     def start_bot(self) -> None:
-        if self._worker is not None and self._worker.isRunning():
-            return
-
-        mock_mode = self.device_combo.currentData() == "mock"
         serial = self.device_combo.currentData()
-        if not mock_mode and not serial:
-            QMessageBox.warning(
-                self,
-                "Chưa chọn thiết bị",
-                "Hãy chuyển sang chế độ ADB, mở LDPlayer, nhấn Quét ADB "
-                "và chọn thiết bị cần chạy.",
-            )
+        if serial is None:
             return
-
+        key = str(serial)
+        current = self._workers.get(key)
+        if current is not None and current.isRunning():
+            return
+        mock_mode = serial == "mock"
+        if not mock_mode and not serial:
+            QMessageBox.warning(self, "Chưa chọn thiết bị", "Hãy quét ADB và chọn thiết bị cần chạy.")
+            return
         config = self._current_config()
         if config.get("state_war_mode") and not config.get("state_war_strategy_path"):
-            QMessageBox.warning(
-                self,
-                "Chưa chọn chiến thuật",
-                "Hãy thêm/chọn một file JSON chiến thuật trong tab Quốc chiến.",
-            )
+            QMessageBox.warning(self, "Chưa chọn chiến thuật", "Hãy thêm/chọn một file JSON chiến thuật trong tab Quốc chiến.")
             return
-        self._active_clone_mode = bool(config.get("clone_mode"))
-        self._active_mock_mode = mock_mode
-        self._clone_total_accounts = 0
-        if self._active_clone_mode:
+        clone = bool(config.get("clone_mode"))
+        accounts = []
+        clone_total = 0
+        if clone:
             account_file = config.get("clone_account_file", "")
             if account_file == CURRENT_ACCOUNT:
                 accounts = [GameAccount("", "", True, "Tài khoản hiện tại")]
-                config["clone_login"] = False
-                config["clone_logout"] = False
+                config["clone_login"] = config["clone_logout"] = False
             else:
                 try:
                     accounts = load_accounts(account_file)
                 except (OSError, UnicodeError, ValueError) as exc:
-                    QMessageBox.warning(
-                        self,
-                        "Danh sách tài khoản không hợp lệ",
-                        str(exc),
-                    )
+                    QMessageBox.warning(self, "Danh sách tài khoản không hợp lệ", str(exc))
                     return
-            self._clone_total_accounts = sum(account.enabled for account in accounts)
-            selected_tasks = [
-                key for key in (
-                    "clone_login",
-                    "clone_daily_check_in",
-                    "clone_guild_check_in",
-                    "clone_receive_lucky_bag",
-                    "clone_guild_fortune",
-                    "clone_buy_fortune_lot",
-                    "clone_quan_su_giao_tranh",
-                    "clone_logout",
-                ) if config.get(key)
-            ]
-            if not selected_tasks:
-                QMessageBox.warning(
-                    self,
-                    "Chưa chọn nhiệm vụ",
-                    "Hãy chọn ít nhất một nhiệm vụ trong tab Clone.",
-                )
+            clone_total = sum(account.enabled for account in accounts)
+            selected = [name for name in (
+                "clone_login", "clone_daily_check_in", "clone_guild_check_in",
+                "clone_receive_lucky_bag", "clone_guild_fortune",
+                "clone_buy_fortune_lot", "clone_quan_su_giao_tranh", "clone_logout",
+            ) if config.get(name)]
+            if not selected:
+                QMessageBox.warning(self, "Chưa chọn nhiệm vụ", "Hãy chọn ít nhất một nhiệm vụ trong tab Clone.")
                 return
-            self._log(
-                f"Tab Clone: đã nạp {len(accounts)} tài khoản. "
-                "Mật khẩu không được ghi vào nhật ký."
-            )
+            self._log(f"Tab Clone: đã nạp {len(accounts)} tài khoản. Mật khẩu không được ghi vào nhật ký.")
+
         from dctq_auto.gui.workers import BotWorker
-        self._worker = BotWorker(
-            serial=serial,
-            screenshot_dir=self._settings.screenshot_dir,
-            config=config,
-            mock_mode=mock_mode,
-            parent=self,
-        )
-        self._worker.log_message.connect(self._log)
-        self._worker.stage_number_changed.connect(
-            lambda value: (self.muu_binh_stage_number.setText(str(value)), self._save_settings())
-        )
-        self._worker.progress_changed.connect(self._update_progress)
-        if self._active_clone_mode:
-            # Clone renders account lifecycle from the unified progress tree.
-            # Keep legacy signals emitted for compatibility, but do not render
-            # them here as well (otherwise each state is applied twice).
-            self._worker.progress_info_added.connect(self._add_clone_progress_item)
-            self._worker.progress_info_changed.connect(self._update_clone_progress_item)
-        else:
-            self._worker.progress_info_added.connect(self._add_standalone_progress_item)
-            self._worker.progress_info_changed.connect(self._update_standalone_progress_item)
-        self._show_progress_root_row = bool(config.get("strategy_mode"))
-        self.task_progress_list.clear()
-        self.task_progress_labels.clear()
-        is_clone = bool(config.get("clone_mode"))
-        self.clone_result_list.clear()
-        self.clone_result_list.setVisible(is_clone)
-        self.task_progress_list.setVisible(not is_clone)
-        self._worker.finished.connect(self._on_worker_finished)
-        self.device_combo.setEnabled(False)
-        self.scan_button.setEnabled(False)
-        self._paused = False
-        self._run_started_at = time.monotonic()
-        self._pause_started_at = None
-        self._paused_duration = 0.0
+        worker = BotWorker(serial=serial, screenshot_dir=self._settings.screenshot_dir,
+                           config=config, mock_mode=mock_mode, parent=self)
+        worker._gui_clone_mode = clone
+        worker._gui_clone_total_accounts = clone_total
+        worker._gui_mock_mode = mock_mode
+        worker._gui_show_progress_root = bool(config.get("strategy_mode"))
+        worker._gui_paused = False
+        worker._gui_stopping = False
+        worker._gui_started_at = time.monotonic()
+        worker._gui_pause_started_at = None
+        worker._gui_paused_duration = 0.0
+        self._workers[key] = worker
+        self._worker = worker
+        self._selected_serial = key
+        worker.log_message.connect(lambda msg, k=key: self._handle_worker_log(k, msg))
+        worker.stage_number_changed.connect(lambda value, k=key: self._handle_worker_stage_number(k, value))
+        worker.progress_changed.connect(lambda c, t, m, k=key: self._handle_worker_progress(k, c, t, m))
+        worker.progress_info_added.connect(lambda info, k=key, cl=clone: self._handle_worker_progress_info(k, info, True, cl))
+        worker.progress_info_changed.connect(lambda info, k=key, cl=clone: self._handle_worker_progress_info(k, info, False, cl))
+        worker.finished.connect(lambda k=key: self._on_worker_finished(k))
+        self._refresh_selected_worker_view()
         self.current_activity_label.setText("Đang xử lý: Chuẩn bị…")
-        if self._active_clone_mode:
-            self.progress_bar.setRange(0, max(1, self._clone_total_accounts))
-            self.progress_bar.setFormat("%v/%m (%p%)")
-            self.progress_bar.setValue(0)
-            self.clone_result_list.clear()
+        self.elapsed_time_label.setText("Thời gian đã chạy: 00:00:00")
+        self.eta_label.setText("Dự kiến kết thúc: Chưa ước tính")
+        if clone:
             for account in accounts:
-                label = account.display_name if account.enabled else f"{account.display_name} — Đã vô hiệu hóa"
                 item = QListWidgetItem(account.display_name)
-                item.setIcon(
-                    self._status_icon("·", "#6e7781")
-                    if account.enabled else self._status_icon("×", "#8c959f")
-                )
+                item.setIcon(self._status_icon("·", "#6e7781") if account.enabled else self._status_icon("×", "#8c959f"))
                 item.setData(Qt.ItemDataRole.UserRole, account.display_name)
                 item.setData(Qt.ItemDataRole.UserRole + 1, account.enabled)
                 self.clone_result_list.addItem(item)
-        else:
-            self.progress_bar.setRange(0, 100)
-            self.progress_bar.setFormat("%v/%m (%p%)")
-            self.progress_bar.setValue(0)
-        self.elapsed_time_label.setText("Thời gian đã chạy: 00:00:00")
-        self.eta_label.setText("Dự kiến kết thúc: Chưa ước tính")
-        self.start_button.setEnabled(False)
-        self.pause_button.setEnabled(True)
-        self.pause_button.setText("⏸")
-        self.pause_button.setToolTip("Tạm dừng")
-        self.stop_button.setEnabled(True)
-        self.elapsed_timer.start()
-        if mock_mode:
-            self._log("Đang chạy thử; không gửi lệnh ADB.")
-        else:
-            self._log(f"Đang chạy tác vụ nền trên thiết bị {serial}…")
-        self._worker.start()
+        self._log("Đang chạy thử; không gửi lệnh ADB." if mock_mode else f"Đang chạy tác vụ nền trên thiết bị {serial}…")
+        worker.start()
 
     def toggle_pause_bot(self) -> None:
         if self._worker is None or not self._worker.isRunning():
             return
-        if self._paused:
-            self.resume_bot()
-        else:
-            self.pause_bot()
+        self.resume_bot() if self._paused else self.pause_bot()
 
     def pause_bot(self) -> None:
-        if self._worker is None or not self._worker.isRunning() or self._paused:
+        worker = self._worker
+        if worker is None or not worker.isRunning() or self._paused:
             return
-        self._worker.pause()
+        worker.pause()
+        worker._gui_paused = True
+        worker._gui_pause_started_at = time.monotonic()
         self._paused = True
-        self._pause_started_at = time.monotonic()
+        self._pause_started_at = worker._gui_pause_started_at
         self.pause_button.setText("▶")
         self.pause_button.setToolTip("Tiếp tục")
-        self._log("Đã tạm dừng tại điểm an toàn; nhấn Tiếp tục để chạy tiếp.")
+        self._log(f"[{self._selected_serial}] Đã tạm dừng.")
 
     def resume_bot(self) -> None:
-        if self._worker is None or not self._worker.isRunning() or not self._paused:
+        worker = self._worker
+        if worker is None or not worker.isRunning() or not self._paused:
             return
         now = time.monotonic()
-        if self._pause_started_at is not None:
-            self._paused_duration += now - self._pause_started_at
-        self._pause_started_at = None
+        paused_at = worker._gui_pause_started_at
+        if paused_at is not None:
+            worker._gui_paused_duration += now - paused_at
+        worker._gui_pause_started_at = None
+        worker._gui_paused = False
+        worker.resume()
         self._paused = False
-        self._worker.resume()
+        self._pause_started_at = None
+        self._paused_duration = worker._gui_paused_duration
         self.pause_button.setText("⏸")
         self.pause_button.setToolTip("Tạm dừng")
-        self._log("Tiếp tục tác vụ.")
+        self._log(f"[{self._selected_serial}] Tiếp tục tác vụ.")
 
     def stop_bot(self) -> None:
-        if self._worker is not None and self._worker.isRunning():
-            self._worker.resume()
-            self._worker.requestInterruption()
+        worker = self._worker
+        if worker is not None and worker.isRunning():
+            worker._gui_stopping = True
+            worker.resume()
+            worker.requestInterruption()
             self.pause_button.setEnabled(False)
             self.stop_button.setEnabled(False)
-            self._log("Đã gửi yêu cầu dừng hẳn; worker sẽ dừng tại điểm kiểm tra tiếp theo.")
+            self._log(f"[{self._selected_serial}] Đã gửi yêu cầu dừng hẳn.")
 
     @staticmethod
     def _status_icon(glyph: str, color: str, indent: int = 0) -> QIcon:
@@ -1601,34 +1628,32 @@ class MainWindow(QMainWindow):
         return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
     def _update_elapsed_time(self) -> None:
-        if self._run_started_at is None:
+        worker = self._worker
+        started = getattr(worker, "_gui_started_at", None)
+        if worker is None or started is None:
             return
         now = time.monotonic()
-        paused_duration = self._paused_duration
-        if self._paused and self._pause_started_at is not None:
-            paused_duration += now - self._pause_started_at
-        elapsed = now - self._run_started_at - paused_duration
+        paused = float(getattr(worker, "_gui_paused_duration", 0.0))
+        paused_at = getattr(worker, "_gui_pause_started_at", None)
+        if getattr(worker, "_gui_paused", False) and paused_at is not None:
+            paused += now - paused_at
         self.elapsed_time_label.setText(
-            f"Thời gian đã chạy: {self._format_duration(elapsed)}"
+            f"Thời gian đã chạy: {self._format_duration(now - started - paused)}"
         )
 
-    def _on_worker_finished(self) -> None:
-        self.elapsed_timer.stop()
-        self._paused = False
-        self._pause_started_at = None
-        self._run_started_at = None
-        self.start_button.setEnabled(True)
-        self.pause_button.setEnabled(False)
-        self.pause_button.setText("⏸")
-        self.pause_button.setToolTip("Tạm dừng")
-        self.stop_button.setEnabled(False)
-        self.device_combo.setEnabled(True)
-        self._on_device_changed()
-        if self.progress_bar.value() < 100:
+    def _on_worker_finished(self, serial: str) -> None:
+        worker = self._workers.get(serial)
+        if worker is not None:
+            worker._gui_paused = False
+            worker._gui_pause_started_at = None
+            worker._gui_stopping = False
+        self._log(f"[{serial}] Worker đã kết thúc.")
+        if serial == self._selected_serial:
+            self._worker = worker
+            self._refresh_selected_worker_view()
             for name, label in self.task_progress_labels.items():
                 if label.text().startswith("→"):
                     self._render_task_progress(name, "stopped", 0, 1)
-        self._log("Worker đã kết thúc.")
 
     def _log(self, message: str) -> None:
         """Send activity messages to the console/logger; the GUI has no log panel."""
