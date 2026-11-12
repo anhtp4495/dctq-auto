@@ -376,6 +376,10 @@ def run(worker, account, device, log) -> bool:
                     worker._config["muu_binh_stage_number"] = stage_number
                     worker.stage_number_changed.emit(stage_number)
 
+            worker.UpdateProcessMessage(
+                root_progress_id,
+                f"Ải {stage_number if recognized_stage is not None else '?'}",
+            )
             if not battle_screenshot_saved:
                 if save_screenshot and stage_number <= 100:
                     _save_stage_screenshot(device, account, log, stage_number)
