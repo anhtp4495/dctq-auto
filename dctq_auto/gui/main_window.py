@@ -715,7 +715,7 @@ class MainWindow(QMainWindow):
         capture_row.addWidget(self.muu_binh_save_screenshot)
         capture_row.addWidget(QLabel("Ải:"))
         self.muu_binh_stage_number = QLineEdit("1")
-        self.muu_binh_stage_number.setValidator(QIntValidator(1, 10000, self))
+        self.muu_binh_stage_number.setValidator(QIntValidator(1, 100, self))
         self.muu_binh_stage_number.setMaximumWidth(72)
         self.muu_binh_stage_number.setAlignment(Qt.AlignmentFlag.AlignRight)
         capture_row.addWidget(self.muu_binh_stage_number)
@@ -1210,6 +1210,9 @@ class MainWindow(QMainWindow):
             parent=self,
         )
         self._worker.log_message.connect(self._log)
+        self._worker.stage_number_changed.connect(
+            lambda value: (self.muu_binh_stage_number.setText(str(value)), self._save_settings())
+        )
         self._worker.progress_changed.connect(self._update_progress)
         if self._active_clone_mode:
             # Clone renders account lifecycle from the unified progress tree.
