@@ -12,7 +12,7 @@ from pathlib import Path
 from PIL import Image
 
 
-def process_image(source: Path, destination: Path) -> None:
+def process_image(source: Path, destination: Path, stage_number: int | None) -> int:
     with Image.open(source) as image:
         if image.width < 1214 or image.height < 86:
             raise ValueError(
@@ -34,24 +34,36 @@ def process_image(source: Path, destination: Path) -> None:
 
         row.putdata(result)
 
+        existing = None
         if destination.exists():
             existing = Image.open(destination).convert("RGBA")
             if existing.width != 507:
+                width = existing.width
+                existing.close()
+                raise ValueError(f"Ảnh đích rộng {width}px, cần đúng 507px")
+            if existing.height % 69 != 0:
+                height = existing.height
                 existing.close()
                 raise ValueError(
-                    f"Ảnh đích rộng {existing.width}px, cần đúng 507px"
+                    f"Chiều cao ảnh đích {height}px không chia hết cho 69px"
                 )
-            combined = Image.new(
-                "RGBA", (507, existing.height + 69), (0, 0, 0, 0)
-            )
+
+        if stage_number is None:
+            stage_number = (existing.height // 69 + 1) if existing else 1
+
+        required_height = stage_number * 69
+        canvas_height = max(existing.height if existing else 0, required_height)
+        combined = Image.new("RGBA", (507, canvas_height), (0, 0, 0, 0))
+        if existing:
             combined.paste(existing, (0, 0))
-            combined.paste(row, (0, existing.height))
             existing.close()
-        else:
-            combined = row
+
+        # Ải 1 nằm ở hàng đầu tiên; ải 100 nằm ở hàng thứ 100.
+        combined.paste(row, (0, (stage_number - 1) * 69))
 
         destination.parent.mkdir(parents=True, exist_ok=True)
         combined.save(destination, format="PNG")
+        return stage_number
 
 
 def main() -> None:
@@ -59,6 +71,12 @@ def main() -> None:
         description="Tách chữ trắng và nối mỗi ảnh ải thành một hàng dọc."
     )
     parser.add_argument("image", type=Path, help="Ảnh chụp màn hình gốc")
+    parser.add_argument(
+        "-a",
+        "--stage",
+        type=int,
+        help="Số ải cần đặt vào đúng hàng (ví dụ: --stage 100)",
+    )
     parser.add_argument(
         "-o",
         "--output",
@@ -70,9 +88,11 @@ def main() -> None:
 
     if not args.image.is_file():
         parser.error(f"Không tìm thấy ảnh: {args.image}")
+    if args.stage is not None and args.stage < 1:
+        parser.error("Số ải phải lớn hơn hoặc bằng 1")
 
-    process_image(args.image, args.output)
-    print(f"Đã thêm một hàng vào: {args.output}")
+    stage_number = process_image(args.image, args.output, args.stage)
+    print(f"Đã lưu ảnh vào hàng ải {stage_number}: {args.output}")
 
 
 if __name__ == "__main__":
