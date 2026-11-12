@@ -300,10 +300,20 @@ def run(worker, account, device, log) -> bool:
     except (TypeError, ValueError):
         stage_number = 1
 
+    def update_task_progress(name, status, current, total):
+        process_id = worker.UpdateOrCreateProcessProgress(
+            name=name,
+            status=status,
+            current=current,
+            total=total,
+        )
+        worker.UpdateProcessStatus(process_id, status)
+        worker.UpdateProcessInfo(process_id, current, total)
+
     completed_stages = 0
     battle_screenshot_saved = False
-    worker._emit_task_progress("Chiến đấu", "pending", 0, 0)
-    worker._emit_task_progress("Nhận thưởng", "pending", 0, 0)
+    update_task_progress("Chiến đấu", "pending", 0, 0)
+    update_task_progress("Nhận thưởng", "pending", 0, 0)
     worker._set_progress_root_message("Đã vượt ải 0")
 
     while time.monotonic() < deadline:
@@ -316,8 +326,8 @@ def run(worker, account, device, log) -> bool:
             return False
 
         if observation["quan_su"] is not None:
-            worker._emit_task_progress("Chiến đấu", "success", 0, 0)
-            worker._emit_task_progress("Nhận thưởng", "success", 0, 0)
+            update_task_progress("Chiến đấu", "success", 0, 0)
+            update_task_progress("Nhận thưởng", "success", 0, 0)
             log(
                 f"[{account.display_name}] Đã hoàn thành Mưu Binh; "
                 "phát hiện màn hình chính Quân Sự."
@@ -326,7 +336,7 @@ def run(worker, account, device, log) -> bool:
 
         if observation["hop_thoai_thuong_vuot_ai"] is not None:
             battle_screenshot_saved = False
-            worker._emit_task_progress("Nhận thưởng", "running", 0, 0)
+            update_task_progress("Nhận thưởng", "running", 0, 0)
             reward_confirmed = _handle_reward_dialog(
                 device, account, log, templates, positions
             )
@@ -338,8 +348,8 @@ def run(worker, account, device, log) -> bool:
             worker._set_progress_root_message(
                 f"Đã vượt ải {min(completed_stages, 100)}"
             )
-            worker._emit_task_progress("Chiến đấu", "running", 0, 0)
-            worker._emit_task_progress("Nhận thưởng", "pending", 0, 0)
+            update_task_progress("Chiến đấu", "running", 0, 0)
+            update_task_progress("Nhận thưởng", "pending", 0, 0)
             time.sleep(1)
             continue
 
@@ -360,14 +370,14 @@ def run(worker, account, device, log) -> bool:
                     _save_stage_screenshot(device, account, log, stage_number)
                 battle_screenshot_saved = True
                 log(f"[{account.display_name}] Đã ghi nhận trạng thái đang chiến đấu ở ải {stage_number}.")
-            worker._emit_task_progress("Chiến đấu", "running", 0, 0)
-            worker._emit_task_progress("Nhận thưởng", "pending", 0, 0)
+            update_task_progress("Chiến đấu", "running", 0, 0)
+            update_task_progress("Nhận thưởng", "pending", 0, 0)
             time.sleep(1)
             continue
 
         if observation["chien_dau"] is not None:
-            worker._emit_task_progress("Chiến đấu", "running", 0, 0)
-            worker._emit_task_progress("Nhận thưởng", "pending", 0, 0)
+            update_task_progress("Chiến đấu", "running", 0, 0)
+            update_task_progress("Nhận thưởng", "pending", 0, 0)
             x, y = click_match(device, observation["chien_dau"])
             log(f"[{account.display_name}] Click Chiến đấu tại ({x}, {y}).")
             time.sleep(1)
