@@ -31,6 +31,12 @@ from dctq_auto.vision.template_store import get_templates
 
 
 _MAX_SECONDS = 100 * 240
+
+# Chỉnh vùng cắt ảnh tại đây: (left, top, right, bottom).
+_STAGE_SCREENSHOT_RECT = (670, 20, 1250, 80)
+_STAGE_IMAGE_WIDTH = _STAGE_SCREENSHOT_RECT[2] - _STAGE_SCREENSHOT_RECT[0]
+_STAGE_IMAGE_HEIGHT = _STAGE_SCREENSHOT_RECT[3] - _STAGE_SCREENSHOT_RECT[1]
+_STAGE_IMAGE_COUNT = 100
 _REWARD_TEMPLATES = (
     _TEMPLATE_CHIEN_TRANH_THUONG_VUOT_AI_GIET_NHANH,
     _TEMPLATE_CHIEN_TRANH_THUONG_VUOT_AI_CUONG_CONG_10,
@@ -107,16 +113,18 @@ def _save_stage_screenshot(device, account, log, stage_number: int) -> None:
     """Save the configured top status strip after a stage reward is confirmed."""
     try:
         image = device.screenshot()
-        if image.width < 1214 or image.height < 86:
+        left, top, right, bottom = _STAGE_SCREENSHOT_RECT
+        if image.width < right or image.height < bottom:
             raise ValueError(
-                f"Kích thước màn hình không đủ để cắt vùng 507x69: {image.width}x{image.height}"
+                f"Kích thước màn hình không đủ để cắt vùng "
+                f"{_STAGE_IMAGE_WIDTH}x{_STAGE_IMAGE_HEIGHT}: {image.width}x{image.height}"
             )
 
         if not 1 <= stage_number <= 100:
             raise ValueError(f"Số ải phải nằm trong khoảng 1-100, nhận được: {stage_number}")
 
         # Mỗi ải chiếm một hàng cố định trong canvas 100 ải.
-        row = image.crop((707, 17, 1214, 86)).convert("RGBA")
+        row = image.crop(_STAGE_SCREENSHOT_RECT).convert("RGBA")
         pixels = []
         for red, green, blue, _alpha in row.getdata():
             darkest = min(red, green, blue)
@@ -131,17 +139,26 @@ def _save_stage_screenshot(device, account, log, stage_number: int) -> None:
         output_dir = Path("artifacts/screenshots")
         output_dir.mkdir(parents=True, exist_ok=True)
         output_path = output_dir / "danh_sach_ai.png"
-        combined = Image.new("RGBA", (507, 100 * 69), (0, 0, 0, 0))
+        combined = Image.new(
+            "RGBA",
+            (_STAGE_IMAGE_WIDTH, _STAGE_IMAGE_COUNT * _STAGE_IMAGE_HEIGHT),
+            (0, 0, 0, 0),
+        )
         if output_path.exists():
             with Image.open(output_path) as existing_file:
                 existing = existing_file.convert("RGBA")
-            if existing.width == 507:
-                # Giữ lại dữ liệu cũ khi nâng cấp từ ảnh danh sách dạng nối dọc.
+            if existing.size == combined.size:
+                combined.paste(existing, (0, 0))
+            elif existing.width == _STAGE_IMAGE_WIDTH:
+                # Giữ dữ liệu cũ dạng nối dọc nếu cùng chiều rộng.
                 copy_height = min(existing.height, combined.height)
-                combined.paste(existing.crop((0, 0, 507, copy_height)), (0, 0))
+                combined.paste(
+                    existing.crop((0, 0, _STAGE_IMAGE_WIDTH, copy_height)),
+                    (0, 0),
+                )
             existing.close()
 
-        combined.paste(row, (0, (stage_number - 1) * 69))
+        combined.paste(row, (0, (stage_number - 1) * _STAGE_IMAGE_HEIGHT))
         combined.save(output_path, format="PNG")
         log(
             f"[{account.display_name}] Đã thêm ảnh ải {stage_number} "
