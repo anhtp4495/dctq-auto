@@ -17,6 +17,7 @@ from dctq_auto.config.constants import (
     _TEMPLATE_MUU_BINH_THUONG_VUOT_AI_1,
     _TEMPLATE_MUU_BINH_THUONG_VUOT_AI_2,
     _TEMPLATE_MUU_BINH_THUONG_VUOT_AI_3,
+    _TEMPLATE_MUU_BINH_RUT_LUI,
     _TEMPLATE_MUU_BINH_XAC_NHAN_THUONG_VUOT_AI,
 )
 from dctq_auto.tasks.common.battle.battle_utils import (
@@ -156,7 +157,8 @@ def run(worker, account, device, log) -> bool:
     log(f"[{account.display_name}] Bắt đầu tự động vượt ải Mưu Binh (tối đa {_MAX_SECONDS // 60} phút).")
 
     templates = get_templates(
-        _REWARD_TEMPLATES + (_TEMPLATE_MUU_BINH_XAC_NHAN_THUONG_VUOT_AI,)
+        _REWARD_TEMPLATES
+        + (_TEMPLATE_MUU_BINH_RUT_LUI, _TEMPLATE_MUU_BINH_XAC_NHAN_THUONG_VUOT_AI)
     )
     positions = ButtonPositions()
 
@@ -168,6 +170,7 @@ def run(worker, account, device, log) -> bool:
         stage_number = 1
 
     completed_stages = 0
+    battle_screenshot_saved = False
     worker._emit_task_progress("Chiến đấu", "pending", 0, 0)
     worker._emit_task_progress("Nhận thưởng", "pending", 0, 0)
     worker._set_progress_root_message("Đã vượt ải 0")
@@ -191,14 +194,11 @@ def run(worker, account, device, log) -> bool:
             return True
 
         if observation["hop_thoai_thuong_vuot_ai"] is not None:
+            battle_screenshot_saved = False
             worker._emit_task_progress("Nhận thưởng", "running", 0, 0)
             reward_confirmed = _handle_reward_dialog(
                 device, account, log, templates, positions
             )
-            if reward_confirmed and save_screenshot and stage_number <= 100:
-                # Chờ giao diện đóng hộp thoại nhận thưởng rồi mới chụp màn hình.
-                time.sleep(0.5)
-                _save_stage_screenshot(device, account, log, stage_number)
             if reward_confirmed:
                 stage_number += 1
                 worker._config["muu_binh_stage_number"] = stage_number
@@ -215,6 +215,17 @@ def run(worker, account, device, log) -> bool:
         if observation["tu_dong_den_ai_tiep_theo"] is not None:
             x, y = click_match(device, observation["tu_dong_den_ai_tiep_theo"])
             log(f"[{account.display_name}] Click Tự động đến ải tiếp theo tại ({x}, {y}).")
+            time.sleep(1)
+            continue
+
+        if observation["rut_lui"] is not None:
+            if not battle_screenshot_saved:
+                if save_screenshot and stage_number <= 100:
+                    _save_stage_screenshot(device, account, log, stage_number)
+                battle_screenshot_saved = True
+                log(f"[{account.display_name}] Đã ghi nhận trạng thái đang chiến đấu ở ải {stage_number}.")
+            worker._emit_task_progress("Chiến đấu", "running", 0, 0)
+            worker._emit_task_progress("Nhận thưởng", "pending", 0, 0)
             time.sleep(1)
             continue
 
