@@ -41,6 +41,12 @@ def process_image(source: Path, destination: Path, stage_number: int | None) -> 
                 width = existing.width
                 existing.close()
                 raise ValueError(f"Ảnh đích rộng {width}px, cần đúng 507px")
+            if existing.height > 6900:
+                height = existing.height
+                existing.close()
+                raise ValueError(
+                    f"Ảnh đích cao {height}px, vượt quá giới hạn 100 ải (6900px)"
+                )
             if existing.height % 69 != 0:
                 height = existing.height
                 existing.close()
@@ -49,11 +55,28 @@ def process_image(source: Path, destination: Path, stage_number: int | None) -> 
                 )
 
         if stage_number is None:
-            stage_number = (existing.height // 69 + 1) if existing else 1
+            # Tự tìm hàng trống đầu tiên để không bị nhầm chiều cao cố định 100 ải.
+            stage_number = 1
+            if existing:
+                for index in range(100):
+                    top = index * 69
+                    if top >= existing.height:
+                        stage_number = index + 1
+                        break
+                    row_alpha = existing.crop((0, top, 507, top + 69)).getchannel("A")
+                    if row_alpha.getbbox() is None:
+                        stage_number = index + 1
+                        break
+                else:
+                    existing.close()
+                    raise ValueError("Đã đủ dữ liệu cả 100 ải")
 
-        required_height = stage_number * 69
-        canvas_height = max(existing.height if existing else 0, required_height)
-        combined = Image.new("RGBA", (507, canvas_height), (0, 0, 0, 0))
+        if not 1 <= stage_number <= 100:
+            if existing:
+                existing.close()
+            raise ValueError("Số ải phải nằm trong khoảng từ 1 đến 100")
+
+        combined = Image.new("RGBA", (507, 6900), (0, 0, 0, 0))
         if existing:
             combined.paste(existing, (0, 0))
             existing.close()
@@ -88,11 +111,14 @@ def main() -> None:
 
     if not args.image.is_file():
         parser.error(f"Không tìm thấy ảnh: {args.image}")
-    if args.stage is not None and args.stage < 1:
-        parser.error("Số ải phải lớn hơn hoặc bằng 1")
+    if args.stage is not None and not 1 <= args.stage <= 100:
+        parser.error("Số ải phải nằm trong khoảng từ 1 đến 100")
 
     stage_number = process_image(args.image, args.output, args.stage)
-    print(f"Đã lưu ảnh vào hàng ải {stage_number}: {args.output}")
+    print(
+        f"Đã lưu ảnh vào hàng ải {stage_number}: {args.output} "
+        f"(507x6900px, đủ 100 ải)"
+    )
 
 
 if __name__ == "__main__":
