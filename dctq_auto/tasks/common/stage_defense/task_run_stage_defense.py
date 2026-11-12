@@ -312,6 +312,7 @@ def run(worker, account, device, log) -> bool:
 
     completed_stages = 0
     battle_screenshot_saved = False
+    recognized_stage = None
     update_task_progress("Chiến đấu", "pending", 0, 0)
     update_task_progress("Nhận thưởng", "pending", 0, 0)
     worker._set_progress_root_message("Đã vượt ải 0")
@@ -360,12 +361,14 @@ def run(worker, account, device, log) -> bool:
             continue
 
         if observation["rut_lui"] is not None:
-            if not battle_screenshot_saved:
+            if recognized_stage is None:
                 recognized_stage = _recognize_stage_number(device, account, log)
                 if recognized_stage is not None:
                     stage_number = recognized_stage
                     worker._config["muu_binh_stage_number"] = stage_number
                     worker.stage_number_changed.emit(stage_number)
+
+            if not battle_screenshot_saved:
                 if save_screenshot and stage_number <= 100:
                     _save_stage_screenshot(device, account, log, stage_number)
                 battle_screenshot_saved = True
