@@ -106,13 +106,13 @@ def _save_stage_screenshot(device, account, log, stage_number: int) -> None:
     """Save the configured top status strip after a stage reward is confirmed."""
     try:
         image = device.screenshot()
-        if image.width < 509 or image.height < 96:
+        if image.width < 1214 or image.height < 86:
             raise ValueError(
-                f"Kích thước màn hình không đủ để cắt vùng 509x96: {image.width}x{image.height}"
+                f"Kích thước màn hình không đủ để cắt vùng 507x69: {image.width}x{image.height}"
             )
 
-        # Mỗi ải là một hàng 509x96, nối tiếp từ trên xuống.
-        row = image.crop((0, 0, 509, 96)).convert("RGBA")
+        # Mỗi ải là một hàng 507x69, nối tiếp từ trên xuống.
+        row = image.crop((707, 17, 1214, 86)).convert("RGBA")
         pixels = []
         for red, green, blue, _alpha in row.getdata():
             darkest = min(red, green, blue)
@@ -129,11 +129,11 @@ def _save_stage_screenshot(device, account, log, stage_number: int) -> None:
         output_path = output_dir / "danh_sach_ai.png"
         if output_path.exists():
             existing = Image.open(output_path).convert("RGBA")
-            if existing.width != 509:
+            if existing.width != 507:
                 raise ValueError(
-                    f"Ảnh danh sách ải có chiều rộng {existing.width}, cần 509 pixel"
+                    f"Ảnh danh sách ải có chiều rộng {existing.width}, cần 507 pixel"
                 )
-            combined = Image.new("RGBA", (509, existing.height + 96), (0, 0, 0, 0))
+            combined = Image.new("RGBA", (507, existing.height + 69), (0, 0, 0, 0))
             combined.paste(existing, (0, 0))
             combined.paste(row, (0, existing.height))
             existing.close()
