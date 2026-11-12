@@ -142,15 +142,14 @@ def _save_stage_screenshot(device, account, log, stage_number: int) -> None:
         )
         alpha_bbox = solid_alpha.getbbox()
         left_offset = alpha_bbox[0] if alpha_bbox else 0
-        if left_offset:
-            aligned_row = Image.new(
-                "RGBA", (_STAGE_IMAGE_WIDTH, _STAGE_IMAGE_HEIGHT), (0, 0, 0, 0)
-            )
-            content = row.crop(
-                (left_offset, 0, _STAGE_IMAGE_WIDTH, _STAGE_IMAGE_HEIGHT)
-            )
-            aligned_row.paste(content, (10, 0))
-            row = aligned_row
+        aligned_row = Image.new(
+            "RGBA", (_STAGE_IMAGE_WIDTH, _STAGE_IMAGE_HEIGHT), (0, 0, 0, 0)
+        )
+        content = row.crop(
+            (left_offset, 0, _STAGE_IMAGE_WIDTH, _STAGE_IMAGE_HEIGHT)
+        )
+        aligned_row.paste(content, (10, 0))
+        row = aligned_row
 
         output_dir = Path("resources/screens/muu_binh")
         output_dir.mkdir(parents=True, exist_ok=True)
