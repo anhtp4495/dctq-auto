@@ -14,13 +14,13 @@ from PIL import Image
 
 def process_image(source: Path, destination: Path) -> None:
     with Image.open(source) as image:
-        if image.width < 509 or image.height < 96:
+        if image.width < 1214 or image.height < 86:
             raise ValueError(
-                f"Ảnh phải có kích thước tối thiểu 509x96, hiện tại "
+                f"Ảnh phải có kích thước tối thiểu 1214x86, hiện tại "
                 f"{image.width}x{image.height}"
             )
 
-        row = image.crop((0, 0, 509, 96)).convert("RGBA")
+        row = image.crop((707, 17, 1214, 86)).convert("RGBA")
         result = []
 
         for red, green, blue, _alpha in row.getdata():
@@ -36,13 +36,13 @@ def process_image(source: Path, destination: Path) -> None:
 
         if destination.exists():
             existing = Image.open(destination).convert("RGBA")
-            if existing.width != 509:
+            if existing.width != 507:
                 existing.close()
                 raise ValueError(
-                    f"Ảnh đích rộng {existing.width}px, cần đúng 509px"
+                    f"Ảnh đích rộng {existing.width}px, cần đúng 507px"
                 )
             combined = Image.new(
-                "RGBA", (509, existing.height + 96), (0, 0, 0, 0)
+                "RGBA", (507, existing.height + 69), (0, 0, 0, 0)
             )
             combined.paste(existing, (0, 0))
             combined.paste(row, (0, existing.height))
