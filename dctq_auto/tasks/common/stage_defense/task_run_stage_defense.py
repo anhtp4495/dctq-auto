@@ -150,7 +150,7 @@ def _save_stage_screenshot(device, account, log, stage_number: int) -> None:
             content = row.crop(
                 (left_offset, 0, _STAGE_IMAGE_WIDTH, _STAGE_IMAGE_HEIGHT)
             )
-            aligned_row.paste(content, (0, 0))
+            aligned_row.paste(content, (10, 0))
             row = aligned_row
 
         output_dir = Path("resources/screens/muu_binh")

@@ -106,7 +106,7 @@ def process_image(source: Path, destination: Path, stage_number: int | None) -> 
 
         combined = Image.new("RGBA", (_STAGE_IMAGE_WIDTH, _STAGE_CANVAS_HEIGHT), (0, 0, 0, 0))
         if existing:
-            combined.paste(existing, (0, 0))
+            combined.paste(existing, (10, 0))
             existing.close()
 
         # Ải 1 nằm ở hàng đầu tiên; ải 100 nằm ở hàng thứ 100.
