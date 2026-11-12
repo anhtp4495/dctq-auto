@@ -42,15 +42,24 @@ def process_image(source: Path, destination: Path, stage_number: int | None) -> 
 
         row.putdata(result)
 
-        # Căn chữ trắng sát mép trái, nhưng giữ nguyên kích thước hàng.
-        alpha_bbox = row.getchannel("A").getbbox()
+        # Bỏ qua pixel trắng lẻ/nhạt để tránh xác định nhầm mép trái.
+        solid_alpha = row.getchannel("A").point(
+            lambda value: 255 if value >= 128 else 0
+        )
+        alpha_bbox = solid_alpha.getbbox()
         left_offset = alpha_bbox[0] if alpha_bbox else 0
+
         if left_offset:
+            # Cắt phần lề trái rồi đặt nội dung vào canvas mới cùng kích thước.
+            # Cách này giữ nguyên chiều ngang 580px và không làm mất chữ do
+            # paste với tọa độ âm.
             aligned_row = Image.new(
                 "RGBA", (_STAGE_IMAGE_WIDTH, _STAGE_IMAGE_HEIGHT), (0, 0, 0, 0)
             )
-            # Dịch toàn bộ hàng sang trái; phần vượt mép phải sẽ bị cắt.
-            aligned_row.paste(row, (-left_offset, 0))
+            content = row.crop(
+                (left_offset, 0, _STAGE_IMAGE_WIDTH, _STAGE_IMAGE_HEIGHT)
+            )
+            aligned_row.paste(content, (0, 0))
             row = aligned_row
 
         existing = None
