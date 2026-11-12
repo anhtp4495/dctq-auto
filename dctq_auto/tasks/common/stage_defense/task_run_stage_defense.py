@@ -4,6 +4,8 @@ import random
 import time
 from pathlib import Path
 
+from PIL import Image
+
 from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.config.constants import (
     _TEMPLATE_CHIEN_TRANH_THUONG_VUOT_AI_GIET_NHANH,
@@ -104,14 +106,15 @@ def _save_stage_screenshot(device, account, log, stage_number: int) -> None:
     """Save the configured top status strip after a stage reward is confirmed."""
     try:
         image = device.screenshot()
-        if image.width < 1219 or image.height < 96:
+        if image.width < 509 or image.height < 96:
             raise ValueError(
-                f"Kích thước màn hình không đủ để cắt vùng 1219x96: {image.width}x{image.height}"
+                f"Kích thước màn hình không đủ để cắt vùng 509x96: {image.width}x{image.height}"
             )
-        cropped = image.crop((710, 0, 1219, 96)).convert("RGBA")
-        # Giữ các pixel trắng/gần trắng; chuyển độ sáng thành alpha để giữ viền chữ mượt.
+
+        # Mỗi ải là một hàng 509x96, nối tiếp từ trên xuống.
+        row = image.crop((0, 0, 509, 96)).convert("RGBA")
         pixels = []
-        for red, green, blue, _alpha in cropped.getdata():
+        for red, green, blue, _alpha in row.getdata():
             darkest = min(red, green, blue)
             brightest = max(red, green, blue)
             if darkest >= 180 and brightest - darkest <= 60:
@@ -119,12 +122,29 @@ def _save_stage_screenshot(device, account, log, stage_number: int) -> None:
                 pixels.append((255, 255, 255, alpha))
             else:
                 pixels.append((0, 0, 0, 0))
-        cropped.putdata(pixels)
+        row.putdata(pixels)
+
         output_dir = Path("artifacts/screenshots")
         output_dir.mkdir(parents=True, exist_ok=True)
-        output_path = output_dir / f"ai_{stage_number}.png"
-        cropped.save(output_path, format="PNG")
-        log(f"[{account.display_name}] Đã lưu ảnh ải {stage_number}: {output_path}")
+        output_path = output_dir / "danh_sach_ai.png"
+        if output_path.exists():
+            existing = Image.open(output_path).convert("RGBA")
+            if existing.width != 509:
+                raise ValueError(
+                    f"Ảnh danh sách ải có chiều rộng {existing.width}, cần 509 pixel"
+                )
+            combined = Image.new("RGBA", (509, existing.height + 96), (0, 0, 0, 0))
+            combined.paste(existing, (0, 0))
+            combined.paste(row, (0, existing.height))
+            existing.close()
+        else:
+            combined = row
+
+        combined.save(output_path, format="PNG")
+        log(
+            f"[{account.display_name}] Đã thêm ảnh ải {stage_number} "
+            f"vào danh sách: {output_path}"
+        )
     except Exception as exc:
         log(f"[{account.display_name}] Không lưu được ảnh ải {stage_number}: {exc}")
 
