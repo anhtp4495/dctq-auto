@@ -136,9 +136,9 @@ def _save_stage_screenshot(device, account, log, stage_number: int) -> None:
                 pixels.append((0, 0, 0, 0))
         row.putdata(pixels)
 
-        output_dir = Path("artifacts/screenshots")
+        output_dir = Path("resources/screens/muu_binh")
         output_dir.mkdir(parents=True, exist_ok=True)
-        output_path = output_dir / "danh_sach_ai.png"
+        output_path = output_dir / "danh_sach_ai_1.png"
         combined = Image.new(
             "RGBA",
             (_STAGE_IMAGE_WIDTH, _STAGE_IMAGE_COUNT * _STAGE_IMAGE_HEIGHT),
