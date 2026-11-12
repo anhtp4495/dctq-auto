@@ -163,7 +163,7 @@ def run(worker, account, device, log) -> bool:
     config = getattr(worker, "_config", {}) or {}
     save_screenshot = bool(config.get("muu_binh_save_screenshot", False))
     try:
-        stage_number = max(1, int(config.get("muu_binh_stage_number", 1)))
+        stage_number = min(100, max(1, int(config.get("muu_binh_stage_number", 1))))
     except (TypeError, ValueError):
         stage_number = 1
 
@@ -195,12 +195,12 @@ def run(worker, account, device, log) -> bool:
             reward_confirmed = _handle_reward_dialog(
                 device, account, log, templates, positions
             )
-            if reward_confirmed and save_screenshot:
+            if reward_confirmed and save_screenshot and stage_number <= 100:
                 # Chờ giao diện đóng hộp thoại nhận thưởng rồi mới chụp màn hình.
                 time.sleep(0.5)
                 _save_stage_screenshot(device, account, log, stage_number)
             if reward_confirmed:
-                stage_number = min(100, stage_number + 1)
+                stage_number += 1
                 worker._config["muu_binh_stage_number"] = stage_number
                 worker.stage_number_changed.emit(stage_number)
             completed_stages += 1
