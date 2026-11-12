@@ -29,6 +29,7 @@ class BotWorker(
     clone_account_status = Signal(str, str)
     progress_info_added = Signal(object)
     progress_info_changed = Signal(object)
+    stage_number_changed = Signal(int)
 
     def __init__(
         self,
