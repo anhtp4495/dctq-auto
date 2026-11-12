@@ -20,7 +20,7 @@ _STAGE_IMAGE_COUNT = 100
 _STAGE_CANVAS_HEIGHT = _STAGE_IMAGE_HEIGHT * _STAGE_IMAGE_COUNT
 
 
-def process_image(source: Path, destination: Path, stage_number: int | None) -> int:
+def process_image(source: Path, destination: Path, stage_number: int | None) -> tuple[int, int]:
     with Image.open(source) as image:
         if image.width < _STAGE_SCREENSHOT_RECT[2] or image.height < _STAGE_SCREENSHOT_RECT[3]:
             raise ValueError(
@@ -41,6 +41,17 @@ def process_image(source: Path, destination: Path, stage_number: int | None) -> 
                 result.append((0, 0, 0, 0))
 
         row.putdata(result)
+
+        # Căn chữ trắng sát mép trái, nhưng giữ nguyên kích thước hàng.
+        alpha_bbox = row.getchannel("A").getbbox()
+        left_offset = alpha_bbox[0] if alpha_bbox else 0
+        if left_offset:
+            aligned_row = Image.new(
+                "RGBA", (_STAGE_IMAGE_WIDTH, _STAGE_IMAGE_HEIGHT), (0, 0, 0, 0)
+            )
+            # Dịch toàn bộ hàng sang trái; phần vượt mép phải sẽ bị cắt.
+            aligned_row.paste(row, (-left_offset, 0))
+            row = aligned_row
 
         existing = None
         if destination.exists():
@@ -94,7 +105,7 @@ def process_image(source: Path, destination: Path, stage_number: int | None) -> 
 
         destination.parent.mkdir(parents=True, exist_ok=True)
         combined.save(destination, format="PNG")
-        return stage_number
+        return stage_number, left_offset
 
 
 def main() -> None:
@@ -122,11 +133,12 @@ def main() -> None:
     if args.stage is not None and not 1 <= args.stage <= 100:
         parser.error("Số ải phải nằm trong khoảng từ 1 đến 100")
 
-    stage_number = process_image(args.image, args.output, args.stage)
+    stage_number, left_offset = process_image(args.image, args.output, args.stage)
     print(
         f"Đã lưu ảnh vào hàng ải {stage_number}: {args.output} "
         f"({_STAGE_IMAGE_WIDTH}x{_STAGE_CANVAS_HEIGHT}px, đủ {_STAGE_IMAGE_COUNT} ải)"
     )
+    print(f"Đã dịch chữ sang trái: {left_offset}px")
 
 
 if __name__ == "__main__":
