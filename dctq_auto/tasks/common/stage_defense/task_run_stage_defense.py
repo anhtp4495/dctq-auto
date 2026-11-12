@@ -2,8 +2,11 @@
 
 import random
 import time
+from functools import lru_cache
 from pathlib import Path
 
+import cv2
+import numpy as np
 from PIL import Image
 
 from dctq_auto.config.button_positions import ButtonPositions
@@ -27,6 +30,7 @@ from dctq_auto.tasks.common.battle.battle_utils import (
     tap,
 )
 from dctq_auto.tasks.common.stage_defense.task_polling_stage_defense import poll
+from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_store import get_templates
 
 
@@ -37,6 +41,99 @@ _STAGE_SCREENSHOT_RECT = (670, 20, 1250, 80)
 _STAGE_IMAGE_WIDTH = _STAGE_SCREENSHOT_RECT[2] - _STAGE_SCREENSHOT_RECT[0]
 _STAGE_IMAGE_HEIGHT = _STAGE_SCREENSHOT_RECT[3] - _STAGE_SCREENSHOT_RECT[1]
 _STAGE_IMAGE_COUNT = 100
+_STAGE_TEMPLATE_PATH = (
+    Path(__file__).resolve().parents[4]
+    / "resources"
+    / "screens"
+    / "muu_binh"
+    / "danh_sach_ai.png"
+)
+_STAGE_TEMPLATE_WIDTH = 135
+_STAGE_TEMPLATE_HEIGHT = 60
+_STAGE_MATCH_THRESHOLD = 0.85
+@lru_cache(maxsize=1)
+def _load_stage_templates() -> tuple[np.ndarray, ...]:
+    """Tách danh_sach_ai.png thành 100 template, mỗi template 135x60."""
+    sheet = cv2.imread(str(_STAGE_TEMPLATE_PATH), cv2.IMREAD_COLOR)
+    if sheet is None:
+        raise FileNotFoundError(f"Không đọc được ảnh template: {_STAGE_TEMPLATE_PATH}")
+
+    expected_size = (
+        _STAGE_TEMPLATE_WIDTH,
+        _STAGE_TEMPLATE_HEIGHT * _STAGE_IMAGE_COUNT,
+    )
+    actual_size = (sheet.shape[1], sheet.shape[0])
+    if actual_size != expected_size:
+        raise ValueError(
+            f"Ảnh danh sách ải phải có kích thước {expected_size[0]}x{expected_size[1]}, "
+            f"hiện tại {actual_size[0]}x{actual_size[1]}"
+        )
+
+    templates = []
+    for index in range(_STAGE_IMAGE_COUNT):
+        top = index * _STAGE_TEMPLATE_HEIGHT
+        template = sheet[top : top + _STAGE_TEMPLATE_HEIGHT, :].copy()
+        template.setflags(write=False)
+        templates.append(template)
+    return tuple(templates)
+
+
+def _recognize_stage_number(device, account, log) -> int | None:
+    """Nhận diện số ải bằng cách so khớp vùng tên ải với 100 template."""
+    try:
+        screenshot = device.screenshot()
+        if screenshot.width < _STAGE_SCREENSHOT_RECT[2] or screenshot.height < _STAGE_SCREENSHOT_RECT[3]:
+            raise ValueError(
+                f"Ảnh màn hình quá nhỏ: {screenshot.width}x{screenshot.height}"
+            )
+
+        row = screenshot.crop(_STAGE_SCREENSHOT_RECT).convert("RGBA")
+        pixels = []
+        for red, green, blue, _alpha in row.getdata():
+            darkest = min(red, green, blue)
+            brightest = max(red, green, blue)
+            if darkest >= 180 and brightest - darkest <= 60:
+                alpha = min(255, max(0, int((darkest - 160) * 255 / 95)))
+                pixels.append((255, 255, 255, alpha))
+            else:
+                pixels.append((0, 0, 0, 0))
+        row.putdata(pixels)
+
+        source = cv2.cvtColor(np.asarray(row.convert("RGB")), cv2.COLOR_RGB2BGR)
+        templates = _load_stage_templates()
+        best_stage = None
+        best_score = -1.0
+
+        for stage_number, template in enumerate(templates, start=1):
+            result = match_template(
+                source,
+                template,
+                threshold=0.0,
+                method=cv2.TM_CCOEFF_NORMED,
+                grayscale=True,
+            )
+            if result is not None and result.score > best_score:
+                best_stage = stage_number
+                best_score = result.score
+
+        if best_stage is None or best_score < _STAGE_MATCH_THRESHOLD:
+            log(
+                f"[{account.display_name}] Không nhận diện được ải "
+                f"(ứng viên gần nhất: ải {best_stage}, score={best_score:.3f}, "
+                f"ngưỡng={_STAGE_MATCH_THRESHOLD:.2f})."
+            )
+            return None
+
+        log(
+            f"[{account.display_name}] Nhận diện ải {best_stage} "
+            f"(score={best_score:.3f})."
+        )
+        return best_stage
+    except Exception as exc:
+        log(f"[{account.display_name}] Không nhận diện được ải từ danh sách template: {exc}")
+        return None
+
+
 _REWARD_TEMPLATES = (
     _TEMPLATE_CHIEN_TRANH_THUONG_VUOT_AI_GIET_NHANH,
     _TEMPLATE_CHIEN_TRANH_THUONG_VUOT_AI_CUONG_CONG_10,
@@ -254,6 +351,11 @@ def run(worker, account, device, log) -> bool:
 
         if observation["rut_lui"] is not None:
             if not battle_screenshot_saved:
+                recognized_stage = _recognize_stage_number(device, account, log)
+                if recognized_stage is not None:
+                    stage_number = recognized_stage
+                    worker._config["muu_binh_stage_number"] = stage_number
+                    worker.stage_number_changed.emit(stage_number)
                 if save_screenshot and stage_number <= 100:
                     _save_stage_screenshot(device, account, log, stage_number)
                 battle_screenshot_saved = True
