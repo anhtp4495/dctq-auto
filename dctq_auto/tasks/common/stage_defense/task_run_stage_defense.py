@@ -111,7 +111,10 @@ def _save_stage_screenshot(device, account, log, stage_number: int) -> None:
                 f"Kích thước màn hình không đủ để cắt vùng 507x69: {image.width}x{image.height}"
             )
 
-        # Mỗi ải là một hàng 507x69, nối tiếp từ trên xuống.
+        if not 1 <= stage_number <= 100:
+            raise ValueError(f"Số ải phải nằm trong khoảng 1-100, nhận được: {stage_number}")
+
+        # Mỗi ải chiếm một hàng cố định trong canvas 100 ải.
         row = image.crop((707, 17, 1214, 86)).convert("RGBA")
         pixels = []
         for red, green, blue, _alpha in row.getdata():
@@ -127,19 +130,17 @@ def _save_stage_screenshot(device, account, log, stage_number: int) -> None:
         output_dir = Path("artifacts/screenshots")
         output_dir.mkdir(parents=True, exist_ok=True)
         output_path = output_dir / "danh_sach_ai.png"
+        combined = Image.new("RGBA", (507, 100 * 69), (0, 0, 0, 0))
         if output_path.exists():
-            existing = Image.open(output_path).convert("RGBA")
-            if existing.width != 507:
-                raise ValueError(
-                    f"Ảnh danh sách ải có chiều rộng {existing.width}, cần 507 pixel"
-                )
-            combined = Image.new("RGBA", (507, existing.height + 69), (0, 0, 0, 0))
-            combined.paste(existing, (0, 0))
-            combined.paste(row, (0, existing.height))
+            with Image.open(output_path) as existing_file:
+                existing = existing_file.convert("RGBA")
+            if existing.width == 507:
+                # Giữ lại dữ liệu cũ khi nâng cấp từ ảnh danh sách dạng nối dọc.
+                copy_height = min(existing.height, combined.height)
+                combined.paste(existing.crop((0, 0, 507, copy_height)), (0, 0))
             existing.close()
-        else:
-            combined = row
 
+        combined.paste(row, (0, (stage_number - 1) * 69))
         combined.save(output_path, format="PNG")
         log(
             f"[{account.display_name}] Đã thêm ảnh ải {stage_number} "
@@ -199,7 +200,9 @@ def run(worker, account, device, log) -> bool:
                 time.sleep(0.5)
                 _save_stage_screenshot(device, account, log, stage_number)
             if reward_confirmed:
-                stage_number += 1
+                stage_number = min(100, stage_number + 1)
+                worker._config["muu_binh_stage_number"] = stage_number
+                worker.stage_number_changed.emit(stage_number)
             completed_stages += 1
             worker._set_progress_root_message(
                 f"Đã vượt ải {min(completed_stages, 100)}"
