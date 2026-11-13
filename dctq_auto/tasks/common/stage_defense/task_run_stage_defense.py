@@ -51,6 +51,7 @@ _STAGE_TEMPLATE_PATH = (
 _STAGE_TEMPLATE_WIDTH = 135
 _STAGE_TEMPLATE_HEIGHT = 60
 _STAGE_MATCH_THRESHOLD = 0.85
+_STAGE_RECOGNITION_MAX_ATTEMPTS = 3
 _STAGE_SOURCE_IMAGE_PATH = (
     Path(__file__).resolve().parents[4]
     / "resources"
@@ -363,6 +364,7 @@ def run(worker, account, device, log) -> bool:
     completed_stages = 0
     battle_screenshot_saved = False
     recognized_stage = None
+    stage_recognition_attempts = 0
     worker.UpdateProcessMessage(root_progress_id, "Đã vượt ải 0")
 
     while time.monotonic() < deadline:
@@ -415,12 +417,26 @@ def run(worker, account, device, log) -> bool:
             continue
 
         if observation["rut_lui"] is not None:
-            if recognized_stage is None:
+            if (
+                recognized_stage is None
+                and stage_recognition_attempts < _STAGE_RECOGNITION_MAX_ATTEMPTS
+            ):
+                stage_recognition_attempts += 1
+                log(
+                    f"[{account.display_name}] Thử nhận diện ải "
+                    f"lần {stage_recognition_attempts}/{_STAGE_RECOGNITION_MAX_ATTEMPTS}."
+                )
                 recognized_stage = _recognize_stage_number(device, account, log)
                 if recognized_stage is not None:
                     stage_number = recognized_stage
                     worker._config["muu_binh_stage_number"] = stage_number
                     worker.stage_number_changed.emit(stage_number)
+                elif stage_recognition_attempts == _STAGE_RECOGNITION_MAX_ATTEMPTS:
+                    log(
+                        f"[{account.display_name}] Đã thử nhận diện ải "
+                        f"{_STAGE_RECOGNITION_MAX_ATTEMPTS} lần nhưng không thành công; "
+                        "bỏ qua nhận diện trong phần còn lại của lượt chạy."
+                    )
 
             worker.UpdateProcessMessage(
                 root_progress_id,
