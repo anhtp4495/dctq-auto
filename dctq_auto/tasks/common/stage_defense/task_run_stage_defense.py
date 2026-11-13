@@ -138,8 +138,8 @@ def _recognize_stage_number(device, account, log) -> int | None:
         source = cv2.cvtColor(
             np.asarray(source_image.convert("RGB")), cv2.COLOR_RGB2BGR
         )
-        if not cv2.imwrite(str(_STAGE_SOURCE_IMAGE_PATH), source):
-            raise OSError(f"Không lưu được ảnh source: {_STAGE_SOURCE_IMAGE_PATH}")
+        #if not cv2.imwrite(str(_STAGE_SOURCE_IMAGE_PATH), source):
+        #    raise OSError(f"Không lưu được ảnh source: {_STAGE_SOURCE_IMAGE_PATH}")
 
         templates = _load_stage_templates()
         scores = []
@@ -388,6 +388,7 @@ def run(worker, account, device, log) -> bool:
 
         if observation["hop_thoai_thuong_vuot_ai"] is not None:
             battle_screenshot_saved = False
+            worker.UpdateProcessStatus(battle_progress_id, "success")
             worker.UpdateProcessStatus(reward_progress_id, "running")
             worker.UpdateProcessInfo(reward_progress_id, 0, 0)
             reward_confirmed = _handle_reward_dialog(
@@ -397,11 +398,12 @@ def run(worker, account, device, log) -> bool:
                 stage_number += 1
                 worker._config["muu_binh_stage_number"] = stage_number
                 worker.stage_number_changed.emit(stage_number)
+                worker.UpdateProcessMessage(
+                    root_progress_id,
+                    f"Ải {stage_number if recognized_stage is not None else '?'}",
+                )
             completed_stages += 1
-            worker.UpdateProcessStatus(battle_progress_id, "running")
-            worker.UpdateProcessInfo(battle_progress_id, 0, 0)
             worker.UpdateProcessStatus(reward_progress_id, "pending")
-            worker.UpdateProcessInfo(reward_progress_id, 0, 0)
             time.sleep(1)
             continue
 
@@ -443,17 +445,13 @@ def run(worker, account, device, log) -> bool:
                 battle_screenshot_saved = True
                 log(f"[{account.display_name}] Đã ghi nhận trạng thái đang chiến đấu ở ải {stage_number}.")
             worker.UpdateProcessStatus(battle_progress_id, "running")
-            worker.UpdateProcessInfo(battle_progress_id, 0, 0)
             worker.UpdateProcessStatus(reward_progress_id, "pending")
-            worker.UpdateProcessInfo(reward_progress_id, 0, 0)
             time.sleep(1)
             continue
 
         if observation["chien_dau"] is not None:
             worker.UpdateProcessStatus(battle_progress_id, "running")
-            worker.UpdateProcessInfo(battle_progress_id, 0, 0)
             worker.UpdateProcessStatus(reward_progress_id, "pending")
-            worker.UpdateProcessInfo(reward_progress_id, 0, 0)
             x, y = click_match(device, observation["chien_dau"])
             log(f"[{account.display_name}] Click Chiến đấu tại ({x}, {y}).")
             time.sleep(1)
