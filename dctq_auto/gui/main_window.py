@@ -1268,6 +1268,13 @@ class MainWindow(QMainWindow):
         self._log("Đang chạy thử; không gửi lệnh ADB." if mock_mode else f"Đang chạy tác vụ nền trên thiết bị {serial}…")
         worker.start()
 
+        # Refresh worker state after starting the thread so isRunning() is true
+        # and the Pause/Stop controls are enabled immediately.
+        self.start_button.setEnabled(False)
+        self.pause_button.setEnabled(True)
+        self.stop_button.setEnabled(True)
+        self.elapsed_timer.start()
+
     def toggle_pause_bot(self) -> None:
         if self._worker is None or not self._worker.isRunning():
             return
