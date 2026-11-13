@@ -13,7 +13,7 @@ from .base_poller import BasePoller
 class FastPoller(BasePoller):
     """Kết thúc lượt khi nhận diện được trạng thái 1 cờ hoặc 2 cờ."""
 
-    templates = BasePoller.templates + (
+    _template_names = (
         _TEMPLATE_QUAN_SU_GIAO_TRANH_1_CO,
         _TEMPLATE_QUAN_SU_GIAO_TRANH_2_CO,
     )
@@ -23,14 +23,11 @@ class FastPoller(BasePoller):
         if observation is None:
             return None
         account = context["account"]
-        templates = observation["templates"]
+        templates = get_templates(self._template_names)
 
         context["log"](f"[{account.display_name}] Chế độ nhanh 1 cờ -> ")
 
-        for template_name in (
-            _TEMPLATE_QUAN_SU_GIAO_TRANH_1_CO,
-            _TEMPLATE_QUAN_SU_GIAO_TRANH_2_CO,
-        ):
+        for template_name in self._template_names:
             found = match(
                 observation["screen"], templates.get(template_name),
                 account=account, log=context["log"],

@@ -991,7 +991,7 @@
           "description": "[Giao tranh] - [Trong trận] - 1 cờ",
           "rect": { "top": 19, "left": 1061, "right": 1092, "bottom": 64},
           "search_rect": { "top": 12, "left": 845, "right": 986, "bottom": 69},
-          "threshold": 0.85,
+          "threshold": 0.50,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
@@ -999,7 +999,7 @@
           "description": "[Giao tranh] - [Trong trận] - 2 cờ",
           "rect": { "top": 19, "left": 1061, "right": 1092, "bottom": 64},
           "search_rect": { "top": 12, "left": 893, "right": 986, "bottom": 69},
-          "threshold": 0.85,
+          "threshold": 0.50,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
