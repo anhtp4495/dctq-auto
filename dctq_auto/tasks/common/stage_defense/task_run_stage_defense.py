@@ -119,15 +119,13 @@ def _recognize_stage_number(device, account, log) -> int | None:
         scores = []
         best_stage = None
         best_score = float("-inf")
-        source_gray = cv2.cvtColor(source, cv2.COLOR_BGR2GRAY)
-
         for stage_number, template in enumerate(templates, start=1):
-            template_gray = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
-            # Cùng phép so khớp TM_CCOEFF_NORMED, lấy max trực tiếp để
-            # ghi được cả score âm, không bị helper loại bởi threshold.
+            # So khớp trực tiếp ảnh màu BGR, không chuyển sang grayscale.
+            # Lấy max trực tiếp để ghi được cả score âm, không bị helper
+            # loại bởi threshold.
             result = cv2.matchTemplate(
-                source_gray,
-                template_gray,
+                source,
+                template,
                 cv2.TM_CCOEFF_NORMED,
             )
             _min_value, max_value, _min_location, _max_location = cv2.minMaxLoc(result)
