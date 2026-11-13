@@ -71,12 +71,14 @@
         },
         "truong_thanh": {
           "description": "[Màn hình chính] - Lối vào [Trưởng Thành].",
+          "rect": { "top": 517, "left": 31, "right": 78, "bottom": 573},
           "search_rect": { "top": 478, "left": 0, "right": 626, "bottom": 854},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "bao_vat": {
           "description": "[Màn hình chính] - Lối vào [Bảo Vật].",
+          "rect": { "top": 421, "left": 196, "right": 269, "bottom": 450},
           "search_rect": { "top": 478, "left": 0, "right": 626, "bottom": 854},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
@@ -987,16 +989,16 @@
         },
         "1_co": {
           "description": "[Giao tranh] - [Trong trận] - 1 cờ",
-          "rect": { "top": 11, "left": 1042, "right": 1198, "bottom": 69},
-          "search_rect":   { "top": 187, "left": 413, "right": 1587, "bottom": 887},
+          "rect": { "top": 19, "left": 1061, "right": 1092, "bottom": 64},
+          "search_rect": { "top": 12, "left": 845, "right": 986, "bottom": 69},
           "threshold": 0.85,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "2_co": {
           "description": "[Giao tranh] - [Trong trận] - 2 cờ",
-          "rect": { "top": 13, "left": 1256, "right": 1402, "bottom": 69},
-          "search_rect":   { "top": 187, "left": 413, "right": 1587, "bottom": 887},
+          "rect": { "top": 19, "left": 1061, "right": 1092, "bottom": 64},
+          "search_rect": { "top": 12, "left": 893, "right": 986, "bottom": 69},
           "threshold": 0.85,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
@@ -1312,16 +1314,16 @@
         },
         "1_co": {
           "description": "[Tranh Bá] - [Trong trận] - 1 cờ",
-          "rect": { "top": 7, "left": 1333, "right": 1497, "bottom": 89},
-          "search_rect":   { "top": 187, "left": 413, "right": 1587, "bottom": 887},
+          "rect": { "top": 19, "left": 1061, "right": 1092, "bottom": 64},
+          "search_rect": { "top": 12, "left": 845, "right": 986, "bottom": 69},
           "threshold": 0.85,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "2_co": {
           "description": "[Tranh Bá] - [Trong trận] - 2 cờ",
-          "rect": { "top": 7, "left": 1522, "right": 1694, "bottom": 86},
-          "search_rect":   { "top": 187, "left": 413, "right": 1587, "bottom": 887},
+          "rect": { "top": 19, "left": 1061, "right": 1092, "bottom": 64},
+          "search_rect": { "top": 12, "left": 893, "right": 986, "bottom": 69},
           "threshold": 0.85,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"

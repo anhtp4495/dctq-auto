@@ -39,7 +39,7 @@ _OPEN_TEMPLATES = (
     _TEMPLATE_QUAN_SU_GIAO_TRANH_TRAN_SAU,
 )
 
-_MAX_TRIES = 60
+_MAX_TRIES = 20
 
 
 def detect_group(screen_bgr, account, log) -> str:

@@ -22,9 +22,11 @@ class FastPoller(BasePoller):
         observation = super().check(context)
         if observation is None:
             return None
-
         account = context["account"]
         templates = observation["templates"]
+
+        context["log"](f"[{account.display_name}] Chế độ nhanh 1 cờ -> ")
+
         for template_name in (
             _TEMPLATE_QUAN_SU_GIAO_TRANH_1_CO,
             _TEMPLATE_QUAN_SU_GIAO_TRANH_2_CO,
