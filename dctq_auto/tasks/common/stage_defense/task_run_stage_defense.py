@@ -115,14 +115,37 @@ def _recognize_stage_number(device, account, log) -> int | None:
             f"{_STAGE_SOURCE_IMAGE_PATH}"
         )
 
+        # Căn nội dung theo pixel trắng ngoài cùng bên trái, giống logic
+        # khi lưu ảnh ải: đưa pixel trái nhất về x=10.
+        alpha = row.getchannel("A").point(
+            lambda value: 255 if value >= 128 else 0
+        )
+        bbox = alpha.getbbox()
+        left_offset = bbox[0] if bbox else 0
+        aligned = Image.new(
+            "RGBA", (_STAGE_IMAGE_WIDTH, _STAGE_IMAGE_HEIGHT), (0, 0, 0, 0)
+        )
+        content = row.crop(
+            (left_offset, 0, _STAGE_IMAGE_WIDTH, _STAGE_IMAGE_HEIGHT)
+        )
+        aligned.paste(content, (10, 0))
+
+        # Chỉ lấy vùng 135x60 sau khi đã căn trái.
+        source_image = aligned.crop(
+            (0, 0, _STAGE_TEMPLATE_WIDTH, _STAGE_TEMPLATE_HEIGHT)
+        )
+        source = cv2.cvtColor(
+            np.asarray(source_image.convert("RGB")), cv2.COLOR_RGB2BGR
+        )
+        if not cv2.imwrite(str(_STAGE_SOURCE_IMAGE_PATH), source):
+            raise OSError(f"Không lưu được ảnh source: {_STAGE_SOURCE_IMAGE_PATH}")
+
         templates = _load_stage_templates()
         scores = []
         best_stage = None
         best_score = float("-inf")
         for stage_number, template in enumerate(templates, start=1):
-            # So khớp trực tiếp ảnh màu BGR, không chuyển sang grayscale.
-            # Lấy max trực tiếp để ghi được cả score âm, không bị helper
-            # loại bởi threshold.
+            # Hai ảnh đều có kích thước 135x60; so khớp trực tiếp ảnh màu BGR.
             result = cv2.matchTemplate(
                 source,
                 template,
