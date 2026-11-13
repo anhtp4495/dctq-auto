@@ -108,13 +108,13 @@ def _recognize_stage_number(device, account, log) -> int | None:
         row.putdata(pixels)
 
         source = cv2.cvtColor(np.asarray(row.convert("RGB")), cv2.COLOR_RGB2BGR)
-        _STAGE_SOURCE_IMAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
-        if not cv2.imwrite(str(_STAGE_SOURCE_IMAGE_PATH), source):
-            raise OSError(f"Không lưu được ảnh source: {_STAGE_SOURCE_IMAGE_PATH}")
-        log(
-            f"[{account.display_name}] Đã lưu ảnh source nhận diện ải: "
-            f"{_STAGE_SOURCE_IMAGE_PATH}"
-        )
+        #_STAGE_SOURCE_IMAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        #if not cv2.imwrite(str(_STAGE_SOURCE_IMAGE_PATH), source):
+        #    raise OSError(f"Không lưu được ảnh source: {_STAGE_SOURCE_IMAGE_PATH}")
+        #log(
+        #    f"[{account.display_name}] Đã lưu ảnh source nhận diện ải: "
+        #    f"{_STAGE_SOURCE_IMAGE_PATH}"
+        #)
 
         # Căn nội dung theo pixel trắng ngoài cùng bên trái, giống logic
         # khi lưu ảnh ải: đưa pixel trái nhất về x=10.
