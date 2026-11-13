@@ -403,6 +403,7 @@ def run(worker, account, device, log) -> bool:
                     f"Ải {stage_number if recognized_stage is not None else '?'}",
                 )
             completed_stages += 1
+            worker.UpdateProcessStatus(battle_progress_id, "running")
             worker.UpdateProcessStatus(reward_progress_id, "pending")
             time.sleep(1)
             continue
