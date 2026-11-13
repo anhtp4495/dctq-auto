@@ -1439,7 +1439,7 @@ class MainWindow(QMainWindow):
             if not self._show_progress_root_row:
                 return
             row_name = "__progress_root__"
-            display_name = progress_info.message or "Đã vượt ải 0"
+            display_name = progress_info.message or "Ải ?"
         else:
             row_name = progress_info.name
             display_name = progress_info.name

@@ -365,7 +365,6 @@ def run(worker, account, device, log) -> bool:
     battle_screenshot_saved = False
     recognized_stage = None
     stage_recognition_attempts = 0
-    worker.UpdateProcessMessage(root_progress_id, "Đã vượt ải 0")
 
     while time.monotonic() < deadline:
         if not worker._wait_if_paused():
@@ -399,10 +398,6 @@ def run(worker, account, device, log) -> bool:
                 worker._config["muu_binh_stage_number"] = stage_number
                 worker.stage_number_changed.emit(stage_number)
             completed_stages += 1
-            worker.UpdateProcessMessage(
-                root_progress_id,
-                f"Đã vượt ải {min(completed_stages, 100)}",
-            )
             worker.UpdateProcessStatus(battle_progress_id, "running")
             worker.UpdateProcessInfo(battle_progress_id, 0, 0)
             worker.UpdateProcessStatus(reward_progress_id, "pending")
