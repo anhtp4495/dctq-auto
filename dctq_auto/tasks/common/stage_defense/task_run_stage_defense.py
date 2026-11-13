@@ -51,6 +51,13 @@ _STAGE_TEMPLATE_PATH = (
 _STAGE_TEMPLATE_WIDTH = 135
 _STAGE_TEMPLATE_HEIGHT = 60
 _STAGE_MATCH_THRESHOLD = 0.85
+_STAGE_SOURCE_IMAGE_PATH = (
+    Path(__file__).resolve().parents[4]
+    / "resources"
+    / "screens"
+    / "muu_binh"
+    / "source_nhan_dien_ai.png"
+)
 @lru_cache(maxsize=1)
 def _load_stage_templates() -> tuple[np.ndarray, ...]:
     """Tách danh_sach_ai.png thành 100 template, mỗi template 135x60."""
@@ -100,21 +107,40 @@ def _recognize_stage_number(device, account, log) -> int | None:
         row.putdata(pixels)
 
         source = cv2.cvtColor(np.asarray(row.convert("RGB")), cv2.COLOR_RGB2BGR)
+        _STAGE_SOURCE_IMAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        if not cv2.imwrite(str(_STAGE_SOURCE_IMAGE_PATH), source):
+            raise OSError(f"Không lưu được ảnh source: {_STAGE_SOURCE_IMAGE_PATH}")
+        log(
+            f"[{account.display_name}] Đã lưu ảnh source nhận diện ải: "
+            f"{_STAGE_SOURCE_IMAGE_PATH}"
+        )
+
         templates = _load_stage_templates()
+        scores = []
         best_stage = None
-        best_score = -1.0
+        best_score = float("-inf")
+        source_gray = cv2.cvtColor(source, cv2.COLOR_BGR2GRAY)
 
         for stage_number, template in enumerate(templates, start=1):
-            result = match_template(
-                source,
-                template,
-                threshold=0.0,
-                method=cv2.TM_CCOEFF_NORMED,
-                grayscale=True,
+            template_gray = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
+            # Cùng phép so khớp TM_CCOEFF_NORMED, lấy max trực tiếp để
+            # ghi được cả score âm, không bị helper loại bởi threshold.
+            result = cv2.matchTemplate(
+                source_gray,
+                template_gray,
+                cv2.TM_CCOEFF_NORMED,
             )
-            if result is not None and result.score > best_score:
+            _min_value, max_value, _min_location, _max_location = cv2.minMaxLoc(result)
+            score = float(max_value)
+            scores.append((stage_number, score))
+            if score > best_score:
                 best_stage = stage_number
-                best_score = result.score
+                best_score = score
+
+        log(
+            f"[{account.display_name}] Điểm matching 100 template: "
+            + ", ".join(f"ải {stage}: {score:.3f}" for stage, score in scores)
+        )
 
         if best_stage is None or best_score < _STAGE_MATCH_THRESHOLD:
             log(
@@ -132,7 +158,6 @@ def _recognize_stage_number(device, account, log) -> int | None:
     except Exception as exc:
         log(f"[{account.display_name}] Không nhận diện được ải từ danh sách template: {exc}")
         return None
-
 
 _REWARD_TEMPLATES = (
     _TEMPLATE_CHIEN_TRANH_THUONG_VUOT_AI_GIET_NHANH,
