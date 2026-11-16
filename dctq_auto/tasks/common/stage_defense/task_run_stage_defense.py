@@ -341,7 +341,8 @@ def run(worker, account, device, log) -> bool:
     positions = ButtonPositions()
 
     config = getattr(worker, "_config", {}) or {}
-    save_screenshot = bool(config.get("muu_binh_save_screenshot", False))
+    #save_screenshot = bool(config.get("muu_binh_save_screenshot", False))
+    save_screenshot = False
     try:
         stage_number = min(100, max(1, int(config.get("muu_binh_stage_number", 1))))
     except (TypeError, ValueError):
