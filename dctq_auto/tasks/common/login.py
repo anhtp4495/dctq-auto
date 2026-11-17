@@ -134,6 +134,9 @@ def handle_post_login(
                 f"(lần {current_try}/{_MAX_TRY_DETECT_MAIN_SCREEN})."
             )
             time.sleep(1)
+            close_knowned_dialog(
+                worker, account, device, ocr_client, worker.log_message.emit, screen_bgr
+            )
             return handle_post_login(
                 worker, account, device, ocr_client, current_try + 1
             )
