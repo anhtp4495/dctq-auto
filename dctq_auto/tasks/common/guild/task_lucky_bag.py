@@ -60,45 +60,51 @@ def _tap_match_center(device, match, account, log):
 
 
 def _close_lucky_bag_detail(device, templates, account, log) -> bool:
-    """Đóng chi tiết Túi phúc và xác nhận đã trở về màn hình nhận Túi phúc."""
+    """Đóng chi tiết Túi phúc, thử tối đa 3 lần và xác nhận màn hình nhận Túi phúc."""
     tap_x, tap_y = ButtonPositions().get("quan_doan.tui_phuc", "dong_man_hinh")
-    log(
-        f"[{account.display_name}] Đóng màn hình chi tiết Túi phúc "
-        f"({tap_x}, {tap_y})."
-    )
-    device.shell(f"input tap {tap_x} {tap_y}")
-    time.sleep(1.5)
 
-    try:
-        screenshot = device.screenshot()
-        screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
-    except Exception as exc:
+    for attempt in range(1, 4):
         log(
-            f"[{account.display_name}] Không chụp được màn hình sau khi đóng "
-            f"chi tiết Túi phúc: {exc}"
+            f"[{account.display_name}] Đóng màn hình chi tiết Túi phúc "
+            f"({tap_x}, {tap_y}) — lần thử {attempt}/3."
         )
-        return False
+        device.shell(f"input tap {tap_x} {tap_y}")
+        time.sleep(1.5)
 
-    template_name, _, _ = _find_template(
-        screen_bgr,
-        templates,
-        (_TEMPLATE_QUAN_DOAN_MAN_HINH_NHAN_TUI_PHUC,),
-        account,
-        log,
-    )
-    if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_NHAN_TUI_PHUC:
-        log(
-            f"[{account.display_name}] Đã trở về "
-            "[Quân đoàn] - [Màn hình nhận Túi phúc]."
+        try:
+            screenshot = device.screenshot()
+            screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
+        except Exception as exc:
+            log(
+                f"[{account.display_name}] Không chụp được màn hình sau lần "
+                f"thử {attempt}/3: {exc}"
+            )
+            continue
+
+        template_name, _, _ = _find_template(
+            screen_bgr,
+            templates,
+            (_TEMPLATE_QUAN_DOAN_MAN_HINH_NHAN_TUI_PHUC,),
+            account,
+            log,
         )
-        return True
+        if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_NHAN_TUI_PHUC:
+            log(
+                f"[{account.display_name}] Đã trở về "
+                "[Quân đoàn] - [Màn hình nhận Túi phúc]."
+            )
+            return True
+
+        log(
+            f"[{account.display_name}] Chưa nhận diện được màn hình nhận Túi phúc "
+            f"sau lần thử {attempt}/3."
+        )
 
     log(
-        f"[{account.display_name}] Đóng chi tiết Túi phúc nhưng "
-        "chưa nhận diện được màn hình nhận Túi phúc."
+        f"[{account.display_name}] Đã thử đóng chi tiết Túi phúc 3 lần "
+        "nhưng vẫn chưa xác nhận được màn hình nhận Túi phúc."
     )
     return False
-
 
 def run(
     worker, account, steps, device, ocr_client, log,
