@@ -60,10 +60,45 @@ def _tap_match_center(device, match, account, log):
 
 
 def _close_lucky_bag_detail(device, templates, account, log) -> bool:
-    """Đóng chi tiết Túi phúc, thử tối đa 3 lần và xác nhận màn hình nhận Túi phúc."""
+    """Chỉ đóng khi đang ở chi tiết Túi phúc, thử tối đa 3 lần."""
     tap_x, tap_y = ButtonPositions().get("quan_doan.tui_phuc", "dong_man_hinh")
 
     for attempt in range(1, 4):
+        try:
+            screenshot = device.screenshot()
+            screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
+        except Exception as exc:
+            log(
+                f"[{account.display_name}] Không chụp được màn hình trước lần "
+                f"thử {attempt}/3: {exc}"
+            )
+            continue
+
+        template_name, _, _ = _find_template(
+            screen_bgr,
+            templates,
+            (
+                _TEMPLATE_QUAN_DOAN_TUI_PHUC_CHI_TIET,
+                _TEMPLATE_QUAN_DOAN_MAN_HINH_NHAN_TUI_PHUC,
+            ),
+            account,
+            log,
+        )
+
+        if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_NHAN_TUI_PHUC:
+            log(
+                f"[{account.display_name}] Đã trở về "
+                "[Quân đoàn] - [Màn hình nhận Túi phúc]."
+            )
+            return True
+
+        if template_name != _TEMPLATE_QUAN_DOAN_TUI_PHUC_CHI_TIET:
+            log(
+                f"[{account.display_name}] Màn hình hiện tại không phải "
+                "chi tiết Túi phúc; không thực hiện click đóng."
+            )
+            return False
+
         log(
             f"[{account.display_name}] Đóng màn hình chi tiết Túi phúc "
             f"({tap_x}, {tap_y}) — lần thử {attempt}/3."
