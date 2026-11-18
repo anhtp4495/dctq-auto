@@ -59,6 +59,47 @@ def _tap_match_center(device, match, account, log):
     time.sleep(0.7)
 
 
+def _close_lucky_bag_detail(device, templates, account, log) -> bool:
+    """Đóng chi tiết Túi phúc và xác nhận đã trở về màn hình nhận Túi phúc."""
+    tap_x, tap_y = ButtonPositions().get("quan_doan.tui_phuc", "dong_man_hinh")
+    log(
+        f"[{account.display_name}] Đóng màn hình chi tiết Túi phúc "
+        f"({tap_x}, {tap_y})."
+    )
+    device.shell(f"input tap {tap_x} {tap_y}")
+    time.sleep(1.5)
+
+    try:
+        screenshot = device.screenshot()
+        screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
+    except Exception as exc:
+        log(
+            f"[{account.display_name}] Không chụp được màn hình sau khi đóng "
+            f"chi tiết Túi phúc: {exc}"
+        )
+        return False
+
+    template_name, _, _ = _find_template(
+        screen_bgr,
+        templates,
+        (_TEMPLATE_QUAN_DOAN_MAN_HINH_NHAN_TUI_PHUC,),
+        account,
+        log,
+    )
+    if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_NHAN_TUI_PHUC:
+        log(
+            f"[{account.display_name}] Đã trở về "
+            "[Quân đoàn] - [Màn hình nhận Túi phúc]."
+        )
+        return True
+
+    log(
+        f"[{account.display_name}] Đóng chi tiết Túi phúc nhưng "
+        "chưa nhận diện được màn hình nhận Túi phúc."
+    )
+    return False
+
+
 def run(
     worker, account, steps, device, ocr_client, log,
     screenshot=None, positions=None,
@@ -119,13 +160,12 @@ def run(
         log(
             f"[{account.display_name}] [Quân đoàn] - [Túi phúc] - [Chi tiết]"
         )
-        tap_x, tap_y = ButtonPositions().get("quan_doan.tui_phuc", "dong_man_hinh")
-        log(
-            f"[{account.display_name}] Đóng màn hình nhận túi phúc ({tap_x}, {tap_y}); "
-        )
-        device.shell(f"input tap {tap_x} {tap_y}")
-        time.sleep(1.5)
-        return run(worker, account, steps, device, ocr_client, log, screenshot=None, positions=positions)
+        if _close_lucky_bag_detail(device, templates, account, log):
+            return run(
+                worker, account, steps, device, ocr_client, log,
+                screenshot=None, positions=positions,
+            )
+        return steps
 
     if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_NHAN_TUI_PHUC:
         log(
