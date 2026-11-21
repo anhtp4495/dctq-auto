@@ -11,6 +11,7 @@ from dctq_auto.config.constants import (
     _TEMPLATE_QUAN_DOAN_BOSS_MAN_HINH_CHINH,
     _TEMPLATE_QUAN_DOAN_BOSS_CHUA_NHAN_THUONG,
     _TEMPLATE_QUAN_DOAN_BOSS_MAN_HINH_NHAN_THUONG,
+    _TEMPLATE_QUAN_DOAN_BOSS_THOAT_MAN_HINH_BOSS,
     _TEMPLATE_QUAN_DOAN_BOSS_QUAN_DOAN,
     _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
 )
@@ -275,13 +276,62 @@ def run_boss_reward(worker, account, device, log) -> bool:
 
 def close_boss_reward(worker, account, device, log) -> bool:
     """Đóng giao diện Boss và xác nhận đã trở về màn hình Quân đoàn."""
-    if not worker._wait_if_paused():
-        log(f"[{account.display_name}] Đã dừng khi đóng giao diện Boss.")
-        return False
+    template_names = (
+        _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
+        _TEMPLATE_QUAN_DOAN_BOSS_THOAT_MAN_HINH_BOSS,
+    )
+    templates = get_templates(template_names)
+
+    for attempt in range(1, 4):
+        if not worker._wait_if_paused():
+            log(f"[{account.display_name}] Đã dừng khi đóng giao diện Boss.")
+            return False
+
+        screen_bgr = _capture_screen(
+            device, account, log, "khi đóng giao diện Boss"
+        )
+        if screen_bgr is None:
+            return False
+
+        template_name, match = _find_template(
+            screen_bgr, templates, template_names, account, log
+        )
+
+        if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH:
+            log(
+                f"[{account.display_name}] Đã thoát [Chiến trận Quân đoàn], "
+                "trở về màn hình [Quân đoàn]."
+            )
+            return True
+
+        if template_name == _TEMPLATE_QUAN_DOAN_BOSS_THOAT_MAN_HINH_BOSS:
+            x = (match.left + match.right) // 2
+            y = (match.top + match.bottom) // 2
+            try:
+                device.shell(f"input tap {x} {y}")
+            except Exception as exc:
+                log(
+                    f"[{account.display_name}] Không click được nút thoát Boss "
+                    f"tại ({x}, {y}): {exc}"
+                )
+                return False
+
+            log(
+                f"[{account.display_name}] Click nút thoát [Chiến trận Quân đoàn] "
+                f"tại ({x}, {y}) — lần {attempt}/3."
+            )
+            time.sleep(0.8)
+            continue
+
+        log(
+            f"[{account.display_name}] Không nhận diện được màn hình Boss "
+            f"hoặc màn hình Quân đoàn khi đóng (lần {attempt}/3)."
+        )
+        time.sleep(0.8)
 
     log(
-        f"[{account.display_name}] Chưa triển khai đóng giao diện Boss: "
-        "cần xử lý template thoát và xác nhận màn hình Quân đoàn."
+        f"[{account.display_name}] Đóng [Chiến trận Quân đoàn] thất bại "
+        "sau 3 lần kiểm tra."
     )
     return False
 
