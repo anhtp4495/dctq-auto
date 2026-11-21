@@ -307,9 +307,9 @@ def run_boss_reward(worker, account, device, log) -> bool:
 
             log(
                 f"[{account.display_name}] Đã click [Nhận thưởng] tại "
-                f"({x}, {y}); chờ 1.5 giây rồi chụp và tìm lại."
+                f"({x}, {y}); chờ 0.8 giây rồi chụp và tìm lại."
             )
-            time.sleep(1.5)
+            time.sleep(0.8)
             continue
 
         # Chỉ vuốt khi ảnh hiện tại không còn nút nhận thưởng.
