@@ -555,6 +555,7 @@ class MainWindow(QMainWindow):
                 "clone_guild_fortune",
                 "clone_guild_donate_knb",
                 "clone_guild_donate_rations",
+                "clone_guild_boss_reward",
                 "clone_buy_fortune_lot",
                 "clone_quan_su_giao_tranh",
                 "clone_quan_su_tranh_ba",
@@ -1226,7 +1227,8 @@ class MainWindow(QMainWindow):
             selected = [name for name in (
                 "clone_login", "clone_daily_check_in", "clone_guild_check_in",
                 "clone_receive_lucky_bag", "clone_guild_fortune",
-                "clone_buy_fortune_lot", "clone_quan_su_giao_tranh", "clone_logout",
+                "clone_guild_donate_knb", "clone_guild_donate_rations",
+                "clone_guild_boss_reward", "clone_buy_fortune_lot", "clone_quan_su_giao_tranh", "clone_logout",
             ) if config.get(name)]
             if not selected:
                 QMessageBox.warning(self, "Chưa chọn nhiệm vụ", "Hãy chọn ít nhất một nhiệm vụ trong tab Clone.")
