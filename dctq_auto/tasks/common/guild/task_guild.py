@@ -6,9 +6,11 @@ from dctq_auto.config.constants import (
     _STEP_QUAN_DOAN_DONG_GOP_KNB,
     _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO,
     _STEP_QUAN_DOAN_TUI_PHUC,
+    _STEP_QUAN_DOAN_NHAN_THUONG_BOSS,
 )
 from dctq_auto.tasks.common.guild import (
     task_blessing,
+    task_boss_reward,
     task_close_guild,
     task_daily_check_in,
     task_donate_rations,
@@ -24,6 +26,7 @@ _GUILD_STEP_IDS = {
     _STEP_QUAN_DOAN_CAU_VAN,
     _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO,
     _STEP_QUAN_DOAN_DONG_GOP_KNB,
+    _STEP_QUAN_DOAN_NHAN_THUONG_BOSS,
 }
 
 
@@ -65,6 +68,7 @@ def steps_run(
         (_STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO, task_donate_rations, "Đóng góp Lương thảo"),
         (_STEP_QUAN_DOAN_DONG_GOP_KNB, task_knb, "Đóng góp KNB"),
         (_STEP_QUAN_DOAN_CAU_VAN, task_blessing, "Cầu vận Quân đoàn"),
+        (_STEP_QUAN_DOAN_NHAN_THUONG_BOSS, task_boss_reward, "Nhận thưởng Boss"),
     )
 
     for step, task, task_name in task_steps:

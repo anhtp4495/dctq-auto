@@ -107,5 +107,11 @@
     "config_key": "chien_tranh_muu_binh",
     "display_name": "Mưu Binh",
     "priority": 15001
+  },
+  {
+    "id": "quan_doan_nhan_thuong_boss",
+    "config_key": "clone_guild_boss_reward",
+    "display_name": "Nhận thưởng Boss",
+    "priority": 10105
   }
 ]

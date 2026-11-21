@@ -120,6 +120,7 @@ _STEP_QUAN_DOAN_TUI_PHUC = "quan_doan_tui_phuc"
 _STEP_QUAN_DOAN_CAU_VAN = "quan_doan_cau_van"
 _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO = "quan_doan_dong_gop_luong_thao"
 _STEP_QUAN_DOAN_DONG_GOP_KNB = "quan_doan_dong_gop_knb"
+_STEP_QUAN_DOAN_NHAN_THUONG_BOSS = "quan_doan_nhan_thuong_boss"
 
 # Step cửa hàng
 _STEP_CUA_HANG_DANH_VONG_MUA_QUE_LANH = "cua_hang_danh_vong_mua_que_lanh"
