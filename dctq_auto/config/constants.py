@@ -145,6 +145,8 @@ _TEMPLATE_QUAN_DOAN_CHAT_TAT_CHAT = "quan_doan.chat/quan_doan_tat_chat"
 
 # Template dùng để nhận diện trạng thái bên trong màn hình Quân đoàn.
 _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH = "quan_doan/quan_doan_man_hinh_chinh"
+_TEMPLATE_QUAN_DOAN_BOSS_QUAN_DOAN = "quan_doan/boss_quan_doan"
+_TEMPLATE_QUAN_DOAN_BOSS_MAN_HINH_CHINH = "quan_doan.boss/man_hinh_chinh"
 _TEMPLATE_QUAN_DOAN_CAU_VAN = "quan_doan/quan_doan_cau_van"
 _TEMPLATE_QUAN_DOAN_LANH_DIA_CHIEN = "quan_doan/quan_doan_lanh_dia_chien"
 _TEMPLATE_QUAN_DOAN_CHUA_NHAN_TUI_PHUC = "quan_doan/quan_doan_chua_nhan_tui_phuc"
