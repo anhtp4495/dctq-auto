@@ -11,6 +11,8 @@ from dctq_auto.config.constants import (
     _TEMPLATE_QUAN_DOAN_BOSS_MAN_HINH_CHINH,
     _TEMPLATE_QUAN_DOAN_BOSS_CHUA_NHAN_THUONG,
     _TEMPLATE_QUAN_DOAN_BOSS_MAN_HINH_NHAN_THUONG,
+    _TEMPLATE_QUAN_DOAN_BOSS_LOI_VAO_NHAN_THUONG,
+    _TEMPLATE_QUAN_DOAN_BOSS_CHUAN_BI_NHAN_THUONG,
     _TEMPLATE_QUAN_DOAN_BOSS_NHAN_THUONG,
     _TEMPLATE_QUAN_DOAN_BOSS_THOAT_MAN_HINH_NHAN_THUONG,
     _TEMPLATE_QUAN_DOAN_BOSS_THOAT_MAN_HINH_BOSS,
@@ -24,7 +26,7 @@ from dctq_auto.vision.template_store import get_templates
 
 
 _MAX_OPEN_TRIES = 6
-_MAX_OPEN_REWARD_TRIES = 3
+_MAX_OPEN_REWARD_TRIES = 6
 
 
 class _OpenRewardResult(Enum):
@@ -93,7 +95,7 @@ def open_boss_reward(worker, account, device, log, screenshot=None) -> bool:
     """Mở Chiến trận Quân đoàn; xác nhận màn hình đích trong tối đa 6 lần."""
     log(f"[{account.display_name}] Bắt đầu mở [Chiến trận Quân đoàn].")
     template_names = (
-        _TEMPLATE_QUAN_DOAN_BOSS_MAN_HINH_CHINH,
+        _TEMPLATE_QUAN_DOAN_BOSS_LOI_VAO_NHAN_THUONG,
         _TEMPLATE_QUAN_DOAN_BOSS_QUAN_DOAN,
         _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
     )
@@ -127,7 +129,7 @@ def open_boss_reward(worker, account, device, log, screenshot=None) -> bool:
             screen_bgr, templates, template_names, account, log
         )
 
-        if template_name == _TEMPLATE_QUAN_DOAN_BOSS_MAN_HINH_CHINH:
+        if template_name == _TEMPLATE_QUAN_DOAN_BOSS_LOI_VAO_NHAN_THUONG:
             log(
                 f"[{account.display_name}] Đã xác nhận mở "
                 "[Chiến trận Quân đoàn]."
@@ -180,7 +182,7 @@ def open_boss_reward(worker, account, device, log, screenshot=None) -> bool:
             f"[{account.display_name}] Chưa nhận diện được màn hình Quân đoàn "
             f"hoặc màn hình Boss (lần {current_try}/{_MAX_OPEN_TRIES})."
         )
-        time.sleep(0.8)
+        time.sleep(1.8)
 
     log(
         f"[{account.display_name}] Mở [Chiến trận Quân đoàn] thất bại "
@@ -193,12 +195,13 @@ def open_boss_reward(worker, account, device, log, screenshot=None) -> bool:
 def open_reward(worker, account, device, log, screenshot=None) -> _OpenRewardResult:
     """Mở màn hình nhận thưởng hoặc xác định phần thưởng đã được nhận."""
     template_names = (
-        _TEMPLATE_QUAN_DOAN_BOSS_MAN_HINH_NHAN_THUONG,
+        _TEMPLATE_QUAN_DOAN_BOSS_CHUAN_BI_NHAN_THUONG,
         _TEMPLATE_QUAN_DOAN_BOSS_CHUA_NHAN_THUONG,
         _TEMPLATE_QUAN_DOAN_BOSS_MAN_HINH_CHINH,
     )
     templates = get_templates(template_names)
 
+    handled_open_reward = False
     for attempt in range(1, _MAX_OPEN_REWARD_TRIES + 1):
         if not worker._wait_if_paused():
             log(f"[{account.display_name}] Đã dừng khi mở màn hình nhận thưởng Boss.")
@@ -221,7 +224,7 @@ def open_reward(worker, account, device, log, screenshot=None) -> _OpenRewardRes
             screen_bgr, templates, template_names, account, log
         )
 
-        if template_name == _TEMPLATE_QUAN_DOAN_BOSS_MAN_HINH_NHAN_THUONG:
+        if template_name == _TEMPLATE_QUAN_DOAN_BOSS_CHUAN_BI_NHAN_THUONG:
             log(f"[{account.display_name}] Đã mở màn hình [Nhận thưởng Boss].")
             return _OpenRewardResult.OPENED
 
@@ -232,7 +235,7 @@ def open_reward(worker, account, device, log, screenshot=None) -> _OpenRewardRes
             )
             return _OpenRewardResult.ALREADY_CLAIMED
 
-        if template_name == _TEMPLATE_QUAN_DOAN_BOSS_CHUA_NHAN_THUONG:
+        if handled_open_reward == False and template_name == _TEMPLATE_QUAN_DOAN_BOSS_CHUA_NHAN_THUONG:
             x = (match.left + match.right) // 2
             y = (match.top + match.bottom) // 2
             try:
@@ -249,7 +252,10 @@ def open_reward(worker, account, device, log, screenshot=None) -> _OpenRewardRes
                 f"tại ({x}, {y}); chờ màn hình nhận thưởng."
             )
             time.sleep(0.8)
+            handled_open_reward = True
             continue
+
+        time.sleep(1.8)
 
         log(
             f"[{account.display_name}] Chưa nhận diện được trạng thái Boss "
@@ -454,6 +460,7 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
 
         reward_result = open_reward(worker, account, device, log)
         if reward_result == _OpenRewardResult.ALREADY_CLAIMED:
+            close_boss_reward(worker, account, device, log)
             return post_run_boss_reward(steps, account, log)
         if reward_result != _OpenRewardResult.OPENED:
             return steps

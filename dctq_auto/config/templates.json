@@ -542,7 +542,7 @@
           "description": "Màn hình [Quân Đoàn] - [Chiến trận Quân Đoàn] - Lối vào nhận [Thưởng]",
           "rect": { "top": 890, "left": 1505, "right": 1537, "bottom": 916},
           "search_rect": { "top": 880, "left": 1333, "right": 1545, "bottom": 961},
-          "threshold": 0.95,
+          "threshold": 0.85,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
@@ -553,11 +553,26 @@
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
+        "loi_vao_nhan_thuong": {
+          "description": "Màn hình [Quân Đoàn] - [Chiến trận Quân Đoàn] - Lối vào [Thưởng]",
+          "rect": { "top": 901, "left": 1375, "right": 1496, "bottom": 944},
+          "search_rect": { "top": 867, "left": 1313, "right": 1560, "bottom": 969},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "chuan_bi_nhan_thuong": {
+          "description": "Màn hình [Quân Đoàn] - [Chiến trận Quân Đoàn] - [Thưởng] - Kiểm tra Nhận",
+          "rect": { "top": 364, "left": 668, "right": 771, "bottom": 445},
+          "search_rect": { "top": 115, "left": 462, "right": 1450, "bottom": 910},
+          "threshold": 0.90,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
         "nhan_thuong": {
           "description": "Màn hình [Quân Đoàn] - [Chiến trận Quân Đoàn] - [Thưởng] - Nhận",
           "rect": { "top": 375, "left": 832, "right": 1047, "bottom": 569},
           "search_rect": { "top": 13, "left": 449, "right": 1471, "bottom": 924},
-          "threshold": 0.95,
+          "threshold": 0.85,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
