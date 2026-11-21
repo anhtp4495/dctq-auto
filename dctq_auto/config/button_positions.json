@@ -92,11 +92,11 @@
     },
     "boss_item_1": {
       "x": 1050,
-      "y": 277
+      "y": 300
     },
     "boss_item_2": {
       "x": 1050,
-      "y": 792
+      "y": 600
     }
   },
   "quan_doan.luong_thao": {
