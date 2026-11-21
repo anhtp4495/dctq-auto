@@ -13,6 +13,22 @@ def pre_run_boss_reward(steps, log) -> bool:
     return True
 
 
+def open_boss_reward(worker, account, device, log, screenshot=None) -> bool:
+    """Mở giao diện Boss và xác nhận màn hình đích.
+
+    Cần bổ sung template lối vào và template màn hình Boss trước khi bật thao tác.
+    """
+    if not worker._wait_if_paused():
+        log(f"[{account.display_name}] Đã dừng khi mở giao diện Boss.")
+        return False
+
+    log(
+        f"[{account.display_name}] Chưa thể mở giao diện Boss: "
+        "chưa có template lối vào và màn hình Boss."
+    )
+    return False
+
+
 def run_boss_reward(worker, account, device, log) -> bool:
     """Thực hiện nhận thưởng Boss.
 
@@ -30,6 +46,19 @@ def run_boss_reward(worker, account, device, log) -> bool:
     return False
 
 
+def close_boss_reward(worker, account, device, log) -> bool:
+    """Đóng giao diện Boss và xác nhận đã trở về màn hình Quân đoàn."""
+    if not worker._wait_if_paused():
+        log(f"[{account.display_name}] Đã dừng khi đóng giao diện Boss.")
+        return False
+
+    log(
+        f"[{account.display_name}] Chưa thể đóng giao diện Boss: "
+        "chưa có template màn hình Boss và trạng thái Quân đoàn."
+    )
+    return False
+
+
 def post_run_boss_reward(steps, account, log) -> list[str]:
     """Loại step sau khi đã xác nhận nhận thưởng Boss thành công."""
     if _STEP_QUAN_DOAN_NHAN_THUONG_BOSS in steps:
@@ -43,7 +72,17 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
     if not pre_run_boss_reward(steps, log):
         return steps
 
-    if not run_boss_reward(worker, account, device, log):
-        return steps
+    try:
+        if not open_boss_reward(worker, account, device, log, screenshot=screenshot):
+            return steps
 
-    return post_run_boss_reward(steps, account, log)
+        if not run_boss_reward(worker, account, device, log):
+            return steps
+
+        if not close_boss_reward(worker, account, device, log):
+            return steps
+
+        return post_run_boss_reward(steps, account, log)
+    except Exception as exc:
+        log(f"[{account.display_name}] Quy trình nhận thưởng Boss phát sinh lỗi: {exc}")
+        return steps
