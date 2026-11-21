@@ -20,6 +20,7 @@ from dctq_auto.config.constants import (
     _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
 )
 from dctq_auto.config.button_positions import ButtonPositions
+from dctq_auto.tasks.common.battle.battle_utils import click_match, swipe, tap
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
@@ -137,14 +138,11 @@ def open_boss_reward(worker, account, device, log, screenshot=None) -> bool:
             return True
 
         if template_name == _TEMPLATE_QUAN_DOAN_BOSS_QUAN_DOAN:
-            x = (match.left + match.right) // 2
-            y = (match.top + match.bottom) // 2
             try:
-                device.shell(f"input tap {x} {y}")
+                x, y = click_match(device, match)
             except Exception as exc:
                 log(
-                    f"[{account.display_name}] Không click được lối vào Boss "
-                    f"tại ({x}, {y}): {exc}"
+                    f"[{account.display_name}] Không click được lối vào Boss: {exc}"
                 )
                 return False
 
@@ -157,11 +155,13 @@ def open_boss_reward(worker, account, device, log, screenshot=None) -> bool:
 
         if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH:
             try:
-                start_x, start_y = positions.get("quan_doan", "item_2")
-                end_x, end_y = positions.get("quan_doan", "item_1")
-                device.shell(
-                    f"input swipe {start_x} {start_y} {end_x} {end_y} 500"
+                start = positions.get("quan_doan", "item_2")
+                end = positions.get("quan_doan", "item_1")
+                swipe(
+                    device, start, end, account=account, log=log, duration_ms=500
                 )
+                start_x, start_y = start
+                end_x, end_y = end
             except Exception as exc:
                 log(
                     f"[{account.display_name}] Không vuốt được danh sách "
@@ -189,7 +189,6 @@ def open_boss_reward(worker, account, device, log, screenshot=None) -> bool:
         f"sau {_MAX_OPEN_TRIES} lần kiểm tra."
     )
     return False
-
 
 
 def open_reward(worker, account, device, log, screenshot=None) -> _OpenRewardResult:
@@ -236,10 +235,10 @@ def open_reward(worker, account, device, log, screenshot=None) -> _OpenRewardRes
             return _OpenRewardResult.ALREADY_CLAIMED
 
         if handled_open_reward == False and template_name == _TEMPLATE_QUAN_DOAN_BOSS_CHUA_NHAN_THUONG:
-            x = (match.left + match.right) // 2
-            y = (match.top + match.bottom) // 2
+            x = round((match.left + match.right) / 2)
+            y = round((match.top + match.bottom) / 2)
             try:
-                device.shell(f"input tap {x} {y}")
+                tap(device, (x, y), account=account, log=log)
             except Exception as exc:
                 log(
                     f"[{account.display_name}] Không click được lối vào nhận thưởng "
@@ -269,6 +268,7 @@ def open_reward(worker, account, device, log, screenshot=None) -> _OpenRewardRes
     )
     return _OpenRewardResult.FAILED
 
+
 def run_boss_reward(worker, account, device, log) -> bool:
     """Nhận toàn bộ thưởng Boss ở hai lượt danh sách rồi đóng màn hình thưởng."""
     claim_template_names = (_TEMPLATE_QUAN_DOAN_BOSS_NHAN_THUONG,)
@@ -295,14 +295,13 @@ def run_boss_reward(worker, account, device, log) -> bool:
             if template_name is None:
                 return True, screen_bgr
 
-            x = (match.left + match.right) // 2
-            y = (match.top + match.bottom) // 2
             try:
-                device.shell(f"input tap {x} {y}")
+                x, y = click_match(device, match)
             except Exception as exc:
                 log(
                     f"[{account.display_name}] Không click được nút [Nhận thưởng] "
-                    f"tại ({x}, {y}): {exc}"
+                    f"tại ({(match.left + match.right) // 2}, "
+                    f"{(match.top + match.bottom) // 2}): {exc}"
                 )
                 return False, None
 
@@ -325,9 +324,11 @@ def run_boss_reward(worker, account, device, log) -> bool:
         return False
 
     try:
-        start_x, start_y = positions.get("quan_doan", "boss_item_2")
-        end_x, end_y = positions.get("quan_doan", "boss_item_1")
-        device.shell(f"input swipe {start_x} {start_y} {end_x} {end_y} 500")
+        start = positions.get("quan_doan", "boss_item_2")
+        end = positions.get("quan_doan", "boss_item_1")
+        swipe(device, start, end, account=account, log=log, duration_ms=500)
+        start_x, start_y = start
+        end_x, end_y = end
     except Exception as exc:
         log(
             f"[{account.display_name}] Không vuốt được danh sách thưởng Boss "
@@ -361,14 +362,12 @@ def run_boss_reward(worker, account, device, log) -> bool:
         )
         return False
 
-    x = (match.left + match.right) // 2
-    y = (match.top + match.bottom) // 2
     try:
-        device.shell(f"input tap {x} {y}")
+        x, y = click_match(device, match)
     except Exception as exc:
         log(
             f"[{account.display_name}] Không click được nút thoát màn hình "
-            f"nhận thưởng tại ({x}, {y}): {exc}"
+            f"nhận thưởng: {exc}"
         )
         return False
 
@@ -410,14 +409,11 @@ def close_boss_reward(worker, account, device, log) -> bool:
             return True
 
         if template_name == _TEMPLATE_QUAN_DOAN_BOSS_THOAT_MAN_HINH_BOSS:
-            x = (match.left + match.right) // 2
-            y = (match.top + match.bottom) // 2
             try:
-                device.shell(f"input tap {x} {y}")
+                x, y = click_match(device, match)
             except Exception as exc:
                 log(
-                    f"[{account.display_name}] Không click được nút thoát Boss "
-                    f"tại ({x}, {y}): {exc}"
+                    f"[{account.display_name}] Không click được nút thoát Boss: {exc}"
                 )
                 return False
 
