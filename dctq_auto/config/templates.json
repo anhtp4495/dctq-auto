@@ -543,13 +543,14 @@
           "rect": { "top": 890, "left": 1505, "right": 1537, "bottom": 916},
           "search_rect": { "top": 880, "left": 1333, "right": 1545, "bottom": 961},
           "threshold": 0.95,
+          "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "man_hinh_nhan_thuong": {
           "description": "Màn hình [Quân Đoàn] - [Chiến trận Quân Đoàn] - [Thưởng]",
           "rect": { "top": 200, "left": 524, "right": 800, "bottom": 288},
           "search_rect": { "top": 6, "left": 443, "right": 1477, "bottom": 156},
-          "threshold": 0.95,
+          "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "nhan_thuong": {
@@ -557,6 +558,7 @@
           "rect": { "top": 375, "left": 832, "right": 1047, "bottom": 569},
           "search_rect": { "top": 13, "left": 449, "right": 1471, "bottom": 924},
           "threshold": 0.95,
+          "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "thoat_man_hinh_nhan_thuong": {
