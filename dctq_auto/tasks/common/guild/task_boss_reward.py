@@ -262,16 +262,113 @@ def open_reward(worker, account, device, log, screenshot=None) -> _OpenRewardRes
     return _OpenRewardResult.FAILED
 
 def run_boss_reward(worker, account, device, log) -> bool:
-    """Thực hiện nhận thưởng Boss; chờ triển khai template trạng thái thưởng."""
+    """Nhận toàn bộ thưởng Boss ở hai lượt danh sách rồi đóng màn hình thưởng."""
+    claim_template_names = (_TEMPLATE_QUAN_DOAN_BOSS_NHAN_THUONG,)
+    exit_template_names = (_TEMPLATE_QUAN_DOAN_BOSS_THOAT_MAN_HINH_NHAN_THUONG,)
+    templates = get_templates(claim_template_names + exit_template_names)
+    positions = ButtonPositions()
+
+    def claim_visible_rewards() -> tuple[bool, np.ndarray | None]:
+        """Click nhận thưởng liên tục đến khi template không còn xuất hiện."""
+        while True:
+            if not worker._wait_if_paused():
+                log(f"[{account.display_name}] Đã dừng trong khi nhận thưởng Boss.")
+                return False, None
+
+            screen_bgr = _capture_screen(
+                device, account, log, "khi nhận thưởng Boss"
+            )
+            if screen_bgr is None:
+                return False, None
+
+            template_name, match = _find_template(
+                screen_bgr, templates, claim_template_names, account, log
+            )
+            if template_name is None:
+                return True, screen_bgr
+
+            x = (match.left + match.right) // 2
+            y = (match.top + match.bottom) // 2
+            try:
+                device.shell(f"input tap {x} {y}")
+            except Exception as exc:
+                log(
+                    f"[{account.display_name}] Không click được nút [Nhận thưởng] "
+                    f"tại ({x}, {y}): {exc}"
+                )
+                return False, None
+
+            log(
+                f"[{account.display_name}] Đã click [Nhận thưởng] tại "
+                f"({x}, {y}); chờ 1.5 giây để kiểm tra lượt tiếp theo."
+            )
+            time.sleep(1.5)
+
+    log(f"[{account.display_name}] Bắt đầu nhận thưởng Boss.")
+
+    # Nhận hết các phần thưởng đang hiển thị ở danh sách hiện tại.
+    completed, screen_bgr = claim_visible_rewards()
+    if not completed or screen_bgr is None:
+        return False
+
+    # Vuốt danh sách từ dưới lên để hiển thị các phần thưởng còn lại.
     if not worker._wait_if_paused():
-        log(f"[{account.display_name}] Nhận thưởng Boss đã dừng theo yêu cầu.")
+        log(f"[{account.display_name}] Đã dừng trước khi vuốt danh sách thưởng Boss.")
+        return False
+
+    try:
+        start_x, start_y = positions.get("quan_doan", "boss_item_2")
+        end_x, end_y = positions.get("quan_doan", "boss_item_1")
+        device.shell(f"input swipe {start_x} {start_y} {end_x} {end_y} 500")
+    except Exception as exc:
+        log(
+            f"[{account.display_name}] Không vuốt được danh sách thưởng Boss "
+            f"từ boss_item_2 sang boss_item_1: {exc}"
+        )
         return False
 
     log(
-        f"[{account.display_name}] Chưa triển khai thao tác nhận thưởng Boss: "
-        "cần xử lý trạng thái và nút nhận thưởng."
+        f"[{account.display_name}] Đã vuốt danh sách thưởng Boss từ "
+        f"boss_item_2 ({start_x}, {start_y}) lên boss_item_1 "
+        f"({end_x}, {end_y}); tiếp tục kiểm tra."
     )
-    return False
+    time.sleep(0.8)
+
+    completed, screen_bgr = claim_visible_rewards()
+    if not completed or screen_bgr is None:
+        return False
+
+    # Không còn nút nhận thưởng sau lượt vuốt: đóng cửa sổ thưởng.
+    if not worker._wait_if_paused():
+        log(f"[{account.display_name}] Đã dừng trước khi đóng màn hình nhận thưởng.")
+        return False
+
+    template_name, match = _find_template(
+        screen_bgr, templates, exit_template_names, account, log
+    )
+    if template_name != _TEMPLATE_QUAN_DOAN_BOSS_THOAT_MAN_HINH_NHAN_THUONG:
+        log(
+            f"[{account.display_name}] Đã hết nút [Nhận thưởng] nhưng không tìm thấy "
+            "nút thoát màn hình nhận thưởng."
+        )
+        return False
+
+    x = (match.left + match.right) // 2
+    y = (match.top + match.bottom) // 2
+    try:
+        device.shell(f"input tap {x} {y}")
+    except Exception as exc:
+        log(
+            f"[{account.display_name}] Không click được nút thoát màn hình "
+            f"nhận thưởng tại ({x}, {y}): {exc}"
+        )
+        return False
+
+    log(
+        f"[{account.display_name}] Đã nhận hết thưởng Boss và click nút "
+        f"thoát màn hình nhận thưởng tại ({x}, {y})."
+    )
+    return True
 
 
 def close_boss_reward(worker, account, device, log) -> bool:
