@@ -1,6 +1,7 @@
 """Điều phối tác vụ nhận thưởng Boss trong màn hình Quân đoàn."""
 
 import time
+from enum import Enum
 
 import cv2
 import numpy as np
@@ -8,6 +9,8 @@ import numpy as np
 from dctq_auto.config.constants import (
     _STEP_QUAN_DOAN_NHAN_THUONG_BOSS,
     _TEMPLATE_QUAN_DOAN_BOSS_MAN_HINH_CHINH,
+    _TEMPLATE_QUAN_DOAN_BOSS_CHUA_NHAN_THUONG,
+    _TEMPLATE_QUAN_DOAN_BOSS_MAN_HINH_NHAN_THUONG,
     _TEMPLATE_QUAN_DOAN_BOSS_QUAN_DOAN,
     _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
 )
@@ -18,6 +21,13 @@ from dctq_auto.vision.template_store import get_templates
 
 
 _MAX_OPEN_TRIES = 6
+_MAX_OPEN_REWARD_TRIES = 3
+
+
+class _OpenRewardResult(Enum):
+    OPENED = "opened"
+    ALREADY_CLAIMED = "already_claimed"
+    FAILED = "failed"
 
 
 def pre_run_boss_reward(steps, log) -> bool:
@@ -176,6 +186,80 @@ def open_boss_reward(worker, account, device, log, screenshot=None) -> bool:
     return False
 
 
+
+def open_reward(worker, account, device, log, screenshot=None) -> _OpenRewardResult:
+    """Mở màn hình nhận thưởng hoặc xác định phần thưởng đã được nhận."""
+    template_names = (
+        _TEMPLATE_QUAN_DOAN_BOSS_MAN_HINH_NHAN_THUONG,
+        _TEMPLATE_QUAN_DOAN_BOSS_CHUA_NHAN_THUONG,
+        _TEMPLATE_QUAN_DOAN_BOSS_MAN_HINH_CHINH,
+    )
+    templates = get_templates(template_names)
+
+    for attempt in range(1, _MAX_OPEN_REWARD_TRIES + 1):
+        if not worker._wait_if_paused():
+            log(f"[{account.display_name}] Đã dừng khi mở màn hình nhận thưởng Boss.")
+            return _OpenRewardResult.FAILED
+
+        if attempt == 1 and screenshot is not None:
+            try:
+                screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
+            except Exception as exc:
+                log(f"[{account.display_name}] Không xử lý được screenshot nhận thưởng Boss: {exc}")
+                return _OpenRewardResult.FAILED
+        else:
+            screen_bgr = _capture_screen(
+                device, account, log, "khi mở màn hình nhận thưởng Boss"
+            )
+            if screen_bgr is None:
+                return _OpenRewardResult.FAILED
+
+        template_name, match = _find_template(
+            screen_bgr, templates, template_names, account, log
+        )
+
+        if template_name == _TEMPLATE_QUAN_DOAN_BOSS_MAN_HINH_NHAN_THUONG:
+            log(f"[{account.display_name}] Đã mở màn hình [Nhận thưởng Boss].")
+            return _OpenRewardResult.OPENED
+
+        if template_name == _TEMPLATE_QUAN_DOAN_BOSS_MAN_HINH_CHINH:
+            log(
+                f"[{account.display_name}] Boss Quân đoàn không còn lối nhận thưởng; "
+                "xác định phần thưởng đã được nhận."
+            )
+            return _OpenRewardResult.ALREADY_CLAIMED
+
+        if template_name == _TEMPLATE_QUAN_DOAN_BOSS_CHUA_NHAN_THUONG:
+            x = (match.left + match.right) // 2
+            y = (match.top + match.bottom) // 2
+            try:
+                device.shell(f"input tap {x} {y}")
+            except Exception as exc:
+                log(
+                    f"[{account.display_name}] Không click được lối vào nhận thưởng "
+                    f"tại ({x}, {y}): {exc}"
+                )
+                return _OpenRewardResult.FAILED
+
+            log(
+                f"[{account.display_name}] Đã click lối vào [Nhận thưởng] "
+                f"tại ({x}, {y}); chờ màn hình nhận thưởng."
+            )
+            time.sleep(0.8)
+            continue
+
+        log(
+            f"[{account.display_name}] Chưa nhận diện được trạng thái Boss "
+            f"(lần {attempt}/{_MAX_OPEN_REWARD_TRIES})."
+        )
+        time.sleep(0.8)
+
+    log(
+        f"[{account.display_name}] Không mở được màn hình [Nhận thưởng Boss] "
+        f"sau {_MAX_OPEN_REWARD_TRIES} lần kiểm tra."
+    )
+    return _OpenRewardResult.FAILED
+
 def run_boss_reward(worker, account, device, log) -> bool:
     """Thực hiện nhận thưởng Boss; chờ triển khai template trạng thái thưởng."""
     if not worker._wait_if_paused():
@@ -217,6 +301,12 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
 
     try:
         if not open_boss_reward(worker, account, device, log, screenshot=screenshot):
+            return steps
+
+        reward_result = open_reward(worker, account, device, log)
+        if reward_result == _OpenRewardResult.ALREADY_CLAIMED:
+            return post_run_boss_reward(steps, account, log)
+        if reward_result != _OpenRewardResult.OPENED:
             return steps
 
         if not run_boss_reward(worker, account, device, log):
