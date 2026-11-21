@@ -471,6 +471,14 @@
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
+        "boss_quan_doan": {
+          "description": "Màn hình [Quân Đoàn] - Lối vào [Chiến trận Quân Đoàn].",
+          "rect": { "top": 183, "left": 1208, "right": 1400, "bottom": 340},
+          "search_rect": { "top": 418, "left": 54, "right": 1870, "bottom": 758},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
         "quan_doan_chua_bao_danh": {
           "description": "Màn hình [Quân Đoàn] - Chưa [Báo danh].",
           "rect": { "top": 838, "left": 1604, "right": 1750, "bottom": 964},
@@ -514,6 +522,55 @@
           "description": "Màn hình [Quân Đoàn] - Đã đóng góp [Lương Thảo].",
           "rect": { "top": 852, "left": 126, "right": 252, "bottom": 952},
           "search_rect": { "top": 786, "left": 1048, "right": 1888, "bottom": 1050},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
+    "quan_doan.boss": {
+      "source_image": "resources/screens/quan_doan/chien_tran_quan_doan.png",
+      "templates": {
+        "man_hinh_chinh": {
+          "description": "Màn hình [Quân Đoàn] - [Chiến trận Quân Đoàn]",
+          "rect": { "top": 47, "left": 734, "right": 1162, "bottom": 119},
+          "search_rect": { "top": 19, "left": 600, "right": 1292, "bottom": 173},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "chua_nhan_thuong": {
+          "description": "Màn hình [Quân Đoàn] - [Chiến trận Quân Đoàn] - Lối vào nhận [Thưởng]",
+          "rect": { "top": 890, "left": 1505, "right": 1537, "bottom": 916},
+          "search_rect": { "top": 880, "left": 1333, "right": 1545, "bottom": 961},
+          "threshold": 0.95,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "man_hinh_nhan_thuong": {
+          "description": "Màn hình [Quân Đoàn] - [Chiến trận Quân Đoàn] - [Thưởng]",
+          "rect": { "top": 200, "left": 524, "right": 800, "bottom": 288},
+          "search_rect": { "top": 6, "left": 443, "right": 1477, "bottom": 156},
+          "threshold": 0.95,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "nhan_thuong": {
+          "description": "Màn hình [Quân Đoàn] - [Chiến trận Quân Đoàn] - [Thưởng] - Nhận",
+          "rect": { "top": 375, "left": 832, "right": 1047, "bottom": 569},
+          "search_rect": { "top": 13, "left": 449, "right": 1471, "bottom": 924},
+          "threshold": 0.95,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "thoat_man_hinh_nhan_thuong": {
+          "description": "Màn hình [Quân Đoàn] - [Chiến trận Quân Đoàn] - [Thưởng] Thoát",
+          "rect": { "top": 207, "left": 1094, "right": 1152, "bottom": 262},
+          "search_rect": { "top": 0, "left": 1356, "right": 1503, "bottom": 130},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "thoat_man_hinh_boss": {
+          "description": "Màn hình [Quân Đoàn] - [Chiến trận Quân Đoàn] Thoát",
+          "rect": { "top": 207, "left": 1094, "right": 1152, "bottom": 262},
+          "search_rect": { "top": 26, "left": 1679, "right": 1835, "bottom": 175},
           "threshold": 0.95,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
