@@ -438,6 +438,13 @@
       "templates": {
         "quan_doan_man_hinh_chinh": {
           "description": "Màn hình [Quân Đoàn].",
+          "rect": { "top": 228, "left": 426, "right": 615, "bottom": 381},
+          "search_rect": { "top": 30, "left": 70, "right": 717, "bottom": 400},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_doan_man_hinh_chinh_1": {
+          "description": "Màn hình [Quân Đoàn].",
           "rect": { "top": 22, "left": 182, "right": 936, "bottom": 104},
           "search_rect": { "top": 0, "left": 0, "right": 1154, "bottom": 148},
           "threshold": 0.85,
