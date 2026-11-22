@@ -72,7 +72,7 @@
         "truong_thanh": {
           "description": "[Màn hình chính] - Lối vào [Trưởng Thành].",
           "rect": { "top": 517, "left": 31, "right": 78, "bottom": 573},
-          "search_rect": { "top": 489, "left": 144, "right": 623, "bottom": 852},
+          "search_rect": { "top": 483, "left": 0, "right": 135, "bottom": 594},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
