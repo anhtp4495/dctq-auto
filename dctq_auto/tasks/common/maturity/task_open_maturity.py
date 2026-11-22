@@ -43,14 +43,14 @@ _CLASSIFICATION_TEMPLATES = (
 )
 
 _CLASSIFICATION_LABELS = {
-    _TEMPLATE_MAIN_TRUONG_THANH_BAO_VAT: "Bảo vật",
-    _TEMPLATE_MAIN_TRUONG_THANH_TUONG_AN: "Tướng ấn",
-    _TEMPLATE_MAIN_TRUONG_THANH_CHUA_CONG: "Chúa công",
-    _TEMPLATE_MAIN_TRUONG_THANH_VE_TUONG: "Vệ tướng",
-    _TEMPLATE_MAIN_TRUONG_THANH_THAN_BINH: "Thần binh",
-    _TEMPLATE_MAIN_TRUONG_THANH_CHIEN_HON: "Chiến hồn",
-    _TEMPLATE_MAIN_TRUONG_THANH_THAN_TUONG: "Thần tượng",
-    _TEMPLATE_MAIN_TRUONG_THANH_TRAI_NGUA: "Trại ngựa",
+    "bao_vat": "Bảo vật",
+    "tuong_an": "Tướng ấn",
+    "chua_cong": "Chúa công",
+    "ve_tuong": "Vệ tướng",
+    "than_binh": "Thần binh",
+    "chien_hon": "Chiến hồn",
+    "than_tuong": "Thần tượng",
+    "trai_ngua": "Trại ngựa",
 }
 
 
@@ -156,6 +156,7 @@ def _scan_unclaimed_cells(
         f"Tìm thấy {matched_count}/{_MAX_GRID_ROWS * _MAX_GRID_COLUMNS} ô chưa nhận."
     )
     return matched_count
+
 
 def run(worker, account, device, ocr_client, log) -> bool:
     """Nhận diện màn hình Trưởng Thành, mở nếu cần và quét 12 ô."""
