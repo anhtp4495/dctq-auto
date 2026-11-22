@@ -91,6 +91,9 @@ def _scan_unclaimed_cells(screen, template, account, log) -> int:
 
 def run(worker, account, device, ocr_client, log) -> bool:
     """Click lối vào Trưởng Thành, sau đó quét 12 ô chưa nhận."""
+    log(f"[{account.display_name}] ==========================================")
+    log(f"[{account.display_name}] ==========================================")
+    log(f"[{account.display_name}] ==========================================")
     log(f"[{account.display_name}] Bắt đầu mở màn hình Trưởng Thành.")
     if not worker._wait_if_paused():
         log(f"[{account.display_name}] Đã dừng khi mở màn hình Trưởng Thành.")

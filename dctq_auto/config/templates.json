@@ -92,6 +92,14 @@
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
+        "loi_vao_tuong_an": {
+          "description": "[Màn hình chính] - [Trưởng thành] - Lối vào [Tướng ấn]",
+          "rect": { "top": 420, "left": 333, "right": 372, "bottom": 479},
+          "search_rect": { "top": 489, "left": 144, "right": 623, "bottom": 852},
+          "threshold": 0.70,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
         "bao_vat": {
           "description": "[Màn hình chính] - [Trưởng thành] - [Bảo vật]",
           "rect": { "top": 393, "left": 191, "right": 276, "bottom": 477},
