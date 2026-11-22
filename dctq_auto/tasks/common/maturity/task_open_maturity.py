@@ -15,6 +15,7 @@ from dctq_auto.vision.template_store import get_templates
 
 _MAX_GRID_ROWS = 3
 _MAX_GRID_COLUMNS = 4
+_GRID_CELL_RECT_SIZE = 20
 _MAX_OPEN_TRIES = 2
 _OPEN_POLL_INTERVAL = 2.0
 
@@ -69,13 +70,18 @@ def _scan_unclaimed_cells(screen, template, account, log) -> int:
             matched_count += 1
             x = round((cell_left + cell_right) / 2)
             y = round((cell_top + cell_bottom) / 2)
+            half_rect = _GRID_CELL_RECT_SIZE // 2
+            rect = (y - half_rect, x - half_rect, x + half_rect, y + half_rect)
             report_template_match(
                 log,
                 context=context,
                 template=template,
                 match=found,
             )
-            log(f"{context}: khớp, trung điểm ({x}, {y}).")
+            log(
+                f"{context}: khớp, trung điểm ({x}, {y}), "
+                f"rect 20x20 {rect}."
+            )
 
     log(
         f"[{account.display_name}] [Trưởng thành] "
