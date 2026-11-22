@@ -18,46 +18,10 @@
     "priority": 10003
   },
   {
-    "id": "truong_thanh_bao_vat",
-    "config_key": "clone_maturity_bao_vat",
-    "display_name": "Bảo vật",
+    "id": "truong_thanh",
+    "config_key": "clone_maturity",
+    "display_name": "Trưởng thành",
     "priority": 10010
-  },
-  {
-    "id": "truong_thanh_tuong_an",
-    "config_key": "clone_maturity_tuong_an",
-    "display_name": "Tướng ấn",
-    "priority": 10011
-  },
-  {
-    "id": "truong_thanh_giuong_co",
-    "config_key": "clone_maturity_giuong_co",
-    "display_name": "Giương cờ",
-    "priority": 10012
-  },
-  {
-    "id": "truong_thanh_ve_tuong",
-    "config_key": "clone_maturity_ve_tuong",
-    "display_name": "Vệ tướng",
-    "priority": 10013
-  },
-  {
-    "id": "truong_thanh_than_binh",
-    "config_key": "clone_maturity_than_binh",
-    "display_name": "Thần binh",
-    "priority": 10014
-  },
-  {
-    "id": "truong_thanh_chien_hon",
-    "config_key": "clone_maturity_chien_hon",
-    "display_name": "Chiến hồn",
-    "priority": 10015
-  },
-  {
-    "id": "truong_thanh_than_tuong",
-    "config_key": "clone_maturity_than_tuong",
-    "display_name": "Thần tượng",
-    "priority": 10016
   },
   {
     "id": "quan_doan_bao_danh",
