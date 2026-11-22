@@ -279,7 +279,7 @@ def run_boss_reward(worker, account, device, log) -> bool:
 
     log(f"[{account.display_name}] Bắt đầu nhận thưởng Boss.")
 
-    while empty_swipes < 2:
+    while empty_swipes < 1:
         if not worker._wait_if_paused():
             log(f"[{account.display_name}] Đã dừng trong khi nhận thưởng Boss.")
             return False

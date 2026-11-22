@@ -577,7 +577,7 @@
         },
         "nhan_thuong": {
           "description": "Màn hình [Quân Đoàn] - [Chiến trận Quân Đoàn] - [Thưởng] - Nhận",
-          "rect": { "top": 375, "left": 832, "right": 1047, "bottom": 569},
+          "rect": { "top": 462, "left": 868, "right": 1009, "bottom": 547},
           "search_rect": { "top": 13, "left": 449, "right": 1471, "bottom": 924},
           "threshold": 0.85,
           "grayscale": false,
