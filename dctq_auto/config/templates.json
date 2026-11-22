@@ -134,7 +134,7 @@
         },
         "than_binh": {
           "description": "[Màn hình chính] - [Trưởng thành] - [Thần binh]",
-          "rect": { "top": 510, "left": 299, "right": 401, "bottom": 595},
+          "rect": { "top": 500, "left": 299, "right": 400, "bottom": 595},
           "search_rect": { "top": 473, "left": 133, "right": 627, "bottom": 857},
           "threshold": 0.70,
           "grayscale": false,
@@ -142,7 +142,7 @@
         },
         "chien_hon": {
           "description": "[Màn hình chính] - [Trưởng thành] - [Chiến hồn]",
-          "rect": { "top": 550, "left": 315, "right": 390, "bottom": 590},
+          "rect": { "top": 500, "left": 410, "right": 520, "bottom": 600},
           "search_rect": { "top": 511, "left": 412, "right": 516, "bottom": 595},
           "threshold": 0.70,
           "grayscale": false,
