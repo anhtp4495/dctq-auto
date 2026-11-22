@@ -15,12 +15,6 @@ from dctq_auto.vision.template_store import get_templates
 _MAX_GRID_ROWS = 3
 _MAX_GRID_COLUMNS = 4
 _POLL_INTERVAL = 1.5
-_TEMPLATES = (
-    _TEMPLATE_MAIN_TRUONG_THANH,
-    _TEMPLATE_MAIN_CHUA_NHAN_TRUONG_THANH,
-)
-
-
 def _scan_unclaimed_cells(screen, template, account, log) -> int:
     """Quét từng ô trong lưới 3x4 và ghi trung điểm các ô có trạng thái chưa nhận."""
     top, left, right, bottom = template.search_rect
@@ -73,11 +67,10 @@ def run(worker, account, device, ocr_client, log) -> bool:
         log(f"[{account.display_name}] Đã dừng khi mở màn hình Trưởng Thành.")
         return False
 
-    templates = get_templates(_TEMPLATES)
-    entry_template = templates.get(_TEMPLATE_MAIN_TRUONG_THANH)
-    unclaimed_template = templates.get(_TEMPLATE_MAIN_CHUA_NHAN_TRUONG_THANH)
-    if entry_template is None or unclaimed_template is None:
-        log(f"[{account.display_name}] Không tải được template Trưởng Thành.")
+    entry_templates = get_templates((_TEMPLATE_MAIN_TRUONG_THANH,))
+    entry_template = entry_templates.get(_TEMPLATE_MAIN_TRUONG_THANH)
+    if entry_template is None:
+        log(f"[{account.display_name}] Không tải được template lối vào Trưởng Thành.")
         return False
 
     try:
@@ -109,6 +102,12 @@ def run(worker, account, device, ocr_client, log) -> bool:
 
     if not worker._wait_if_paused():
         log(f"[{account.display_name}] Đã dừng trước khi quét Trưởng Thành.")
+        return False
+
+    unclaimed_templates = get_templates((_TEMPLATE_MAIN_CHUA_NHAN_TRUONG_THANH,))
+    unclaimed_template = unclaimed_templates.get(_TEMPLATE_MAIN_CHUA_NHAN_TRUONG_THANH)
+    if unclaimed_template is None:
+        log(f"[{account.display_name}] Không tải được template ô chưa nhận Trưởng Thành.")
         return False
 
     try:
