@@ -18,16 +18,18 @@ def pre_maturity(steps, account, log) -> bool:
     return True
 
 
-def open_maturity(worker, account, device, ocr_client, log) -> bool:
+def open_maturity(
+    worker, account, device, ocr_client, log
+) -> tuple[bool, list[tuple[int, int, int, int]]]:
     """Mở giao diện Trưởng Thành."""
     return task_open_maturity.run(
         worker, account, device, ocr_client, log
     )
 
 
-def run_maturity(worker, account, device, log) -> bool:
+def run_maturity(worker, account, device, rects, log) -> bool:
     """Thực hiện các nhiệm vụ trong giao diện Trưởng Thành."""
-    return task_run_maturity.run(worker, account, device, log)
+    return task_run_maturity.run(worker, account, device, rects, log)
 
 
 def close_maturity(worker, account, device, log) -> bool:
@@ -52,12 +54,12 @@ def run(worker, account, steps, device, ocr_client, log) -> list[str]:
     completed = False
 
     try:
-        opened = open_maturity(worker, account, device, ocr_client, log)
+        opened, rects = open_maturity(worker, account, device, ocr_client, log)
         if not opened:
             log(f"[{account.display_name}] Không mở được Trưởng Thành; giữ nguyên step.")
             return steps
 
-        completed = run_maturity(worker, account, device, log)
+        completed = run_maturity(worker, account, device, rects, log)
         if not completed:
             log(f"[{account.display_name}] Trưởng Thành chưa hoàn tất; giữ nguyên step.")
     except Exception as exc:
