@@ -72,14 +72,14 @@
         "truong_thanh": {
           "description": "[Màn hình chính] - Lối vào [Trưởng Thành].",
           "rect": { "top": 517, "left": 31, "right": 78, "bottom": 573},
-          "search_rect": { "top": 478, "left": 0, "right": 626, "bottom": 854},
+          "search_rect": { "top": 489, "left": 144, "right": 623, "bottom": 852},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "chua_nhan_truong_thanh": {
           "description": "[Màn hình chính] - [Trưởng thành] - Chưa nhận",
           "rect": { "top": 515, "left": 375, "right": 390, "bottom": 530},
-          "search_rect": { "top": 473, "left": 133, "right": 627, "bottom": 857},
+          "search_rect": { "top": 489, "left": 144, "right": 623, "bottom": 852},
           "threshold": 0.85,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
@@ -87,7 +87,7 @@
         "loi_vao_bao_vat": {
           "description": "[Màn hình chính] - [Trưởng thành] - Lối vào [Bảo vật]",
           "rect": { "top": 532, "left": 174, "right": 243, "bottom": 585},
-          "search_rect": { "top": 478, "left": 0, "right": 626, "bottom": 854},
+          "search_rect": { "top": 489, "left": 144, "right": 623, "bottom": 852},
           "threshold": 0.70,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
@@ -95,7 +95,7 @@
         "bao_vat": {
           "description": "[Màn hình chính] - [Trưởng thành] - [Bảo vật]",
           "rect": { "top": 393, "left": 191, "right": 276, "bottom": 477},
-          "search_rect": { "top": 478, "left": 0, "right": 626, "bottom": 854},
+          "search_rect": { "top": 489, "left": 144, "right": 623, "bottom": 852},
           "threshold": 0.70,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
@@ -103,7 +103,7 @@
         "tuong_an": {
           "description": "[Màn hình chính] - [Trưởng thành] - [Tướng ấn]",
           "rect": { "top": 392, "left": 299, "right": 397, "bottom": 479},
-          "search_rect": { "top": 478, "left": 0, "right": 626, "bottom": 854},
+          "search_rect": { "top": 489, "left": 144, "right": 623, "bottom": 852},
           "threshold": 0.70,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
@@ -111,7 +111,7 @@
         "chua_cong": {
           "description": "[Màn hình chính] - [Trưởng thành] - [Chúa công]",
           "rect": { "top": 392, "left": 408, "right": 514, "bottom": 477},
-          "search_rect": { "top": 478, "left": 0, "right": 626, "bottom": 854},
+          "search_rect": { "top": 489, "left": 144, "right": 623, "bottom": 852},
           "threshold": 0.70,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
@@ -119,7 +119,7 @@
         "ve_tuong": {
           "description": "[Màn hình chính] - [Trưởng thành] - [Vệ tướng]",
           "rect": { "top": 392, "left": 526, "right": 623, "bottom": 477},
-          "search_rect": { "top": 478, "left": 0, "right": 626, "bottom": 854},
+          "search_rect": { "top": 489, "left": 144, "right": 623, "bottom": 852},
           "threshold": 0.70,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
