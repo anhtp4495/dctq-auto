@@ -67,8 +67,8 @@ def _scan_unclaimed_cells(screen, template, account, log) -> int:
                 continue
 
             matched_count += 1
-            x = round((found.left + found.right) / 2)
-            y = round((found.top + found.bottom) / 2)
+            x = round((cell_left + cell_right) / 2)
+            y = round((cell_top + cell_bottom) / 2)
             report_template_match(
                 log,
                 context=context,
