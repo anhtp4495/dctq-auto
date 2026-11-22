@@ -93,7 +93,10 @@ class CloneTab(QWidget):
         maturity_group = QGroupBox("Trưởng thành")
         maturity_layout = QVBoxLayout(maturity_group)
         self.clone_maturity = QCheckBox(
-            step_registry.get_display_name_by_config_key("clone_maturity", "Trưởng thành")
+            step_registry.get_display_name_by_config_key(
+                "clone_maturity",
+                "Bảo vật, Tướng ấn, Giương cờ, Vệ tướng, Thần binh, Chiến hồn, Thần tượng",
+            )
         )
         maturity_layout.addWidget(self.clone_maturity)
         layout.addWidget(maturity_group)
