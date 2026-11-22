@@ -12,6 +12,7 @@ _TEMPLATE_ACCOUNT_DANG_NHAP = "accounts3/dang_nhap"
 
 # Template dùng để mở màn hình Trưởng Thành và quét trạng thái chưa nhận.
 _TEMPLATE_MAIN_TRUONG_THANH = "main/truong_thanh"
+_TEMPLATE_MAIN_LOI_VAO_TUONG_AN = "main/loi_vao_tuong_an"
 _TEMPLATE_MAIN_CHUA_NHAN_TRUONG_THANH = "main/chua_nhan_truong_thanh"
 
 # Template màn hình đã biết
