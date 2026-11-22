@@ -1560,14 +1560,6 @@
     "nhiem_vu_hang_ngay.chua_cong": {
       "source_image": "resources/screens/nhiem_vu_hang_ngay/man_hinh_chinh.png",
       "templates": {
-        "dang_chon_chien_ky": {
-          "description": "[Màn hình chính] - [Chúa công] - Chiến kỳ",
-          "rect": { "top": 41, "left": 367, "right": 509, "bottom": 93},
-          "search_rect": { "top": 14, "left": 319, "right": 563, "bottom": 107},
-          "threshold": 0.85,
-          "grayscale": false,
-          "match_method": "TM_CCOEFF_NORMED"
-        },
         "chua_chon_chien_ky": {
           "description": "[Màn hình chính] - [Chúa công] - Phong hầu",
           "rect": { "top": 197, "left": 358, "right": 526, "bottom": 257},
