@@ -103,7 +103,7 @@ def run(worker, account, device, ocr_client, log) -> bool:
         return False
 
     try:
-        screen = screen_bgr(device)
+        main_screen = screen_bgr(device)
     except Exception as exc:
         log(f"[{account.display_name}] Không chụp được màn hình chính: {exc}")
         return False
