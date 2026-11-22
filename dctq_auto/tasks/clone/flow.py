@@ -265,6 +265,7 @@ def run_clone_flow_optimize_account(
     if not _common_tasks_done:
         from dctq_auto.tasks.common.activity.task_activity import run as run_activity
         from dctq_auto.tasks.common.three_kingdom.task_three_kingdom import run as run_three_kingdom
+        from dctq_auto.tasks.common.maturity.task_maturity import run as run_maturity
         from dctq_auto.tasks.common.guild.task_guild import run as run_guild
         from dctq_auto.tasks.common.shop.task_shop import run as run_shop
         from dctq_auto.tasks.common.war.guild.task_war_guild import run as run_war_guild
@@ -333,6 +334,7 @@ def run_clone_flow_optimize_account(
             ("Chiến tranh - Giao tranh", run_raid_battle, {"quan_su_giao_tranh"}),
             ("Chiến tranh - Tranh bá", run_ranked_battle, {"quan_su_tranh_ba"}),
             ("Tam Quốc Lệnh", run_three_kingdom, {"hoat_dong_nhan_thuong_tam_quoc_lenh"}),
+            ("Trưởng Thành", run_maturity, {"truong_thanh"}),
         )
         for task_label, task_runner, group_step_ids in common_tasks:
             if not self._wait_if_paused():
