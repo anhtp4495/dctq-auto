@@ -20,7 +20,7 @@ def pre_maturity(steps, account, log) -> bool:
 
 def open_maturity(
     worker, account, device, ocr_client, log
-) -> tuple[bool, list[tuple[int, int, int, int]]]:
+) -> tuple[bool, list[tuple[str, tuple[int, int, int, int], int, int]]]:
     """Mở giao diện Trưởng Thành."""
     return task_open_maturity.run(
         worker, account, device, ocr_client, log
