@@ -10,10 +10,18 @@ _TEMPLATE_ACCOUNT_THONG_TIN_DANG_NHAP_KHONG_DUNG = "accounts4/thong_tin_dang_nha
 _TEMPLATE_ACCOUNT_TRANG_CA_NHAN = "accounts5/trang_ca_nhan"
 _TEMPLATE_ACCOUNT_DANG_NHAP = "accounts3/dang_nhap"
 
-# Template dùng để mở màn hình Trưởng Thành và quét trạng thái chưa nhận.
+# Template dùng trong quy trình Trưởng Thành.
 _TEMPLATE_MAIN_TRUONG_THANH = "main/truong_thanh"
 _TEMPLATE_MAIN_LOI_VAO_TUONG_AN = "main/loi_vao_tuong_an"
 _TEMPLATE_MAIN_CHUA_NHAN_TRUONG_THANH = "main/chua_nhan_truong_thanh"
+_TEMPLATE_MAIN_TRUONG_THANH_BAO_VAT = "main/bao_vat"
+_TEMPLATE_MAIN_TRUONG_THANH_TUONG_AN = "main/tuong_an"
+_TEMPLATE_MAIN_TRUONG_THANH_CHUA_CONG = "main/chua_cong"
+_TEMPLATE_MAIN_TRUONG_THANH_VE_TUONG = "main/ve_tuong"
+_TEMPLATE_MAIN_TRUONG_THANH_THAN_BINH = "main/than_binh"
+_TEMPLATE_MAIN_TRUONG_THANH_CHIEN_HON = "main/chien_hon"
+_TEMPLATE_MAIN_TRUONG_THANH_THAN_TUONG = "main/than_tuong"
+_TEMPLATE_MAIN_TRUONG_THANH_TRAI_NGUA = "main/trai_ngua"
 
 # Template màn hình đã biết
 _TEMPLATE_MAIN_SU_KIEN_TANG_QUA_HANG_NGAY = "main.su_kien/tang_qua_hang_ngay"

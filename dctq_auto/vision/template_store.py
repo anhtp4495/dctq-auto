@@ -34,6 +34,28 @@ class LoadedTemplate:
     method: int
     grayscale: bool
     search_rect: tuple[int, int, int, int]
+    rect: tuple[int, int, int, int]
+
+
+@lru_cache(maxsize=16)
+def _load_screen_image(screen_name: str) -> np.ndarray | None:
+    """Đọc và cache ảnh nguồn của một màn hình."""
+    try:
+        config = json.loads(_CONFIG_PATH.read_text(encoding="utf-8"))
+        source_path = _REPO_ROOT / config["screens"][screen_name]["source_image"]
+        source_image = cv2.imread(str(source_path), cv2.IMREAD_COLOR)
+        if source_image is None:
+            raise FileNotFoundError(f"Không đọc được source_image: {source_path}")
+        source_image.setflags(write=False)
+        return source_image
+    except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
+        logger.warning("Không tải được ảnh nguồn màn hình %s: %s", screen_name, exc)
+        return None
+
+
+def get_screen_image(screen_name: str) -> np.ndarray | None:
+    """Trả về ảnh nguồn đã cache theo tên màn hình."""
+    return _load_screen_image(screen_name)
 
 
 @lru_cache(maxsize=16)
@@ -42,10 +64,9 @@ def _load_screen_templates(screen_name: str) -> dict[str, LoadedTemplate]:
     try:
         config = json.loads(_CONFIG_PATH.read_text(encoding="utf-8"))
         screen_config = config["screens"][screen_name]
-        source_path = _REPO_ROOT / screen_config["source_image"]
-        source_image = cv2.imread(str(source_path), cv2.IMREAD_COLOR)
+        source_image = _load_screen_image(screen_name)
         if source_image is None:
-            raise FileNotFoundError(f"Không đọc được source_image: {source_path}")
+            return {}
         definitions = screen_config["templates"]
     except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
         logger.warning("Không tải được cấu hình template màn hình %s từ %s: %s", screen_name, _CONFIG_PATH, exc)
@@ -124,6 +145,7 @@ def _load_screen_templates(screen_name: str) -> dict[str, LoadedTemplate]:
             method=method,
             grayscale=grayscale,
             search_rect=search_rect,
+            rect=(top, left, right, bottom),
         )
 
     return loaded
@@ -166,3 +188,4 @@ def get_templates(template_names: tuple[str, ...] | list[str]) -> dict[str, Load
 def clear_template_cache() -> None:
     """Xóa cache nếu templates.json hoặc ảnh nguồn vừa được cập nhật."""
     _load_screen_templates.cache_clear()
+    _load_screen_image.cache_clear()
