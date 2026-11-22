@@ -155,6 +155,14 @@
           "threshold": 0.70,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
+        },
+        "trai_ngua": {
+          "description": "[Màn hình chính] - [Trưởng thành] - [Trại ngựa]",
+          "rect": { "top": 510, "left": 177, "right": 289, "bottom": 601},
+          "search_rect": { "top": 511, "left": 412, "right": 516, "bottom": 595},
+          "threshold": 0.70,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
