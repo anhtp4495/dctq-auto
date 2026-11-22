@@ -1558,7 +1558,7 @@
       }
     },
     "nhiem_vu_hang_ngay.chua_cong": {
-      "source_image": "resources/screens/nhiem_vu_hang_ngay/man_hinh_chinh.png",
+      "source_image": "resources/screens/nhiem_vu_hang_ngay/chua_cong.png",
       "templates": {
         "chua_chon_chien_ky": {
           "description": "[Màn hình chính] - [Chúa công] - Phong hầu",
