@@ -15,10 +15,33 @@ from dctq_auto.vision.template_store import get_templates
 _MAX_GRID_ROWS = 3
 _MAX_GRID_COLUMNS = 4
 _POLL_INTERVAL = 1.5
-_TEMPLATES = (
-    _TEMPLATE_MAIN_TRUONG_THANH,
-    _TEMPLATE_MAIN_CHUA_NHAN_TRUONG_THANH,
-)
+
+
+def _count_unclaimed_cells(screen, template) -> int:
+    """Đếm số ô khớp template trên một ảnh màn hình."""
+    top, left, right, bottom = template.search_rect
+    width = right - left
+    height = bottom - top
+    matched_count = 0
+
+    for row in range(_MAX_GRID_ROWS):
+        cell_top = top + row * height // _MAX_GRID_ROWS
+        cell_bottom = top + (row + 1) * height // _MAX_GRID_ROWS
+        for column in range(_MAX_GRID_COLUMNS):
+            cell_left = left + column * width // _MAX_GRID_COLUMNS
+            cell_right = left + (column + 1) * width // _MAX_GRID_COLUMNS
+            found = match_template(
+                screen,
+                template.image,
+                threshold=template.threshold,
+                method=template.method,
+                search_rect=(cell_top, cell_left, cell_right, cell_bottom),
+                grayscale=template.grayscale,
+            )
+            if found is not None:
+                matched_count += 1
+
+    return matched_count
 
 
 def _scan_unclaimed_cells(screen, template, account, log) -> int:
@@ -73,22 +96,21 @@ def run(worker, account, device, ocr_client, log) -> bool:
         log(f"[{account.display_name}] Đã dừng khi mở màn hình Trưởng Thành.")
         return False
 
-    templates = get_templates(_TEMPLATES)
-    entry_template = templates.get(_TEMPLATE_MAIN_TRUONG_THANH)
-    unclaimed_template = templates.get(_TEMPLATE_MAIN_CHUA_NHAN_TRUONG_THANH)
-    if entry_template is None or unclaimed_template is None:
-        log(f"[{account.display_name}] Không tải được template Trưởng Thành.")
+    entry_templates = get_templates((_TEMPLATE_MAIN_TRUONG_THANH,))
+    entry_template = entry_templates.get(_TEMPLATE_MAIN_TRUONG_THANH)
+    if entry_template is None:
+        log(f"[{account.display_name}] Không tải được template lối vào Trưởng Thành.")
         return False
 
     try:
-        screen = screen_bgr(device)
+        main_screen = screen_bgr(device)
     except Exception as exc:
         log(f"[{account.display_name}] Không chụp được màn hình chính: {exc}")
         return False
 
     try:
         found = match_template(
-            screen,
+            main_screen,
             entry_template.image,
             threshold=entry_template.threshold,
             method=entry_template.method,
@@ -111,14 +133,50 @@ def run(worker, account, device, ocr_client, log) -> bool:
         log(f"[{account.display_name}] Đã dừng trước khi quét Trưởng Thành.")
         return False
 
-    try:
-        screen = screen_bgr(device)
-    except Exception as exc:
-        log(f"[{account.display_name}] Không chụp được màn hình Trưởng Thành: {exc}")
+    unclaimed_templates = get_templates((_TEMPLATE_MAIN_CHUA_NHAN_TRUONG_THANH,))
+    unclaimed_template = unclaimed_templates.get(_TEMPLATE_MAIN_CHUA_NHAN_TRUONG_THANH)
+    if unclaimed_template is None:
+        log(f"[{account.display_name}] Không tải được template ô chưa nhận Trưởng Thành.")
         return False
 
     try:
-        _scan_unclaimed_cells(screen, unclaimed_template, account, log)
+        maturity_screen = screen_bgr(device)
+    except Exception as exc:
+        log(f"[{account.display_name}] Không chụp được màn hình sau khi mở Trưởng Thành: {exc}")
+        return False
+
+    try:
+        main_count = _count_unclaimed_cells(main_screen, unclaimed_template)
+        maturity_count = _count_unclaimed_cells(maturity_screen, unclaimed_template)
+    except Exception as exc:
+        log(f"[{account.display_name}] Lỗi đối chiếu hai màn hình Trưởng Thành: {exc}")
+        return False
+
+    log(
+        f"[{account.display_name}] [Trưởng thành] "
+        f"Số ô khớp: màn hình trước click {main_count}, "
+        f"màn hình sau click {maturity_count}."
+    )
+    if main_count == maturity_count:
+        log(
+            f"[{account.display_name}] Không xác định được màn hình Trưởng Thành "
+            "vì số lượng ô khớp bằng nhau."
+        )
+        return False
+
+    active_screen = (
+        main_screen if main_count > maturity_count else maturity_screen
+    )
+    active_screen_name = (
+        "trước click" if main_count > maturity_count else "sau click"
+    )
+    log(
+        f"[{account.display_name}] [Trưởng thành] "
+        f"Chọn màn hình {active_screen_name} vì có nhiều ô khớp hơn."
+    )
+
+    try:
+        _scan_unclaimed_cells(active_screen, unclaimed_template, account, log)
     except Exception as exc:
         log(f"[{account.display_name}] Lỗi quét các ô chưa nhận Trưởng Thành: {exc}")
         return False
