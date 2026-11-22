@@ -18,6 +18,23 @@ def pre_maturity(steps, account, log) -> bool:
     return True
 
 
+def open_maturity(worker, account, device, ocr_client, log) -> bool:
+    """Mở giao diện Trưởng Thành."""
+    return task_open_maturity.run(
+        worker, account, device, ocr_client, log
+    )
+
+
+def run_maturity(worker, account, device, log) -> bool:
+    """Thực hiện các nhiệm vụ trong giao diện Trưởng Thành."""
+    return task_run_maturity.run(worker, account, device, log)
+
+
+def close_maturity(worker, account, device, log) -> bool:
+    """Đóng giao diện Trưởng Thành."""
+    return task_close_maturity.run(worker, account, device, log)
+
+
 def post_maturity(steps) -> list[str]:
     """Loại step Trưởng Thành sau khi quy trình hoàn tất."""
     if _STEP_MATURITY in steps:
@@ -26,7 +43,7 @@ def post_maturity(steps) -> list[str]:
 
 
 def run(worker, account, steps, device, ocr_client, log) -> list[str]:
-    """Chạy lần lượt pre → open → run → close → post."""
+    """Điều phối lần lượt pre → open → run → close → post."""
     if not pre_maturity(steps, account, log):
         return steps
 
@@ -35,24 +52,20 @@ def run(worker, account, steps, device, ocr_client, log) -> list[str]:
     completed = False
 
     try:
-        opened = task_open_maturity.run(
-            worker, account, device, ocr_client, log
-        )
+        opened = open_maturity(worker, account, device, ocr_client, log)
         if not opened:
             log(f"[{account.display_name}] Không mở được Trưởng Thành; giữ nguyên step.")
             return steps
 
-        completed = task_run_maturity.run(worker, account, device, log)
+        completed = run_maturity(worker, account, device, log)
         if not completed:
             log(f"[{account.display_name}] Trưởng Thành chưa hoàn tất; giữ nguyên step.")
-            return steps
     except Exception as exc:
         log(f"[{account.display_name}] Quy trình Trưởng Thành phát sinh lỗi: {exc}")
-        return steps
     finally:
         if opened:
             try:
-                closed = task_close_maturity.run(worker, account, device, log)
+                closed = close_maturity(worker, account, device, log)
                 if not closed:
                     log(
                         f"[{account.display_name}] Không đóng được màn hình Trưởng Thành."
