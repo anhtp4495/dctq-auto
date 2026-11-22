@@ -18,6 +18,48 @@
     "priority": 10003
   },
   {
+    "id": "truong_thanh_bao_vat",
+    "config_key": "clone_maturity_bao_vat",
+    "display_name": "Bảo vật",
+    "priority": 10010
+  },
+  {
+    "id": "truong_thanh_tuong_an",
+    "config_key": "clone_maturity_tuong_an",
+    "display_name": "Tướng ấn",
+    "priority": 10011
+  },
+  {
+    "id": "truong_thanh_giuong_co",
+    "config_key": "clone_maturity_giuong_co",
+    "display_name": "Giương cờ",
+    "priority": 10012
+  },
+  {
+    "id": "truong_thanh_ve_tuong",
+    "config_key": "clone_maturity_ve_tuong",
+    "display_name": "Vệ tướng",
+    "priority": 10013
+  },
+  {
+    "id": "truong_thanh_than_binh",
+    "config_key": "clone_maturity_than_binh",
+    "display_name": "Thần binh",
+    "priority": 10014
+  },
+  {
+    "id": "truong_thanh_chien_hon",
+    "config_key": "clone_maturity_chien_hon",
+    "display_name": "Chiến hồn",
+    "priority": 10015
+  },
+  {
+    "id": "truong_thanh_than_tuong",
+    "config_key": "clone_maturity_than_tuong",
+    "display_name": "Thần tượng",
+    "priority": 10016
+  },
+  {
     "id": "quan_doan_bao_danh",
     "config_key": "clone_guild_check_in",
     "display_name": "Báo danh quân đoàn",
@@ -34,6 +76,30 @@
     "config_key": "clone_guild_fortune",
     "display_name": "Cầu vận quân đoàn",
     "priority": 10102
+  },
+  {
+    "id": "quan_doan_dong_gop_knb",
+    "config_key": "clone_guild_donate_knb",
+    "display_name": "Đóng góp KNB",
+    "priority": 10103
+  },
+  {
+    "id": "quan_doan_dong_gop_luong_thao",
+    "config_key": "clone_guild_donate_rations",
+    "display_name": "Đóng góp Lương Thảo",
+    "priority": 10104
+  },
+  {
+    "id": "quan_doan_nhan_thuong_boss",
+    "config_key": "clone_guild_boss_reward",
+    "display_name": "Nhận thưởng Boss",
+    "priority": 10105
+  },
+  {
+    "id": "cua_hang_danh_vong_mua_que_lanh",
+    "config_key": "clone_buy_fortune_lot",
+    "display_name": "Cửa hàng Danh Vọng - Mua quẻ lành",
+    "priority": 10301
   },
   {
     "id": "chien_tranh_quan_doan_nhan_thuong",
@@ -53,24 +119,6 @@
     "templates": [
       "chien_tranh/chien_tranh_man_hinh_chinh"
     ]
-  },
-  {
-    "id": "quan_doan_dong_gop_knb",
-    "config_key": "clone_guild_donate_knb",
-    "display_name": "Đóng góp KNB",
-    "priority": 10103
-  },
-  {
-    "id": "quan_doan_dong_gop_luong_thao",
-    "config_key": "clone_guild_donate_rations",
-    "display_name": "Đóng góp Lương Thảo",
-    "priority": 10104
-  },
-  {
-    "id": "cua_hang_danh_vong_mua_que_lanh",
-    "config_key": "clone_buy_fortune_lot",
-    "display_name": "Cửa hàng Danh Vọng - Mua quẻ lành",
-    "priority": 10301
   },
   {
     "id": "quan_su_giao_tranh",
@@ -107,11 +155,5 @@
     "config_key": "chien_tranh_muu_binh",
     "display_name": "Mưu Binh",
     "priority": 15001
-  },
-  {
-    "id": "quan_doan_nhan_thuong_boss",
-    "config_key": "clone_guild_boss_reward",
-    "display_name": "Nhận thưởng Boss",
-    "priority": 10105
   }
 ]

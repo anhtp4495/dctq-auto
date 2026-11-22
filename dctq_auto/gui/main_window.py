@@ -550,6 +550,13 @@ class MainWindow(QMainWindow):
             for name in (
                 "clone_daily_check_in",
                 "clone_receive_quoc_van",
+                "clone_maturity_bao_vat",
+                "clone_maturity_tuong_an",
+                "clone_maturity_giuong_co",
+                "clone_maturity_ve_tuong",
+                "clone_maturity_than_binh",
+                "clone_maturity_chien_hon",
+                "clone_maturity_than_tuong",
                 "clone_guild_check_in",
                 "clone_receive_lucky_bag",
                 "clone_guild_fortune",

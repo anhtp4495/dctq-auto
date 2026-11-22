@@ -90,6 +90,52 @@ class CloneTab(QWidget):
         phuc_loi_layout.addWidget(self.clone_daily_check_in)
         layout.addWidget(phuc_loi_group)
 
+        maturity_group = QGroupBox("Trưởng thành")
+        maturity_layout = QVBoxLayout(maturity_group)
+        self.clone_maturity_bao_vat = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_maturity_bao_vat", "Bảo vật"
+            )
+        )
+        maturity_layout.addWidget(self.clone_maturity_bao_vat)
+        self.clone_maturity_tuong_an = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_maturity_tuong_an", "Tướng ấn"
+            )
+        )
+        maturity_layout.addWidget(self.clone_maturity_tuong_an)
+        self.clone_maturity_giuong_co = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_maturity_giuong_co", "Giương cờ"
+            )
+        )
+        maturity_layout.addWidget(self.clone_maturity_giuong_co)
+        self.clone_maturity_ve_tuong = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_maturity_ve_tuong", "Vệ tướng"
+            )
+        )
+        maturity_layout.addWidget(self.clone_maturity_ve_tuong)
+        self.clone_maturity_than_binh = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_maturity_than_binh", "Thần binh"
+            )
+        )
+        maturity_layout.addWidget(self.clone_maturity_than_binh)
+        self.clone_maturity_chien_hon = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_maturity_chien_hon", "Chiến hồn"
+            )
+        )
+        maturity_layout.addWidget(self.clone_maturity_chien_hon)
+        self.clone_maturity_than_tuong = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_maturity_than_tuong", "Thần tượng"
+            )
+        )
+        maturity_layout.addWidget(self.clone_maturity_than_tuong)
+        layout.addWidget(maturity_group)
+
         guild_group = QGroupBox("Quân đoàn")
         guild_layout = QVBoxLayout(guild_group)
         self.clone_guild_check_in = QCheckBox(
@@ -437,6 +483,13 @@ class CloneTab(QWidget):
             "clone_login": True,
             "clone_daily_check_in": self.clone_daily_check_in.isChecked(),
             "clone_receive_quoc_van": self.clone_receive_quoc_van.isChecked(),
+            "clone_maturity_bao_vat": self.clone_maturity_bao_vat.isChecked(),
+            "clone_maturity_tuong_an": self.clone_maturity_tuong_an.isChecked(),
+            "clone_maturity_giuong_co": self.clone_maturity_giuong_co.isChecked(),
+            "clone_maturity_ve_tuong": self.clone_maturity_ve_tuong.isChecked(),
+            "clone_maturity_than_binh": self.clone_maturity_than_binh.isChecked(),
+            "clone_maturity_chien_hon": self.clone_maturity_chien_hon.isChecked(),
+            "clone_maturity_than_tuong": self.clone_maturity_than_tuong.isChecked(),
             "clone_reward_daily_missions": self.clone_reward_daily_missions.isChecked(),
             "clone_guild_check_in": self.clone_guild_check_in.isChecked(),
             "clone_receive_lucky_bag": self.clone_receive_lucky_bag.isChecked(),
