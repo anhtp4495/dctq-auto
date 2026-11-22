@@ -4,8 +4,9 @@ import time
 
 from dctq_auto.config.constants import (
     _TEMPLATE_MAIN_TAM_QUOC_LENH,
-    _TEMPLATE_TAM_QUOC_LENH_MAN_HINH_CHINH,
     _TEMPLATE_MAIN_CHUA_NHAN_TAM_QUOC_LENH,
+    _TEMPLATE_TAM_QUOC_LENH_QUE_BOI,
+    _TEMPLATE_TAM_QUOC_LENH_DIEM_BINH,
 )
 from dctq_auto.tasks.common.battle.battle_utils import click_match, match, screen_bgr
 from dctq_auto.vision.template_store import get_templates
@@ -15,8 +16,9 @@ _MAX_TRIES = 15
 _POLL_INTERVAL = 1.5
 _OPEN_TEMPLATES = (
     _TEMPLATE_MAIN_TAM_QUOC_LENH,
-    _TEMPLATE_TAM_QUOC_LENH_MAN_HINH_CHINH,
     _TEMPLATE_MAIN_CHUA_NHAN_TAM_QUOC_LENH,
+    _TEMPLATE_TAM_QUOC_LENH_QUE_BOI,
+    _TEMPLATE_TAM_QUOC_LENH_DIEM_BINH,
 )
 
 
@@ -61,8 +63,11 @@ def run(worker, account, device, ocr_client, log, current_try=1) -> bool:
         if found is None:
             continue
 
-        if template_name == _TEMPLATE_TAM_QUOC_LENH_MAN_HINH_CHINH:
-            log(f"[{account.display_name}] Đã mở màn hình Tam Quốc Lệnh.")
+        if template_name in (
+            _TEMPLATE_TAM_QUOC_LENH_QUE_BOI,
+            _TEMPLATE_TAM_QUOC_LENH_DIEM_BINH,
+        ):
+            log(f"[{account.display_name}] Đã xác nhận mở Tam Quốc Lệnh.")
             return True
 
         try:
