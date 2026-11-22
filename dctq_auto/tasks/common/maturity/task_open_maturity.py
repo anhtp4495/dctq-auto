@@ -98,10 +98,9 @@ def run(worker, account, device, ocr_client, log) -> bool:
         log(f"[{account.display_name}] Đã dừng khi mở màn hình Trưởng Thành.")
         return False
 
-    templates = get_templates(_OPEN_TEMPLATES + (_TEMPLATE_MAIN_CHUA_NHAN_TRUONG_THANH,))
+    templates = get_templates(_OPEN_TEMPLATES)
     maturity_entry = templates.get(_TEMPLATE_MAIN_LOI_VAO_TUONG_AN)
     main_entry = templates.get(_TEMPLATE_MAIN_TRUONG_THANH)
-    unclaimed_template = templates.get(_TEMPLATE_MAIN_CHUA_NHAN_TRUONG_THANH)
 
     if maturity_entry is None:
         log(f"[{account.display_name}] Không tải được template lối vào Tướng Ấn.")
@@ -109,10 +108,6 @@ def run(worker, account, device, ocr_client, log) -> bool:
     if main_entry is None:
         log(f"[{account.display_name}] Không tải được template lối vào Trưởng Thành.")
         return False
-    if unclaimed_template is None:
-        log(f"[{account.display_name}] Không tải được template ô chưa nhận Trưởng Thành.")
-        return False
-
     for attempt in range(_MAX_OPEN_TRIES):
         if not worker._wait_if_paused():
             log(f"[{account.display_name}] Đã dừng khi mở màn hình Trưởng Thành.")
@@ -135,6 +130,18 @@ def run(worker, account, device, ocr_client, log) -> bool:
                 f"[{account.display_name}] Đã xác định Trưởng Thành đang mở "
                 f"(lần kiểm tra {attempt + 1}/{_MAX_OPEN_TRIES})."
             )
+            unclaimed_templates = get_templates(
+                (_TEMPLATE_MAIN_CHUA_NHAN_TRUONG_THANH,)
+            )
+            unclaimed_template = unclaimed_templates.get(
+                _TEMPLATE_MAIN_CHUA_NHAN_TRUONG_THANH
+            )
+            if unclaimed_template is None:
+                log(
+                    f"[{account.display_name}] "
+                    "Không tải được template ô chưa nhận Trưởng Thành."
+                )
+                return False
             try:
                 _scan_unclaimed_cells(
                     screen, unclaimed_template, account, log
