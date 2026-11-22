@@ -907,7 +907,15 @@
         "nhan_thuong_nhanh": {
           "description": "[Tam Quốc Lệnh] - Nhận thưởng nhanh",
           "rect": { "top": 948, "left": 1307, "right": 1487, "bottom": 1020},
-          "search_rect": { "top": 931, "left": 942, "right": 1208, "bottom": 1047},
+          "search_rect": { "top": 924, "left": 407, "right": 1259, "bottom": 1057},
+          "threshold": 0.98,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "nhan_thuong_nhanh2": {
+          "description": "[Tam Quốc Lệnh] - Nhận thưởng nhanh",
+          "rect": { "top": 969, "left": 1584, "right": 1744, "bottom": 1009},
+          "search_rect": { "top": 924, "left": 407, "right": 1259, "bottom": 1057},
           "threshold": 0.98,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
