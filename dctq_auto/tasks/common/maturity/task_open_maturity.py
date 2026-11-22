@@ -63,10 +63,7 @@ def _scan_unclaimed_cells(screen, template, account, log) -> int:
                 f"[Ô {row + 1}-{column + 1}]"
             )
             if found is None:
-                log(
-                    f"{context} Ô {cell_number}/"
-                    f"{_MAX_GRID_ROWS * _MAX_GRID_COLUMNS}: không khớp."
-                )
+                log(f"{context}: không khớp.")
                 continue
 
             matched_count += 1
@@ -78,11 +75,7 @@ def _scan_unclaimed_cells(screen, template, account, log) -> int:
                 template=template,
                 match=found,
             )
-            log(
-                f"{context} Ô {cell_number}/"
-                f"{_MAX_GRID_ROWS * _MAX_GRID_COLUMNS}: khớp, "
-                f"trung điểm ({x}, {y})."
-            )
+            log(f"{context}: khớp, trung điểm ({x}, {y}).")
 
     log(
         f"[{account.display_name}] [Trưởng thành] "
