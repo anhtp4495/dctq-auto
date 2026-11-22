@@ -1564,7 +1564,7 @@
           "description": "[Màn hình chính] - [Chúa công] - Phong hầu",
           "rect": { "top": 197, "left": 358, "right": 526, "bottom": 257},
           "search_rect": { "top": 14, "left": 319, "right": 563, "bottom": 107},
-          "threshold": 0.85,
+          "threshold": 0.95,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
