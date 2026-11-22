@@ -912,11 +912,20 @@
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
+        "thuong_nhiem_vu": {
+          "description": "[Tam Quốc Lệnh] - Thưởng/Nhiệm vụ",
+          "rect": { "top": 277, "left": 663, "right": 699, "bottom": 311},
+          "search_rect": { "top": 117, "left": 413, "right": 1120, "bottom": 266},
+          "threshold": 0.85,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
         "que_boi_diem_binh_mien_phi": {
           "description": "[Tam Quốc Lệnh] - Quẻ bói/Điểm Binh",
-          "rect": { "top": 271, "left": 663, "right": 706, "bottom": 311},
+          "rect": { "top": 277, "left": 663, "right": 699, "bottom": 311},
           "search_rect": { "top": 235, "left": 105, "right": 435, "bottom": 578},
           "threshold": 0.85,
+          "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "que_boi": {
