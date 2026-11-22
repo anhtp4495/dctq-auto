@@ -1224,14 +1224,15 @@ class MainWindow(QMainWindow):
                     QMessageBox.warning(self, "Danh sách tài khoản không hợp lệ", str(exc))
                     return
             clone_total = sum(account.enabled for account in accounts)
-            selected = [name for name in (
-                "clone_login", "clone_daily_check_in", "clone_guild_check_in",
-                "clone_receive_lucky_bag", "clone_guild_fortune",
-                "clone_guild_donate_knb", "clone_guild_donate_rations",
-                "clone_guild_boss_reward", "clone_buy_fortune_lot", "clone_quan_su_giao_tranh", "clone_logout",
-            ) if config.get(name)]
-            if not selected:
-                QMessageBox.warning(self, "Chưa chọn nhiệm vụ", "Hãy chọn ít nhất một nhiệm vụ trong tab Clone.")
+            from dctq_auto.config.step_registry import get_clone_step_registry
+
+            steps = get_clone_step_registry().get_enabled_steps(config)
+            if len(steps) == 0:
+                QMessageBox.warning(
+                    self,
+                    "Chưa chọn nhiệm vụ",
+                    "Hãy chọn ít nhất một nhiệm vụ trong tab Tổng hợp.",
+                )
                 return
             self._log(f"Tab Clone: đã nạp {len(accounts)} tài khoản. Mật khẩu không được ghi vào nhật ký.")
 
