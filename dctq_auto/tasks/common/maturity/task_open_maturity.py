@@ -26,6 +26,8 @@ _GRID_CELL_RECT_SIZE = 60
 _MAX_OPEN_TRIES = 2
 _OPEN_POLL_INTERVAL = 2.0
 
+_PROCESSABLE_TEMPLATE_IDS = {"chua_cong", "ve_tuong", "than_binh", "chien_hon", "tuong_an"}
+
 _OPEN_TEMPLATES = (
     _TEMPLATE_MAIN_LOI_VAO_TUONG_AN,
     _TEMPLATE_MAIN_TRUONG_THANH,
@@ -93,7 +95,7 @@ def _classify_cell(cell_image, source_image, templates):
 
 def _scan_unclaimed_cells(
     screen, template, source_image, classification_templates, account, log
-) -> list[tuple[int, int, int, int]]:
+) -> list[tuple[str, tuple[int, int, int, int], int, int]]:
     """Quét 12 ô chưa nhận và phân loại từng ô đã khớp."""
     top, left, right, bottom = template.search_rect
     width = right - left
@@ -144,8 +146,11 @@ def _scan_unclaimed_cells(
                 )
                 continue
 
-            rects.append(rect)
             label = _CLASSIFICATION_LABELS[matched_template.id]
+            if matched_template.id not in _PROCESSABLE_TEMPLATE_IDS:
+                log(f"{context}: bỏ qua [{label}].")
+                continue
+            rects.append((matched_template.id, rect, row + 1, column + 1))
             log(
                 f"{context}: khớp "
                 f"(score={classification_match.score:.3f}, "
@@ -160,7 +165,7 @@ def _scan_unclaimed_cells(
     return rects
 
 
-def run(worker, account, device, ocr_client, log) -> tuple[bool, list[tuple[int, int, int, int]]]:
+def run(worker, account, device, ocr_client, log) -> tuple[bool, list[tuple[str, tuple[int, int, int, int], int, int]]]:
     """Nhận diện màn hình Trưởng Thành, mở nếu cần và quét 12 ô."""
     log(f"[{account.display_name}] Bắt đầu mở màn hình Trưởng Thành.")
     if not worker._wait_if_paused():
