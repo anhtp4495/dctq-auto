@@ -24,8 +24,8 @@ _TEMPLATES = (
     _TEMPLATE_TAM_QUOC_LENH_NHAN_THUONG_NHANH2,
     _TEMPLATE_TAM_QUOC_LENH_THUONG_NHIEM_VU,
     _TEMPLATE_TAM_QUOC_LENH_HOP_THOAI_SU_DUNG_KNB_DONG,
+    _TEMPLATE_TAM_QUOC_LENH_QUE_BOI_DIEM_BINH_MIEN_PHI,
 )
-_TERMINAL_TEMPLATE = _TEMPLATE_TAM_QUOC_LENH_QUE_BOI_DIEM_BINH_MIEN_PHI
 
 
 def run(worker, account, device, log, current_try=1) -> bool:
@@ -90,28 +90,8 @@ def run(worker, account, device, log, current_try=1) -> bool:
             current_try=current_try + 1,
         )
 
-    # Quẻ Bói chỉ được dùng làm dấu hiệu xác nhận đã nhận xong,
-    # không phải nút nhận thưởng để click.
-    terminal_template = templates.get(_TERMINAL_TEMPLATE)
-    if terminal_template is None:
-        log(
-            f"[{account.display_name}] Không tải được template "
-            f"{_TERMINAL_TEMPLATE}; không thể xác nhận đã nhận xong."
-        )
-        return False
-
-    terminal_match = match(
-        screen, terminal_template, account=account, log=log
-    )
-    if terminal_match is not None:
-        log(
-            f"[{account.display_name}] Đã nhận xong thưởng Tam Quốc Lệnh "
-            f"(xác nhận bằng [{_TERMINAL_TEMPLATE}])."
-        )
-        return True
-
     log(
-        f"[{account.display_name}] Không còn nút nhận thưởng nhưng cũng chưa "
-        f"nhận diện được trạng thái hoàn tất [{_TERMINAL_TEMPLATE}]."
+        f"[{account.display_name}] Không còn template nhận thưởng nào xuất hiện; "
+        "hoàn tất nhận thưởng Tam Quốc Lệnh."
     )
-    return False
+    return True
