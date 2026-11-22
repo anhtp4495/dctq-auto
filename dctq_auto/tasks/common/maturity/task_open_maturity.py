@@ -15,7 +15,7 @@ from dctq_auto.vision.template_store import get_templates
 
 _MAX_GRID_ROWS = 3
 _MAX_GRID_COLUMNS = 4
-_GRID_CELL_RECT_SIZE = 20
+_GRID_CELL_RECT_SIZE = 60
 _MAX_OPEN_TRIES = 2
 _OPEN_POLL_INTERVAL = 2.0
 
