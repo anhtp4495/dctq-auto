@@ -93,12 +93,13 @@ def _classify_cell(cell_image, source_image, templates):
 
 def _scan_unclaimed_cells(
     screen, template, source_image, classification_templates, account, log
-) -> int:
+) -> list[tuple[int, int, int, int]]:
     """Quét 12 ô chưa nhận và phân loại từng ô đã khớp."""
     top, left, right, bottom = template.search_rect
     width = right - left
     height = bottom - top
     matched_count = 0
+    rects = []
 
     for row in range(_MAX_GRID_ROWS):
         cell_top = top + row * height // _MAX_GRID_ROWS
@@ -143,6 +144,7 @@ def _scan_unclaimed_cells(
                 )
                 continue
 
+            rects.append(rect)
             label = _CLASSIFICATION_LABELS[matched_template.id]
             log(
                 f"{context}: khớp "
@@ -155,15 +157,15 @@ def _scan_unclaimed_cells(
         f"[{account.display_name}] [Trưởng thành] "
         f"Tìm thấy {matched_count}/{_MAX_GRID_ROWS * _MAX_GRID_COLUMNS} ô chưa nhận."
     )
-    return matched_count
+    return rects
 
 
-def run(worker, account, device, ocr_client, log) -> bool:
+def run(worker, account, device, ocr_client, log) -> tuple[bool, list[tuple[int, int, int, int]]]:
     """Nhận diện màn hình Trưởng Thành, mở nếu cần và quét 12 ô."""
     log(f"[{account.display_name}] Bắt đầu mở màn hình Trưởng Thành.")
     if not worker._wait_if_paused():
         log(f"[{account.display_name}] Đã dừng khi mở màn hình Trưởng Thành.")
-        return False
+        return False, []
 
     templates = get_templates(_OPEN_TEMPLATES)
     maturity_entry = templates.get(_TEMPLATE_MAIN_LOI_VAO_TUONG_AN)
@@ -225,7 +227,7 @@ def run(worker, account, device, ocr_client, log) -> bool:
                 )
                 return False
             try:
-                _scan_unclaimed_cells(
+                rects = _scan_unclaimed_cells(
                     screen,
                     unclaimed_template,
                     source_image,
@@ -236,7 +238,7 @@ def run(worker, account, device, ocr_client, log) -> bool:
             except Exception as exc:
                 log(f"[{account.display_name}] Lỗi quét 12 ô Trưởng Thành: {exc}")
                 return False
-            return True
+            return True, rects
 
         log(
             f"[{account.display_name}] Không tìm thấy lối vào Tướng Ấn "
