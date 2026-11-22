@@ -79,7 +79,7 @@ def _run_chua_cong(worker, account, device, log) -> bool:
                 continue
 
             # Thứ tự ưu tiên theo luồng thao tác đã thống nhất.
-            for template_name in _CHUA_CONG_TEMPLATES[:-1]:
+            for template_name in _CHUA_CONG_TEMPLATES[:-2]:
                 template = templates[template_name]
                 found = _find_template(screen, template)
                 if found is None:
@@ -90,8 +90,6 @@ def _run_chua_cong(worker, account, device, log) -> bool:
                     f"[{account.display_name}] [Trưởng thành] [Chúa công] "
                     f"Click {template_name.rsplit('/', 1)[-1]} tại ({x}, {y})."
                 )
-                if template_name == _TEMPLATE_MATURITY_CHUA_CONG_THOAT:
-                    return True
                 break
             else:
                 exit_template = templates[_TEMPLATE_MATURITY_CHUA_CONG_THOAT]
