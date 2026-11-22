@@ -6,6 +6,7 @@ from dctq_auto.config.constants import (
     _TEMPLATE_MATURITY_CHUA_CONG_CHUA_CHON_CHIEN_KY,
     _TEMPLATE_MATURITY_CHUA_CONG_GIUONG_CO,
     _TEMPLATE_MATURITY_CHUA_CONG_THOAT,
+    _TEMPLATE_MAIN_TRUONG_THANH,
 )
 from dctq_auto.tasks.common.battle.battle_utils import click_match, screen_bgr
 from dctq_auto.vision.template_matching import match_template
@@ -19,6 +20,7 @@ _CHUA_CONG_TEMPLATES = (
     _TEMPLATE_MATURITY_CHUA_CONG_CHUA_CHON_CHIEN_KY,
     _TEMPLATE_MATURITY_CHUA_CONG_GIUONG_CO,
     _TEMPLATE_MATURITY_CHUA_CONG_THOAT,
+    _TEMPLATE_MAIN_TRUONG_THANH,
 )
 
 _LABELS = {
@@ -52,6 +54,7 @@ def _run_chua_cong(worker, account, device, log) -> bool:
         )
         return False
 
+    exit_clicked = False
     for attempt in range(_MAX_POLL_TRIES):
         if not worker._wait_if_paused():
             log(f"[{account.display_name}] Đã dừng khi xử lý Chúa công.")
@@ -59,8 +62,24 @@ def _run_chua_cong(worker, account, device, log) -> bool:
 
         try:
             screen = screen_bgr(device)
+            if exit_clicked:
+                main_template = templates[_TEMPLATE_MAIN_TRUONG_THANH]
+                if _find_template(screen, main_template) is not None:
+                    log(
+                        f"[{account.display_name}] [Trưởng thành] [Chúa công] "
+                        "Đã xác nhận quay về màn hình Trưởng Thành."
+                    )
+                    return True
+                log(
+                    f"[{account.display_name}] [Trưởng thành] [Chúa công] "
+                    f"Đang chờ màn hình Trưởng Thành "
+                    f"(lần {attempt + 1}/{_MAX_POLL_TRIES})."
+                )
+                time.sleep(_POLL_INTERVAL)
+                continue
+
             # Thứ tự ưu tiên theo luồng thao tác đã thống nhất.
-            for template_name in _CHUA_CONG_TEMPLATES:
+            for template_name in _CHUA_CONG_TEMPLATES[:-1]:
                 template = templates[template_name]
                 found = _find_template(screen, template)
                 if found is None:
@@ -75,10 +94,20 @@ def _run_chua_cong(worker, account, device, log) -> bool:
                     return True
                 break
             else:
-                log(
-                    f"[{account.display_name}] [Trưởng thành] [Chúa công] "
-                    f"Chưa khớp trạng thái (lần {attempt + 1}/{_MAX_POLL_TRIES})."
-                )
+                exit_template = templates[_TEMPLATE_MATURITY_CHUA_CONG_THOAT]
+                found = _find_template(screen, exit_template)
+                if found is not None:
+                    x, y = click_match(device, found)
+                    exit_clicked = True
+                    log(
+                        f"[{account.display_name}] [Trưởng thành] [Chúa công] "
+                        f"Click thoát tại ({x}, {y}); chờ xác nhận màn hình Trưởng Thành."
+                    )
+                else:
+                    log(
+                        f"[{account.display_name}] [Trưởng thành] [Chúa công] "
+                        f"Chưa khớp trạng thái (lần {attempt + 1}/{_MAX_POLL_TRIES})."
+                    )
         except Exception as exc:
             log(f"[{account.display_name}] Lỗi xử lý Chúa công: {exc}")
             return False
