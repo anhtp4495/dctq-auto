@@ -14,6 +14,13 @@ from dctq_auto.vision.template_store import get_templates
 class FriendPoller(BaseMaturityPoller):
     """Detects the friends list entry, free heart gift and exit."""
 
+    category_key = "ban_be"
+    progress_steps = (
+        ("loi_vao", "Lối vào danh sách bạn bè"),
+        ("mien_phi", "Tặng tim"),
+        ("thoat", "Thoát màn hình Bạn bè"),
+    )
+
     templates = (
         _TEMPLATE_MATURITY_BAN_BE_LOI_VAO,
         _TEMPLATE_MATURITY_BAN_BE_MIEN_PHI,
@@ -22,6 +29,7 @@ class FriendPoller(BaseMaturityPoller):
     )
 
     def __init__(self):
+        super().__init__()
         self.loaded_templates = get_templates(self.templates)
         missing = [
             name for name in self.templates
@@ -29,7 +37,6 @@ class FriendPoller(BaseMaturityPoller):
         ]
         if missing:
             raise ValueError(f"Thiếu template: {', '.join(missing)}")
-        self.waiting_for_main = False
 
     def check(self, context) -> dict | None:
         account = context["account"]
