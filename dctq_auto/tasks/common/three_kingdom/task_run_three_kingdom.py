@@ -17,7 +17,7 @@ from dctq_auto.tasks.common.battle.battle_utils import click_match, match, scree
 from dctq_auto.vision.template_store import get_templates
 
 
-_MAX_TRIES = 6
+_MAX_MISSES = 6
 _POLL_INTERVAL = 0.8
 _TEMPLATES = (
     _TEMPLATE_TAM_QUOC_LENH_MIEN_PHI,
@@ -33,14 +33,15 @@ _TEMPLATES = (
 
 
 def run(worker, account, device, log, current_try=1) -> bool:
-    """Nhấn lần lượt các mục nhận thưởng với số lần thử có giới hạn."""
+    """Nhấn lần lượt các mục nhận thưởng; chỉ tính lần quét không phát hiện trạng thái."""
 
     if current_try == 1:
         log(f"[{account.display_name}] Bắt đầu nhận thưởng Tam Quốc Lệnh.")
 
     templates = get_templates(_TEMPLATES)
+    miss_count = current_try - 1
 
-    for try_number in range(current_try, _MAX_TRIES + 1):
+    while miss_count < _MAX_MISSES:
         if not worker._wait_if_paused():
             log(f"[{account.display_name}] Đã dừng khi đang nhận thưởng Tam Quốc Lệnh.")
             return False
@@ -93,17 +94,16 @@ def run(worker, account, device, log, current_try=1) -> bool:
             break
 
         if not action_found:
+            miss_count += 1
             log(
-                f"[{account.display_name}] Không tìm thấy nút nhận thưởng "
-                "hoặc trạng thái hoàn tất Tam Quốc Lệnh."
+                f"[{account.display_name}] Không phát hiện trạng thái nhận thưởng "
+                f"nào ({miss_count}/{_MAX_MISSES})."
             )
-            return False
 
-        if try_number < _MAX_TRIES:
-            time.sleep(_POLL_INTERVAL)
+        time.sleep(_POLL_INTERVAL)
 
     log(
-        f"[{account.display_name}] Đã đạt giới hạn {_MAX_TRIES} lần thử "
-        "khi nhận thưởng Tam Quốc Lệnh."
+        f"[{account.display_name}] Đã đạt giới hạn {_MAX_MISSES} lần quét "
+        "không phát hiện trạng thái khi nhận thưởng Tam Quốc Lệnh."
     )
     return False
