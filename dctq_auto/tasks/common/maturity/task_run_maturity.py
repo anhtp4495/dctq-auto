@@ -1,8 +1,12 @@
 """Xử lý các ô Trưởng Thành đã được phân loại."""
 
+import time
+
 from dctq_auto.tasks.common.battle.battle_utils import click_match
 from dctq_auto.tasks.common.maturity.polling import create_poller
 
+
+_POLL_TIMEOUT_SECONDS = 180
 
 _LABELS = {
     "chua_cong": "Chúa công",
@@ -46,11 +50,12 @@ def _handle_lord_observation(observation, poller, context) -> bool:
 
 
 def _run_poller(poller, context) -> bool:
-    """Polling liên tục cho đến khi hoàn tất hoặc có yêu cầu dừng."""
+    """Polling tối đa 3 phút hoặc đến khi hoàn tất."""
     account = context["account"]
     log = context["log"]
+    deadline = time.monotonic() + _POLL_TIMEOUT_SECONDS
 
-    while True:
+    while time.monotonic() < deadline:
         observation = poller.poll(context)
         if observation is None:
             return False
@@ -65,6 +70,13 @@ def _run_poller(poller, context) -> bool:
             continue
 
         _handle_lord_observation(observation, poller, context)
+
+    log(
+        f"[{account.display_name}] [Trưởng thành] "
+        f"[{context.get('label', 'Chúa công')}] "
+        "Quá thời gian polling tối đa 3 phút."
+    )
+    return False
 
 
 def run(worker, account, device, rects, log) -> bool:
