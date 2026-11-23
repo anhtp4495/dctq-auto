@@ -45,34 +45,42 @@ def _run_poller(poller, context) -> bool:
             )
             continue
 
-        # Ưu tiên xử lý theo đúng thứ tự của luồng Chúa công.
-        chua_cong = observation.get("chua_cong", {})
-        actions = (
-            ("chua_chon_chien_ky", "Chưa chọn Chiến kỳ"),
-            ("giuong_co", "Giương cờ"),
-            ("thoat", "Thoát màn hình Chúa công"),
-        )
-        for key, label in actions:
-            found = chua_cong.get(key)
-            if found is None:
-                continue
+        chua_cong_found = observation.get("chua_cong")
+        handled = False
 
-            x, y = click_match(context["device"], found)
-            log(
-                f"[{account.display_name}] [Trưởng thành] [Chúa công] "
-                f"Click {label} tại ({x}, {y})."
-            )
-            if key == "thoat":
+        if chua_cong_found:
+            if chua_cong_found.get("chua_chon_chien_ky") is not None:
+                found = chua_cong_found["chua_chon_chien_ky"]
+                label = "Chưa chọn Chiến kỳ"
+            elif chua_cong_found.get("giuong_co") is not None:
+                found = chua_cong_found["giuong_co"]
+                label = "Giương cờ"
+            elif chua_cong_found.get("thoat") is not None:
+                found = chua_cong_found["thoat"]
+                label = "Thoát màn hình Chúa công"
                 poller.waiting_for_main = True
-            break
-        else:
+            else:
+                found = None
+                label = None
+
+            if found is not None:
+                x, y = click_match(context["device"], found)
+                log(
+                    f"[{account.display_name}] [Trưởng thành] [Chúa công] "
+                    f"Click {label} tại ({x}, {y})."
+                )
+                handled = True
+
+        if not handled:
             log(
-                f"[{account.display_name}] [Trưởng thành] [Chúa công] "
+                f"[{account.display_name}] [Trưởng thành] "
+                f"[{context.get('label', 'Chúa công')}] "
                 f"Chưa khớp trạng thái (lần {attempt}/{_MAX_POLL_TRIES})."
             )
 
     log(
-        f"[{account.display_name}] [Trưởng thành] [Chúa công] "
+        f"[{account.display_name}] [Trưởng thành] "
+        f"[{context.get('label', 'Chúa công')}] "
         f"Không hoàn tất sau {_MAX_POLL_TRIES} lần polling."
     )
     return False
