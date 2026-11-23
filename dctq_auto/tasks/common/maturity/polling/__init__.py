@@ -1,12 +1,12 @@
 """Các poller theo category của Trưởng Thành."""
 
 from dctq_auto.tasks.common.maturity.polling.lord_poller import LordPoller
-from dctq_auto.tasks.common.maturity.polling.treasure_poller import TreasurePoller
+from dctq_auto.tasks.common.maturity.polling.divine_weapon_poller import DivineWeaponPoller
 
 
 _POLLERS = {
     "chua_cong": LordPoller,
-    "than_binh": TreasurePoller,
+    "than_binh": DivineWeaponPoller,
 }
 
 
