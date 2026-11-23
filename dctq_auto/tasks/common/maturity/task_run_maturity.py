@@ -136,6 +136,36 @@ def _handle_soul_observation(observation, poller, context) -> bool:
     return False
 
 
+def _handle_tuong_an_observation(observation, poller, context) -> bool:
+    """Xử lý trạng thái quan sát được trong luồng Tướng ấn."""
+    tuong_an_found = observation.get("tuong_an")
+    if not tuong_an_found:
+        return False
+
+    actions = (
+        ("loi_vao", "Thăm dò lãnh địa"),
+        ("mien_phi", "Miễn phí"),
+        ("an_cho_trong_de_thoat", "Ấn chỗ trống để thoát"),
+        ("thoat", "Thoát màn hình Tướng ấn"),
+    )
+    for key, label in actions:
+        found = tuong_an_found.get(key)
+        if found is None:
+            continue
+
+        x, y = click_match(context["device"], found)
+        context["log"](
+            f"[{context['account'].display_name}] [Trưởng thành] [Tướng ấn] "
+            f"Click {label} tại ({x}, {y})."
+        )
+        if key == "thoat":
+            poller.waiting_for_main = True
+        return True
+
+    return False
+
+
+
 def _run_poller(poller, context) -> bool:
     """Polling tối đa 3 phút hoặc đến khi hoàn tất."""
     account = context["account"]
@@ -164,6 +194,8 @@ def _run_poller(poller, context) -> bool:
             _handle_guardian_observation(observation, poller, context)
         elif observation.get("chien_hon") is not None:
             _handle_soul_observation(observation, poller, context)
+        elif observation.get("tuong_an") is not None:
+            _handle_tuong_an_observation(observation, poller, context)
 
     log(
         f"[{account.display_name}] [Trưởng thành] "
