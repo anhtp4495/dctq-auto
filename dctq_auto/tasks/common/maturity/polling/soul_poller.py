@@ -15,6 +15,14 @@ from dctq_auto.vision.template_store import get_templates
 class SoulPoller(BaseMaturityPoller):
     """Nhận diện lối vào, miễn phí, thoát popup và thoát màn hình Chiến hồn."""
 
+    category_key = "chien_hon"
+    progress_steps = (
+        ("loi_vao", "Lối vào Chiến hồn"),
+        ("mien_phi", "Miễn phí"),
+        ("an_cho_trong_de_thoat", "Ấn chỗ trống để thoát"),
+        ("thoat", "Thoát màn hình Chiến hồn"),
+    )
+
     templates = (
         _TEMPLATE_MATURITY_CHIEN_HON_LOI_VAO,
         _TEMPLATE_MATURITY_CHIEN_HON_MIEN_PHI,
@@ -24,6 +32,7 @@ class SoulPoller(BaseMaturityPoller):
     )
 
     def __init__(self):
+        super().__init__()
         self.loaded_templates = get_templates(self.templates)
         missing = [
             name for name in self.templates
@@ -31,7 +40,6 @@ class SoulPoller(BaseMaturityPoller):
         ]
         if missing:
             raise ValueError(f"Thiếu template: {', '.join(missing)}")
-        self.waiting_for_main = False
 
     def check(self, context) -> dict | None:
         account = context["account"]
