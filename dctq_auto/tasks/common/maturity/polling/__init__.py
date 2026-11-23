@@ -1,10 +1,10 @@
 """Các poller theo category của Trưởng Thành."""
 
-from dctq_auto.tasks.common.maturity.polling.chua_cong_poller import ChuaCongPoller
+from dctq_auto.tasks.common.maturity.polling.lord_poller import LordPoller
 
 
 _POLLERS = {
-    "chua_cong": ChuaCongPoller,
+    "chua_cong": LordPoller,
 }
 
 
