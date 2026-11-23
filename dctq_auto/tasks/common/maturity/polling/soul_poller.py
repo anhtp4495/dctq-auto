@@ -1,4 +1,4 @@
-"""Poller xử lý category Soul trong Trưởng Thành."""
+"""Poller cho tính năng Chiến Hồn, category: chien_hon."""
 
 from dctq_auto.config.constants import (
     _TEMPLATE_MAIN_TRUONG_THANH,
