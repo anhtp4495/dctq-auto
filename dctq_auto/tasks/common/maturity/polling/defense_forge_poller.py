@@ -1,4 +1,4 @@
-"""Poller for the Defense Forge maturity category."""
+"""Poller cho tính năng Thần Tượng, category: than_tuong."""
 
 from dctq_auto.config.constants import (
     _TEMPLATE_MAIN_TRUONG_THANH,
