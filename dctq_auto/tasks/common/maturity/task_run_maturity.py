@@ -78,7 +78,6 @@ def _handle_divine_weapon_observation(observation, poller, context) -> bool:
             f"Click {label} tại ({x}, {y})."
         )
         poller.record_action(key, context)
-        poller.record_action(key, context)
         if key == "thoat":
             poller.waiting_for_main = True
         return True
