@@ -49,7 +49,7 @@ def _handle_lord_observation(observation, poller, context) -> bool:
     return True
 
 
-def _handle_treasure_observation(observation, poller, context) -> bool:
+def _handle_divine_weapon_observation(observation, poller, context) -> bool:
     """Xử lý trạng thái quan sát được trong luồng Thần binh."""
     than_binh_found = observation.get("than_binh")
     if not than_binh_found:
@@ -101,7 +101,7 @@ def _run_poller(poller, context) -> bool:
         if observation.get("chua_cong") is not None:
             _handle_lord_observation(observation, poller, context)
         elif observation.get("than_binh") is not None:
-            _handle_treasure_observation(observation, poller, context)
+            _handle_divine_weapon_observation(observation, poller, context)
 
     log(
         f"[{account.display_name}] [Trưởng thành] "
