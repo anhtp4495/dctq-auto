@@ -20,6 +20,33 @@ def _create_poller(category, context):
     return create_poller(category, context)
 
 
+def _handle_lord_observation(observation, poller, context) -> bool:
+    """Xử lý trạng thái quan sát được trong luồng Chúa công."""
+    chua_cong_found = observation.get("chua_cong")
+    if not chua_cong_found:
+        return False
+
+    if chua_cong_found.get("chua_chon_chien_ky") is not None:
+        found = chua_cong_found["chua_chon_chien_ky"]
+        label = "Chưa chọn Chiến kỳ"
+    elif chua_cong_found.get("giuong_co") is not None:
+        found = chua_cong_found["giuong_co"]
+        label = "Giương cờ"
+    elif chua_cong_found.get("thoat") is not None:
+        found = chua_cong_found["thoat"]
+        label = "Thoát màn hình Chúa công"
+        poller.waiting_for_main = True
+    else:
+        return False
+
+    x, y = click_match(context["device"], found)
+    context["log"](
+        f"[{context['account'].display_name}] [Trưởng thành] [Chúa công] "
+        f"Click {label} tại ({x}, {y})."
+    )
+    return True
+
+
 def _run_poller(poller, context) -> bool:
     """Polling và xử lý observation của category."""
     account = context["account"]
@@ -45,33 +72,7 @@ def _run_poller(poller, context) -> bool:
             )
             continue
 
-        chua_cong_found = observation.get("chua_cong")
-        handled = False
-
-        if chua_cong_found:
-            if chua_cong_found.get("chua_chon_chien_ky") is not None:
-                found = chua_cong_found["chua_chon_chien_ky"]
-                label = "Chưa chọn Chiến kỳ"
-            elif chua_cong_found.get("giuong_co") is not None:
-                found = chua_cong_found["giuong_co"]
-                label = "Giương cờ"
-            elif chua_cong_found.get("thoat") is not None:
-                found = chua_cong_found["thoat"]
-                label = "Thoát màn hình Chúa công"
-                poller.waiting_for_main = True
-            else:
-                found = None
-                label = None
-
-            if found is not None:
-                x, y = click_match(context["device"], found)
-                log(
-                    f"[{account.display_name}] [Trưởng thành] [Chúa công] "
-                    f"Click {label} tại ({x}, {y})."
-                )
-                handled = True
-
-        if not handled:
+        if not _handle_lord_observation(observation, poller, context):
             log(
                 f"[{account.display_name}] [Trưởng thành] "
                 f"[{context.get('label', 'Chúa công')}] "
