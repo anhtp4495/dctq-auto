@@ -6,6 +6,7 @@ from dctq_auto.tasks.common.maturity.polling.guardian_poller import GuardianPoll
 from dctq_auto.tasks.common.maturity.polling.soul_poller import SoulPoller
 from dctq_auto.tasks.common.maturity.polling.general_seal_poller import GeneralSealPoller
 from dctq_auto.tasks.common.maturity.polling.defense_forge_poller import DefenseForgePoller
+from dctq_auto.tasks.common.maturity.polling.friend_poller import FriendPoller
 
 
 _POLLERS = {
@@ -15,6 +16,7 @@ _POLLERS = {
     "chien_hon": SoulPoller,
     "tuong_an": GeneralSealPoller,
     "than_tuong": DefenseForgePoller,
+    "ban_be": FriendPoller,
 }
 
 
