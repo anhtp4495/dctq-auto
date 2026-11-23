@@ -1,4 +1,4 @@
-"""Poller for the General Seal maturity category."""
+"""Poller cho tính năng Tướng Ấn, category: tuong_an."""
 
 from dctq_auto.config.constants import (
     _TEMPLATE_MAIN_TRUONG_THANH,
