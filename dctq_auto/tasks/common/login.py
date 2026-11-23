@@ -65,7 +65,7 @@ def _match_account_template(screen_bgr, template):
     )
 
 # Số lần tối đa xác định game đã tải thành công
-_MAX_TRY_DETECT_MAIN_SCREEN = 20
+_MAX_TRY_DETECT_MAIN_SCREEN = 40
 
 def handle_post_login(
     worker, account, device, ocr_client, current_try: int = 1
@@ -129,25 +129,14 @@ def handle_post_login(
 
     if main_match is None:
         if current_try < _MAX_TRY_DETECT_MAIN_SCREEN:
-            worker.log_message.emit(
-                f"[{account.display_name}] Đang chờ màn hình Quân Sự "
-                f"(lần {current_try}/{_MAX_TRY_DETECT_MAIN_SCREEN})."
-            )
-            time.sleep(1)
-            close_knowned_dialog(
-                worker, account, device, ocr_client, worker.log_message.emit, screen_bgr
-            )
-            return handle_post_login(
-                worker, account, device, ocr_client, current_try + 1
-            )
+            close_knowned_dialog(worker, account, device, ocr_client, worker.log_message.emit, screen_bgr)
+            return handle_post_login(worker, account, device, ocr_client, current_try + 1)
 
         worker.log_message.emit(
-            f"[{account.display_name}] Hết lượt chờ màn hình Quân Sự; "
+            f"[{account.display_name}] Hết {_MAX_TRY_DETECT_MAIN_SCREEN} lượt chờ màn hình Quân Sự; "
             "thử đóng dialog đã biết."
         )
-        close_knowned_dialog(
-            worker, account, device, ocr_client, worker.log_message.emit, screen_bgr
-        )
+        close_knowned_dialog(worker, account, device, ocr_client, worker.log_message.emit, screen_bgr)
         return False, "Không nhận diện được màn hình Quân Sự"
 
     report_template_match(
@@ -182,7 +171,7 @@ def handle_post_login(
         try:
             tap_x, tap_y = ButtonPositions().get("main", "open_menu_game")
             device.shell(f"input tap {tap_x} {tap_y}")
-            time.sleep(1)
+            time.sleep(0.3)
             screen_bgr = capture_screen()
         except Exception as exc:
             worker.log_message.emit(
@@ -425,5 +414,4 @@ def login_account(
     if verified is not True:
         return verified, error
 
-    time.sleep(2)
     return handle_post_login(worker, account, device, ocr_client)
