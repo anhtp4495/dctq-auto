@@ -1617,6 +1617,40 @@
           "match_method": "TM_CCOEFF_NORMED"
         }
       }
+    },
+    "nhiem_vu_hang_ngay.ve_tuong": {
+      "source_image": "resources/screens/nhiem_vu_hang_ngay/ve_tuong.png",
+      "templates": {
+        "loi_vao": {
+          "description": "[Màn hình chính] - [Vệ tướng] - Thiên cơ diễn quẻ",
+          "rect": { "top": 197, "left": 358, "right": 526, "bottom": 257},
+          "search_rect": { "top": 14, "left": 319, "right": 563, "bottom": 107},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "mien_phi": {
+          "description": "[Màn hình chính] - [Vệ tướng] - Miễn phí",
+          "rect": { "top": 748, "left": 876, "right": 1038, "bottom": 799},
+          "search_rect": { "top": 696, "left": 818, "right": 1086, "bottom": 832},
+          "threshold": 0.70,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "an_cho_trong_de_thoat": {
+          "description": "[Màn hình chính] - [Vệ tướng] - Ấn chỗ trống để thoát",
+          "rect": { "top": 748, "left": 876, "right": 1038, "bottom": 799},
+          "search_rect": { "top": 696, "left": 818, "right": 1086, "bottom": 832},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "thoat": {
+          "description": "[Màn hình chính] - [Vệ tướng] - Thoát",
+          "rect": { "top": 25, "left": 1842, "right": 1904, "bottom": 91},
+          "search_rect": { "top": 0, "left": 1807, "right": 1919, "bottom": 115},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
     }
   }
 }
