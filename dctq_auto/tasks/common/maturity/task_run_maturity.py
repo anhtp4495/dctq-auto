@@ -107,6 +107,35 @@ def _handle_guardian_observation(observation, poller, context) -> bool:
     return False
 
 
+def _handle_soul_observation(observation, poller, context) -> bool:
+    """Xử lý trạng thái quan sát được trong luồng Chiến hồn."""
+    chien_hon_found = observation.get("chien_hon")
+    if not chien_hon_found:
+        return False
+
+    actions = (
+        ("loi_vao", "Lối vào Chiến hồn"),
+        ("mien_phi", "Miễn phí"),
+        ("an_cho_trong_de_thoat", "Ấn chỗ trống để thoát"),
+        ("thoat", "Thoát màn hình Chiến hồn"),
+    )
+    for key, label in actions:
+        found = chien_hon_found.get(key)
+        if found is None:
+            continue
+
+        x, y = click_match(context["device"], found)
+        context["log"](
+            f"[{context['account'].display_name}] [Trưởng thành] [Chiến hồn] "
+            f"Click {label} tại ({x}, {y})."
+        )
+        if key == "thoat":
+            poller.waiting_for_main = True
+        return True
+
+    return False
+
+
 def _run_poller(poller, context) -> bool:
     """Polling tối đa 3 phút hoặc đến khi hoàn tất."""
     account = context["account"]
@@ -133,6 +162,8 @@ def _run_poller(poller, context) -> bool:
             _handle_divine_weapon_observation(observation, poller, context)
         elif observation.get("ve_tuong") is not None:
             _handle_guardian_observation(observation, poller, context)
+        elif observation.get("chien_hon") is not None:
+            _handle_soul_observation(observation, poller, context)
 
     log(
         f"[{account.display_name}] [Trưởng thành] "
