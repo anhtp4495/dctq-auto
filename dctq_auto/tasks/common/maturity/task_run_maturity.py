@@ -49,6 +49,35 @@ def _handle_lord_observation(observation, poller, context) -> bool:
     return True
 
 
+def _handle_treasure_observation(observation, poller, context) -> bool:
+    """Xử lý trạng thái quan sát được trong luồng Thần binh."""
+    than_binh_found = observation.get("than_binh")
+    if not than_binh_found:
+        return False
+
+    actions = (
+        ("loi_vao", "Lối vào Thần binh"),
+        ("mien_phi", "Miễn phí"),
+        ("an_cho_trong_de_thoat", "Ấn chỗ trống để thoát"),
+        ("thoat", "Thoát màn hình Thần binh"),
+    )
+    for key, label in actions:
+        found = than_binh_found.get(key)
+        if found is None:
+            continue
+
+        x, y = click_match(context["device"], found)
+        context["log"](
+            f"[{context['account'].display_name}] [Trưởng thành] [Thần binh] "
+            f"Click {label} tại ({x}, {y})."
+        )
+        if key == "thoat":
+            poller.waiting_for_main = True
+        return True
+
+    return False
+
+
 def _run_poller(poller, context) -> bool:
     """Polling tối đa 3 phút hoặc đến khi hoàn tất."""
     account = context["account"]
@@ -69,11 +98,14 @@ def _run_poller(poller, context) -> bool:
                 return True
             continue
 
-        _handle_lord_observation(observation, poller, context)
+        if observation.get("chua_cong") is not None:
+            _handle_lord_observation(observation, poller, context)
+        elif observation.get("than_binh") is not None:
+            _handle_treasure_observation(observation, poller, context)
 
     log(
         f"[{account.display_name}] [Trưởng thành] "
-        f"[{context.get('label', 'Chúa công')}] "
+        f"[{context.get('label', 'Trưởng thành')}] "
         "Quá thời gian polling tối đa 3 phút."
     )
     return False
