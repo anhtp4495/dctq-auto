@@ -3,12 +3,14 @@
 from dctq_auto.tasks.common.maturity.polling.lord_poller import LordPoller
 from dctq_auto.tasks.common.maturity.polling.divine_weapon_poller import DivineWeaponPoller
 from dctq_auto.tasks.common.maturity.polling.guardian_poller import GuardianPoller
+from dctq_auto.tasks.common.maturity.polling.soul_poller import SoulPoller
 
 
 _POLLERS = {
     "chua_cong": LordPoller,
     "than_binh": DivineWeaponPoller,
     "ve_tuong": GuardianPoller,
+    "chien_hon": SoulPoller,
 }
 
 
