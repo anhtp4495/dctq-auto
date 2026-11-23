@@ -71,7 +71,7 @@ def _run_poller(poller, context) -> bool:
             )
 
     log(
-        f"[{account['account'].display_name}] [Trưởng thành] [Chúa công] "
+        f"[{account.display_name}] [Trưởng thành] [Chúa công] "
         f"Không hoàn tất sau {_MAX_POLL_TRIES} lần polling."
     )
     return False
