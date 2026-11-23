@@ -15,6 +15,14 @@ from dctq_auto.vision.template_store import get_templates
 class GeneralSealPoller(BaseMaturityPoller):
     """Detects territory exploration, free claim, popup dismissal, and exit."""
 
+    category_key = "tuong_an"
+    progress_steps = (
+        ("loi_vao", "Thăm dò lãnh địa"),
+        ("mien_phi", "Miễn phí"),
+        ("an_cho_trong_de_thoat", "Ấn chỗ trống để thoát"),
+        ("thoat", "Thoát màn hình Tướng ấn"),
+    )
+
     templates = (
         _TEMPLATE_MATURITY_TUONG_AN_LOI_VAO,
         _TEMPLATE_MATURITY_TUONG_AN_MIEN_PHI,
@@ -24,6 +32,7 @@ class GeneralSealPoller(BaseMaturityPoller):
     )
 
     def __init__(self):
+        super().__init__()
         self.loaded_templates = get_templates(self.templates)
         missing = [
             name for name in self.templates
@@ -31,7 +40,6 @@ class GeneralSealPoller(BaseMaturityPoller):
         ]
         if missing:
             raise ValueError(f"Thiếu template: {', '.join(missing)}")
-        self.waiting_for_main = False
 
     def check(self, context) -> dict | None:
         account = context["account"]
