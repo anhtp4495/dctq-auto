@@ -14,6 +14,7 @@ _LABELS = {
     "than_binh": "Thần binh",
     "chien_hon": "Chiến hồn",
     "tuong_an": "Tướng ấn",
+    "than_tuong": "Thần tượng",
 }
 
 
@@ -166,6 +167,35 @@ def _handle_tuong_an_observation(observation, poller, context) -> bool:
 
 
 
+def _handle_defense_forge_observation(observation, poller, context) -> bool:
+    """Handle an observation from the Defense Forge flow."""
+    defense_forge_found = observation.get("than_tuong")
+    if not defense_forge_found:
+        return False
+
+    actions = (
+        ("loi_vao", "Lối vào Thần tượng"),
+        ("mien_phi", "Miễn phí"),
+        ("an_cho_trong_de_thoat", "Ấn chỗ trống để thoát"),
+        ("thoat", "Thoát màn hình Thần tượng"),
+    )
+    for key, label in actions:
+        found = defense_forge_found.get(key)
+        if found is None:
+            continue
+
+        x, y = click_match(context["device"], found)
+        context["log"](
+            f"[{context['account'].display_name}] [Trưởng thành] [Defense Forge] "
+            f"Click {label} tại ({x}, {y})."
+        )
+        if key == "thoat":
+            poller.waiting_for_main = True
+        return True
+
+    return False
+
+
 def _run_poller(poller, context) -> bool:
     """Polling tối đa 3 phút hoặc đến khi hoàn tất."""
     account = context["account"]
@@ -196,6 +226,8 @@ def _run_poller(poller, context) -> bool:
             _handle_soul_observation(observation, poller, context)
         elif observation.get("tuong_an") is not None:
             _handle_tuong_an_observation(observation, poller, context)
+        elif observation.get("than_tuong") is not None:
+            _handle_defense_forge_observation(observation, poller, context)
 
     log(
         f"[{account.display_name}] [Trưởng thành] "
