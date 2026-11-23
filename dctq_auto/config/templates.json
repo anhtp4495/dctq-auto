@@ -1557,10 +1557,78 @@
         }
       }
     },
+    "nhiem_vu_hang_ngay.bao_vat": {
+      "source_image": "resources/screens/nhiem_vu_hang_ngay/bao_vat.png",
+      "templates": {
+        "loi_vao": {
+          "description": "[Màn hình chính] - [Bảo vật] - Chính vụ",
+          "rect": { "top": 197, "left": 358, "right": 526, "bottom": 257},
+          "search_rect": { "top": 14, "left": 319, "right": 563, "bottom": 107},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "mien_phi": {
+          "description": "[Màn hình chính] - [Bảo vật] - Miễn phí",
+          "rect": { "top": 748, "left": 876, "right": 1038, "bottom": 799},
+          "search_rect": { "top": 696, "left": 818, "right": 1086, "bottom": 832},
+          "threshold": 0.70,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "an_cho_trong_de_thoat": {
+          "description": "[Màn hình chính] - [Bảo vật] - Ấn chỗ trống để thoát",
+          "rect": { "top": 748, "left": 876, "right": 1038, "bottom": 799},
+          "search_rect": { "top": 696, "left": 818, "right": 1086, "bottom": 832},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "thoat": {
+          "description": "[Màn hình chính] - [Bảo vật] - Thoát",
+          "rect": { "top": 25, "left": 1842, "right": 1904, "bottom": 91},
+          "search_rect": { "top": 0, "left": 1807, "right": 1919, "bottom": 115},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
+    "nhiem_vu_hang_ngay.tuong_an": {
+      "source_image": "resources/screens/nhiem_vu_hang_ngay/tuong_an.png",
+      "templates": {
+        "loi_vao": {
+          "description": "[Màn hình chính] - [Tướng ấn] - Thăm dò lãnh địa",
+          "rect": { "top": 197, "left": 358, "right": 526, "bottom": 257},
+          "search_rect": { "top": 14, "left": 319, "right": 563, "bottom": 107},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "mien_phi": {
+          "description": "[Màn hình chính] - [Tướng ấn] - Miễn phí",
+          "rect": { "top": 748, "left": 876, "right": 1038, "bottom": 799},
+          "search_rect": { "top": 696, "left": 818, "right": 1086, "bottom": 832},
+          "threshold": 0.70,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "an_cho_trong_de_thoat": {
+          "description": "[Màn hình chính] - [Tướng ấn] - Ấn chỗ trống để thoát",
+          "rect": { "top": 748, "left": 876, "right": 1038, "bottom": 799},
+          "search_rect": { "top": 696, "left": 818, "right": 1086, "bottom": 832},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "thoat": {
+          "description": "[Màn hình chính] - [Tướng ấn] - Thoát",
+          "rect": { "top": 25, "left": 1842, "right": 1904, "bottom": 91},
+          "search_rect": { "top": 0, "left": 1807, "right": 1919, "bottom": 115},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
     "nhiem_vu_hang_ngay.chua_cong": {
       "source_image": "resources/screens/nhiem_vu_hang_ngay/chua_cong.png",
       "templates": {
-        "chua_chon_chien_ky": {
+        "loi_vao": {
           "description": "[Màn hình chính] - [Chúa công] - Phong hầu",
           "rect": { "top": 197, "left": 358, "right": 526, "bottom": 257},
           "search_rect": { "top": 14, "left": 319, "right": 563, "bottom": 107},
@@ -1568,7 +1636,7 @@
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
-        "giuong_co": {
+        "mien_phi": {
           "description": "[Màn hình chính] - [Chúa công] - Giương cờ",
           "rect": { "top": 748, "left": 876, "right": 1038, "bottom": 799},
           "search_rect": { "top": 696, "left": 818, "right": 1086, "bottom": 832},
@@ -1656,7 +1724,7 @@
       "source_image": "resources/screens/nhiem_vu_hang_ngay/chien_hon.png",
       "templates": {
         "loi_vao": {
-          "description": "[Màn hình chính] - [Chiến hồn] - Q",
+          "description": "[Màn hình chính] - [Chiến hồn] - Chiến hồn bí bảo",
           "rect": { "top": 197, "left": 358, "right": 526, "bottom": 257},
           "search_rect": { "top": 14, "left": 319, "right": 563, "bottom": 107},
           "threshold": 0.85,
@@ -1679,6 +1747,40 @@
         },
         "thoat": {
           "description": "[Màn hình chính] - [Chiến hồn] - Thoát",
+          "rect": { "top": 25, "left": 1842, "right": 1904, "bottom": 91},
+          "search_rect": { "top": 0, "left": 1807, "right": 1919, "bottom": 115},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
+    "nhiem_vu_hang_ngay.than_tuong": {
+      "source_image": "resources/screens/nhiem_vu_hang_ngay/than_tuong.png",
+      "templates": {
+        "loi_vao": {
+          "description": "[Màn hình chính] - [Thần tượng] - Thiên sư đạo",
+          "rect": { "top": 197, "left": 358, "right": 526, "bottom": 257},
+          "search_rect": { "top": 14, "left": 319, "right": 563, "bottom": 107},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "mien_phi": {
+          "description": "[Màn hình chính] - [Thần tượng] - Miễn phí",
+          "rect": { "top": 748, "left": 876, "right": 1038, "bottom": 799},
+          "search_rect": { "top": 696, "left": 818, "right": 1086, "bottom": 832},
+          "threshold": 0.70,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "an_cho_trong_de_thoat": {
+          "description": "[Màn hình chính] - [Thần tượng] - Ấn chỗ trống để thoát",
+          "rect": { "top": 748, "left": 876, "right": 1038, "bottom": 799},
+          "search_rect": { "top": 696, "left": 818, "right": 1086, "bottom": 832},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "thoat": {
+          "description": "[Màn hình chính] - [Thần tượng] - Thoát",
           "rect": { "top": 25, "left": 1842, "right": 1904, "bottom": 91},
           "search_rect": { "top": 0, "left": 1807, "right": 1919, "bottom": 115},
           "threshold": 0.85,

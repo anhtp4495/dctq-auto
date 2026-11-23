@@ -2,8 +2,8 @@
 
 from dctq_auto.config.constants import (
     _TEMPLATE_MAIN_TRUONG_THANH,
-    _TEMPLATE_MATURITY_CHUA_CONG_CHUA_CHON_CHIEN_KY,
-    _TEMPLATE_MATURITY_CHUA_CONG_GIUONG_CO,
+    _TEMPLATE_MATURITY_CHUA_CONG_LOI_VAO,
+    _TEMPLATE_MATURITY_CHUA_CONG_MIEN_PHI,
     _TEMPLATE_MATURITY_CHUA_CONG_THOAT,
 )
 from dctq_auto.tasks.common.battle.battle_utils import match, screen_bgr
@@ -15,8 +15,8 @@ class LordPoller(BaseMaturityPoller):
     """Nhận diện Chiến kỳ, Giương cờ, thoát và xác nhận màn hình chính."""
 
     templates = (
-        _TEMPLATE_MATURITY_CHUA_CONG_CHUA_CHON_CHIEN_KY,
-        _TEMPLATE_MATURITY_CHUA_CONG_GIUONG_CO,
+        _TEMPLATE_MATURITY_CHUA_CONG_LOI_VAO,
+        _TEMPLATE_MATURITY_CHUA_CONG_MIEN_PHI,
         _TEMPLATE_MATURITY_CHUA_CONG_THOAT,
         _TEMPLATE_MAIN_TRUONG_THANH,
     )
@@ -56,15 +56,15 @@ class LordPoller(BaseMaturityPoller):
         return {
             "screen": screen,
             "chua_cong": {
-                "chua_chon_chien_ky": match(
+                "loi_vao": match(
                     screen,
-                    self.loaded_templates[_TEMPLATE_MATURITY_CHUA_CONG_CHUA_CHON_CHIEN_KY],
+                    self.loaded_templates[_TEMPLATE_MATURITY_CHUA_CONG_LOI_VAO],
                     account=account,
                     log=context["log"],
                 ),
-                "giuong_co": match(
+                "mien_phi": match(
                     screen,
-                    self.loaded_templates[_TEMPLATE_MATURITY_CHUA_CONG_GIUONG_CO],
+                    self.loaded_templates[_TEMPLATE_MATURITY_CHUA_CONG_MIEN_PHI],
                     account=account,
                     log=context["log"],
                 ),
