@@ -83,7 +83,34 @@ def _run_chua_cong(worker, account, device, log) -> bool:
                         f"[{account.display_name}] [Trưởng thành] [Chúa công] "
                         f"Click thoát tại ({x}, {y}); bắt đầu polling màn hình Trưởng Thành."
                     )
-                    return task_polling_maturity.run(worker, account, device, log)
+
+                    for poll_try in range(1, _MAX_POLL_TRIES + 1):
+                        observation = task_polling_maturity.run(
+                            worker, account, device, log
+                        )
+                        if observation is None:
+                            return False
+
+                        if observation["main_maturity"] is not None:
+                            log(
+                                f"[{account.display_name}] [Trưởng thành] "
+                                "Đã xác nhận quay về màn hình Trưởng Thành."
+                            )
+                            return True
+
+                        log(
+                            f"[{account.display_name}] [Trưởng thành] "
+                            f"Chưa thấy màn hình Trưởng Thành "
+                            f"(lần {poll_try}/{_MAX_POLL_TRIES})."
+                        )
+                        if poll_try < _MAX_POLL_TRIES:
+                            time.sleep(_POLL_INTERVAL)
+
+                    log(
+                        f"[{account.display_name}] [Trưởng thành] "
+                        f"Không xác nhận được màn hình Trưởng Thành sau {_MAX_POLL_TRIES} lần polling."
+                    )
+                    return False
 
                 log(
                     f"[{account.display_name}] [Trưởng thành] [Chúa công] "
