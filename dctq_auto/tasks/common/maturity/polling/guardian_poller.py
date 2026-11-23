@@ -1,4 +1,4 @@
-"""Poller xử lý category Guardian trong Trưởng Thành."""
+"""Poller cho tính năng Vệ Tướng, category: ve_tuong."""
 
 from dctq_auto.config.constants import (
     _TEMPLATE_MAIN_TRUONG_THANH,
