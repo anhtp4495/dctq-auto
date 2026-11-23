@@ -79,7 +79,10 @@ class BaseMaturityPoller:
             return None
 
         time.sleep(self.poll_interval)
-        return self.check(context)
+        observation = self.check(context)
+        if observation is None:
+            self.finish(context, "failed", "Không chụp được màn hình")
+        return observation
 
     def check(self, context) -> dict | None:
         """Lớp con triển khai nhận diện trạng thái."""
