@@ -29,6 +29,10 @@ _TEMPLATE_MATURITY_THAN_BINH_LOI_VAO = "nhiem_vu_hang_ngay.than_binh/loi_vao"
 _TEMPLATE_MATURITY_THAN_BINH_MIEN_PHI = "nhiem_vu_hang_ngay.than_binh/mien_phi"
 _TEMPLATE_MATURITY_THAN_BINH_AN_CHO_TRONG_DE_THOAT = "nhiem_vu_hang_ngay.than_binh/an_cho_trong_de_thoat"
 _TEMPLATE_MATURITY_THAN_BINH_THOAT = "nhiem_vu_hang_ngay.than_binh/thoat"
+_TEMPLATE_MATURITY_VE_TUONG_LOI_VAO = "nhiem_vu_hang_ngay.ve_tuong/loi_vao"
+_TEMPLATE_MATURITY_VE_TUONG_MIEN_PHI = "nhiem_vu_hang_ngay.ve_tuong/mien_phi"
+_TEMPLATE_MATURITY_VE_TUONG_AN_CHO_TRONG_DE_THOAT = "nhiem_vu_hang_ngay.ve_tuong/an_cho_trong_de_thoat"
+_TEMPLATE_MATURITY_VE_TUONG_THOAT = "nhiem_vu_hang_ngay.ve_tuong/thoat"
 
 # Template màn hình đã biết
 _TEMPLATE_MAIN_SU_KIEN_TANG_QUA_HANG_NGAY = "main.su_kien/tang_qua_hang_ngay"
