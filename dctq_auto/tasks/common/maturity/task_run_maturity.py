@@ -46,13 +46,14 @@ def _run_poller(poller, context) -> bool:
             continue
 
         # Ưu tiên xử lý theo đúng thứ tự của luồng Chúa công.
+        chua_cong = observation.get("chua_cong", {})
         actions = (
             ("chua_chon_chien_ky", "Chưa chọn Chiến kỳ"),
             ("giuong_co", "Giương cờ"),
             ("thoat", "Thoát màn hình Chúa công"),
         )
         for key, label in actions:
-            found = observation.get(key)
+            found = chua_cong.get(key)
             if found is None:
                 continue
 
