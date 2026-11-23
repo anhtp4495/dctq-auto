@@ -33,12 +33,15 @@ def _handle_lord_observation(observation, poller, context) -> bool:
     if chua_cong_found.get("loi_vao") is not None:
         found = chua_cong_found["loi_vao"]
         label = "Chiến kỳ"
+        action_key = "loi_vao"
     elif chua_cong_found.get("mien_phi") is not None:
         found = chua_cong_found["mien_phi"]
         label = "Giương cờ"
+        action_key = "mien_phi"
     elif chua_cong_found.get("thoat") is not None:
         found = chua_cong_found["thoat"]
         label = "Thoát màn hình Chúa công"
+        action_key = "thoat"
         poller.waiting_for_main = True
     else:
         return False
@@ -48,6 +51,7 @@ def _handle_lord_observation(observation, poller, context) -> bool:
         f"[{context['account'].display_name}] [Trưởng thành] [Chúa công] "
         f"Click {label} tại ({x}, {y})."
     )
+    poller.record_action(action_key, context)
     return True
 
 
@@ -73,6 +77,7 @@ def _handle_divine_weapon_observation(observation, poller, context) -> bool:
             f"[{context['account'].display_name}] [Trưởng thành] [Thần binh] "
             f"Click {label} tại ({x}, {y})."
         )
+        poller.record_action(key, context)
         if key == "thoat":
             poller.waiting_for_main = True
         return True
@@ -242,6 +247,7 @@ def _run_poller(poller, context) -> bool:
                     f"[{account.display_name}] [Trưởng thành] "
                     "Đã xác nhận quay về màn hình Trưởng Thành."
                 )
+                poller.finish(context, "success", "Đã hoàn thành")
                 return True
             continue
 
@@ -265,6 +271,7 @@ def _run_poller(poller, context) -> bool:
         f"[{context.get('label', 'Trưởng thành')}] "
         "Quá thời gian polling tối đa 3 phút."
     )
+    poller.finish(context, "failed", "Quá thời gian polling tối đa 3 phút")
     return False
 
 
