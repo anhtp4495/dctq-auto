@@ -55,22 +55,24 @@ class LordPoller(BaseMaturityPoller):
 
         return {
             "screen": screen,
-            "chua_chon_chien_ky": match(
-                screen,
-                self.loaded_templates[_TEMPLATE_MATURITY_CHUA_CONG_CHUA_CHON_CHIEN_KY],
-                account=account,
-                log=context["log"],
-            ),
-            "giuong_co": match(
-                screen,
-                self.loaded_templates[_TEMPLATE_MATURITY_CHUA_CONG_GIUONG_CO],
-                account=account,
-                log=context["log"],
-            ),
-            "thoat": match(
-                screen,
-                self.loaded_templates[_TEMPLATE_MATURITY_CHUA_CONG_THOAT],
-                account=account,
-                log=context["log"],
-            ),
+            "chua_cong": {
+                "chua_chon_chien_ky": match(
+                    screen,
+                    self.loaded_templates[_TEMPLATE_MATURITY_CHUA_CONG_CHUA_CHON_CHIEN_KY],
+                    account=account,
+                    log=context["log"],
+                ),
+                "giuong_co": match(
+                    screen,
+                    self.loaded_templates[_TEMPLATE_MATURITY_CHUA_CONG_GIUONG_CO],
+                    account=account,
+                    log=context["log"],
+                ),
+                "thoat": match(
+                    screen,
+                    self.loaded_templates[_TEMPLATE_MATURITY_CHUA_CONG_THOAT],
+                    account=account,
+                    log=context["log"],
+                ),
+            },
         }
