@@ -17,7 +17,7 @@ from dctq_auto.tasks.common.battle.battle_utils import click_match, match, scree
 from dctq_auto.vision.template_store import get_templates
 
 
-_MAX_MISSES = 6
+_MAX_TRIES = 6
 _POLL_INTERVAL = 0.8
 _TEMPLATES = (
     _TEMPLATE_TAM_QUOC_LENH_MIEN_PHI,
@@ -41,7 +41,7 @@ def run(worker, account, device, log, current_try=1) -> bool:
     templates = get_templates(_TEMPLATES)
     miss_count = current_try - 1
 
-    while miss_count < _MAX_MISSES:
+    while miss_count < _MAX_TRIES:
         if not worker._wait_if_paused():
             log(f"[{account.display_name}] Đã dừng khi đang nhận thưởng Tam Quốc Lệnh.")
             return False
@@ -97,13 +97,13 @@ def run(worker, account, device, log, current_try=1) -> bool:
             miss_count += 1
             log(
                 f"[{account.display_name}] Không phát hiện trạng thái nhận thưởng "
-                f"nào ({miss_count}/{_MAX_MISSES})."
+                f"nào ({miss_count}/{_MAX_TRIES})."
             )
 
         time.sleep(_POLL_INTERVAL)
 
     log(
-        f"[{account.display_name}] Đã đạt giới hạn {_MAX_MISSES} lần quét "
+        f"[{account.display_name}] Đã đạt giới hạn {_MAX_TRIES} lần quét "
         "không phát hiện trạng thái khi nhận thưởng Tam Quốc Lệnh."
     )
     return False
