@@ -15,6 +15,14 @@ from dctq_auto.vision.template_store import get_templates
 class GuardianPoller(BaseMaturityPoller):
     """Nhận diện lối vào, miễn phí, thoát popup và thoát màn hình Vệ tướng."""
 
+    category_key = "ve_tuong"
+    progress_steps = (
+        ("loi_vao", "Lối vào Vệ tướng"),
+        ("mien_phi", "Miễn phí"),
+        ("an_cho_trong_de_thoat", "Ấn chỗ trống để thoát"),
+        ("thoat", "Thoát màn hình Vệ tướng"),
+    )
+
     templates = (
         _TEMPLATE_MATURITY_VE_TUONG_LOI_VAO,
         _TEMPLATE_MATURITY_VE_TUONG_MIEN_PHI,
@@ -24,6 +32,7 @@ class GuardianPoller(BaseMaturityPoller):
     )
 
     def __init__(self):
+        super().__init__()
         self.loaded_templates = get_templates(self.templates)
         missing = [
             name for name in self.templates
@@ -31,7 +40,6 @@ class GuardianPoller(BaseMaturityPoller):
         ]
         if missing:
             raise ValueError(f"Thiếu template: {', '.join(missing)}")
-        self.waiting_for_main = False
 
     def check(self, context) -> dict | None:
         account = context["account"]
