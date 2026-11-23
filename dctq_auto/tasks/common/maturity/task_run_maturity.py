@@ -4,8 +4,6 @@ from dctq_auto.tasks.common.battle.battle_utils import click_match
 from dctq_auto.tasks.common.maturity.polling import create_poller
 
 
-_MAX_POLL_TRIES = 5
-
 _LABELS = {
     "chua_cong": "Chúa công",
     "ve_tuong": "Vệ tướng",
@@ -48,11 +46,11 @@ def _handle_lord_observation(observation, poller, context) -> bool:
 
 
 def _run_poller(poller, context) -> bool:
-    """Polling và xử lý observation của category."""
+    """Polling liên tục cho đến khi hoàn tất hoặc có yêu cầu dừng."""
     account = context["account"]
     log = context["log"]
 
-    for attempt in range(1, _MAX_POLL_TRIES + 1):
+    while True:
         observation = poller.poll(context)
         if observation is None:
             return False
@@ -64,27 +62,9 @@ def _run_poller(poller, context) -> bool:
                     "Đã xác nhận quay về màn hình Trưởng Thành."
                 )
                 return True
-
-            log(
-                f"[{account.display_name}] [Trưởng thành] [Chúa công] "
-                f"Chưa thấy màn hình Trưởng Thành "
-                f"(lần {attempt}/{_MAX_POLL_TRIES})."
-            )
             continue
 
-        if not _handle_lord_observation(observation, poller, context):
-            log(
-                f"[{account.display_name}] [Trưởng thành] "
-                f"[{context.get('label', 'Chúa công')}] "
-                f"Chưa khớp trạng thái (lần {attempt}/{_MAX_POLL_TRIES})."
-            )
-
-    log(
-        f"[{account.display_name}] [Trưởng thành] "
-        f"[{context.get('label', 'Chúa công')}] "
-        f"Không hoàn tất sau {_MAX_POLL_TRIES} lần polling."
-    )
-    return False
+        _handle_lord_observation(observation, poller, context)
 
 
 def run(worker, account, device, rects, log) -> bool:
