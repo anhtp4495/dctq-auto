@@ -1,4 +1,4 @@
-"""Poller xử lý category Divine Weapon trong Trưởng Thành."""
+"""Poller cho tính năng Thần Binh, category: than_binh."""
 
 from dctq_auto.config.constants import (
     _TEMPLATE_MAIN_TRUONG_THANH,
