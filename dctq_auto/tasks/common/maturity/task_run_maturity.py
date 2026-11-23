@@ -78,6 +78,7 @@ def _handle_divine_weapon_observation(observation, poller, context) -> bool:
             f"Click {label} tại ({x}, {y})."
         )
         poller.record_action(key, context)
+        poller.record_action(key, context)
         if key == "thoat":
             poller.waiting_for_main = True
         return True
@@ -107,6 +108,7 @@ def _handle_guardian_observation(observation, poller, context) -> bool:
             f"[{context['account'].display_name}] [Trưởng thành] [Vệ tướng] "
             f"Click {label} tại ({x}, {y})."
         )
+        poller.record_action(key, context)
         if key == "thoat":
             poller.waiting_for_main = True
         return True
@@ -136,6 +138,7 @@ def _handle_soul_observation(observation, poller, context) -> bool:
             f"[{context['account'].display_name}] [Trưởng thành] [Chiến hồn] "
             f"Click {label} tại ({x}, {y})."
         )
+        poller.record_action(key, context)
         if key == "thoat":
             poller.waiting_for_main = True
         return True
@@ -165,6 +168,7 @@ def _handle_tuong_an_observation(observation, poller, context) -> bool:
             f"[{context['account'].display_name}] [Trưởng thành] [Tướng ấn] "
             f"Click {label} tại ({x}, {y})."
         )
+        poller.record_action(key, context)
         if key == "thoat":
             poller.waiting_for_main = True
         return True
@@ -195,6 +199,7 @@ def _handle_defense_forge_observation(observation, poller, context) -> bool:
             f"[{context['account'].display_name}] [Trưởng thành] [Defense Forge] "
             f"Click {label} tại ({x}, {y})."
         )
+        poller.record_action(key, context)
         if key == "thoat":
             poller.waiting_for_main = True
         return True
@@ -224,6 +229,7 @@ def _handle_friend_observation(observation, poller, context) -> bool:
             f"[{context['account'].display_name}] [Trưởng thành] [Bạn bè] "
             f"Click {label} tại ({x}, {y})."
         )
+        poller.record_action(key, context)
         if key == "thoat":
             poller.waiting_for_main = True
         return True
