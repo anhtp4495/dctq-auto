@@ -39,9 +39,9 @@ def run(worker, account, device, log, current_try=1) -> bool:
         log(f"[{account.display_name}] Bắt đầu nhận thưởng Tam Quốc Lệnh.")
 
     templates = get_templates(_TEMPLATES)
-    miss_count = current_try - 1
+    try_count = current_try - 1
 
-    while miss_count < _MAX_TRIES:
+    while try_count < _MAX_TRIES:
         if not worker._wait_if_paused():
             log(f"[{account.display_name}] Đã dừng khi đang nhận thưởng Tam Quốc Lệnh.")
             return False
@@ -94,10 +94,10 @@ def run(worker, account, device, log, current_try=1) -> bool:
             break
 
         if not action_found:
-            miss_count += 1
+            try_count += 1
             log(
                 f"[{account.display_name}] Không phát hiện trạng thái nhận thưởng "
-                f"nào ({miss_count}/{_MAX_TRIES})."
+                f"nào ({try_count}/{_MAX_TRIES})."
             )
 
         time.sleep(_POLL_INTERVAL)
