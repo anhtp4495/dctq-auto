@@ -1,4 +1,4 @@
-"""Poller xử lý category Lord trong Trưởng Thành."""
+"""Poller cho tính năng Chúa Công, category: chua_cong."""
 
 from dctq_auto.config.constants import (
     _TEMPLATE_MAIN_TRUONG_THANH,
