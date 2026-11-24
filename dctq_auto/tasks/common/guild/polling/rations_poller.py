@@ -12,6 +12,7 @@ from dctq_auto.config.constants import (
     _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO,
     _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_KNB,
     _TEMPLATE_QUAN_DOAN_DUNG_NHANH,
+    _TEMPLATE_QUAN_DOAN_XAC_NHAN_DUNG_NHANH,
     _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO,
     _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
 )
@@ -31,6 +32,7 @@ _RUN_TEMPLATES = (
     _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_KNB,
     _TEMPLATE_QUAN_DOAN_DA_DONG_GOP_LUONG_THAO,
     _TEMPLATE_QUAN_DOAN_DUNG_NHANH,
+    _TEMPLATE_QUAN_DOAN_XAC_NHAN_DUNG_NHANH,
     _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO,
     _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO,
     _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO,
@@ -51,6 +53,7 @@ class RationsPoller(BaseGuildPoller):
         _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO: "donation_screen",
         _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_KNB: "buy_rations",
         _TEMPLATE_QUAN_DOAN_DUNG_NHANH: "stop_quickly",
+        _TEMPLATE_QUAN_DOAN_XAC_NHAN_DUNG_NHANH: "confirm_stop_quickly",
         _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO: "close_donation_screen",
         _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH: "guild_main",
     }
@@ -59,7 +62,7 @@ class RationsPoller(BaseGuildPoller):
         observation = self._match_first(context)
         observation["requires_action"] = observation["state"] in {
             "not_donated", "donation_screen", "buy_rations",
-            "stop_quickly", "close_donation_screen",
+            "stop_quickly", "confirm_stop_quickly", "close_donation_screen",
         }
         # Đã đóng góp chỉ là hoàn thành phần nghiệp vụ. Chỉ màn hình chính
         # Quân đoàn mới xác nhận toàn bộ task đã kết thúc.
@@ -176,11 +179,13 @@ class RationsPoller(BaseGuildPoller):
                 )
                 operation_success = True
                 break
-            if state == "stop_quickly":
-                if not self._tap_button(
-                    device, account, log, "xac_nhan",
-                    "Xác nhận dùng nhanh túi lúa",
-                ):
+            if state in {"stop_quickly", "confirm_stop_quickly"}:
+                label = (
+                    "nút Dùng nhanh"
+                    if state == "stop_quickly"
+                    else "nút xác nhận Dùng nhanh"
+                )
+                if not self._tap_center(device, matched, account, log, label):
                     return steps
             elif state == "not_donated":
                 if not self._tap_center(
