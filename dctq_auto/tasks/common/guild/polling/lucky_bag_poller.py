@@ -13,7 +13,6 @@ from .base_poller import BaseGuildPoller
 
 class LuckyBagPoller(BaseGuildPoller):
     step_id = _STEP_QUAN_DOAN_TUI_PHUC
-    task_module = "task_lucky_bag"
 
     category_key = "tui_phuc"
     state_by_template = {
