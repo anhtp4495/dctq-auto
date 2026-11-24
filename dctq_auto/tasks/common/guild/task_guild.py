@@ -13,6 +13,7 @@ from dctq_auto.config.constants import (
     _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO,
     _STEP_QUAN_DOAN_TUI_PHUC,
     _STEP_QUAN_DOAN_NHAN_THUONG_BOSS,
+    _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
 )
 from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.tasks.common.battle.battle_utils import click_match
@@ -98,19 +99,16 @@ def _handle_ration_observation(observation, poller, context, phase):
     log = context["log"]
 
     if phase == "run":
-        if state == "guild_main":
-            # Từ màn hình chính Quân đoàn, mở khu vực chức năng.
-            x, y = click_match(context["device"], observation["match"])
-            log(
-                f"[{account.display_name}] [Quân đoàn] [Lương thảo] "
-                f"Click màn hình chính Quân đoàn tại ({x}, {y})."
-            )
-        elif state == "not_donated":
+        if state == "not_donated":
             x, y = click_match(context["device"], observation["match"])
             log(
                 f"[{account.display_name}] [Quân đoàn] [Lương thảo] "
                 f"Click nút đóng góp Lương thảo tại ({x}, {y})."
             )
+            return "contribution_handled"
+        elif state == "donated":
+            log(f"[{account.display_name}] Đã xác nhận đóng góp Lương thảo.")
+            return "contribution_handled"
         elif state == "donation_screen":
             x, y = ButtonPositions().get("quan_doan.luong_thao", "dong_gop")
             context["device"].shell(f"input tap {x} {y}")
@@ -125,10 +123,8 @@ def _handle_ration_observation(observation, poller, context, phase):
                 f"[{account.display_name}] [Quân đoàn] [Lương thảo] "
                 f"Click {label} tại ({x}, {y})."
             )
-        elif state in {"donated", "buy_rations", "close_donation_screen"}:
-            if state == "donated":
-                log(f"[{account.display_name}] Đã xác nhận đóng góp Lương thảo.")
-            elif state == "buy_rations":
+        elif state in {"buy_rations", "close_donation_screen"}:
+            if state == "buy_rations":
                 log(
                     f"[{account.display_name}] Xuất hiện thông báo lấy thêm "
                     "Lương thảo bằng KNB; bỏ qua thao tác Dùng nhanh."
@@ -166,6 +162,10 @@ def _run_rations_poller(poller, context):
     account = context["account"]
     log = context["log"]
     phase = "run"
+    # Ban đầu tuyệt đối không dò màn hình chính vì template này xuất hiện
+    # trên phần lớn màn hình. Chỉ bật nhận diện sau khi đã xử lý CHƯA ĐÓNG GÓP
+    # hoặc xác nhận ĐÃ ĐÓNG GÓP ít nhất một lần.
+    contribution_handled = False
     template_names = _RATION_RUN_TEMPLATES
     templates = get_templates(template_names)
     deadline = time.monotonic() + _POLL_TIMEOUT_SECONDS
@@ -183,7 +183,15 @@ def _run_rations_poller(poller, context):
         result = _handle_ration_observation(
             observation, poller, context, phase
         )
-        if result == "success":
+        if result == "contribution_handled":
+            if not contribution_handled:
+                contribution_handled = True
+                template_names = (
+                    *_RATION_RUN_TEMPLATES,
+                    _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
+                )
+                templates = get_templates(template_names)
+        elif result == "success":
             phase = "close"
             template_names = _RATION_CLOSE_TEMPLATES
             templates = get_templates(template_names)
