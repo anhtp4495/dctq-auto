@@ -23,11 +23,15 @@ _POLLER = LuckyBagPoller()
 
 
 def _find_template(screen_bgr, templates, template_names, account, log):
-    """Lấy observation từ poller theo thứ tự ưu tiên của tác vụ."""
-    template_name, matched = _POLLER.poll(
+    """Lấy observation đã phân loại từ LuckyBagPoller."""
+    observation = _POLLER.poll(
         screen_bgr, templates, template_names, account, log
     )
-    return template_name, templates.get(template_name) if template_name else None, matched
+    return (
+        observation["template_name"],
+        observation["template"],
+        observation["match"],
+    )
 
 def _tap_match_center(device, match, account, log):
     """Click trung điểm vùng template được nhận diện."""
