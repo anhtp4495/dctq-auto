@@ -745,6 +745,13 @@
           "search_rect": { "top": 356, "left": 534, "right": 1406, "bottom": 818},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
+        },
+        "xac_nhan_lay_them_luong_thao_KNB": {
+          "description": "[Quân Đoàn] - [Lương Thảo] - [KNB]",
+          "rect": { "top": 591, "left": 1536, "right": 1772, "bottom": 649},
+          "search_rect": { "top": 779, "left": 548, "right": 1357, "bottom": 977},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
