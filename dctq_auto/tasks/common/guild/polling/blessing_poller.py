@@ -1,3 +1,4 @@
+from dctq_auto.config.constants import _STEP_QUAN_DOAN_CAU_VAN
 """Poller Cầu vận: nhận diện lối vào, lượt cầu và các trạng thái kết thúc."""
 
 from dctq_auto.config.constants import (
@@ -14,6 +15,9 @@ from .base_poller import BaseGuildPoller
 
 
 class BlessingPoller(BaseGuildPoller):
+    step_id = _STEP_QUAN_DOAN_CAU_VAN
+    task_module = "task_blessing"
+
     category_key = "cau_van"
     state_by_template = {
         _TEMPLATE_QUAN_DOAN_CAU_VAN: "entry",
