@@ -1,3 +1,4 @@
+from dctq_auto.config.constants import _STEP_QUAN_DOAN_DONG_GOP_KNB
 """Poller đóng góp KNB: nhận diện cửa vào, điều kiện và các mức đóng góp."""
 
 from dctq_auto.config.constants import (
@@ -13,6 +14,9 @@ from .base_poller import BaseGuildPoller
 
 
 class KnbPoller(BaseGuildPoller):
+    step_id = _STEP_QUAN_DOAN_DONG_GOP_KNB
+    task_module = "task_knb"
+
     category_key = "dong_gop_knb"
     state_by_template = {
         _TEMPLATE_QUAN_DOAN_DONG_GOP_KNB: "entry",
