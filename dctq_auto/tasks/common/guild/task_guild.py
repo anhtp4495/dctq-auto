@@ -225,6 +225,7 @@ def _run_knb_poller(poller, context):
     log = context["log"]
     phase = "run"
     small_donation_count = 0
+    last_small_donation_template = None
     template_names = _KNB_RUN_TEMPLATES
     templates = get_templates(template_names)
     deadline = time.monotonic() + _POLL_TIMEOUT_SECONDS
@@ -248,7 +249,12 @@ def _run_knb_poller(poller, context):
                     f"Click trung tâm nút đóng góp KNB tại ({x}, {y})."
                 )
             elif state in {"donate_10", "donate_20"}:
+                template_name = observation["template_name"]
+                if template_name == last_small_donation_template:
+                    time.sleep(_POLL_INTERVAL_SECONDS)
+                    continue
                 x, y = click_match(context["device"], observation["match"])
+                last_small_donation_template = template_name
                 small_donation_count += 1
                 log(
                     f"[{account.display_name}] [Quân đoàn] [KNB] "
