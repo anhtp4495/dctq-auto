@@ -29,5 +29,5 @@ class KnbPoller(BaseGuildPoller):
         observation["requires_action"] = observation["state"] in {
             "entry", "donation_screen", "donate_10", "donate_20", "donate_40"
         }
-        observation["completed"] = observation["state"] == "insufficient_conditions"
+        observation["completed"] = observation["state"] in {"insufficient_conditions", "guild_main"}
         return observation
