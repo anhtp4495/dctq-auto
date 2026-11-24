@@ -346,10 +346,18 @@ def _run_remaining_poller(poller, context):
     device = context["device"]
     worker = context["worker"]
     state_by_template = poller.state_by_template
+    # Các template màn hình tổng quan dễ xuất hiện thường xuyên nên luôn
+    # được kiểm tra sau các trạng thái thao tác cụ thể.
     template_names = tuple(
         name for name in state_by_template
-        if state_by_template[name] != "guild_main"
-    ) + tuple(
+        if state_by_template[name] not in {"guild_main", "boss_main"}
+    )
+    if isinstance(poller, BossRewardPoller):
+        template_names += tuple(
+            name for name in state_by_template
+            if state_by_template[name] == "boss_main"
+        )
+    template_names += tuple(
         name for name in state_by_template
         if state_by_template[name] == "guild_main"
     )
