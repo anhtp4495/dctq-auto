@@ -25,5 +25,5 @@ class LuckyBagPoller(BaseGuildPoller):
         observation["requires_action"] = observation["state"] in {
             "not_received", "detail", "receive_screen"
         }
-        observation["completed"] = observation["state"] == "already_received"
+        observation["completed"] = observation["state"] in {"already_received", "guild_main"}
         return observation
