@@ -396,8 +396,6 @@ def _run_remaining_poller(poller, context):
                 if phase == "run":
                     phase = "close"
                     log(f"[{account.display_name}] Đã xác nhận báo danh Quân đoàn.")
-                else:
-                    return True
             elif state == "not_checked_in":
                 x, y = click_match(device, match)
                 log(f"[{account.display_name}] Click trạng thái chưa báo danh tại ({x}, {y}).")
@@ -494,6 +492,21 @@ def _run_remaining_poller(poller, context):
             elif state == "reward_entrance":
                 x, y = click_match(device, match)
                 log(f"[{account.display_name}] Mở màn hình nhận thưởng Boss tại ({x}, {y}).")
+            elif state == "reward_screen":
+                try:
+                    start = ButtonPositions().get("quan_doan", "boss_item_2")
+                    end = ButtonPositions().get("quan_doan", "boss_item_1")
+                    swipe(device, start, end, account=account, log=log, duration_ms=500)
+                    boss_empty_swipes += 1
+                    log(
+                        f"[{account.display_name}] Vuốt danh sách thưởng Boss "
+                        f"({boss_empty_swipes}/2)."
+                    )
+                    if boss_empty_swipes >= 2 and not boss_reward_clicked:
+                        phase = "close_boss"
+                except Exception as exc:
+                    log(f"[{account.display_name}] Không vuốt được danh sách thưởng Boss: {exc}")
+                    return False
             elif state == "ready_to_claim":
                 log(f"[{account.display_name}] Đã vào màn hình chuẩn bị nhận thưởng Boss.")
             elif state == "claim_button":
