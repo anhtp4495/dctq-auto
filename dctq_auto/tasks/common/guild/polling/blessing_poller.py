@@ -25,3 +25,11 @@ class BlessingPoller(BaseGuildPoller):
         _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH: "not_checked_in",
         _TEMPLATE_QUAN_DOAN_DA_BAO_DANH: "checked_in",
     }
+
+    def check(self, context) -> dict:
+        observation = self._match_first(context)
+        observation["requires_action"] = observation["state"] in {
+            "entry", "can_bless", "blessing_screen"
+        }
+        observation["completed"] = observation["state"] in {"no_turns_1", "no_turns_2"}
+        return observation
