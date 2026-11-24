@@ -19,6 +19,10 @@ from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
+from dctq_auto.tasks.common.guild.polling.knb_poller import KnbPoller
+
+
+_POLLER = KnbPoller()
 
 
 _MAX_TRIES = 10
@@ -51,37 +55,11 @@ def pre_knb(steps, log) -> bool:
 
 
 def _find_template(screen_bgr, templates, template_names, account, log):
-    """Trả về template và vị trí khớp đầu tiên theo thứ tự ưu tiên."""
-    for template_name in template_names:
-        template = templates.get(template_name)
-        if template is None:
-            log(f"[{account.display_name}] Không tải được template {template_name}; bỏ qua.")
-            continue
-
-        try:
-            match = match_template(
-                screen_bgr,
-                template.image,
-                threshold=template.threshold,
-                method=template.method,
-                search_rect=template.search_rect,
-                grayscale=template.grayscale,
-            )
-        except (ValueError, cv2.error) as exc:
-            log(f"[{account.display_name}] Lỗi template matching {template_name}: {exc}")
-            continue
-
-        if match is not None:
-            report_template_match(
-                log,
-                context=f"[{account.display_name}]",
-                template=template,
-                match=match,
-            )
-            return template_name, match
-
-    return None, None
-
+    """Lấy observation từ poller theo thứ tự ưu tiên của tác vụ."""
+    template_name, matched = _POLLER.poll(
+        screen_bgr, templates, template_names, account, log
+    )
+    return template_name, matched
 
 def _capture_screen(device, account, log, action: str):
     """Chụp màn hình và chuyển sang BGR; lỗi được trả về cho caller xử lý."""
