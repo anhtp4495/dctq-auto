@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 
 from dctq_auto.config.constants import (
+    _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_GOP_KNB,
     _STEP_QUAN_DOAN_BAO_DANH,
     _STEP_QUAN_DOAN_CAU_VAN,
     _STEP_QUAN_DOAN_DONG_GOP_KNB,
@@ -227,6 +228,7 @@ def _run_knb_poller(poller, context):
     small_donation_count = 0
     last_small_donation_template = None
     template_names = _KNB_RUN_TEMPLATES
+    _KNB_DONATION_CLOSE_TEMPLATE = _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_GOP_KNB
     templates = get_templates(template_names)
     deadline = time.monotonic() + _POLL_TIMEOUT_SECONDS
 
@@ -261,23 +263,14 @@ def _run_knb_poller(poller, context):
                     f"Click mức {10 if state == 'donate_10' else 20} KNB "
                     f"tại ({x}, {y}); lần {small_donation_count}/3."
                 )
-                if small_donation_count >= 3:
-                    phase = "close"
-                    template_names = _KNB_CLOSE_TEMPLATES
+                if state == "donate_20" or small_donation_count >= 3:
+                    phase = "close_screen"
+                    template_names = (_KNB_DONATION_CLOSE_TEMPLATE,)
                     templates = get_templates(template_names)
                     log(
-                        f"[{account.display_name}] Đã thử 3 lần đóng góp 10/20 KNB; "
-                        "chờ xác nhận màn hình chính Quân đoàn."
+                        f"[{account.display_name}] Đã hoàn tất đóng góp KNB; "
+                        "chờ nút đóng màn hình đóng góp."
                     )
-            elif state == "donate_40":
-                x, y = click_match(context["device"], observation["match"])
-                log(
-                    f"[{account.display_name}] [Quân đoàn] [KNB] "
-                    f"Click trung tâm mức 40 KNB tại ({x}, {y}); đã đóng góp đủ."
-                )
-                phase = "close"
-                template_names = _KNB_CLOSE_TEMPLATES
-                templates = get_templates(template_names)
             elif state == "insufficient_conditions":
                 log(
                     f"[{account.display_name}] Không đủ điều kiện đóng góp KNB; "
@@ -291,6 +284,15 @@ def _run_knb_poller(poller, context):
                     f"[{account.display_name}] [Quân đoàn] [KNB] "
                     f"Chưa nhận diện được trạng thái đóng góp ({state})."
                 )
+        elif phase == "close_screen" and state == "close_donation_screen":
+            x, y = click_match(context["device"], observation["match"])
+            log(
+                f"[{account.display_name}] [Quân đoàn] [KNB] "
+                f"Click trung tâm nút đóng màn hình đóng góp tại ({x}, {y})."
+            )
+            phase = "close"
+            template_names = _KNB_CLOSE_TEMPLATES
+            templates = get_templates(template_names)
         elif state == "guild_main":
             log(
                 f"[{account.display_name}] Đã xác nhận màn hình chính Quân đoàn; "
