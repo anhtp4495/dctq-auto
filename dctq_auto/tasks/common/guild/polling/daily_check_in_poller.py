@@ -15,3 +15,9 @@ class DailyCheckInPoller(BaseGuildPoller):
         _TEMPLATE_QUAN_DOAN_DA_BAO_DANH: "checked_in",
         _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH: "guild_main",
     }
+
+    def check(self, context) -> dict:
+        observation = self._match_first(context)
+        observation["requires_action"] = observation["state"] == "not_checked_in"
+        observation["completed"] = observation["state"] == "checked_in"
+        return observation
