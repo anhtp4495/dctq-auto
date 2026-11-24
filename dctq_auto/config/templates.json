@@ -733,7 +733,7 @@
           "match_method": "TM_CCOEFF_NORMED"
         },
         "xac_nhan_dung_nhanh": {
-          "description": "[Quân Đoàn] - [Lương Thảo] - [KNB]",
+          "description": "[Quân Đoàn] - [Lương Thảo] - [Dùng nhanh] - Túi ngũ cốc",
           "rect": { "top": 591, "left": 1536, "right": 1772, "bottom": 649},
           "search_rect": { "top": 779, "left": 548, "right": 1357, "bottom": 977},
           "threshold": 0.85,
