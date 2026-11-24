@@ -6,7 +6,6 @@ from dctq_auto.config.constants import (
     _TEMPLATE_QUAN_DOAN_CHUA_DU_DIEU_KIEN_DONG_GOP_KNB,
     _TEMPLATE_QUAN_DOAN_DONG_GOP_10_KNB,
     _TEMPLATE_QUAN_DOAN_DONG_GOP_20_KNB,
-    _TEMPLATE_QUAN_DOAN_DONG_GOP_40_KNB,
     _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
 )
 
@@ -17,10 +16,10 @@ from .base_poller import BaseGuildPoller
 _OPEN_TEMPLATES = (
     _TEMPLATE_QUAN_DOAN_CHUA_DU_DIEU_KIEN_DONG_GOP_KNB,
     _TEMPLATE_QUAN_DOAN_DONG_GOP_KNB,
+    _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_GOP_KNB,
 )
 _RUN_TEMPLATES = (
     _TEMPLATE_QUAN_DOAN_CHUA_DU_DIEU_KIEN_DONG_GOP_KNB,
-    _TEMPLATE_QUAN_DOAN_DONG_GOP_40_KNB,
     _TEMPLATE_QUAN_DOAN_DONG_GOP_20_KNB,
     _TEMPLATE_QUAN_DOAN_DONG_GOP_10_KNB,
     _TEMPLATE_QUAN_DOAN_DONG_GOP_KNB,
@@ -38,10 +37,10 @@ class KnbPoller(BaseGuildPoller):
 
     state_by_template = {
         _TEMPLATE_QUAN_DOAN_DONG_GOP_KNB: "entry",
+        _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_GOP_KNB: "close_donation_screen",
         _TEMPLATE_QUAN_DOAN_CHUA_DU_DIEU_KIEN_DONG_GOP_KNB: "insufficient_conditions",
         _TEMPLATE_QUAN_DOAN_DONG_GOP_10_KNB: "donate_10",
         _TEMPLATE_QUAN_DOAN_DONG_GOP_20_KNB: "donate_20",
-        _TEMPLATE_QUAN_DOAN_DONG_GOP_40_KNB: "donate_40",
         _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH: "guild_main",
     }
 
@@ -52,7 +51,7 @@ class KnbPoller(BaseGuildPoller):
             "entry",
             "donate_10",
             "donate_20",
-            "donate_40",
+            "close_donation_screen",
         }
         observation["completed"] = observation["state"] in {
             "insufficient_conditions",
