@@ -23,3 +23,11 @@ class KnbPoller(BaseGuildPoller):
         _TEMPLATE_QUAN_DOAN_DONG_GOP_40_KNB: "donate_40",
         _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH: "guild_main",
     }
+
+    def check(self, context) -> dict:
+        observation = self._match_first(context)
+        observation["requires_action"] = observation["state"] in {
+            "entry", "donation_screen", "donate_10", "donate_20", "donate_40"
+        }
+        observation["completed"] = observation["state"] == "insufficient_conditions"
+        return observation
