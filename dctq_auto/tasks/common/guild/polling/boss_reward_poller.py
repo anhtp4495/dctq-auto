@@ -1,3 +1,4 @@
+from dctq_auto.config.constants import _STEP_QUAN_DOAN_NHAN_THUONG_BOSS
 """Poller Boss: phân loại điều hướng, trạng thái nhận thưởng và thoát màn hình."""
 
 from dctq_auto.config.constants import (
@@ -16,6 +17,9 @@ from .base_poller import BaseGuildPoller
 
 
 class BossRewardPoller(BaseGuildPoller):
+    step_id = _STEP_QUAN_DOAN_NHAN_THUONG_BOSS
+    task_module = "task_boss_reward"
+
     category_key = "boss_reward"
     state_by_template = {
         _TEMPLATE_QUAN_DOAN_BOSS_MAN_HINH_CHINH: "boss_main",
