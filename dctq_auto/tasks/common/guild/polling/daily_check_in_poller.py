@@ -11,7 +11,6 @@ from .base_poller import BaseGuildPoller
 
 class DailyCheckInPoller(BaseGuildPoller):
     step_id = _STEP_QUAN_DOAN_BAO_DANH
-    task_module = "task_daily_check_in"
 
     category_key = "bao_danh"
     state_by_template = {
