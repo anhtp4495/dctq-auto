@@ -31,5 +31,7 @@ class BlessingPoller(BaseGuildPoller):
         observation["requires_action"] = observation["state"] in {
             "entry", "can_bless", "blessing_screen"
         }
-        observation["completed"] = observation["state"] in {"no_turns_1", "no_turns_2"}
+        observation["completed"] = observation["state"] in {
+            "no_turns_1", "no_turns_2", "guild_main"
+        }
         return observation
