@@ -24,7 +24,11 @@ class BaseGuildPoller:
         return self.check(context)
 
     def check(self, context) -> dict:
-        """Nhận diện template theo thứ tự ưu tiên và trả trạng thái chuẩn hóa."""
+        """Lớp con phân loại observation theo nghiệp vụ của task."""
+        raise NotImplementedError
+
+    def _match_first(self, context) -> dict:
+        """Tìm template đầu tiên khớp theo thứ tự ưu tiên của phase hiện tại."""
         account = context["account"]
         log = context["log"]
         screen = context["screen"]
