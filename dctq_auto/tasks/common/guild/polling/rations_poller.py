@@ -27,3 +27,12 @@ class RationsPoller(BaseGuildPoller):
         _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH: "not_checked_in",
         _TEMPLATE_QUAN_DOAN_DA_BAO_DANH: "checked_in",
     }
+
+    def check(self, context) -> dict:
+        observation = self._match_first(context)
+        observation["requires_action"] = observation["state"] in {
+            "not_donated", "donation_screen", "buy_rations", "stop_quickly",
+            "close_donation_screen",
+        }
+        observation["completed"] = observation["state"] == "donated"
+        return observation
