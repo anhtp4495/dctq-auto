@@ -24,6 +24,10 @@ from dctq_auto.tasks.common.battle.battle_utils import click_match, swipe, tap
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
+from dctq_auto.tasks.common.guild.polling.boss_reward_poller import BossRewardPoller
+
+
+_POLLER = BossRewardPoller()
 
 
 _MAX_OPEN_TRIES = 6
@@ -47,40 +51,11 @@ def pre_run_boss_reward(steps, log) -> bool:
 
 
 def _find_template(screen_bgr, templates, template_names, account, log):
-    """Trả về template đầu tiên khớp theo thứ tự ưu tiên."""
-    for template_name in template_names:
-        template = templates.get(template_name)
-        if template is None:
-            log(f"[{account.display_name}] Không tải được template {template_name}; bỏ qua.")
-            continue
-
-        try:
-            match = match_template(
-                screen_bgr,
-                template.image,
-                threshold=template.threshold,
-                method=template.method,
-                search_rect=template.search_rect,
-                grayscale=template.grayscale,
-            )
-        except (ValueError, cv2.error) as exc:
-            log(
-                f"[{account.display_name}] Lỗi template matching "
-                f"{template_name}: {exc}"
-            )
-            continue
-
-        if match is not None:
-            report_template_match(
-                log,
-                context=f"[{account.display_name}]",
-                template=template,
-                match=match,
-            )
-            return template_name, match
-
-    return None, None
-
+    """Lấy observation từ poller theo thứ tự ưu tiên của tác vụ."""
+    template_name, matched = _POLLER.poll(
+        screen_bgr, templates, template_names, account, log
+    )
+    return template_name, matched
 
 def _capture_screen(device, account, log, action):
     """Chụp màn hình và chuyển sang BGR."""
