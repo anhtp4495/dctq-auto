@@ -224,7 +224,7 @@ def _run_knb_poller(poller, context):
     account = context["account"]
     log = context["log"]
     phase = "run"
-    skipped_templates = set()
+    small_donation_count = 0
     template_names = _KNB_RUN_TEMPLATES
     templates = get_templates(template_names)
     deadline = time.monotonic() + _POLL_TIMEOUT_SECONDS
@@ -241,69 +241,41 @@ def _run_knb_poller(poller, context):
 
         state = observation["state"]
         if phase == "run":
-            if state == "insufficient_conditions":
-                log(f"[{account.display_name}] Không đủ điều kiện đóng góp KNB.")
-                return True
-
-            if state in {"donate_10", "donate_20"}:
-                template_name = observation["template_name"]
-                if template_name in skipped_templates:
-                    try:
-                        x, y = ButtonPositions().get("quan_doan.knb", "dong_man_hinh")
-                        context["device"].shell(f"input tap {x} {y}")
-                    except Exception as exc:
-                        log(
-                            f"[{account.display_name}] Không đóng được màn hình góp KNB: {exc}"
-                        )
-                        return False
-                    log(
-                        f"[{account.display_name}] Template {template_name} đã được xử lý; "
-                        f"đóng màn hình góp KNB tại ({x}, {y})."
-                    )
+            if state == "entry":
+                x, y = click_match(context["device"], observation["match"])
+                log(
+                    f"[{account.display_name}] [Quân đoàn] [KNB] "
+                    f"Click trung tâm nút đóng góp KNB tại ({x}, {y})."
+                )
+            elif state in {"donate_10", "donate_20"}:
+                x, y = click_match(context["device"], observation["match"])
+                small_donation_count += 1
+                log(
+                    f"[{account.display_name}] [Quân đoàn] [KNB] "
+                    f"Click mức {10 if state == 'donate_10' else 20} KNB "
+                    f"tại ({x}, {y}); lần {small_donation_count}/3."
+                )
+                if small_donation_count >= 3:
                     phase = "close"
                     template_names = _KNB_CLOSE_TEMPLATES
                     templates = get_templates(template_names)
-                else:
-                    x, y = click_match(context["device"], observation["match"])
-                    skipped_templates.add(template_name)
                     log(
-                        f"[{account.display_name}] [Quân đoàn] [KNB] "
-                        f"Click mức đóng góp tại ({x}, {y})."
+                        f"[{account.display_name}] Đã thử 3 lần đóng góp 10/20 KNB; "
+                        "chờ xác nhận màn hình chính Quân đoàn."
                     )
             elif state == "donate_40":
-                try:
-                    x, y = ButtonPositions().get("quan_doan.knb", "dong_man_hinh")
-                    context["device"].shell(f"input tap {x} {y}")
-                except Exception as exc:
-                    log(
-                        f"[{account.display_name}] Không đóng được màn hình góp KNB: {exc}"
-                    )
-                    return False
+                x, y = click_match(context["device"], observation["match"])
                 log(
-                    f"[{account.display_name}] Đã nhận diện mức đóng góp 40 KNB; "
-                    f"đóng màn hình tại ({x}, {y})."
+                    f"[{account.display_name}] [Quân đoàn] [KNB] "
+                    f"Click trung tâm mức 40 KNB tại ({x}, {y}); đã đóng góp đủ."
                 )
                 phase = "close"
                 template_names = _KNB_CLOSE_TEMPLATES
                 templates = get_templates(template_names)
-            elif state == "entry":
-                x, y = click_match(context["device"], observation["match"])
+            elif state == "insufficient_conditions":
                 log(
-                    f"[{account.display_name}] [Quân đoàn] [KNB] "
-                    f"Mở đóng góp KNB tại ({x}, {y})."
-                )
-            elif state == "donation_screen":
-                try:
-                    x, y = ButtonPositions().get("quan_doan.knb", "dong_man_hinh")
-                    context["device"].shell(f"input tap {x} {y}")
-                except Exception as exc:
-                    log(
-                        f"[{account.display_name}] Không đóng được màn hình góp KNB: {exc}"
-                    )
-                    return False
-                log(
-                    f"[{account.display_name}] Đã xử lý giao diện đóng góp KNB; "
-                    f"đóng màn hình tại ({x}, {y})."
+                    f"[{account.display_name}] Không đủ điều kiện đóng góp KNB; "
+                    "chờ xác nhận màn hình chính Quân đoàn."
                 )
                 phase = "close"
                 template_names = _KNB_CLOSE_TEMPLATES
@@ -313,21 +285,16 @@ def _run_knb_poller(poller, context):
                     f"[{account.display_name}] [Quân đoàn] [KNB] "
                     f"Chưa nhận diện được trạng thái đóng góp ({state})."
                 )
+        elif state == "guild_main":
+            log(
+                f"[{account.display_name}] Đã xác nhận màn hình chính Quân đoàn; "
+                "hoàn tất đóng góp KNB."
+            )
+            return True
         else:
-            if state == "guild_main":
-                log(
-                    f"[{account.display_name}] Đã xác nhận trở về màn hình chính Quân đoàn "
-                    "sau khi đóng góp KNB."
-                )
-                return True
-            if state == "insufficient_conditions":
-                log(
-                    f"[{account.display_name}] Kết thúc đóng góp KNB do không đủ điều kiện."
-                )
-                return True
             log(
                 f"[{account.display_name}] [Quân đoàn] [KNB] "
-                f"Chưa xác nhận được màn hình chính ({state})."
+                f"Đang chờ màn hình chính Quân đoàn ({state})."
             )
 
         time.sleep(_POLL_INTERVAL_SECONDS)
