@@ -21,8 +21,6 @@ from dctq_auto.config.constants import (
 )
 from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.tasks.common.battle.battle_utils import click_match, swipe, tap
-from dctq_auto.vision.template_matching import match_template
-from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
 from dctq_auto.tasks.common.guild.polling.boss_reward_poller import BossRewardPoller
 
