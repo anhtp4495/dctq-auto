@@ -108,7 +108,7 @@ def _handle_ration_observation(observation, poller, context, phase):
             return "contribution_handled"
         elif state == "donated":
             log(f"[{account.display_name}] Đã xác nhận đóng góp Lương thảo.")
-            return "contribution_handled"
+            return "success"
         elif state == "donation_screen":
             x, y = ButtonPositions().get("quan_doan.luong_thao", "dong_gop")
             context["device"].shell(f"input tap {x} {y}")
@@ -192,8 +192,16 @@ def _run_rations_poller(poller, context):
                 )
                 templates = get_templates(template_names)
         elif result == "success":
+            if observation["state"] == "donated":
+                contribution_handled = True
             phase = "close"
-            template_names = _RATION_CLOSE_TEMPLATES
+            # Chỉ cho phép dùng template màn hình chính làm dấu kết thúc
+            # sau khi CHƯA ĐÓNG GÓP đã được click hoặc ĐÃ ĐÓNG GÓP được xác nhận.
+            template_names = (
+                _RATION_CLOSE_TEMPLATES
+                if contribution_handled
+                else _RATION_CLOSE_TEMPLATES[:-1]
+            )
             templates = get_templates(template_names)
         elif result == "completed":
             log(f"[{account.display_name}] Hoàn tất tác vụ đóng góp Lương thảo.")
