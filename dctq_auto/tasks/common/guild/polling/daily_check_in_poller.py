@@ -1,3 +1,4 @@
+from dctq_auto.config.constants import _STEP_QUAN_DOAN_BAO_DANH
 """Poller báo danh: phân biệt đã báo danh, chưa báo danh và màn hình Quân đoàn."""
 
 from dctq_auto.config.constants import (
@@ -9,6 +10,9 @@ from .base_poller import BaseGuildPoller
 
 
 class DailyCheckInPoller(BaseGuildPoller):
+    step_id = _STEP_QUAN_DOAN_BAO_DANH
+    task_module = "task_daily_check_in"
+
     category_key = "bao_danh"
     state_by_template = {
         _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH: "not_checked_in",
