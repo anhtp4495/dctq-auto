@@ -27,7 +27,6 @@ _RUN_TEMPLATES = (
 )
 _CLOSE_TEMPLATES = (
     _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
-    _TEMPLATE_QUAN_DOAN_CHUA_DU_DIEU_KIEN_DONG_GOP_KNB,
 )
 
 
@@ -40,7 +39,7 @@ class KnbPoller(BaseGuildPoller):
     state_by_template = {
         _TEMPLATE_QUAN_DOAN_DONG_GOP_KNB: "entry",
         _TEMPLATE_QUAN_DOAN_CHUA_DU_DIEU_KIEN_DONG_GOP_KNB: "insufficient_conditions",
-            _TEMPLATE_QUAN_DOAN_DONG_GOP_10_KNB: "donate_10",
+        _TEMPLATE_QUAN_DOAN_DONG_GOP_10_KNB: "donate_10",
         _TEMPLATE_QUAN_DOAN_DONG_GOP_20_KNB: "donate_20",
         _TEMPLATE_QUAN_DOAN_DONG_GOP_40_KNB: "donate_40",
         _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH: "guild_main",
