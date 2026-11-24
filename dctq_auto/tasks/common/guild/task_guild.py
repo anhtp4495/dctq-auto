@@ -30,6 +30,10 @@ from dctq_auto.tasks.common.guild.polling.rations_poller import (
     _RUN_TEMPLATES as _RATION_RUN_TEMPLATES,
     _CLOSE_TEMPLATES as _RATION_CLOSE_TEMPLATES,
 )
+from dctq_auto.tasks.common.guild.polling.knb_poller import (
+    _RUN_TEMPLATES as _KNB_RUN_TEMPLATES,
+    _CLOSE_TEMPLATES as _KNB_CLOSE_TEMPLATES,
+)
 from dctq_auto.vision.template_store import get_templates
 
 
@@ -216,6 +220,126 @@ def _run_rations_poller(poller, context):
     return False
 
 
+def _run_knb_poller(poller, context):
+    """Polling và điều phối đóng góp KNB; Poller chỉ nhận diện trạng thái."""
+    account = context["account"]
+    log = context["log"]
+    phase = "run"
+    skipped_templates = set()
+    template_names = _KNB_RUN_TEMPLATES
+    templates = get_templates(template_names)
+    deadline = time.monotonic() + _POLL_TIMEOUT_SECONDS
+
+    log(f"[{account.display_name}] Bắt đầu đóng góp KNB.")
+    while time.monotonic() < deadline:
+        if not context["worker"]._wait_if_paused():
+            log(f"[{account.display_name}] Đóng góp KNB đã dừng theo yêu cầu.")
+            return False
+
+        observation = _observe_ration(poller, context, templates, template_names)
+        if observation is None:
+            return False
+
+        state = observation["state"]
+        if phase == "run":
+            if state == "insufficient_conditions":
+                log(f"[{account.display_name}] Không đủ điều kiện đóng góp KNB.")
+                return True
+
+            if state in {"donate_10", "donate_20"}:
+                template_name = observation["template_name"]
+                if template_name in skipped_templates:
+                    try:
+                        x, y = ButtonPositions().get("quan_doan.knb", "dong_man_hinh")
+                        context["device"].shell(f"input tap {x} {y}")
+                    except Exception as exc:
+                        log(
+                            f"[{account.display_name}] Không đóng được màn hình góp KNB: {exc}"
+                        )
+                        return False
+                    log(
+                        f"[{account.display_name}] Template {template_name} đã được xử lý; "
+                        f"đóng màn hình góp KNB tại ({x}, {y})."
+                    )
+                    phase = "close"
+                    template_names = _KNB_CLOSE_TEMPLATES
+                    templates = get_templates(template_names)
+                else:
+                    x, y = click_match(context["device"], observation["match"])
+                    skipped_templates.add(template_name)
+                    log(
+                        f"[{account.display_name}] [Quân đoàn] [KNB] "
+                        f"Click mức đóng góp tại ({x}, {y})."
+                    )
+            elif state == "donate_40":
+                try:
+                    x, y = ButtonPositions().get("quan_doan.knb", "dong_man_hinh")
+                    context["device"].shell(f"input tap {x} {y}")
+                except Exception as exc:
+                    log(
+                        f"[{account.display_name}] Không đóng được màn hình góp KNB: {exc}"
+                    )
+                    return False
+                log(
+                    f"[{account.display_name}] Đã nhận diện mức đóng góp 40 KNB; "
+                    f"đóng màn hình tại ({x}, {y})."
+                )
+                phase = "close"
+                template_names = _KNB_CLOSE_TEMPLATES
+                templates = get_templates(template_names)
+            elif state == "entry":
+                x, y = click_match(context["device"], observation["match"])
+                log(
+                    f"[{account.display_name}] [Quân đoàn] [KNB] "
+                    f"Mở đóng góp KNB tại ({x}, {y})."
+                )
+            elif state == "donation_screen":
+                try:
+                    x, y = ButtonPositions().get("quan_doan.knb", "dong_man_hinh")
+                    context["device"].shell(f"input tap {x} {y}")
+                except Exception as exc:
+                    log(
+                        f"[{account.display_name}] Không đóng được màn hình góp KNB: {exc}"
+                    )
+                    return False
+                log(
+                    f"[{account.display_name}] Đã xử lý giao diện đóng góp KNB; "
+                    f"đóng màn hình tại ({x}, {y})."
+                )
+                phase = "close"
+                template_names = _KNB_CLOSE_TEMPLATES
+                templates = get_templates(template_names)
+            else:
+                log(
+                    f"[{account.display_name}] [Quân đoàn] [KNB] "
+                    f"Chưa nhận diện được trạng thái đóng góp ({state})."
+                )
+        else:
+            if state == "guild_main":
+                log(
+                    f"[{account.display_name}] Đã xác nhận trở về màn hình chính Quân đoàn "
+                    "sau khi đóng góp KNB."
+                )
+                return True
+            if state == "insufficient_conditions":
+                log(
+                    f"[{account.display_name}] Kết thúc đóng góp KNB do không đủ điều kiện."
+                )
+                return True
+            log(
+                f"[{account.display_name}] [Quân đoàn] [KNB] "
+                f"Chưa xác nhận được màn hình chính ({state})."
+            )
+
+        time.sleep(_POLL_INTERVAL_SECONDS)
+
+    log(
+        f"[{account.display_name}] [Quân đoàn] [KNB] "
+        "Quá thời gian polling tối đa 3 phút; giữ nguyên step."
+    )
+    return False
+
+
 def _run_legacy_task(poller, context):
     """Điều phối tạm thời category chưa chuyển sang observation handler."""
     module = importlib.import_module(
@@ -258,6 +382,10 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
             try:
                 if isinstance(poller, RationsPoller):
                     if _run_rations_poller(poller, context):
+                        if poller.step_id in steps:
+                            steps.remove(poller.step_id)
+                elif isinstance(poller, KnbPoller):
+                    if _run_knb_poller(poller, context):
                         if poller.step_id in steps:
                             steps.remove(poller.step_id)
                 else:
