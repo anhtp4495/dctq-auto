@@ -34,5 +34,5 @@ class RationsPoller(BaseGuildPoller):
             "not_donated", "donation_screen", "buy_rations", "stop_quickly",
             "close_donation_screen",
         }
-        observation["completed"] = observation["state"] == "donated"
+        observation["completed"] = observation["state"] in {"donated", "guild_main"}
         return observation
