@@ -83,7 +83,7 @@ def _capture_screen(context):
         return None
 
 
-def _observe_ration(poller, context, templates, template_names):
+def _observe_poller(poller, context, templates, template_names):
     screen = _capture_screen(context)
     if screen is None:
         return None
@@ -180,7 +180,7 @@ def _run_rations_poller(poller, context):
             log(f"[{account.display_name}] Đóng góp Lương thảo đã dừng theo yêu cầu.")
             return False
 
-        observation = _observe_ration(poller, context, templates, template_names)
+        observation = _observe_poller(poller, context, templates, template_names)
         if observation is None:
             return False
 
@@ -236,7 +236,7 @@ def _run_knb_poller(poller, context):
             log(f"[{account.display_name}] Đóng góp KNB đã dừng theo yêu cầu.")
             return False
 
-        observation = _observe_ration(poller, context, templates, template_names)
+        observation = _observe_poller(poller, context, templates, template_names)
         if observation is None:
             return False
 
