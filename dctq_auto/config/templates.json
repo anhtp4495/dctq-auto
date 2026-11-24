@@ -785,6 +785,13 @@
           "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
           "threshold": 0.95,
           "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_doan_dong_man_hinh_gop_knb": {
+          "description": "Màn hình [Quân Đoàn] - [Đóng góp KNB] - Thoát.",
+          "rect": { "top": 228, "left": 1376, "right": 1428, "bottom": 280},
+          "search_rect": { "top": 194, "left": 1349, "right": 1460, "bottom": 319},
+          "threshold": 0.95,
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
