@@ -19,5 +19,5 @@ class DailyCheckInPoller(BaseGuildPoller):
     def check(self, context) -> dict:
         observation = self._match_first(context)
         observation["requires_action"] = observation["state"] == "not_checked_in"
-        observation["completed"] = observation["state"] == "checked_in"
+        observation["completed"] = observation["state"] in {"checked_in", "guild_main"}
         return observation
