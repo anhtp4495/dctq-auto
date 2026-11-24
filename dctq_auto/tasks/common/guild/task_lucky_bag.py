@@ -14,8 +14,6 @@ from dctq_auto.config.constants import (
     _TEMPLATE_QUAN_DOAN_MAN_HINH_NHAN_TUI_PHUC,
     _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
 )
-from dctq_auto.vision.template_matching import match_template
-from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
 from dctq_auto.tasks.common.guild.polling.lucky_bag_poller import LuckyBagPoller
 
