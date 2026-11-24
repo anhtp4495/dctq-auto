@@ -18,7 +18,6 @@ from .base_poller import BaseGuildPoller
 
 class BossRewardPoller(BaseGuildPoller):
     step_id = _STEP_QUAN_DOAN_NHAN_THUONG_BOSS
-    task_module = "task_boss_reward"
 
     category_key = "boss_reward"
     state_by_template = {
