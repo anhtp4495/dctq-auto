@@ -17,38 +17,19 @@ from dctq_auto.config.constants import (
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
+from dctq_auto.tasks.common.guild.polling.lucky_bag_poller import LuckyBagPoller
+
+
+_POLLER = LuckyBagPoller()
 from dctq_auto.config.button_positions import ButtonPositions
 
 
 def _find_template(screen_bgr, templates, template_names, account, log):
-    """Trả về template khớp đầu tiên theo thứ tự ưu tiên."""
-    for template_name in template_names:
-        template = templates.get(template_name)
-        if template is None:
-            log(f"[{account.display_name}] Không tải được template {template_name}; bỏ qua.")
-            continue
-        try:
-            match = match_template(
-                screen_bgr,
-                template.image,
-                threshold=template.threshold,
-                method=template.method,
-                search_rect=template.search_rect,
-                grayscale=template.grayscale,
-            )
-        except (ValueError, cv2.error) as exc:
-            log(f"[{account.display_name}] Lỗi template matching {template_name}: {exc}")
-            continue
-        if match is not None:
-            report_template_match(
-                log,
-                context=f"[{account.display_name}]",
-                template=template,
-                match=match,
-            )
-            return template_name, template, match
-    return None, None, None
-
+    """Lấy observation từ poller theo thứ tự ưu tiên của tác vụ."""
+    template_name, matched = _POLLER.poll(
+        screen_bgr, templates, template_names, account, log
+    )
+    return template_name, templates.get(template_name) if template_name else None, matched
 
 def _tap_match_center(device, match, account, log):
     """Click trung điểm vùng template được nhận diện."""
