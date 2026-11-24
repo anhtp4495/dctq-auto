@@ -16,7 +16,6 @@ from .base_poller import BaseGuildPoller
 
 class BlessingPoller(BaseGuildPoller):
     step_id = _STEP_QUAN_DOAN_CAU_VAN
-    task_module = "task_blessing"
 
     category_key = "cau_van"
     state_by_template = {
