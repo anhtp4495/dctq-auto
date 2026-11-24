@@ -223,7 +223,7 @@ _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_KNB = "quan_doan.luong_thao/lay_them_luo
 _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_KNB = "quan_doan.knb/quan_doan_man_hinh_dong_gop_knb"
 _TEMPLATE_QUAN_DOAN_DONG_GOP_10_KNB = "quan_doan.knb/quan_doan_dong_gop_10_knb"
 _TEMPLATE_QUAN_DOAN_DONG_GOP_20_KNB = "quan_doan.knb/quan_doan_dong_gop_20_knb"
-_TEMPLATE_QUAN_DOAN_DONG_GOP_40_KNB = "quan_doan.knb/quan_doan_dong_gop_40_knb"
+_TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_GOP_KNB = "quan_doan.knb/quan_doan_dong_man_hinh_gop_knb"
 
 # Template dùng bên trong màn hình nhận túi phúc.
 _TEMPLATE_QUAN_DOAN_MAN_HINH_NHAN_TUI_PHUC = "quan_doan.tui_phuc/man_hinh_nhan_tui_phuc"
