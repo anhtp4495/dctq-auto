@@ -1,3 +1,4 @@
+from dctq_auto.config.constants import _STEP_QUAN_DOAN_TUI_PHUC
 """Poller Túi phúc: phân biệt trạng thái nhận, chi tiết và màn hình nhận."""
 
 from dctq_auto.config.constants import (
@@ -11,6 +12,9 @@ from .base_poller import BaseGuildPoller
 
 
 class LuckyBagPoller(BaseGuildPoller):
+    step_id = _STEP_QUAN_DOAN_TUI_PHUC
+    task_module = "task_lucky_bag"
+
     category_key = "tui_phuc"
     state_by_template = {
         _TEMPLATE_QUAN_DOAN_DA_NHAN_TUI_PHUC: "already_received",
