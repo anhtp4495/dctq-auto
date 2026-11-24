@@ -19,3 +19,11 @@ class LuckyBagPoller(BaseGuildPoller):
         _TEMPLATE_QUAN_DOAN_MAN_HINH_NHAN_TUI_PHUC: "receive_screen",
         _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH: "guild_main",
     }
+
+    def check(self, context) -> dict:
+        observation = self._match_first(context)
+        observation["requires_action"] = observation["state"] in {
+            "not_received", "detail", "receive_screen"
+        }
+        observation["completed"] = observation["state"] == "already_received"
+        return observation
