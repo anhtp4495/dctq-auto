@@ -29,3 +29,12 @@ class BossRewardPoller(BaseGuildPoller):
         _TEMPLATE_QUAN_DOAN_BOSS_QUAN_DOAN: "guild_boss_entry",
         _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH: "guild_main",
     }
+
+    def check(self, context) -> dict:
+        observation = self._match_first(context)
+        observation["requires_action"] = observation["state"] in {
+            "reward_available_entry", "reward_entrance", "claim_button",
+            "exit_reward_screen", "exit_boss_screen", "guild_boss_entry",
+        }
+        observation["completed"] = observation["state"] == "boss_main"
+        return observation
