@@ -36,5 +36,5 @@ class BossRewardPoller(BaseGuildPoller):
             "reward_available_entry", "reward_entrance", "claim_button",
             "exit_reward_screen", "exit_boss_screen", "guild_boss_entry",
         }
-        observation["completed"] = observation["state"] == "boss_main"
+        observation["completed"] = observation["state"] in {"boss_main", "guild_main"}
         return observation
