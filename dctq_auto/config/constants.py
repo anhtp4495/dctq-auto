@@ -215,6 +215,7 @@ _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN2 = "quan_doan.cau_van/quan_doan_het_luot_ca
 # Template dùng bên trong màn hình đóng góp Lương thảo Quân đoàn.
 _TEMPLATE_QUAN_DOAN_MAN_HINH_DONG_GOP_LUONG_THAO      = "quan_doan.luong_thao/quan_doan_man_hinh_dong_gop_luong_thao"
 _TEMPLATE_QUAN_DOAN_DUNG_NHANH = "quan_doan.luong_thao/dung_nhanh"
+_TEMPLATE_QUAN_DOAN_XAC_NHAN_DUNG_NHANH = "quan_doan.luong_thao/xac_nhan_dung_nhanh"
 _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO = "quan_doan.luong_thao/dong_man_hinh_dong_gop_luong_thao"
 _TEMPLATE_QUAN_DOAN_LAY_THEM_LUONG_THAO_KNB = "quan_doan.luong_thao/lay_them_luong_thao_KNB"
 
