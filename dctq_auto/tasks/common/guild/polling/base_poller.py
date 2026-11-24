@@ -1,6 +1,7 @@
 """Lớp cơ sở cho polling và chuẩn hóa observation của Quân đoàn."""
 
 import cv2
+from importlib import import_module
 
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
@@ -11,6 +12,37 @@ class BaseGuildPoller:
 
     category_key = ""
     state_by_template = {}
+    step_id = None
+    task_module = None
+
+    @classmethod
+    def create(cls, context):
+        """Chỉ tạo Poller khi step tương ứng được chọn."""
+        if cls.step_id not in context["steps"]:
+            return None
+        return cls()
+
+    def run(self, context):
+        """Chạy trọn quy trình nghiệp vụ của task tương ứng."""
+        if self.step_id not in context["steps"]:
+            context["log"](
+                f"[{context['account'].display_name}] [Quân đoàn] "
+                f"{self.category_key}: không có step; bỏ qua."
+            )
+            return context["steps"]
+
+        module = import_module(
+            f"dctq_auto.tasks.common.guild.{self.task_module}"
+        )
+        return module.run(
+            context["worker"],
+            context["account"],
+            context["steps"],
+            context["device"],
+            context.get("ocr_client"),
+            context["log"],
+            screenshot=context.get("screenshot"),
+        )
 
     def poll(self, screen_bgr, templates, template_names, account, log):
         """Trả observation đã được lớp con phân loại."""
