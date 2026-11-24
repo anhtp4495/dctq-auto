@@ -502,7 +502,7 @@ def _run_remaining_poller(poller, context):
                         f"[{account.display_name}] Vuốt danh sách thưởng Boss "
                         f"({boss_empty_swipes}/2)."
                     )
-                    if boss_empty_swipes >= 2 and not boss_reward_clicked:
+                    if boss_empty_swipes >= 2:
                         phase = "close_boss"
                 except Exception as exc:
                     log(f"[{account.display_name}] Không vuốt được danh sách thưởng Boss: {exc}")
