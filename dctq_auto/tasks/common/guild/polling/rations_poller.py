@@ -1,3 +1,4 @@
+from dctq_auto.config.constants import _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO
 """Poller đóng góp Lương thảo: phân loại các trạng thái đóng góp và điều hướng."""
 
 from dctq_auto.config.constants import (
@@ -15,6 +16,9 @@ from .base_poller import BaseGuildPoller
 
 
 class RationsPoller(BaseGuildPoller):
+    step_id = _STEP_QUAN_DOAN_DONG_GOP_LUONG_THAO
+    task_module = "task_donate_rations"
+
     category_key = "dong_gop_luong_thao"
     state_by_template = {
         _TEMPLATE_QUAN_DOAN_CHUA_DONG_GOP_LUONG_THAO: "not_donated",
