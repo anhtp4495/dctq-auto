@@ -49,11 +49,11 @@ def pre_run_boss_reward(steps, log) -> bool:
 
 
 def _find_template(screen_bgr, templates, template_names, account, log):
-    """Lấy observation từ poller theo thứ tự ưu tiên của tác vụ."""
-    template_name, matched = _POLLER.poll(
+    """Lấy observation đã phân loại từ poller chuyên biệt của tác vụ."""
+    observation = _POLLER.poll(
         screen_bgr, templates, template_names, account, log
     )
-    return template_name, matched
+    return observation["template_name"], observation["match"]
 
 def _capture_screen(device, account, log, action):
     """Chụp màn hình và chuyển sang BGR."""
