@@ -14,12 +14,12 @@ from dctq_auto.config.constants import (
     _TEMPLATE_QUAN_DOAN_MAN_HINH_NHAN_TUI_PHUC,
     _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
 )
+from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.vision.template_store import get_templates
 from dctq_auto.tasks.common.guild.polling.lucky_bag_poller import LuckyBagPoller
 
 
 _POLLER = LuckyBagPoller()
-from dctq_auto.config.button_positions import ButtonPositions
 
 
 def _find_template(screen_bgr, templates, template_names, account, log):
