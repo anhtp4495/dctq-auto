@@ -733,9 +733,9 @@
           "match_method": "TM_CCOEFF_NORMED"
         },
         "dong_man_hinh_dong_gop_luong_thao": {
-          "description": "[Quân Đoàn] - [Lương Thảo] - [X]",
-          "rect": { "top": 204, "left": 1356, "right": 1444, "bottom": 300},
-          "search_rect": { "top": 162, "left": 1168, "right": 1544, "bottom": 368},
+          "description": "[Quân Đoàn] - [Lương Thảo] - Thoát",
+          "rect": { "top": 231, "left": 1377, "right": 1431, "bottom": 280},
+          "search_rect": { "top": 141, "left": 1248, "right": 1524, "bottom": 377},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
