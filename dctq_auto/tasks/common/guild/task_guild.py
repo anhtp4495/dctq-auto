@@ -420,6 +420,79 @@ def _handle_blessing_observation(observation, context, phase):
     return "continue", phase, None, None
 
 
+
+def _handle_boss_reward_observation(
+    observation,
+    context,
+    phase,
+    boss_reward_clicked,
+    boss_empty_swipes,
+):
+    """Xử lý observation nhận thưởng Boss; Poller chỉ nhận diện trạng thái."""
+    account = context["account"]
+    device = context["device"]
+    log = context["log"]
+    state = observation["state"]
+    match = observation.get("match")
+
+    if state == "guild_boss_entry":
+        x, y = click_match(device, match)
+        log(f"[{account.display_name}] Mở lối vào Boss Quân đoàn tại ({x}, {y}).")
+    elif state == "boss_main":
+        try:
+            start = ButtonPositions().get("quan_doan", "item_2")
+            end = ButtonPositions().get("quan_doan", "item_1")
+            swipe(device, start, end, account=account, log=log, duration_ms=500)
+            log(f"[{account.display_name}] Vuốt danh sách Boss để tìm thưởng.")
+        except Exception as exc:
+            log(f"[{account.display_name}] Không vuốt được danh sách Boss: {exc}")
+            return "failed", phase, boss_reward_clicked, boss_empty_swipes
+    elif state == "reward_available_entry":
+        x, y = click_match(device, match)
+        log(f"[{account.display_name}] Mở lối nhận thưởng Boss tại ({x}, {y}).")
+    elif state == "reward_entrance":
+        x, y = click_match(device, match)
+        log(f"[{account.display_name}] Mở màn hình nhận thưởng Boss tại ({x}, {y}).")
+    elif state == "reward_screen":
+        try:
+            start = ButtonPositions().get("quan_doan", "boss_item_2")
+            end = ButtonPositions().get("quan_doan", "boss_item_1")
+            swipe(device, start, end, account=account, log=log, duration_ms=500)
+            boss_empty_swipes += 1
+            log(
+                f"[{account.display_name}] Vuốt danh sách thưởng Boss "
+                f"({boss_empty_swipes}/2)."
+            )
+            if boss_empty_swipes >= 2:
+                phase = "close_boss"
+        except Exception as exc:
+            log(f"[{account.display_name}] Không vuốt được danh sách thưởng Boss: {exc}")
+            return "failed", phase, boss_reward_clicked, boss_empty_swipes
+    elif state == "ready_to_claim":
+        log(f"[{account.display_name}] Đã vào màn hình chuẩn bị nhận thưởng Boss.")
+    elif state == "claim_button":
+        x, y = click_match(device, match)
+        boss_reward_clicked = True
+        boss_empty_swipes = 0
+        log(f"[{account.display_name}] Nhận thưởng Boss tại ({x}, {y}).")
+    elif state == "exit_reward_screen":
+        x, y = click_match(device, match)
+        phase = "close_boss"
+        log(f"[{account.display_name}] Đóng màn hình nhận thưởng Boss tại ({x}, {y}).")
+    elif state == "exit_boss_screen":
+        x, y = click_match(device, match)
+        phase = "close_boss"
+        log(f"[{account.display_name}] Thoát màn hình Boss tại ({x}, {y}).")
+    elif state == "guild_main" and phase == "close_boss":
+        log(f"[{account.display_name}] Đã trở về màn hình chính Quân đoàn sau khi nhận thưởng Boss.")
+        return "completed", phase, boss_reward_clicked, boss_empty_swipes
+    elif state == "guild_main" and not boss_reward_clicked:
+        # Boss không còn lối nhận thưởng: xem như đã nhận từ trước.
+        log(f"[{account.display_name}] Boss không còn lối nhận thưởng; xem như đã nhận trước đó.")
+        return "completed", phase, boss_reward_clicked, boss_empty_swipes
+
+    return "continue", phase, boss_reward_clicked, boss_empty_swipes
+
 def _run_remaining_poller(poller, context):
     """Điều phối các poller còn lại; mọi nhận diện đều qua observation."""
     account = context["account"]
@@ -561,59 +634,19 @@ def _run_remaining_poller(poller, context):
                 return True
 
         elif isinstance(poller, BossRewardPoller):
-            if state == "guild_boss_entry":
-                x, y = click_match(device, match)
-                log(f"[{account.display_name}] Mở lối vào Boss Quân đoàn tại ({x}, {y}).")
-            elif state == "boss_main":
-                try:
-                    start = ButtonPositions().get("quan_doan", "item_2")
-                    end = ButtonPositions().get("quan_doan", "item_1")
-                    swipe(device, start, end, account=account, log=log, duration_ms=500)
-                    log(f"[{account.display_name}] Vuốt danh sách Boss để tìm thưởng.")
-                except Exception as exc:
-                    log(f"[{account.display_name}] Không vuốt được danh sách Boss: {exc}")
-                    return False
-            elif state == "reward_available_entry":
-                x, y = click_match(device, match)
-                log(f"[{account.display_name}] Mở lối nhận thưởng Boss tại ({x}, {y}).")
-            elif state == "reward_entrance":
-                x, y = click_match(device, match)
-                log(f"[{account.display_name}] Mở màn hình nhận thưởng Boss tại ({x}, {y}).")
-            elif state == "reward_screen":
-                try:
-                    start = ButtonPositions().get("quan_doan", "boss_item_2")
-                    end = ButtonPositions().get("quan_doan", "boss_item_1")
-                    swipe(device, start, end, account=account, log=log, duration_ms=500)
-                    boss_empty_swipes += 1
-                    log(
-                        f"[{account.display_name}] Vuốt danh sách thưởng Boss "
-                        f"({boss_empty_swipes}/2)."
-                    )
-                    if boss_empty_swipes >= 2:
-                        phase = "close_boss"
-                except Exception as exc:
-                    log(f"[{account.display_name}] Không vuốt được danh sách thưởng Boss: {exc}")
-                    return False
-            elif state == "ready_to_claim":
-                log(f"[{account.display_name}] Đã vào màn hình chuẩn bị nhận thưởng Boss.")
-            elif state == "claim_button":
-                x, y = click_match(device, match)
-                boss_reward_clicked = True
-                boss_empty_swipes = 0
-                log(f"[{account.display_name}] Nhận thưởng Boss tại ({x}, {y}).")
-            elif state == "exit_reward_screen":
-                x, y = click_match(device, match)
-                phase = "close_boss"
-                log(f"[{account.display_name}] Đóng màn hình nhận thưởng Boss tại ({x}, {y}).")
-            elif state == "exit_boss_screen":
-                x, y = click_match(device, match)
-                phase = "close_boss"
-                log(f"[{account.display_name}] Thoát màn hình Boss tại ({x}, {y}).")
-            elif state == "guild_main" and phase == "close_boss":
+            result, phase, boss_reward_clicked, boss_empty_swipes = (
+                _handle_boss_reward_observation(
+                    observation,
+                    context,
+                    phase,
+                    boss_reward_clicked,
+                    boss_empty_swipes,
+                )
+            )
+            if result == "completed":
                 return True
-            elif state == "guild_main" and not boss_reward_clicked:
-                # Boss không còn lối nhận thưởng: xem như đã nhận từ trước.
-                return True
+            if result == "failed":
+                return False
 
         time.sleep(_POLL_INTERVAL_SECONDS)
 
