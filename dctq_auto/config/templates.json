@@ -1641,7 +1641,7 @@
           "description": "[Màn hình chính] - [Tướng ấn] - Thăm dò tất cả",
           "rect": { "top": 981, "left": 1488, "right": 1515, "bottom": 1010},
           "search_rect": { "top": 968, "left": 1475, "right": 1528, "bottom": 1021},
-          "threshold": 0.70,
+          "threshold": 0.90,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
