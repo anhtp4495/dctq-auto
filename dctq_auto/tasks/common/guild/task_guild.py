@@ -22,6 +22,7 @@ from dctq_auto.config.constants import (
     _TEMPLATE_QUAN_DOAN_THOAT_MAN_HINH_CAU_VAN,
 )
 from dctq_auto.config.button_positions import ButtonPositions
+from dctq_auto.progress import ProgressStatus
 from dctq_auto.tasks.common.battle.battle_utils import click_match, swipe
 from dctq_auto.tasks.common.guild import task_close_guild, task_open_guild
 from dctq_auto.tasks.common.guild.polling import (
@@ -691,6 +692,20 @@ def _run_remaining_poller(poller, context):
 
 
 
+def _update_poller_process_status(poller, context, success):
+    """Cập nhật node tiến trình Clone ngay khi từng poller kết thúc."""
+    worker = context["worker"]
+    process_ids = getattr(worker, "_current_process_ids", {})
+    process_id = process_ids.get(poller.step_id)
+    if process_id is None:
+        return
+
+    worker.UpdateProcessStatus(
+        process_id=process_id,
+        status=ProgressStatus.SUCCESS if success else ProgressStatus.FAILED,
+    )
+
+
 def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> list[str]:
     """Mở Quân đoàn, điều phối từng task và đóng màn hình."""
     if not _GUILD_STEP_IDS.intersection(steps):
@@ -716,18 +731,18 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
         for poller in create_pollers(context):
             try:
                 if isinstance(poller, RationsPoller):
-                    if _run_rations_poller(poller, context):
-                        if poller.step_id in steps:
-                            steps.remove(poller.step_id)
+                    poller_success = _run_rations_poller(poller, context)
                 elif isinstance(poller, KnbPoller):
-                    if _run_knb_poller(poller, context):
-                        if poller.step_id in steps:
-                            steps.remove(poller.step_id)
+                    poller_success = _run_knb_poller(poller, context)
                 else:
-                    if _run_remaining_poller(poller, context):
-                        if poller.step_id in steps:
-                            steps.remove(poller.step_id)
+                    poller_success = _run_remaining_poller(poller, context)
+
+                if poller_success and poller.step_id in steps:
+                    steps.remove(poller.step_id)
+
+                _update_poller_process_status(poller, context, poller_success)
             except Exception as exc:
+                _update_poller_process_status(poller, context, False)
                 log(
                     f"[{account.display_name}] [Quân đoàn] "
                     f"{poller.category_key} thất bại: {exc}"
