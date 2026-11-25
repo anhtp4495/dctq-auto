@@ -15,6 +15,11 @@ from dctq_auto.config.constants import (
     _STEP_QUAN_DOAN_NHAN_THUONG_BOSS,
     _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
     _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH,
+    _TEMPLATE_QUAN_DOAN_CAU_VAN,
+    _TEMPLATE_QUAN_DOAN_CO_THE_CAU_VAN,
+    _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN1,
+    _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN2,
+    _TEMPLATE_QUAN_DOAN_THOAT_MAN_HINH_CAU_VAN,
 )
 from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.tasks.common.battle.battle_utils import click_match, swipe
@@ -404,7 +409,18 @@ def _run_remaining_poller(poller, context):
     boss_reward_clicked = False
     boss_empty_swipes = 0
 
-    if isinstance(poller, DailyCheckInPoller):
+    if isinstance(poller, BlessingPoller):
+        # Ban đầu chỉ nhận diện lối vào và trạng thái Cầu vận; chưa xét
+        # guild_main vì template này cùng xuất hiện với lối vào.
+        template_names = (
+            _TEMPLATE_QUAN_DOAN_CAU_VAN,
+            _TEMPLATE_QUAN_DOAN_CO_THE_CAU_VAN,
+            _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN1,
+            _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN2,
+        )
+        templates = get_templates(template_names)
+        log(f"[{account.display_name}] Bắt đầu Cầu vận Quân đoàn.")
+    elif isinstance(poller, DailyCheckInPoller):
         template_names = (
             *[name for name in template_names if state_by_template[name] != "guild_main"],
             *[name for name in template_names if state_by_template[name] == "guild_main"],
@@ -451,28 +467,34 @@ def _run_remaining_poller(poller, context):
         elif isinstance(poller, BlessingPoller):
             if state == "entry":
                 x, y = click_match(device, match)
-                log(f"[{account.display_name}] Mở Cầu vận tại ({x}, {y}).")
+                log(f"[{account.display_name}] Mở lối vào Cầu vận tại ({x}, {y}).")
+                # Entry và màn hình chính Quân đoàn cùng xuất hiện trên một
+                # màn hình; chỉ bật nhận diện guild_main sau khi đã click entry.
+                template_names = (
+                    _TEMPLATE_QUAN_DOAN_CO_THE_CAU_VAN,
+                    _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN1,
+                    _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN2,
+                    _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
+                )
+                templates = get_templates(template_names)
             elif state == "can_bless":
                 x, y = click_match(device, match)
                 log(f"[{account.display_name}] Thực hiện Cầu vận tại ({x}, {y}).")
             elif state in {"no_turns_1", "no_turns_2"}:
                 phase = "close"
                 log(f"[{account.display_name}] Đã xác nhận Cầu vận hết lượt.")
-            elif state == "blessing_screen":
-                if phase == "close":
-                    try:
-                        x, y = ButtonPositions().get("quan_doan.cau_van", "dong_man_hinh")
-                        device.shell(f"input tap {x} {y}")
-                        log(f"[{account.display_name}] Đóng màn hình Cầu vận tại ({x}, {y}).")
-                    except Exception as exc:
-                        log(f"[{account.display_name}] Không đóng được màn hình Cầu vận: {exc}")
-                        return False
-                else:
-                    log(f"[{account.display_name}] Đang ở màn hình Cầu vận, chờ trạng thái thao tác.")
-            elif phase == "close" and state in {
-                "not_checked_in", "checked_in", "entry", "guild_main"
-            }:
-                log(f"[{account.display_name}] Đã đóng màn hình Cầu vận.")
+                template_names = (
+                    _TEMPLATE_QUAN_DOAN_THOAT_MAN_HINH_CAU_VAN,
+                    _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
+                )
+                templates = get_templates(template_names)
+            elif state == "exit_blessing":
+                x, y = click_match(device, match)
+                log(f"[{account.display_name}] Thoát màn hình Cầu vận tại ({x}, {y}).")
+                template_names = (_TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,)
+                templates = get_templates(template_names)
+            elif state == "guild_main":
+                log(f"[{account.display_name}] Đã xác nhận màn hình chính Quân đoàn; hoàn tất Cầu vận.")
                 return True
 
         elif isinstance(poller, LuckyBagPoller):
