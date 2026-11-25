@@ -48,8 +48,6 @@ class DailyCheckInPoller:
     def __init__(self):
         # Giữ danh sách ô đã chọn để các lần poll sau chỉ kiểm tra lại các ô này.
         self._target_cells = None
-        self._target_day = None
-        self._catchup_days = None
 
     @staticmethod
     def _match_day(screen_bgr, template, search_rect):
@@ -116,67 +114,63 @@ class DailyCheckInPoller:
                 "template_name": _TEMPLATE_XAC_NHAN_DIEM_DANH_BU,
                 "template": confirmation_template,
                 "match": confirmation_match,
-                "target_cells": self._target_cells or [],
-                "target_day": self._target_day,
-                "catchup_days": self._catchup_days or [],
             }
 
         all_day_regions = self.build_day_regions(screen_width, screen_height)
         is_initial_poll = self._target_cells is None
+
         if is_initial_poll:
-            day_regions = all_day_regions
-        else:
-            day_regions = [
-                (item["day"], item["search_rect"])
-                for item in self._target_cells
-            ]
-
-        days = []
-        already_days = set()
-        log(
-            f"[{account.display_name}] "
-            f"{'Quét lần đầu toàn bộ' if is_initial_poll else 'Quét lại các ô đã lưu'}: "
-            f"{len(day_regions)} ô."
-        )
-
-        for day, search_rect in day_regions:
-            try:
-                already_match = self._match_day(
-                    screen_bgr, already_template, search_rect
-                )
-                if already_match is not None:
-                    already_days.add(day)
-                    state = "completed"
-                    log(f"[{account.display_name}] Ngày {day} đã điểm danh.")
-                else:
-                    catchup_match = self._match_day(
-                        screen_bgr, catchup_template, search_rect
+            days = []
+            already_days = set()
+            log(
+                f"[{account.display_name}] Bắt đầu quét trạng thái "
+                f"{len(all_day_regions)} ngày."
+            )
+            for day, search_rect in all_day_regions:
+                try:
+                    already_match = self._match_day(
+                        screen_bgr, already_template, search_rect
                     )
-                    state = "catchup_available" if catchup_match is not None else "not_completed"
-                    if catchup_match is not None:
-                        report_template_match(
-                            log,
-                            context=f"[{account.display_name}] Ngày {day}",
-                            template=catchup_template,
-                            match=catchup_match,
+                    if already_match is not None:
+                        already_days.add(day)
+                        state = "completed"
+                        log(f"[{account.display_name}] Ngày {day} đã điểm danh.")
+                    else:
+                        catchup_match = self._match_day(
+                            screen_bgr, catchup_template, search_rect
                         )
-                    log(f"[{account.display_name}] Ngày {day} chưa điểm danh.")
-            except (ValueError, cv2.error) as exc:
-                log(f"[{account.display_name}] Lỗi nhận diện trạng thái ngày {day}: {exc}")
-                return None
-            except Exception as exc:
-                log(f"[{account.display_name}] Không kiểm tra được ngày {day}: {exc}")
-                return None
+                        state = (
+                            "catchup_available"
+                            if catchup_match is not None
+                            else "not_completed"
+                        )
+                        if catchup_match is not None:
+                            report_template_match(
+                                log,
+                                context=f"[{account.display_name}] Ngày {day}",
+                                template=catchup_template,
+                                match=catchup_match,
+                            )
+                        log(f"[{account.display_name}] Ngày {day} chưa điểm danh.")
+                except (ValueError, cv2.error) as exc:
+                    log(
+                        f"[{account.display_name}] Lỗi nhận diện trạng thái "
+                        f"ngày {day}: {exc}"
+                    )
+                    return None
+                except Exception as exc:
+                    log(
+                        f"[{account.display_name}] Không kiểm tra được "
+                        f"ngày {day}: {exc}"
+                    )
+                    return None
 
-            days.append({
-                "day": day,
-                "state": state,
-                "search_rect": search_rect,
-            })
+                days.append({
+                    "day": day,
+                    "state": state,
+                    "search_rect": search_rect,
+                })
 
-        if is_initial_poll:
-            # Thứ tự xử lý: ngày cần điểm danh, ngày kế tiếp, rồi tối đa
-            # ba ngày còn thiếu trước ngày mục tiêu.
             target_day = max(already_days, default=0) + 1
             catchup_days = [
                 item["day"]
@@ -185,27 +179,59 @@ class DailyCheckInPoller:
             ][:3]
             selected_days = [target_day, target_day + 1, *catchup_days]
             region_by_day = dict(all_day_regions)
-            target_cells = [
+            self._target_cells = [
                 {"day": day, "search_rect": region_by_day[day]}
                 for day in selected_days
                 if day in region_by_day
             ]
+            log(
+                f"[{account.display_name}] Đã lưu thứ tự các ô cần xử lý: "
+                f"{[item['day'] for item in self._target_cells]}."
+            )
+            # Lần quét đầu đã có trạng thái từng ô, không cần quét lại.
+            pending_days = {
+                item["day"] for item in days
+                if item["state"] != "completed"
+            }
+            for item in self._target_cells:
+                if item["day"] in pending_days:
+                    return {
+                        "state": "check_in",
+                        "day": item["day"],
+                        "search_rect": item["search_rect"],
+                    }
+            return {"state": "completed"}
 
-            self._target_cells = target_cells
-            self._target_day = target_day
-            self._catchup_days = catchup_days
-            log(
-                f"[{account.display_name}] Lưu danh sách ô cần xử lý: "
-                f"{[item['day'] for item in target_cells]}."
-            )
-        else:
-            target_day = self._target_day
-            catchup_days = self._catchup_days
-            target_cells = self._target_cells
-            log(
-                f"[{account.display_name}] Tiếp tục dùng danh sách ô đã lưu: "
-                f"{[item['day'] for item in target_cells]}."
-            )
+        # Những lần poll sau chỉ kiểm tra các ô đã lưu, theo đúng thứ tự.
+        log(
+            f"[{account.display_name}] Kiểm tra lại "
+            f"{len(self._target_cells)} ô đã lưu."
+        )
+        for item in self._target_cells:
+            try:
+                already_match = self._match_day(
+                    screen_bgr, already_template, item["search_rect"]
+                )
+            except (ValueError, cv2.error) as exc:
+                log(
+                    f"[{account.display_name}] Lỗi nhận diện trạng thái "
+                    f"ngày {item['day']}: {exc}"
+                )
+                return None
+
+            if already_match is not None:
+                log(f"[{account.display_name}] Ngày {item['day']} đã điểm danh.")
+                continue
+
+            log(f"[{account.display_name}] Cần xử lý ngày {item['day']}.")
+            return {
+                "state": "check_in",
+                "day": item["day"],
+                "search_rect": item["search_rect"],
+            }
+
+        return {"state": "completed"}
+
         return {
             "days": days,
             "already_days": already_days,
