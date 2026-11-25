@@ -14,6 +14,7 @@ from dctq_auto.config.constants import (
     _STEP_QUAN_DOAN_TUI_PHUC,
     _STEP_QUAN_DOAN_NHAN_THUONG_BOSS,
     _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
+    _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH,
 )
 from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.tasks.common.battle.battle_utils import click_match, swipe
@@ -315,7 +316,7 @@ def _run_knb_poller(poller, context):
 
 
 
-def _handle_daily_check_in_observation(observation, context, phase):
+def _handle_daily_check_in_observation(observation, context, phase, templates):
     """Xử lý observation báo danh; Poller chỉ nhận diện trạng thái."""
     account = context["account"]
     device = context["device"]
@@ -331,16 +332,10 @@ def _handle_daily_check_in_observation(observation, context, phase):
             return "close"
     elif state == "not_checked_in":
         if phase == "run":
-            search_top, search_left, search_right, search_bottom = (
-                observation["template"].search_rect
-            )
-            x = (search_left + search_right) // 2
-            y = (search_top + search_bottom) // 2
-            device.shell(f"input tap {x} {y}")
+            x, y = click_match(device, observation["match"])
             log(
-                f"[{account.display_name}] Click trung điểm vùng search_rect "
-                f"của template chưa báo danh tại ({x}, {y}); "
-                "chờ xác nhận màn hình chính."
+                f"[{account.display_name}] Click trung điểm template chưa báo danh "
+                f"tại ({x}, {y}); chờ xác nhận màn hình chính."
             )
             return "close"
     elif state == "guild_main":
@@ -351,17 +346,22 @@ def _handle_daily_check_in_observation(observation, context, phase):
             )
             return "completed"
         try:
-            x, y = ButtonPositions().get("quan_doan", "bao_danh")
+            search_top, search_left, search_right, search_bottom = (
+                templates[_TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH].search_rect
+            )
+            x = (search_left + search_right) // 2
+            y = (search_top + search_bottom) // 2
             device.shell(f"input tap {x} {y}")
             log(
                 f"[{account.display_name}] Màn hình chính Quân đoàn đang hiển thị; "
-                f"click tọa độ nút báo danh ({x}, {y}) và chờ nhận diện lại "
-                "màn hình chính để kết thúc."
+                f"click trung điểm vùng search_rect của template chưa báo danh "
+                f"tại ({x}, {y}); chờ nhận diện lại màn hình chính để kết thúc."
             )
             return "close"
         except Exception as exc:
             log(
-                f"[{account.display_name}] Không click được tọa độ nút báo danh: {exc}"
+                f"[{account.display_name}] Không click được trung điểm vùng "
+                f"search_rect của template chưa báo danh: {exc}"
             )
             return "failed"
 
@@ -433,6 +433,7 @@ def _run_remaining_poller(poller, context):
                 observation,
                 context,
                 phase,
+                templates,
             )
             if result == "close":
                 phase = "close"
