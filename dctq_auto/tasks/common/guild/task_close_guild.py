@@ -8,12 +8,15 @@ import numpy as np
 from dctq_auto.config.constants import (
     _TEMPLATE_MAIN_QUAN_DOAN_MO_CHAT,
     _TEMPLATE_QUAN_DOAN_CHAT_TAT_CHAT,
-    _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
+    _TEMPLATE_QUAN_DOAN_THOAT_MAN_HINH_CAU_VAN,
+    _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO,
+    _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_GOP_KNB,
+    _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_TUI_PHUC,
+    _TEMPLATE_QUAN_DOAN_DONG_QUAN_DOAN_MAN_HINH_CHINH,
 )
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
-from dctq_auto.config.button_positions import ButtonPositions
 
 
 def close_guild(
@@ -28,9 +31,13 @@ def close_guild(
     log(f"[{account.display_name}] Bắt đầu kiểm tra đóng màn hình [Quân đoàn].")
 
     template_names = (
+        _TEMPLATE_QUAN_DOAN_THOAT_MAN_HINH_CAU_VAN,
+        _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO,
+        _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_GOP_KNB,
+        _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_TUI_PHUC,
+        _TEMPLATE_QUAN_DOAN_DONG_QUAN_DOAN_MAN_HINH_CHINH,
         _TEMPLATE_MAIN_QUAN_DOAN_MO_CHAT,
         _TEMPLATE_QUAN_DOAN_CHAT_TAT_CHAT,
-        _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
     )
     templates = get_templates(template_names)
 
@@ -75,13 +82,21 @@ def close_guild(
             log(f"[{account.display_name}] Đã xác nhận đóng màn hình [Quân đoàn] thành công.")
             return True
 
-        if template_name == _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH:
+        close_template_names = {
+            _TEMPLATE_QUAN_DOAN_THOAT_MAN_HINH_CAU_VAN,
+            _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_DONG_GOP_LUONG_THAO,
+            _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_GOP_KNB,
+            _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_TUI_PHUC,
+            _TEMPLATE_QUAN_DOAN_DONG_QUAN_DOAN_MAN_HINH_CHINH,
+        }
+        if template_name in close_template_names:
+            x = round((match.left + match.right) / 2)
+            y = round((match.top + match.bottom) / 2)
+            log(
+                f"[{account.display_name}] Phát hiện nút đóng màn hình "
+                f"({template.id}); click trung điểm ({x}, {y}) rồi kiểm tra lại."
+            )
             try:
-                x, y = ButtonPositions().get("quan_doan", "dong_man_hinh")
-                log(
-                    f"[{account.display_name}] Đang ở giao diện Quân đoàn "
-                    f"({template.id}); click đóng màn hình tại ({x}, {y})."
-                )
                 device.shell(f"input tap {x} {y}")
                 time.sleep(1.0)
                 return close_guild(self, account, device, ocr_client, log)
