@@ -130,7 +130,15 @@ class DailyCheckInPoller:
             for item in days
             if item["day"] < target_day and item["state"] != "completed"
         ][:3]
-        selected_days = [target_day, target_day + 1, *catchup_days]
+        if catchup_days:
+            selected_days = [*catchup_days, target_day]
+        else:
+            selected_days = [
+                target_day,
+                target_day + 1,
+                target_day + 2,
+                target_day + 3,
+            ]
         region_by_day = dict(all_day_regions)
         pending_days = {
             item["day"] for item in days
@@ -237,12 +245,14 @@ class DailyCheckInPoller:
                 continue
 
             item["attempts"] += 1
-            should_remove = item["attempts"] >= 3
-            if should_remove:
-                self._target_cells.pop(0)
+            should_stop = item["attempts"] >= 3
+            if should_stop:
+                failed_day = item["day"]
+                self._target_cells.clear()
                 log(
-                    f"[{account.display_name}] Ngày {item['day']} đã được poll "
-                    "3 lần; loại khỏi hàng đợi."
+                    f"[{account.display_name}] Ngày {failed_day} đã được poll "
+                    "3 lần nhưng vẫn chưa điểm danh được; xóa toàn bộ hàng đợi "
+                    "và kết thúc điểm danh."
                 )
             else:
                 log(
