@@ -374,6 +374,7 @@ def open_diem_danh(worker, account, device, ocr_client, log, screenshot=None) ->
             log(f"[{account.display_name}] Không chụp được màn hình khi mở Điểm danh: {exc}")
             return False
 
+        clicked = False
         for template_name in template_names:
             template = templates.get(template_name)
             if template is None:
@@ -403,6 +404,12 @@ def open_diem_danh(worker, account, device, ocr_client, log, screenshot=None) ->
 
             log(f"[{account.display_name}] Phát hiện Điểm danh chưa được chọn.")
             _tap_match_center(device, match, account, log)
+            clicked = True
+            break
+
+        if clicked:
+            # Sau khi click, chụp màn hình ở vòng lặp kế tiếp để xác nhận.
+            # Không vuốt danh sách ngay trong cùng lượt kiểm tra.
             continue
 
         if attempt == 5:
