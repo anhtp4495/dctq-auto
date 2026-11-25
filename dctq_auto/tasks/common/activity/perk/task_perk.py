@@ -42,7 +42,6 @@ _DAILY_TEMPLATE_NAMES = (
     _TEMPLATE_DIEM_DANH_BU,
     _TEMPLATE_DA_DIEM_DANH,
 )
-_SCREEN_TEMPLATE_NAMES = (_TEMPLATE_XAC_NHAN_DIEM_DANH_BU,)
 
 
 def pre_perk(steps) -> bool:
@@ -150,35 +149,6 @@ def task_open_perk(
     log(f"[{account.display_name}] Mở Phúc lợi thất bại sau {_MAX_TRIES} lần thử.")
     return False
 
-def _find_template(screen_bgr, templates, account, log):
-    """Tìm template đầu tiên khớp theo thứ tự ưu tiên."""
-    for template_name in _SCREEN_TEMPLATE_NAMES:
-        template = templates.get(template_name)
-        if template is None:
-            log(f"[{account.display_name}] Không tải được template {template_name}; bỏ qua.")
-            continue
-        try:
-            match = match_template(
-                screen_bgr,
-                template.image,
-                threshold=template.threshold,
-                method=template.method,
-                search_rect=template.search_rect,
-                grayscale=template.grayscale,
-            )
-        except (ValueError, cv2.error) as exc:
-            log(f"[{account.display_name}] Lỗi template matching {template_name}: {exc}")
-            continue
-        if match is not None:
-            report_template_match(
-                log,
-                context=f"[{account.display_name}]",
-                template=template,
-                match=match,
-            )
-            return template_name, match
-    return None, None
-
 def _match_day_template(screen_bgr, template, search_rect):
     """Tìm template trạng thái trong đúng vùng của một ngày."""
     return match_template(
@@ -218,7 +188,7 @@ def _tap_day(
             screen_bgr = cv2.cvtColor(
                 np.asarray(screenshot), cv2.COLOR_RGB2BGR
             )
-            screen_template_name, screen_match = _find_template(
+            confirmation = DailyCheckInPoller().check_catchup_confirmation(
                 screen_bgr, templates, account, log
             )
         except Exception as exc:
@@ -228,15 +198,12 @@ def _tap_day(
             )
             continue
 
-        if screen_template_name == _TEMPLATE_XAC_NHAN_DIEM_DANH_BU:
+        if confirmation is not None and confirmation["state"] == "confirmation_required":
             log(f"[{account.display_name}] Ngày {day} yêu cầu xác nhận điểm danh bù.")
             if not worker._wait_if_paused():
                 return None
-            if screen_match is None:
-                log(f"[{account.display_name}] Không tìm thấy vùng xác nhận điểm danh bù ngày {day}.")
-                return None
 
-            _tap_match_center(device, screen_match, account, log)
+            _tap_match_center(device, confirmation["match"], account, log)
             time.sleep(0.8)
             return "catchup"
 
