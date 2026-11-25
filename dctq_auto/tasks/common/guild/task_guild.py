@@ -384,11 +384,17 @@ def _run_remaining_poller(poller, context):
                     )
             elif state == "not_checked_in":
                 if phase == "run":
-                    x, y = click_match(device, match)
+                    search_top, search_left, search_right, search_bottom = (
+                        templates[observation["template_name"]].search_rect
+                    )
+                    x = (search_left + search_right) // 2
+                    y = (search_top + search_bottom) // 2
+                    device.shell(f"input tap {x} {y}")
                     phase = "close"
                     log(
-                        f"[{account.display_name}] Click trung tâm trạng thái chưa báo danh "
-                        f"tại ({x}, {y}); chờ xác nhận màn hình chính."
+                        f"[{account.display_name}] Click trung điểm vùng search_rect "
+                        f"của template chưa báo danh tại ({x}, {y}); "
+                        "chờ xác nhận màn hình chính."
                     )
             elif state == "guild_main":
                 if phase == "close":
