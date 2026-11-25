@@ -163,14 +163,10 @@ def _match_day_template(screen_bgr, template, search_rect):
 def _tap_day(
     worker, device, account, day, region, templates, log,
     poller, screen_width, screen_height,
-) -> str | None:
-    """Click trung điểm vùng ngày; chỉ xác nhận thường khi ô đã điểm danh."""
+):
+    """Click một ô và poll lại cho đến khi trạng thái chuyển sang ô kế tiếp."""
     tap_x = (region[1] + region[2]) // 2
     tap_y = (region[0] + region[3]) // 2
-    already_template = templates.get(_TEMPLATE_DA_DIEM_DANH)
-    if already_template is None:
-        log(f"[{account.display_name}] Thiếu template đã điểm danh.")
-        return None
 
     for attempt in range(1, _TAP_DAY_MAX_TRIES + 1):
         if not worker._wait_if_paused():
@@ -189,7 +185,7 @@ def _tap_day(
             screen_bgr = cv2.cvtColor(
                 np.asarray(screenshot), cv2.COLOR_RGB2BGR
             )
-            confirmation = poller.poll(
+            observation = poller.poll(
                 screen_bgr,
                 screen_width,
                 screen_height,
@@ -199,68 +195,49 @@ def _tap_day(
             )
         except Exception as exc:
             log(
-                f"[{account.display_name}] Không kiểm tra được trạng thái "
+                f"[{account.display_name}] Không poll được trạng thái "
                 f"sau khi click ngày {day}: {exc}"
             )
             continue
 
-        if confirmation is not None and confirmation.get("state") == "confirmation_required":
-            log(f"[{account.display_name}] Ngày {day} yêu cầu xác nhận điểm danh bù.")
-            if not worker._wait_if_paused():
-                return None
-
-            _tap_match_center(device, confirmation["match"], account, log)
-            time.sleep(0.8)
-            return "catchup"
-
-        try:
-            already_match = _match_day_template(
-                screen_bgr, already_template, region
-            )
-        except (ValueError, cv2.error) as exc:
-            log(
-                f"[{account.display_name}] Lỗi kiểm tra ngày {day} đã điểm danh: {exc}"
-            )
-            already_match = None
-
-        if already_match is not None:
-            report_template_match(
-                log,
-                context=f"[{account.display_name}] Ngày {day}",
-                template=already_template,
-                match=already_match,
-            )
-            return "normal"
+        if observation is None:
+            continue
+        if observation["state"] != "check_in" or observation["day"] != day:
+            return observation
 
         log(
-            f"[{account.display_name}] Ngày {day} chưa chuyển sang trạng thái "
-            f"đã điểm danh; sẽ thử lại."
+            f"[{account.display_name}] Ngày {day} chưa hoàn tất; "
+            "sẽ thử click lại."
         )
 
     log(
         f"[{account.display_name}] Đã thử click ngày {day} "
-        f"{_TAP_DAY_MAX_TRIES} lần nhưng chưa xác nhận được trạng thái đã điểm danh."
+        f"{_TAP_DAY_MAX_TRIES} lần nhưng trạng thái chưa thay đổi."
     )
-    return "normal"
+    return None
+
 
 def _scan_day_statuses(
     worker, device, account, screen_width, screen_height, templates, log,
     poller=None,
 ):
-    """Quét 30 ngày bằng Poller và trả tập ngày đã điểm danh."""
+    """Gọi Poller và nhận đúng một observation."""
     if not worker._wait_if_paused():
         log(f"[{account.display_name}] Điểm danh đã dừng theo yêu cầu.")
-        return None, None
+        return None
 
     try:
         screenshot = device.screenshot()
         screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
     except Exception as exc:
-        log(f"[{account.display_name}] Không chụp được màn hình khi mở Điểm danh: {exc}")
-        return None, None
+        log(
+            f"[{account.display_name}] Không chụp được màn hình "
+            f"khi kiểm tra Điểm danh: {exc}"
+        )
+        return None
 
     poller = poller or DailyCheckInPoller()
-    observation = poller.poll(
+    return poller.poll(
         screen_bgr,
         screen_width,
         screen_height,
@@ -268,16 +245,14 @@ def _scan_day_statuses(
         account,
         log,
     )
-    if observation is None:
-        return None, None
 
-    return observation
 
 def _tap_all_days(
     worker, device, account, screen_width, screen_height, templates, log,
     poller=None,
 ) -> bool:
-    """Xử lý tuần tự các ô do Poller trả về, không phân biệt ngày thường/ngày bù."""
+    """Điều phối từng observation: xác nhận hoặc xử lý một ô điểm danh."""
+    poller = poller or DailyCheckInPoller()
     observation = _scan_day_statuses(
         worker, device, account, screen_width, screen_height, templates, log,
         poller=poller,
@@ -285,29 +260,48 @@ def _tap_all_days(
     if observation is None:
         return False
 
-    target_cells = observation["target_cells"]
-    log(
-        f"[{account.display_name}] Sẽ xử lý các ngày theo thứ tự: "
-        f"{[item['day'] for item in target_cells]}."
-    )
-
-    for item in target_cells:
+    processed_count = 0
+    while True:
         if not worker._wait_if_paused():
             return False
 
-        day = item["day"]
-        result = _tap_day(
-            worker, device, account, day, item["search_rect"], templates, log,
-            poller, screen_width, screen_height,
-        )
-        if result is None:
+        state = observation["state"]
+        if state == "completed":
+            log(
+                f"[{account.display_name}] Hoàn tất xử lý "
+                f"{processed_count} ô điểm danh."
+            )
+            return True
+
+        if state == "confirmation_required":
+            log(f"[{account.display_name}] Xác nhận điểm danh bù.")
+            _tap_match_center(device, observation["match"], account, log)
+            time.sleep(0.8)
+            observation = _scan_day_statuses(
+                worker, device, account, screen_width, screen_height,
+                templates, log, poller=poller,
+            )
+            if observation is None:
+                return False
+            continue
+
+        if state != "check_in":
+            log(
+                f"[{account.display_name}] Poller trả state không hỗ trợ: {state}."
+            )
             return False
 
-    log(
-        f"[{account.display_name}] Hoàn tất xử lý "
-        f"{len(target_cells)} ô điểm danh."
-    )
-    return True
+        day = observation["day"]
+        next_observation = _tap_day(
+            worker, device, account, day, observation["search_rect"],
+            templates, log, poller, screen_width, screen_height,
+        )
+        if next_observation is None:
+            return False
+
+        processed_count += 1
+        observation = next_observation
+
 
 def run_diem_danh(worker, account, steps, device, ocr_client, log, screenshot=None) -> bool:
     """Xử lý điểm danh sau khi đã mở đúng mục."""
