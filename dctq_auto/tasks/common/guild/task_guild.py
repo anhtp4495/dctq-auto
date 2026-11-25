@@ -451,8 +451,8 @@ def _handle_boss_reward_observation(
             log(f"[{account.display_name}] Không vuốt được danh sách Boss: {exc}")
             return "failed", phase, boss_reward_clicked, boss_empty_swipes, boss_guild_main_swipes
     elif state == "guild_main":
-        if phase == "verify_guild_main":
-            log(f"[{account.display_name}] Đã xác nhận lại màn hình chính Quân đoàn; hoàn tất nhận thưởng Boss.")
+        if phase in {"close_boss", "verify_guild_main"}:
+            log(f"[{account.display_name}] Đã xác nhận màn hình chính Quân đoàn; hoàn tất nhận thưởng Boss.")
             return "completed", phase, boss_reward_clicked, boss_empty_swipes, boss_guild_main_swipes
         try:
             start = ButtonPositions().get("quan_doan", "item_2")
