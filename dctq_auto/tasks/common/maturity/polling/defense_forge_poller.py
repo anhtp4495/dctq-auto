@@ -3,6 +3,7 @@
 from dctq_auto.config.constants import (
     _TEMPLATE_MAIN_TRUONG_THANH,
     _TEMPLATE_MATURITY_THAN_TUONG_AN_CHO_TRONG_DE_THOAT,
+    _TEMPLATE_MATURITY_THAN_TUONG_HOI_THANH,
     _TEMPLATE_MATURITY_THAN_TUONG_LOI_VAO,
     _TEMPLATE_MATURITY_THAN_TUONG_MIEN_PHI,
     _TEMPLATE_MATURITY_THAN_TUONG_THOAT,
@@ -21,6 +22,7 @@ class DefenseForgePoller(BaseMaturityPoller):
         ("mien_phi", "Miễn phí"),
         ("an_cho_trong_de_thoat", "Ấn chỗ trống để thoát"),
         ("thoat", "Thoát màn hình Thần tượng"),
+        ("hoi_thanh", "Hồi thành"),
     )
 
     templates = (
@@ -28,11 +30,13 @@ class DefenseForgePoller(BaseMaturityPoller):
         _TEMPLATE_MATURITY_THAN_TUONG_MIEN_PHI,
         _TEMPLATE_MATURITY_THAN_TUONG_AN_CHO_TRONG_DE_THOAT,
         _TEMPLATE_MATURITY_THAN_TUONG_THOAT,
+        _TEMPLATE_MATURITY_THAN_TUONG_HOI_THANH,
         _TEMPLATE_MAIN_TRUONG_THANH,
     )
 
     def __init__(self):
         super().__init__()
+        self.waiting_for_hall = False
         self.loaded_templates = get_templates(self.templates)
         missing = [
             name for name in self.templates
@@ -61,6 +65,19 @@ class DefenseForgePoller(BaseMaturityPoller):
                     account=account,
                     log=context["log"],
                 ),
+            }
+
+        if self.waiting_for_hall:
+            return {
+                "screen": screen,
+                "than_tuong": {
+                    "hoi_thanh": match(
+                        screen,
+                        self.loaded_templates[_TEMPLATE_MATURITY_THAN_TUONG_HOI_THANH],
+                        account=account,
+                        log=context["log"],
+                    ),
+                },
             }
 
         return {
