@@ -563,7 +563,12 @@ def _run_remaining_poller(poller, context):
                         x, y = ButtonPositions().get("quan_doan.tui_phuc", "dong_man_hinh")
                         device.shell(f"input tap {x} {y}")
                         lucky_closed = True
-                        log(f"[{account.display_name}] Đóng màn hình nhận Túi phúc tại ({x}, {y}).")
+                        template_names = tuple(
+                            name for name in state_by_template
+                            if state_by_template[name] == "guild_main"
+                        )
+                        templates = get_templates(template_names)
+                        log(f"[{account.display_name}] Đóng màn hình nhận Túi phúc tại ({x}, {y}); chờ màn hình chính Quân đoàn.")
                     except Exception as exc:
                         log(f"[{account.display_name}] Không đóng được màn hình Túi phúc: {exc}")
                         return False
