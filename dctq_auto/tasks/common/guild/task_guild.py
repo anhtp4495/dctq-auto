@@ -378,21 +378,29 @@ def _run_remaining_poller(poller, context):
             if state == "checked_in":
                 if phase == "run":
                     phase = "close"
-                    log(f"[{account.display_name}] Đã xác nhận báo danh Quân đoàn.")
+                    log(
+                        f"[{account.display_name}] Đã báo danh Quân đoàn; "
+                        "chờ xác nhận màn hình chính."
+                    )
             elif state == "not_checked_in":
-                x, y = click_match(device, match)
-                log(f"[{account.display_name}] Click trạng thái chưa báo danh tại ({x}, {y}).")
+                if phase == "run":
+                    x, y = click_match(device, match)
+                    phase = "close"
+                    log(
+                        f"[{account.display_name}] Click trung tâm trạng thái chưa báo danh "
+                        f"tại ({x}, {y}); chờ xác nhận màn hình chính."
+                    )
             elif state == "guild_main":
                 if phase == "close":
-                    log(f"[{account.display_name}] Đã xác nhận trở về màn hình chính Quân đoàn.")
+                    log(
+                        f"[{account.display_name}] Đã xác nhận màn hình chính Quân đoàn; "
+                        "hoàn tất báo danh."
+                    )
                     return True
-                try:
-                    x, y = ButtonPositions().get("quan_doan", "bao_danh")
-                    device.shell(f"input tap {x} {y}")
-                    log(f"[{account.display_name}] Click nút báo danh tại ({x}, {y}).")
-                except Exception as exc:
-                    log(f"[{account.display_name}] Không click được nút báo danh: {exc}")
-                    return False
+                log(
+                    f"[{account.display_name}] Đang ở màn hình chính Quân đoàn; "
+                    "chờ nhận diện trạng thái báo danh."
+                )
 
         elif isinstance(poller, BlessingPoller):
             if state == "entry":
