@@ -160,63 +160,6 @@ def _match_day_template(screen_bgr, template, search_rect):
         grayscale=template.grayscale,
     )
 
-def _tap_day(
-    worker, device, account, day, region, templates, log,
-    poller, screen_width, screen_height,
-):
-    """Click một ô và poll lại cho đến khi trạng thái chuyển sang ô kế tiếp."""
-    tap_x = (region[1] + region[2]) // 2
-    tap_y = (region[0] + region[3]) // 2
-
-    for attempt in range(1, _TAP_DAY_MAX_TRIES + 1):
-        if not worker._wait_if_paused():
-            return None
-
-        log(
-            f"[{account.display_name}] Click ngày {day} tại "
-            f"({tap_x}, {tap_y}) từ region={region} "
-            f"(lần {attempt}/{_TAP_DAY_MAX_TRIES})."
-        )
-        device.shell(f"input tap {tap_x} {tap_y}")
-        time.sleep(0.8)
-
-        try:
-            screenshot = device.screenshot()
-            screen_bgr = cv2.cvtColor(
-                np.asarray(screenshot), cv2.COLOR_RGB2BGR
-            )
-            observation = poller.poll(
-                screen_bgr,
-                screen_width,
-                screen_height,
-                templates,
-                account,
-                log,
-            )
-        except Exception as exc:
-            log(
-                f"[{account.display_name}] Không poll được trạng thái "
-                f"sau khi click ngày {day}: {exc}"
-            )
-            continue
-
-        if observation is None:
-            continue
-        if observation["state"] != "check_in" or observation["day"] != day:
-            return observation
-
-        log(
-            f"[{account.display_name}] Ngày {day} chưa hoàn tất; "
-            "sẽ thử click lại."
-        )
-
-    log(
-        f"[{account.display_name}] Đã thử click ngày {day} "
-        f"{_TAP_DAY_MAX_TRIES} lần nhưng trạng thái chưa thay đổi."
-    )
-    return None
-
-
 def _scan_day_statuses(
     worker, device, account, screen_width, screen_height, templates, log,
     poller=None,
@@ -292,15 +235,30 @@ def _tap_all_days(
             return False
 
         day = observation["day"]
-        next_observation = _tap_day(
-            worker, device, account, day, observation["search_rect"],
-            templates, log, poller, screen_width, screen_height,
+        top, left, right, bottom = observation["search_rect"]
+        tap_x = (left + right) // 2
+        tap_y = (top + bottom) // 2
+        log(
+            f"[{account.display_name}] Click trung điểm ô ngày {day} "
+            f"tại ({tap_x}, {tap_y})."
         )
-        if next_observation is None:
+        try:
+            device.shell(f"input tap {tap_x} {tap_y}")
+            time.sleep(0.8)
+        except Exception as exc:
+            log(
+                f"[{account.display_name}] Không click được ô ngày "
+                f"{day}: {exc}"
+            )
             return False
 
         processed_count += 1
-        observation = next_observation
+        observation = _scan_day_statuses(
+            worker, device, account, screen_width, screen_height,
+            templates, log, poller=poller,
+        )
+        if observation is None:
+            return False
 
 
 def run_diem_danh(worker, account, steps, device, ocr_client, log, screenshot=None) -> bool:
