@@ -42,7 +42,7 @@ _DAILY_TEMPLATE_NAMES = (
     _TEMPLATE_DIEM_DANH_BU,
     _TEMPLATE_DA_DIEM_DANH,
 )
-_DAILY_SCREEN_TEMPLATE_NAMES = (_TEMPLATE_XAC_NHAN_DIEM_DANH_BU,)
+_SCREEN_TEMPLATE_NAMES = (_TEMPLATE_XAC_NHAN_DIEM_DANH_BU,)
 _NATIONAL_FORTUNE_TAB_TEMPLATE_NAMES = (
     _TEMPLATE_DANG_CHON_LE_BAO_QUOC_VAN,
     _TEMPLATE_CHUA_CHON_LE_BAO_QUOC_VAN,
@@ -67,7 +67,7 @@ def task_open_perk(
     worker, account, device, ocr_client, log, screenshot=None
 ) -> bool:
     """Mở màn hình Phúc lợi; đã mở thì xác nhận, chưa mở thì click trung điểm."""
-    templates = get_templates(_TEMPLATE_NAMES)
+    templates = get_templates(_PERK_TEMPLATE_NAMES)
 
     for attempt in range(1, _MAX_TRIES + 1):
         if not worker._wait_if_paused():
@@ -94,7 +94,7 @@ def task_open_perk(
             return False
 
         matched = False
-        for template_name in _TEMPLATE_NAMES:
+        for template_name in _PERK_TEMPLATE_NAMES:
             template = templates.get(template_name)
             if template is None:
                 log(f"[{account.display_name}] Không tải được template {template_name}; bỏ qua.")
@@ -182,14 +182,6 @@ def _find_template(screen_bgr, templates, account, log):
             )
             return template_name, match
     return None, None
-
-def _tap_match_center(device, match, account, log):
-    """Click trung điểm vùng template được nhận diện."""
-    x = (match.left + match.right) // 2
-    y = (match.top + match.bottom) // 2
-    log(f"[{account.display_name}] Click trung điểm template tại ({x}, {y}).")
-    device.shell(f"input tap {x} {y}")
-    time.sleep(0.7)
 
 def _match_day_template(screen_bgr, template, search_rect):
     """Tìm template trạng thái trong đúng vùng của một ngày."""
@@ -417,7 +409,7 @@ def _tap_all_days(
 
 def run_diem_danh(worker, account, steps, device, ocr_client, log, screenshot=None) -> bool:
     """Xử lý điểm danh sau khi đã mở đúng mục."""
-    templates = get_templates(_TEMPLATE_NAMES)
+    templates = get_templates(_DAILY_TEMPLATE_NAMES)
 
     if not worker._wait_if_paused():
         log(f"[{account.display_name}] Điểm danh đã dừng theo yêu cầu.")
