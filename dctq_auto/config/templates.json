@@ -524,6 +524,13 @@
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
+        "dong_quan_doan_man_hinh_chinh": {
+          "description": "Màn hình [Quân Đoàn] - Thoát",
+          "rect": { "top": 29, "left": 1826, "right": 1882, "bottom": 91},
+          "search_rect": { "top": 0, "left": 1773, "right": 1917, "bottom": 141},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
         "quan_doan_man_hinh_chinh_1": {
           "description": "Màn hình [Quân Đoàn].",
           "rect": { "top": 22, "left": 182, "right": 936, "bottom": 104},
