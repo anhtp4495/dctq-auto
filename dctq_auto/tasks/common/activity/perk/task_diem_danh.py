@@ -17,7 +17,7 @@ from dctq_auto.config.constants import (
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
-from dctq_auto.tasks.common.activity.perk.daily_check_in_poller import DailyCheckInPoller
+from dctq_auto.tasks.common.activity.perk.polling.daily_check_in_poller import DailyCheckInPoller
 
 
 _TEMPLATE_NAMES = (
