@@ -245,7 +245,7 @@ class DailyCheckInPoller:
                 continue
 
             item["attempts"] += 1
-            should_stop = item["attempts"] >= 3
+            should_stop = item["attempts"] >= 2
             if should_stop:
                 failed_day = item["day"]
                 self._target_cells.clear()
