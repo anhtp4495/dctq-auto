@@ -11,13 +11,14 @@ from dctq_auto.config.constants import (
     _TEMPLATE_CHUA_CHON_LE_BAO_QUOC_VAN,
     _TEMPLATE_DA_NHAN_LE_BAO_MIEN_PHI,
     _TEMPLATE_NHAN_LE_BAO_MIEN_PHI,
+    _TEMPLATE_TAT_THONG_BAO_NHAN_LE_BAO_MIEN_PHI1,
+    _TEMPLATE_TAT_THONG_BAO_NHAN_LE_BAO_MIEN_PHI2,
     _STEP_QUOC_VAN,
 )
 
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
-from dctq_auto.tasks.common.activity.perk.polling.national_fortune_gift_poller import NationalFortuneGiftPoller
 
 
 def pre_le_bao_quoc_van(steps) -> bool:
@@ -32,6 +33,45 @@ def post_le_bao_quoc_van(steps) -> list[str]:
     return steps
 
 
+_TEMPLATE_NAMES = (
+    _TEMPLATE_NHAN_LE_BAO_MIEN_PHI,
+    _TEMPLATE_DA_NHAN_LE_BAO_MIEN_PHI,
+    _TEMPLATE_TAT_THONG_BAO_NHAN_LE_BAO_MIEN_PHI1,
+    _TEMPLATE_TAT_THONG_BAO_NHAN_LE_BAO_MIEN_PHI2,
+    _TEMPLATE_DANG_CHON_LE_BAO_QUOC_VAN,
+)
+
+
+def _find_template(screen_bgr, templates, account, log):
+    """Tìm template đầu tiên khớp theo thứ tự ưu tiên."""
+    for template_name in _TEMPLATE_NAMES:
+        template = templates.get(template_name)
+        if template is None:
+            log(f"[{account.display_name}] Không tải được template {template_name}; bỏ qua.")
+            continue
+        try:
+            match = match_template(
+                screen_bgr,
+                template.image,
+                threshold=template.threshold,
+                method=template.method,
+                search_rect=template.search_rect,
+                grayscale=template.grayscale,
+            )
+        except (ValueError, cv2.error) as exc:
+            log(f"[{account.display_name}] Lỗi template matching {template_name}: {exc}")
+            continue
+        if match is not None:
+            report_template_match(
+                log,
+                context=f"[{account.display_name}]",
+                template=template,
+                match=match,
+            )
+            return template_name, match
+    return None, None
+
+
 def _tap_match_center(device, match, account, log):
     """Click trung điểm vùng template được nhận diện."""
     x = (match.left + match.right) // 2
@@ -43,8 +83,7 @@ def _tap_match_center(device, match, account, log):
 
 def run_le_bao_quoc_van(worker, account, steps, device, ocr_client, log, screenshot=None) -> bool:
     """Nhận lễ bao Quốc Vận sau khi đã mở đúng mục."""
-    poller = NationalFortuneGiftPoller()
-    templates = get_templates(poller.TEMPLATE_NAMES)
+    templates = get_templates(_TEMPLATE_NAMES)
 
     if not worker._wait_if_paused():
         log(f"[{account.display_name}] Nhận lễ bao Quốc Vận đã dừng theo yêu cầu.")
@@ -58,10 +97,8 @@ def run_le_bao_quoc_van(worker, account, steps, device, ocr_client, log, screens
         log(f"[{account.display_name}] Không chụp được màn hình để nhận diện lễ bao Quốc Vận: {exc}")
         return False
 
-    observation = poller.poll(screen_bgr, templates, account, log)
-    template_name = observation["template_name"]
-    match = observation["match"]
-    if observation["state"] == "not_found":
+    template_name, match = _find_template(screen_bgr, templates, account, log)
+    if template_name is None:
         log(
             f"[{account.display_name}] Không nhận diện được template lễ bao Quốc Vận; "
             "có thể đã chuyển sang màn hình khác."
