@@ -161,7 +161,8 @@ def _match_day_template(screen_bgr, template, search_rect):
     )
 
 def _tap_day(
-    worker, device, account, day, region, templates, log
+    worker, device, account, day, region, templates, log,
+    poller, screen_width, screen_height,
 ) -> str | None:
     """Click trung điểm vùng ngày; chỉ xác nhận thường khi ô đã điểm danh."""
     tap_x = (region[1] + region[2]) // 2
@@ -188,8 +189,13 @@ def _tap_day(
             screen_bgr = cv2.cvtColor(
                 np.asarray(screenshot), cv2.COLOR_RGB2BGR
             )
-            confirmation = DailyCheckInPoller().check_catchup_confirmation(
-                screen_bgr, templates, account, log
+            confirmation = poller.poll(
+                screen_bgr,
+                screen_width,
+                screen_height,
+                templates,
+                account,
+                log,
             )
         except Exception as exc:
             log(
@@ -198,7 +204,7 @@ def _tap_day(
             )
             continue
 
-        if confirmation is not None and confirmation["state"] == "confirmation_required":
+        if confirmation is not None and confirmation.get("state") == "confirmation_required":
             log(f"[{account.display_name}] Ngày {day} yêu cầu xác nhận điểm danh bù.")
             if not worker._wait_if_paused():
                 return None
@@ -291,7 +297,8 @@ def _tap_all_days(
 
         day = item["day"]
         result = _tap_day(
-            worker, device, account, day, item["search_rect"], templates, log
+            worker, device, account, day, item["search_rect"], templates, log,
+            poller, screen_width, screen_height,
         )
         if result is None:
             return False
