@@ -25,7 +25,8 @@ from dctq_auto.config.constants import (
 )
 from dctq_auto.tasks.common.activity.perk.polling.daily_check_in_poller import DailyCheckInPoller
 from dctq_auto.tasks.common.activity.perk.polling.national_fortune_gift_poller import NationalFortuneGiftPoller
-from dctq_auto.vision.template_matching import match_template
+from dctq_auto.tasks.common.battle.battle_utils import click_match
+from dctq_auto.vision.template_matching import TemplateMatch, match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
 
@@ -51,10 +52,8 @@ def pre_perk(steps) -> bool:
 
 def _tap_match_center(device, match, account, log):
     """Click trung điểm vùng template được nhận diện."""
-    x = (match.left + match.right) // 2
-    y = (match.top + match.bottom) // 2
+    x, y = click_match(device, match)
     log(f"[{account.display_name}] Click trung điểm template tại ({x}, {y}).")
-    device.shell(f"input tap {x} {y}")
     time.sleep(0.7)
 
 
@@ -234,15 +233,14 @@ def _tap_all_days(
             return False
 
         day = observation["day"]
-        top, left, right, bottom = observation["search_rect"]
-        tap_x = (left + right) // 2
-        tap_y = (top + bottom) // 2
-        log(
-            f"[{account.display_name}] Click trung điểm ô ngày {day} "
-            f"tại ({tap_x}, {tap_y})."
-        )
         try:
-            device.shell(f"input tap {tap_x} {tap_y}")
+            search_rect = observation["search_rect"]
+            click_region = TemplateMatch(*search_rect, score=1.0)
+            tap_x, tap_y = click_match(device, click_region)
+            log(
+                f"[{account.display_name}] Click trung điểm ô ngày {day} "
+                f"tại ({tap_x}, {tap_y})."
+            )
             time.sleep(0.8)
         except Exception as exc:
             log(
