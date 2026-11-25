@@ -153,6 +153,7 @@ def _handle_tuong_an_observation(observation, poller, context) -> bool:
 
     actions = (
         ("loi_vao", "Thăm dò lãnh địa"),
+        ("tat_ca", "Thăm dò tất cả"),
         ("mien_phi", "Miễn phí"),
         ("an_cho_trong_de_thoat", "Ấn chỗ trống để thoát"),
         ("thoat", "Thoát màn hình Tướng ấn"),

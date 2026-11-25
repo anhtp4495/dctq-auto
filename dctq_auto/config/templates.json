@@ -1662,6 +1662,13 @@
         },
         "thoat": {
           "description": "[Màn hình chính] - [Tướng ấn] - Thoát",
+          "rect": { "top": 46, "left": 1781, "right": 1824, "bottom": 93},
+          "search_rect": { "top": 0, "left": 1707, "right": 1919, "bottom": 133},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "hoi_thanh": {
+          "description": "[Màn hình chính] - [Tướng ấn] - Hồi thành",
           "rect": { "top": 81, "left": 1729, "right": 1778, "bottom": 139},
           "search_rect": { "top": 0, "left": 1644, "right": 1919, "bottom": 183},
           "threshold": 0.85,

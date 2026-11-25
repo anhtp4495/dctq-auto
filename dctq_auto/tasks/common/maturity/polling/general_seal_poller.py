@@ -4,6 +4,7 @@ from dctq_auto.config.constants import (
     _TEMPLATE_MAIN_TRUONG_THANH,
     _TEMPLATE_MATURITY_TUONG_AN_AN_CHO_TRONG_DE_THOAT,
     _TEMPLATE_MATURITY_TUONG_AN_LOI_VAO,
+    _TEMPLATE_MATURITY_TUONG_AN_TAT_CA,
     _TEMPLATE_MATURITY_TUONG_AN_MIEN_PHI,
     _TEMPLATE_MATURITY_TUONG_AN_THOAT,
 )
@@ -18,6 +19,7 @@ class GeneralSealPoller(BaseMaturityPoller):
     category_key = "tuong_an"
     progress_steps = (
         ("loi_vao", "Thăm dò lãnh địa"),
+        ("tat_ca", "Thăm dò tất cả"),
         ("mien_phi", "Miễn phí"),
         ("an_cho_trong_de_thoat", "Ấn chỗ trống để thoát"),
         ("thoat", "Thoát màn hình Tướng ấn"),
@@ -25,6 +27,7 @@ class GeneralSealPoller(BaseMaturityPoller):
 
     templates = (
         _TEMPLATE_MATURITY_TUONG_AN_LOI_VAO,
+        _TEMPLATE_MATURITY_TUONG_AN_TAT_CA,
         _TEMPLATE_MATURITY_TUONG_AN_MIEN_PHI,
         _TEMPLATE_MATURITY_TUONG_AN_AN_CHO_TRONG_DE_THOAT,
         _TEMPLATE_MATURITY_TUONG_AN_THOAT,
@@ -69,6 +72,12 @@ class GeneralSealPoller(BaseMaturityPoller):
                 "loi_vao": match(
                     screen,
                     self.loaded_templates[_TEMPLATE_MATURITY_TUONG_AN_LOI_VAO],
+                    account=account,
+                    log=context["log"],
+                ),
+                "tat_ca": match(
+                    screen,
+                    self.loaded_templates[_TEMPLATE_MATURITY_TUONG_AN_TAT_CA],
                     account=account,
                     log=context["log"],
                 ),
