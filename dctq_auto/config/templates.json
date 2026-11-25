@@ -715,9 +715,9 @@
         },
         "quan_doan_thoat_man_hinh_cau_van": {
           "description": "Màn hình [Quân Đoàn] - [Cầu vận] - Thoát.",
-          "rect": { "top": 520, "left": 491, "right": 707, "bottom": 620},
-          "search_rect": { "top": 842, "left": 422, "right": 817, "bottom": 1032},
-          "threshold": 0.95,
+          "rect": { "top": 62, "left": 1737, "right": 1787, "bottom": 109},
+          "search_rect": { "top": 15, "left": 1681, "right": 1817, "bottom": 144},
+          "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
       }
