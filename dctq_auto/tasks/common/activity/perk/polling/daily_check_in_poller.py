@@ -153,18 +153,25 @@ class DailyCheckInPoller:
                 "search_rect": search_rect,
             })
 
-        # Giữ nguyên cách xác định của task cũ: ngày thường là ngày ngay sau
-        # ngày đã hoàn thành có số lớn nhất; các ngày thiếu phía trước là ứng viên bù.
+        # Thứ tự xử lý: ngày cần điểm danh, ngày kế tiếp, rồi tối đa
+        # ba ngày còn thiếu trước ngày mục tiêu.
         target_day = max(already_days, default=0) + 1
         catchup_days = [
             item["day"]
             for item in days
             if item["day"] < target_day and item["state"] != "completed"
+        ][:3]
+        selected_days = [target_day, target_day + 1, *catchup_days]
+        region_by_day = dict(day_regions)
+        target_cells = [
+            {"day": day, "search_rect": region_by_day[day]}
+            for day in selected_days
+            if day in region_by_day
         ]
 
         log(
-            f"[{account.display_name}] Ngày cần điểm danh thường: {target_day}; "
-            f"các ngày có thể điểm danh bù: {catchup_days}."
+            f"[{account.display_name}] Các ô cần xử lý theo thứ tự: "
+            f"{[item['day'] for item in target_cells]}."
         )
         return {
             "days": days,
@@ -172,4 +179,5 @@ class DailyCheckInPoller:
             "day_regions": day_regions,
             "target_day": target_day,
             "catchup_days": catchup_days,
+            "target_cells": target_cells,
         }
