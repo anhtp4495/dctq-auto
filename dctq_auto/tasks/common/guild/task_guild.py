@@ -228,6 +228,22 @@ def _run_rations_poller(poller, context):
     return False
 
 
+def _update_knb_process_info(context, current):
+    """Cập nhật tiến độ đóng góp KNB theo hai mốc 10 và 20 KNB."""
+    worker = context["worker"]
+    process_id = getattr(worker, "_current_process_ids", {}).get(
+        _STEP_QUAN_DOAN_DONG_GOP_KNB
+    )
+    if process_id is None:
+        return
+
+    worker.UpdateProcessInfo(
+        process_id=process_id,
+        current=min(current, 2),
+        total=2,
+    )
+
+
 def _run_knb_poller(poller, context):
     """Polling và điều phối đóng góp KNB; Poller chỉ nhận diện trạng thái."""
     account = context["account"]
@@ -265,6 +281,10 @@ def _run_knb_poller(poller, context):
             last_small_donation_template = template_name
             pending_donation = state
             small_donation_count += 1
+            _update_knb_process_info(
+                context,
+                1 if state == "donate_10" else 2,
+            )
             log(
                 f"[{account.display_name}] [Quân đoàn] [KNB] "
                 f"Click mức {10 if state == 'donate_10' else 20} KNB "
@@ -284,6 +304,8 @@ def _run_knb_poller(poller, context):
                 or small_donation_count >= 3
                 or pending_donation is None
             ):
+                if pending_donation is None or pending_donation == "donate_20":
+                    _update_knb_process_info(context, 2)
                 log(
                     f"[{account.display_name}] Đã hoàn tất đóng góp KNB; "
                     "kết thúc sau khi đóng màn hình đóng góp."
