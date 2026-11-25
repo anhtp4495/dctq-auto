@@ -187,7 +187,8 @@ def _handle_defense_forge_observation(observation, poller, context) -> bool:
         ("loi_vao", "Lối vào Thần tượng"),
         ("mien_phi", "Miễn phí"),
         ("an_cho_trong_de_thoat", "Ấn chỗ trống để thoát"),
-        ("thoat", "Thoát màn hình Thần tượng"),
+        ("thoat", "Thoát màn hình nhận miễn phí"),
+        ("hoi_thanh", "Hồi thành"),
     )
     for key, label in actions:
         found = defense_forge_found.get(key)
@@ -196,11 +197,16 @@ def _handle_defense_forge_observation(observation, poller, context) -> bool:
 
         x, y = click_match(context["device"], found)
         context["log"](
-            f"[{context['account'].display_name}] [Trưởng thành] [Defense Forge] "
+            f"[{context['account'].display_name}] [Trưởng thành] [Thần tượng] "
             f"Click {label} tại ({x}, {y})."
         )
         poller.record_action(key, context)
         if key == "thoat":
+            # Thoát màn hình nhận miễn phí xong phải tìm nút Hồi thành,
+            # không quay lại dò Lối vào trên màn hình trung gian.
+            poller.waiting_for_hall = True
+        elif key == "hoi_thanh":
+            poller.waiting_for_hall = False
             poller.waiting_for_main = True
         return True
 
