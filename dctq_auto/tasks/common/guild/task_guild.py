@@ -289,6 +289,7 @@ def _run_knb_poller(poller, context):
                 )
                 return True
             pending_donation = None
+            last_small_donation_template = None
         elif state == "insufficient_conditions":
             log(
                 f"[{account.display_name}] Không đủ điều kiện đóng góp KNB; "
