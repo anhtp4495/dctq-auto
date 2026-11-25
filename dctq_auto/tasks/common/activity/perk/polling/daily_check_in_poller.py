@@ -5,6 +5,7 @@ import cv2
 from dctq_auto.config.constants import (
     _TEMPLATE_DA_DIEM_DANH,
     _TEMPLATE_DIEM_DANH_BU,
+    _TEMPLATE_XAC_NHAN_DIEM_DANH_BU,
 )
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
@@ -43,6 +44,42 @@ class DailyCheckInPoller:
                 day += 1
 
         return day_regions
+
+    def check_catchup_confirmation(self, screen_bgr, templates, account, log):
+        """Nhận diện hộp thoại xác nhận điểm danh bù, chỉ trả observation."""
+        template = templates.get(_TEMPLATE_XAC_NHAN_DIEM_DANH_BU)
+        if template is None:
+            log(f"[{account.display_name}] Thiếu template xác nhận điểm danh bù.")
+            return None
+
+        try:
+            match = match_template(
+                screen_bgr,
+                template.image,
+                threshold=template.threshold,
+                method=template.method,
+                search_rect=template.search_rect,
+                grayscale=template.grayscale,
+            )
+        except (ValueError, cv2.error) as exc:
+            log(f"[{account.display_name}] Lỗi nhận diện xác nhận điểm danh bù: {exc}")
+            return None
+
+        if match is None:
+            return {"state": "not_required", "template_name": None, "match": None}
+
+        report_template_match(
+            log,
+            context=f"[{account.display_name}] Xác nhận điểm danh bù",
+            template=template,
+            match=match,
+        )
+        return {
+            "state": "confirmation_required",
+            "template_name": _TEMPLATE_XAC_NHAN_DIEM_DANH_BU,
+            "template": template,
+            "match": match,
+        }
 
     @staticmethod
     def _match_day(screen_bgr, template, search_rect):
