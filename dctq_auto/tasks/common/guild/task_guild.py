@@ -427,6 +427,7 @@ def _handle_boss_reward_observation(
     phase,
     boss_reward_clicked,
     boss_empty_swipes,
+    boss_guild_main_swipes,
 ):
     """Xử lý observation nhận thưởng Boss; Poller chỉ nhận diện trạng thái."""
     account = context["account"]
@@ -437,7 +438,9 @@ def _handle_boss_reward_observation(
 
     if state == "guild_boss_entry":
         x, y = click_match(device, match)
-        log(f"[{account.display_name}] Mở lối vào Boss Quân đoàn tại ({x}, {y}).")
+        phase = "boss_entered"
+        boss_guild_main_swipes = 0
+        log(f"[{account.display_name}] Click trung điểm lối vào Boss Quân đoàn tại ({x}, {y}).")
     elif state == "boss_main":
         try:
             start = ButtonPositions().get("quan_doan", "item_2")
@@ -446,7 +449,29 @@ def _handle_boss_reward_observation(
             log(f"[{account.display_name}] Vuốt danh sách Boss để tìm thưởng.")
         except Exception as exc:
             log(f"[{account.display_name}] Không vuốt được danh sách Boss: {exc}")
-            return "failed", phase, boss_reward_clicked, boss_empty_swipes
+            return "failed", phase, boss_reward_clicked, boss_empty_swipes, boss_guild_main_swipes
+    elif state == "guild_main":
+        if phase == "verify_guild_main":
+            log(f"[{account.display_name}] Đã xác nhận lại màn hình chính Quân đoàn; hoàn tất nhận thưởng Boss.")
+            return "completed", phase, boss_reward_clicked, boss_empty_swipes, boss_guild_main_swipes
+        try:
+            start = ButtonPositions().get("quan_doan", "item_2")
+            end = ButtonPositions().get("quan_doan", "item_1")
+            swipe(device, start, end, account=account, log=log, duration_ms=500)
+            boss_guild_main_swipes += 1
+            log(
+                f"[{account.display_name}] Màn hình chính Quân đoàn xuất hiện trước khi kết thúc; "
+                f"vuốt tìm lối vào Boss ({boss_guild_main_swipes}/2)."
+            )
+            if boss_guild_main_swipes >= 2:
+                phase = "verify_guild_main"
+                log(
+                    f"[{account.display_name}] Đã vuốt 2 lần nhưng không tìm thấy "
+                    "lối vào Boss; chuyển sang chờ xác nhận màn hình chính để kết thúc."
+                )
+        except Exception as exc:
+            log(f"[{account.display_name}] Không vuốt được màn hình chính Quân đoàn: {exc}")
+            return "failed", phase, boss_reward_clicked, boss_empty_swipes, boss_guild_main_swipes
     elif state == "reward_available_entry":
         x, y = click_match(device, match)
         log(f"[{account.display_name}] Mở lối nhận thưởng Boss tại ({x}, {y}).")
@@ -467,7 +492,7 @@ def _handle_boss_reward_observation(
                 phase = "close_boss"
         except Exception as exc:
             log(f"[{account.display_name}] Không vuốt được danh sách thưởng Boss: {exc}")
-            return "failed", phase, boss_reward_clicked, boss_empty_swipes
+            return "failed", phase, boss_reward_clicked, boss_empty_swipes, boss_guild_main_swipes
     elif state == "ready_to_claim":
         log(f"[{account.display_name}] Đã vào màn hình chuẩn bị nhận thưởng Boss.")
     elif state == "claim_button":
@@ -483,15 +508,9 @@ def _handle_boss_reward_observation(
         x, y = click_match(device, match)
         phase = "close_boss"
         log(f"[{account.display_name}] Thoát màn hình Boss tại ({x}, {y}).")
-    elif state == "guild_main" and phase == "close_boss":
-        log(f"[{account.display_name}] Đã trở về màn hình chính Quân đoàn sau khi nhận thưởng Boss.")
-        return "completed", phase, boss_reward_clicked, boss_empty_swipes
-    elif state == "guild_main" and not boss_reward_clicked:
-        # Boss không còn lối nhận thưởng: xem như đã nhận từ trước.
-        log(f"[{account.display_name}] Boss không còn lối nhận thưởng; xem như đã nhận trước đó.")
-        return "completed", phase, boss_reward_clicked, boss_empty_swipes
 
-    return "continue", phase, boss_reward_clicked, boss_empty_swipes
+    return "continue", phase, boss_reward_clicked, boss_empty_swipes, boss_guild_main_swipes
+
 
 def _run_remaining_poller(poller, context):
     """Điều phối các poller còn lại; mọi nhận diện đều qua observation."""
@@ -507,14 +526,16 @@ def _run_remaining_poller(poller, context):
         if state_by_template[name] not in {"guild_main", "boss_main"}
     )
     if isinstance(poller, BossRewardPoller):
+        # Chưa bật template màn hình chính cho đến khi đã click lối vào Boss.
         template_names += tuple(
             name for name in state_by_template
             if state_by_template[name] == "boss_main"
         )
-    template_names += tuple(
-        name for name in state_by_template
-        if state_by_template[name] == "guild_main"
-    )
+    else:
+        template_names += tuple(
+            name for name in state_by_template
+            if state_by_template[name] == "guild_main"
+        )
     templates = get_templates(template_names)
     deadline = time.monotonic() + _POLL_TIMEOUT_SECONDS
     phase = "run"
@@ -522,6 +543,7 @@ def _run_remaining_poller(poller, context):
     lucky_closed = False
     boss_reward_clicked = False
     boss_empty_swipes = 0
+    boss_guild_main_swipes = 0
 
     if isinstance(poller, BlessingPoller):
         # Ban đầu chỉ nhận diện lối vào và trạng thái Cầu vận; chưa xét
@@ -634,15 +656,26 @@ def _run_remaining_poller(poller, context):
                 return True
 
         elif isinstance(poller, BossRewardPoller):
-            result, phase, boss_reward_clicked, boss_empty_swipes = (
+            result, phase, boss_reward_clicked, boss_empty_swipes, boss_guild_main_swipes = (
                 _handle_boss_reward_observation(
                     observation,
                     context,
                     phase,
                     boss_reward_clicked,
                     boss_empty_swipes,
+                    boss_guild_main_swipes,
                 )
             )
+            if state == "guild_boss_entry" and phase == "boss_entered":
+                # Chỉ sau cú click trung điểm lối vào Boss mới bật điều kiện kết thúc.
+                if _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH not in template_names:
+                    template_names = (*template_names, _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH)
+                    templates = get_templates(template_names)
+            elif phase == "verify_guild_main":
+                # Sau 2 lần vuốt không thấy lối vào Boss, chỉ dò lại màn hình chính
+                # để xác nhận kết thúc ở observation kế tiếp.
+                template_names = (_TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,)
+                templates = get_templates(template_names)
             if result == "completed":
                 return True
             if result == "failed":
