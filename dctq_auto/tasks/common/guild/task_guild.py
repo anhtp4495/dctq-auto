@@ -379,6 +379,52 @@ def _handle_daily_check_in_observation(observation, context, phase, templates):
     return "continue"
 
 
+def _handle_blessing_observation(observation, context, phase):
+    """Xử lý observation Cầu vận; trả về kết quả, phase và bộ template tiếp theo."""
+    account = context["account"]
+    log = context["log"]
+    device = context["device"]
+    state = observation["state"]
+    match = observation.get("match")
+
+    if state == "entry":
+        x, y = click_match(device, match)
+        log(f"[{account.display_name}] Mở lối vào Cầu vận tại ({x}, {y}).")
+        # Template màn hình chính cùng xuất hiện với lối vào, chỉ bật sau click.
+        template_names = (
+            _TEMPLATE_QUAN_DOAN_CO_THE_CAU_VAN,
+            _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN1,
+            _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN2,
+            _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
+        )
+        return "continue", phase, template_names, get_templates(template_names)
+
+    if state == "can_bless":
+        x, y = click_match(device, match)
+        log(f"[{account.display_name}] Thực hiện Cầu vận tại ({x}, {y}).")
+    elif state in {"no_turns_1", "no_turns_2"}:
+        phase = "close"
+        log(f"[{account.display_name}] Đã xác nhận Cầu vận hết lượt.")
+        template_names = (
+            _TEMPLATE_QUAN_DOAN_THOAT_MAN_HINH_CAU_VAN,
+            _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
+        )
+        return "continue", phase, template_names, get_templates(template_names)
+    elif state == "exit_blessing":
+        x, y = click_match(device, match)
+        log(f"[{account.display_name}] Thoát màn hình Cầu vận tại ({x}, {y}).")
+        template_names = (_TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,)
+        return "continue", phase, template_names, get_templates(template_names)
+    elif state == "guild_main":
+        log(
+            f"[{account.display_name}] Đã xác nhận màn hình chính Quân đoàn; "
+            "hoàn tất Cầu vận."
+        )
+        return "completed", phase, None, None
+
+    return "continue", phase, None, None
+
+
 def _run_remaining_poller(poller, context):
     """Điều phối các poller còn lại; mọi nhận diện đều qua observation."""
     account = context["account"]
@@ -434,8 +480,6 @@ def _run_remaining_poller(poller, context):
             ButtonPositions().get("quan_doan.tui_phuc", "knb"),
         ]
         log(f"[{account.display_name}] Bắt đầu nhận Túi phúc Quân đoàn.")
-    elif isinstance(poller, BlessingPoller):
-        log(f"[{account.display_name}] Bắt đầu Cầu vận Quân đoàn.")
     elif isinstance(poller, BossRewardPoller):
         log(f"[{account.display_name}] Bắt đầu nhận thưởng Boss Quân đoàn.")
 
@@ -465,37 +509,14 @@ def _run_remaining_poller(poller, context):
                 return False
 
         elif isinstance(poller, BlessingPoller):
-            if state == "entry":
-                x, y = click_match(device, match)
-                log(f"[{account.display_name}] Mở lối vào Cầu vận tại ({x}, {y}).")
-                # Entry và màn hình chính Quân đoàn cùng xuất hiện trên một
-                # màn hình; chỉ bật nhận diện guild_main sau khi đã click entry.
-                template_names = (
-                    _TEMPLATE_QUAN_DOAN_CO_THE_CAU_VAN,
-                    _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN1,
-                    _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN2,
-                    _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
-                )
-                templates = get_templates(template_names)
-            elif state == "can_bless":
-                x, y = click_match(device, match)
-                log(f"[{account.display_name}] Thực hiện Cầu vận tại ({x}, {y}).")
-            elif state in {"no_turns_1", "no_turns_2"}:
-                phase = "close"
-                log(f"[{account.display_name}] Đã xác nhận Cầu vận hết lượt.")
-                template_names = (
-                    _TEMPLATE_QUAN_DOAN_THOAT_MAN_HINH_CAU_VAN,
-                    _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
-                )
-                templates = get_templates(template_names)
-            elif state == "exit_blessing":
-                x, y = click_match(device, match)
-                log(f"[{account.display_name}] Thoát màn hình Cầu vận tại ({x}, {y}).")
-                template_names = (_TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,)
-                templates = get_templates(template_names)
-            elif state == "guild_main":
-                log(f"[{account.display_name}] Đã xác nhận màn hình chính Quân đoàn; hoàn tất Cầu vận.")
+            result, phase, next_template_names, next_templates = (
+                _handle_blessing_observation(observation, context, phase)
+            )
+            if result == "completed":
                 return True
+            if next_template_names is not None:
+                template_names = next_template_names
+                templates = next_templates
 
         elif isinstance(poller, LuckyBagPoller):
             if state in {"already_received", "not_received"}:
