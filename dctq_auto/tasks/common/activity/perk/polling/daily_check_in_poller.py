@@ -137,7 +137,7 @@ class DailyCheckInPoller:
             if item["state"] != "completed"
         }
         self._target_cells = [
-            {"day": day, "search_rect": region_by_day[day]}
+            {"day": day, "search_rect": region_by_day[day], "attempts": 0}
             for day in selected_days
             if day in region_by_day and day in pending_days
         ]
@@ -215,13 +215,45 @@ class DailyCheckInPoller:
                 "match": confirmation_match,
             }
 
-        if not self._target_cells:
-            return {"state": "completed"}
+        while self._target_cells:
+            item = self._target_cells[0]
+            try:
+                already_match = self._match_day(
+                    screen_bgr, already_template, item["search_rect"]
+                )
+            except (ValueError, cv2.error) as exc:
+                log(
+                    f"[{account.display_name}] Lỗi kiểm tra ngày "
+                    f"{item['day']} đã điểm danh: {exc}"
+                )
+                return None
 
-        item = self._target_cells.pop(0)
-        log(f"[{account.display_name}] Lấy ô ngày {item['day']} để điểm danh.")
-        return {
-            "state": "check_in",
-            "day": item["day"],
-            "search_rect": item["search_rect"],
-        }
+            if already_match is not None:
+                self._target_cells.pop(0)
+                log(
+                    f"[{account.display_name}] Ngày {item['day']} đã điểm danh; "
+                    "loại khỏi hàng đợi."
+                )
+                continue
+
+            item["attempts"] += 1
+            should_remove = item["attempts"] >= 3
+            if should_remove:
+                self._target_cells.pop(0)
+                log(
+                    f"[{account.display_name}] Ngày {item['day']} đã được poll "
+                    "3 lần; loại khỏi hàng đợi."
+                )
+            else:
+                log(
+                    f"[{account.display_name}] Ngày {item['day']} được poll "
+                    f"lần {item['attempts']}/3."
+                )
+
+            return {
+                "state": "check_in",
+                "day": item["day"],
+                "search_rect": item["search_rect"],
+            }
+
+        return {"state": "completed"}
