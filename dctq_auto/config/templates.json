@@ -838,6 +838,13 @@
           "search_rect":  { "top": 0, "left": 0, "right": 1900, "bottom": 150},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
+        },
+        "dong_man_hinh_tui_phuc": {
+          "description": "[Quân Đoàn] - [Túi Phúc] - Thoát",
+          "rect": { "top": 32, "left": 1726, "right": 1779, "bottom": 85},
+          "search_rect": { "top": 3, "left": 1564, "right": 1808, "bottom": 200},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
