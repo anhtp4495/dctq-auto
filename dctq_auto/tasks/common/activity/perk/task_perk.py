@@ -268,105 +268,33 @@ def _scan_day_statuses(
 def _tap_all_days(
     worker, device, account, screen_width, screen_height, templates, log
 ) -> bool:
-    """Ưu tiên điểm danh ngày kế tiếp, sau đó bù tối đa ba ngày còn thiếu."""
+    """Xử lý tuần tự các ô do Poller trả về, không phân biệt ngày thường/ngày bù."""
     observation = _scan_day_statuses(
         worker, device, account, screen_width, screen_height, templates, log
     )
     if observation is None:
         return False
 
-    already_days = observation["already_days"]
-    region_by_day = dict(observation["day_regions"])
-    target_day = observation["target_day"]
-    catchup_days = observation["catchup_days"]
-    if target_day > 30:
-        log(
-            f"[{account.display_name}] Không còn ngày điểm danh thường; "
-            f"kiểm tra các ngày còn thiếu để điểm danh bù."
-        )
-    else:
-        log(
-            f"[{account.display_name}] Ngày cần điểm danh được xác định là "
-            f"ngày {target_day}; sẽ ưu tiên xử lý ngày này trước."
-        )
+    target_cells = observation["target_cells"]
+    log(
+        f"[{account.display_name}] Sẽ xử lý các ngày theo thứ tự: "
+        f"{[item['day'] for item in target_cells]}."
+    )
 
-    catchup_count = 0
-    processed_catchup_days = set()
-
-    # Xử lý ngày kế tiếp trước. Nếu xuất hiện hộp thoại điểm danh bù,
-    # ngày đó được tính là một ngày bù và ngày cần điểm danh tăng lên.
-    while target_day <= 30:
+    for item in target_cells:
         if not worker._wait_if_paused():
             return False
 
-        if target_day in already_days:
-            target_day += 1
-            continue
-
-        region = region_by_day[target_day]
+        day = item["day"]
         result = _tap_day(
-            worker, device, account, target_day, region, templates, log
+            worker, device, account, day, item["search_rect"], templates, log
         )
         if result is None:
             return False
 
-        if result == "catchup":
-            catchup_count += 1
-            processed_catchup_days.add(target_day)
-            log(
-                f"[{account.display_name}] Đã xác nhận ngày {target_day} "
-                f"là ngày bù ({catchup_count}/3). Ngày cần điểm danh tiếp theo "
-                f"là ngày {target_day + 1}."
-            )
-            target_day += 1
-            continue
-
-        log(f"[{account.display_name}] Đã xử lý ngày cần điểm danh {target_day}.")
-        break
-
-    # Sau ngày cần điểm danh, bù các ngày chưa điểm danh nằm trước ngày đó.
-    # Tổng số ngày bù, kể cả ngày mục tiêu bất ngờ hiện hộp thoại bù, không quá 3.
-    if catchup_count < 3:
-        # Poller đã xác định các ô bù. Nếu ngày mục tiêu cũng phát sinh hộp thoại
-        # bù, bổ sung các ngày thiếu trước mục tiêu mới theo đúng thứ tự cũ.
-        if target_day > observation["target_day"]:
-            catchup_days = sorted(set(catchup_days) | {
-                day for day in range(1, min(target_day, 31))
-                if day not in already_days
-            })
-        for day in catchup_days:
-            if catchup_count >= 3:
-                break
-            if day in already_days or day in processed_catchup_days:
-                continue
-
-            if not worker._wait_if_paused():
-                return False
-
-            region = region_by_day[day]
-            result = _tap_day(
-                worker, device, account, day, region, templates, log
-            )
-            if result is None:
-                return False
-
-            if result == "catchup":
-                catchup_count += 1
-                processed_catchup_days.add(day)
-                log(
-                    f"[{account.display_name}] Đã điểm danh bù ngày {day} "
-                    f"({catchup_count}/3)."
-                )
-            else:
-                log(
-                    f"[{account.display_name}] Ngày {day} không hiện hộp thoại "
-                    f"điểm danh bù; đã chuyển về trạng thái màn hình Điểm danh."
-                )
-
     log(
-        f"[{account.display_name}] Hoàn tất lượt xử lý: "
-        f"1 ngày cần điểm danh và tối đa 3 ngày bù "
-        f"(đã bù {catchup_count} ngày)."
+        f"[{account.display_name}] Hoàn tất xử lý "
+        f"{len(target_cells)} ô điểm danh."
     )
     return True
 
