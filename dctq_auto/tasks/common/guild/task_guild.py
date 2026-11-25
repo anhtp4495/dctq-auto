@@ -393,14 +393,24 @@ def _run_remaining_poller(poller, context):
             elif state == "guild_main":
                 if phase == "close":
                     log(
-                        f"[{account.display_name}] Đã xác nhận màn hình chính Quân đoàn; "
-                        "hoàn tất báo danh."
+                        f"[{account.display_name}] Đã xác nhận màn hình chính Quân đoàn "
+                        "sau thao tác báo danh; hoàn tất."
                     )
                     return True
-                log(
-                    f"[{account.display_name}] Đang ở màn hình chính Quân đoàn; "
-                    "chờ nhận diện trạng thái báo danh."
-                )
+                try:
+                    x, y = ButtonPositions().get("quan_doan", "bao_danh")
+                    device.shell(f"input tap {x} {y}")
+                    phase = "close"
+                    log(
+                        f"[{account.display_name}] Màn hình chính Quân đoàn đang hiển thị; "
+                        f"click tọa độ nút báo danh ({x}, {y}) và chờ nhận diện lại "
+                        "màn hình chính để kết thúc."
+                    )
+                except Exception as exc:
+                    log(
+                        f"[{account.display_name}] Không click được tọa độ nút báo danh: {exc}"
+                    )
+                    return False
 
         elif isinstance(poller, BlessingPoller):
             if state == "entry":
