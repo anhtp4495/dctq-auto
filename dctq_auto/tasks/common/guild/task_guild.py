@@ -513,6 +513,13 @@ def _run_remaining_poller(poller, context):
             )
             if result == "close":
                 phase = "close"
+                # Sau khi đã click CHƯA BÁO DANH (hoặc xác nhận ĐÃ BÁO DANH),
+                # không dò lại template này; chỉ chờ màn hình chính xuất hiện.
+                template_names = tuple(
+                    name for name in state_by_template
+                    if state_by_template[name] == "guild_main"
+                )
+                templates = get_templates(template_names)
             elif result == "completed":
                 return True
             elif result == "failed":
