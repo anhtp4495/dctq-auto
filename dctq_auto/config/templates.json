@@ -1662,13 +1662,6 @@
         },
         "thoat": {
           "description": "[Màn hình chính] - [Tướng ấn] - Thoát",
-          "rect": { "top": 46, "left": 1781, "right": 1824, "bottom": 93},
-          "search_rect": { "top": 0, "left": 1707, "right": 1919, "bottom": 133},
-          "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED"
-        },
-        "hoi_thanh": {
-          "description": "[Màn hình chính] - [Tướng ấn] - Hồi thành",
           "rect": { "top": 81, "left": 1729, "right": 1778, "bottom": 139},
           "search_rect": { "top": 0, "left": 1644, "right": 1919, "bottom": 183},
           "threshold": 0.85,
@@ -1832,8 +1825,15 @@
         },
         "thoat": {
           "description": "[Màn hình chính] - [Thần tượng] - Thoát",
-          "rect": { "top": 791, "left": 478, "right": 573, "bottom": 864},
-          "search_rect": { "top": 743, "left": 396, "right": 657, "bottom": 980},
+          "rect": { "top": 38, "left": 1778, "right": 1829, "bottom": 104},
+          "search_rect": { "top": 0, "left": 1713, "right": 1919, "bottom": 159},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "hoi_thanh": {
+          "description": "[Màn hình chính] - [Thần tượng] - Hồi thành",
+          "rect": { "top": 792, "left": 470, "right": 579, "bottom": 864},
+          "search_rect":  { "top": 742, "left": 368, "right": 687, "bottom": 976},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
