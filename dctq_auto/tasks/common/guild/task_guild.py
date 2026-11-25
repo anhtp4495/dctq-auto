@@ -314,6 +314,59 @@ def _run_knb_poller(poller, context):
     return False
 
 
+
+def _handle_daily_check_in_observation(observation, context, phase):
+    """Xử lý observation báo danh; Poller chỉ nhận diện trạng thái."""
+    account = context["account"]
+    device = context["device"]
+    log = context["log"]
+    state = observation["state"]
+
+    if state == "checked_in":
+        if phase == "run":
+            log(
+                f"[{account.display_name}] Đã báo danh Quân đoàn; "
+                "chờ xác nhận màn hình chính."
+            )
+            return "close"
+    elif state == "not_checked_in":
+        if phase == "run":
+            template = context["templates"][observation["template_name"]]
+            search_top, search_left, search_right, search_bottom = template.search_rect
+            x = (search_left + search_right) // 2
+            y = (search_top + search_bottom) // 2
+            device.shell(f"input tap {x} {y}")
+            log(
+                f"[{account.display_name}] Click trung điểm vùng search_rect "
+                f"của template chưa báo danh tại ({x}, {y}); "
+                "chờ xác nhận màn hình chính."
+            )
+            return "close"
+    elif state == "guild_main":
+        if phase == "close":
+            log(
+                f"[{account.display_name}] Đã xác nhận màn hình chính Quân đoàn "
+                "sau thao tác báo danh; hoàn tất."
+            )
+            return "completed"
+        try:
+            x, y = ButtonPositions().get("quan_doan", "bao_danh")
+            device.shell(f"input tap {x} {y}")
+            log(
+                f"[{account.display_name}] Màn hình chính Quân đoàn đang hiển thị; "
+                f"click tọa độ nút báo danh ({x}, {y}) và chờ nhận diện lại "
+                "màn hình chính để kết thúc."
+            )
+            return "close"
+        except Exception as exc:
+            log(
+                f"[{account.display_name}] Không click được tọa độ nút báo danh: {exc}"
+            )
+            return "failed"
+
+    return "continue"
+
+
 def _run_remaining_poller(poller, context):
     """Điều phối các poller còn lại; mọi nhận diện đều qua observation."""
     account = context["account"]
@@ -375,48 +428,17 @@ def _run_remaining_poller(poller, context):
         match = observation.get("match")
 
         if isinstance(poller, DailyCheckInPoller):
-            if state == "checked_in":
-                if phase == "run":
-                    phase = "close"
-                    log(
-                        f"[{account.display_name}] Đã báo danh Quân đoàn; "
-                        "chờ xác nhận màn hình chính."
-                    )
-            elif state == "not_checked_in":
-                if phase == "run":
-                    search_top, search_left, search_right, search_bottom = (
-                        templates[observation["template_name"]].search_rect
-                    )
-                    x = (search_left + search_right) // 2
-                    y = (search_top + search_bottom) // 2
-                    device.shell(f"input tap {x} {y}")
-                    phase = "close"
-                    log(
-                        f"[{account.display_name}] Click trung điểm vùng search_rect "
-                        f"của template chưa báo danh tại ({x}, {y}); "
-                        "chờ xác nhận màn hình chính."
-                    )
-            elif state == "guild_main":
-                if phase == "close":
-                    log(
-                        f"[{account.display_name}] Đã xác nhận màn hình chính Quân đoàn "
-                        "sau thao tác báo danh; hoàn tất."
-                    )
-                    return True
-                try:
-                    x, y = ButtonPositions().get("quan_doan", "bao_danh")
-                    device.shell(f"input tap {x} {y}")
-                    phase = "close"
-                    log(
-                        f"[{account.display_name}] Màn hình chính Quân đoàn đang hiển thị; "
-                        f"click tọa độ nút báo danh ({x}, {y}) và chờ nhận diện lại "
-                        "màn hình chính để kết thúc."
-                    )
-                except Exception as exc:
-                    log(
-                        f"[{account.display_name}] Không click được tọa độ nút báo danh: {exc}"
-                    )
-                    return False
+            result = _handle_daily_check_in_observation(
+                observation,
+                {**context, "templates": templates},
+                phase,
+            )
+            if result == "close":
+                phase = "close"
+            elif result == "completed":
+                return True
+            elif result == "failed":
+                return False
 
         elif isinstance(poller, BlessingPoller):
             if state == "entry":
