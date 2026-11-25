@@ -17,6 +17,7 @@ from dctq_auto.adb.client import AdbClient
 from dctq_auto.automation.battle_testkit import BattleSnapshot, run_mock_battle
 from dctq_auto.tasks.common.accounts import CURRENT_ACCOUNT, GameAccount, load_accounts
 from dctq_auto.config.step_registry import get_clone_step_registry
+from dctq_auto.config.constants import _STEP_QUAN_DOAN_DONG_GOP_KNB
 from dctq_auto.progress import ProgressStatus
 
 
@@ -241,7 +242,7 @@ def run_clone_flow_optimize_account(
                 name=step_registry.get_label(step_id),
                 status="running",
                 current=0,
-                total=1,
+                total=2 if step_id == _STEP_QUAN_DOAN_DONG_GOP_KNB else 1,
                 parent_id=getProcessIdOfAccount(self, account),
             )
         self.log_message.emit(
