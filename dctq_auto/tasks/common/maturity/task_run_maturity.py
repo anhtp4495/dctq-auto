@@ -65,7 +65,8 @@ def _handle_divine_weapon_observation(observation, poller, context) -> bool:
         ("loi_vao", "Lối vào Thần binh"),
         ("mien_phi", "Miễn phí"),
         ("an_cho_trong_de_thoat", "Ấn chỗ trống để thoát"),
-        ("thoat", "Thoát màn hình Thần binh"),
+        ("thoat", "Thoát màn hình nhận miễn phí"),
+        ("hoi_thanh", "Hồi thành"),
     )
     for key, label in actions:
         found = than_binh_found.get(key)
@@ -79,6 +80,10 @@ def _handle_divine_weapon_observation(observation, poller, context) -> bool:
         )
         poller.record_action(key, context)
         if key == "thoat":
+            # Sau khi thoát màn hình nhận miễn phí, chỉ tìm nút Hồi thành.
+            poller.waiting_for_hall = True
+        elif key == "hoi_thanh":
+            poller.waiting_for_hall = False
             poller.waiting_for_main = True
         return True
 
