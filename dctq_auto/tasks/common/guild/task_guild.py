@@ -331,8 +331,9 @@ def _handle_daily_check_in_observation(observation, context, phase):
             return "close"
     elif state == "not_checked_in":
         if phase == "run":
-            template = context["templates"][observation["template_name"]]
-            search_top, search_left, search_right, search_bottom = template.search_rect
+            search_top, search_left, search_right, search_bottom = (
+                observation["template"].search_rect
+            )
             x = (search_left + search_right) // 2
             y = (search_top + search_bottom) // 2
             device.shell(f"input tap {x} {y}")
@@ -430,7 +431,7 @@ def _run_remaining_poller(poller, context):
         if isinstance(poller, DailyCheckInPoller):
             result = _handle_daily_check_in_observation(
                 observation,
-                {**context, "templates": templates},
+                context,
                 phase,
             )
             if result == "close":
