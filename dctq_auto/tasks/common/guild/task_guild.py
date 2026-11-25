@@ -272,11 +272,16 @@ def _run_knb_poller(poller, context):
                 )
                 if state == "donate_20" or small_donation_count >= 3:
                     phase = "close_screen"
-                    template_names = (_KNB_DONATION_CLOSE_TEMPLATE,)
+                    # Nút đóng là tùy chọn: nếu xuất hiện thì click, nếu không
+                    # có thì chấp nhận màn hình chính làm dấu hoàn tất.
+                    template_names = (
+                        _KNB_DONATION_CLOSE_TEMPLATE,
+                        *_KNB_CLOSE_TEMPLATES,
+                    )
                     templates = get_templates(template_names)
                     log(
                         f"[{account.display_name}] Đã hoàn tất đóng góp KNB; "
-                        "chờ nút đóng màn hình đóng góp."
+                        "chờ nút đóng màn hình đóng góp hoặc màn hình chính Quân đoàn."
                     )
             elif state == "insufficient_conditions":
                 log(
@@ -307,9 +312,14 @@ def _run_knb_poller(poller, context):
             )
             return True
         else:
+            waiting_for = (
+                "nút đóng màn hình đóng góp hoặc màn hình chính Quân đoàn"
+                if phase == "close_screen"
+                else "màn hình chính Quân đoàn"
+            )
             log(
                 f"[{account.display_name}] [Quân đoàn] [KNB] "
-                f"Đang chờ màn hình chính Quân đoàn ({state})."
+                f"Đang chờ {waiting_for} ({state})."
             )
 
         time.sleep(_POLL_INTERVAL_SECONDS)
