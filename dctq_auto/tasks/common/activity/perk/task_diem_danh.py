@@ -17,7 +17,6 @@ from dctq_auto.config.constants import (
 from dctq_auto.vision.template_matching import match_template
 from dctq_auto.vision.template_report import report_template_match
 from dctq_auto.vision.template_store import get_templates
-from dctq_auto.tasks.common.activity.perk.polling.daily_check_in_poller import DailyCheckInPoller
 
 
 _TEMPLATE_NAMES = (
@@ -85,8 +84,36 @@ def _tap_match_center(device, match, account, log):
 
 
 def _build_day_regions(screen_width: int, screen_height: int):
-    """Tạo vùng 30 ô thông qua Poller nhận diện Điểm danh."""
-    return DailyCheckInPoller.build_day_regions(screen_width, screen_height)
+    """Tạo vùng tìm kiếm cho 30 ô theo lưới 9 + 9 + 9 + 3."""
+    scale_x = screen_width / 1920
+    scale_y = screen_height / 1080
+
+    # Tọa độ gốc lấy từ ba ô mẫu: ngày 1, ngày 9 và ngày 30.
+    row_bounds = (
+        (405, 537),
+        (554, 689),
+        (704, 841),
+        (853, 992),
+    )
+    row_lengths = (9, 9, 9, 3)
+    day_regions = []
+
+    day = 1
+    for row_index, (top, bottom) in enumerate(row_bounds):
+        for column in range(row_lengths[row_index]):
+            left = round((480 + column * 150) * scale_x)
+            right = round((620 + column * 150) * scale_x)
+            region = (
+                round(top * scale_y),
+                left,
+                right,
+                round(bottom * scale_y),
+            )
+            day_regions.append((day, region))
+            day += 1
+
+    return day_regions
+
 
 def _match_day_template(screen_bgr, template, search_rect):
     """Tìm template trạng thái trong đúng vùng của một ngày."""
@@ -182,9 +209,13 @@ def _tap_day(
 def _scan_day_statuses(
     worker, device, account, screen_width, screen_height, templates, log
 ):
-    """Quét 30 ngày bằng Poller và trả tập ngày đã điểm danh."""
-    if not worker._wait_if_paused():
-        log(f"[{account.display_name}] Điểm danh đã dừng theo yêu cầu.")
+    """Quét 30 ngày, trả về tập ngày đã điểm danh."""
+    day_regions = _build_day_regions(screen_width, screen_height)
+    already_template = templates.get(_TEMPLATE_DA_DIEM_DANH)
+    catchup_template = templates.get(_TEMPLATE_DIEM_DANH_BU)
+
+    if already_template is None or catchup_template is None:
+        log(f"[{account.display_name}] Thiếu template trạng thái ngày điểm danh.")
         return None, None
 
     try:
@@ -194,33 +225,61 @@ def _scan_day_statuses(
         log(f"[{account.display_name}] Không chụp được màn hình khi mở Điểm danh: {exc}")
         return None, None
 
-    observation = DailyCheckInPoller().poll(
-        screen_bgr,
-        screen_width,
-        screen_height,
-        templates,
-        account,
-        log,
-    )
-    if observation is None:
-        return None, None
+    already_days = set()
+    log(f"[{account.display_name}] Bắt đầu quét trạng thái {len(day_regions)} ngày.")
 
-    return observation
+    for day, search_rect in day_regions:
+        if not worker._wait_if_paused():
+            log(f"[{account.display_name}] Điểm danh đã dừng theo yêu cầu tại ngày {day}.")
+            return None, None
+
+        log(
+            f"[{account.display_name}] Quét ngày {day} "
+            f"với region={search_rect}."
+        )
+
+        try:
+            already_match = _match_day_template(
+                screen_bgr, already_template, search_rect
+            )
+            if already_match is not None:
+                already_days.add(day)
+                log(f"[{account.display_name}] Ngày {day} đã điểm danh.")
+                continue
+
+            catchup_match = _match_day_template(
+                screen_bgr, catchup_template, search_rect
+            )
+            if catchup_match is not None:
+                report_template_match(
+                    log,
+                    context=f"[{account.display_name}] Ngày {day}",
+                    template=catchup_template,
+                    match=catchup_match,
+                )
+                log(f"[{account.display_name}] Ngày {day} chưa điểm danh.")
+        except (ValueError, cv2.error) as exc:
+            log(f"[{account.display_name}] Lỗi nhận diện trạng thái ngày {day}: {exc}")
+            return None, None
+        except Exception as exc:
+            log(f"[{account.display_name}] Không kiểm tra được ngày {day}: {exc}")
+            return None, None
+
+    return already_days, day_regions
+
 
 def _tap_all_days(
     worker, device, account, screen_width, screen_height, templates, log
 ) -> bool:
     """Ưu tiên điểm danh ngày kế tiếp, sau đó bù tối đa ba ngày còn thiếu."""
-    observation = _scan_day_statuses(
+    already_days, day_regions = _scan_day_statuses(
         worker, device, account, screen_width, screen_height, templates, log
     )
-    if observation is None:
+    if already_days is None:
         return False
 
-    already_days = observation["already_days"]
-    region_by_day = dict(observation["day_regions"])
-    target_day = observation["target_day"]
-    catchup_days = observation["catchup_days"]
+    region_by_day = dict(day_regions)
+    target_day = max(already_days, default=0) + 1
     if target_day > 30:
         log(
             f"[{account.display_name}] Không còn ngày điểm danh thường; "
@@ -269,14 +328,7 @@ def _tap_all_days(
     # Sau ngày cần điểm danh, bù các ngày chưa điểm danh nằm trước ngày đó.
     # Tổng số ngày bù, kể cả ngày mục tiêu bất ngờ hiện hộp thoại bù, không quá 3.
     if catchup_count < 3:
-        # Poller đã xác định các ô bù. Nếu ngày mục tiêu cũng phát sinh hộp thoại
-        # bù, bổ sung các ngày thiếu trước mục tiêu mới theo đúng thứ tự cũ.
-        if target_day > observation["target_day"]:
-            catchup_days = sorted(set(catchup_days) | {
-                day for day in range(1, min(target_day, 31))
-                if day not in already_days
-            })
-        for day in catchup_days:
+        for day in range(1, min(target_day, 31)):
             if catchup_count >= 3:
                 break
             if day in already_days or day in processed_catchup_days:
