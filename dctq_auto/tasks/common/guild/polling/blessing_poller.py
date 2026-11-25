@@ -28,7 +28,7 @@ class BlessingPoller(BaseGuildPoller):
     def check(self, context) -> dict:
         observation = self._match_first(context)
         observation["requires_action"] = observation["state"] in {
-            "entry", "can_bless", "no_turns_1", "no_turns_2", "exit_blessing"
+            "entry", "can_bless", "exit_blessing"
         }
         observation["completed"] = observation["state"] == "guild_main"
         return observation
