@@ -51,42 +51,6 @@ class DailyCheckInPoller:
         self._target_day = None
         self._catchup_days = None
 
-    def check_catchup_confirmation(self, screen_bgr, templates, account, log):
-        """Nhận diện hộp thoại xác nhận điểm danh bù, chỉ trả observation."""
-        template = templates.get(_TEMPLATE_XAC_NHAN_DIEM_DANH_BU)
-        if template is None:
-            log(f"[{account.display_name}] Thiếu template xác nhận điểm danh bù.")
-            return None
-
-        try:
-            match = match_template(
-                screen_bgr,
-                template.image,
-                threshold=template.threshold,
-                method=template.method,
-                search_rect=template.search_rect,
-                grayscale=template.grayscale,
-            )
-        except (ValueError, cv2.error) as exc:
-            log(f"[{account.display_name}] Lỗi nhận diện xác nhận điểm danh bù: {exc}")
-            return None
-
-        if match is None:
-            return {"state": "not_required", "template_name": None, "match": None}
-
-        report_template_match(
-            log,
-            context=f"[{account.display_name}] Xác nhận điểm danh bù",
-            template=template,
-            match=match,
-        )
-        return {
-            "state": "confirmation_required",
-            "template_name": _TEMPLATE_XAC_NHAN_DIEM_DANH_BU,
-            "template": template,
-            "match": match,
-        }
-
     @staticmethod
     def _match_day(screen_bgr, template, search_rect):
         return match_template(
@@ -118,6 +82,44 @@ class DailyCheckInPoller:
         if already_template is None or catchup_template is None:
             log(f"[{account.display_name}] Thiếu template trạng thái ngày điểm danh.")
             return None
+
+        # Hộp thoại xác nhận điểm danh bù được ưu tiên nhận diện trước
+        # khi quét lại các ô ngày.
+        confirmation_template = templates.get(_TEMPLATE_XAC_NHAN_DIEM_DANH_BU)
+        if confirmation_template is None:
+            log(f"[{account.display_name}] Thiếu template xác nhận điểm danh bù.")
+            return None
+        try:
+            confirmation_match = match_template(
+                screen_bgr,
+                confirmation_template.image,
+                threshold=confirmation_template.threshold,
+                method=confirmation_template.method,
+                search_rect=confirmation_template.search_rect,
+                grayscale=confirmation_template.grayscale,
+            )
+        except (ValueError, cv2.error) as exc:
+            log(
+                f"[{account.display_name}] Lỗi nhận diện xác nhận điểm danh bù: {exc}"
+            )
+            return None
+
+        if confirmation_match is not None:
+            report_template_match(
+                log,
+                context=f"[{account.display_name}] Xác nhận điểm danh bù",
+                template=confirmation_template,
+                match=confirmation_match,
+            )
+            return {
+                "state": "confirmation_required",
+                "template_name": _TEMPLATE_XAC_NHAN_DIEM_DANH_BU,
+                "template": confirmation_template,
+                "match": confirmation_match,
+                "target_cells": self._target_cells or [],
+                "target_day": self._target_day,
+                "catchup_days": self._catchup_days or [],
+            }
 
         all_day_regions = self.build_day_regions(screen_width, screen_height)
         is_initial_poll = self._target_cells is None
