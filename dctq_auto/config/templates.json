@@ -696,7 +696,7 @@
           "description": "Màn hình [Quân Đoàn] - [Cầu vận] - Còn lượt.",
           "rect": { "top": 870, "left": 498, "right": 700, "bottom": 936},
           "search_rect": { "top": 738, "left": 172, "right": 962, "bottom": 1060},
-          "threshold": 0.85,
+          "threshold": 0.95,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
