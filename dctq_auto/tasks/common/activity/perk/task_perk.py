@@ -219,7 +219,6 @@ def _tap_all_days(
         if state == "confirmation_required":
             log(f"[{account.display_name}] Xác nhận điểm danh bù.")
             _tap_match_center(device, observation["match"], account, log)
-            time.sleep(0.8)
             observation = _scan_day_statuses(
                 worker, device, account, screen_width, screen_height,
                 templates, log, poller=poller,
