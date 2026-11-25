@@ -283,7 +283,7 @@ def _run_knb_poller(poller, context):
             small_donation_count += 1
             _update_knb_process_info(
                 context,
-                1 if state == "donate_10" else 2,
+                2 if state == "donate_20" or small_donation_count >= 3 else 1,
             )
             log(
                 f"[{account.display_name}] [Quân đoàn] [KNB] "
