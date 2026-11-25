@@ -238,7 +238,8 @@ def _tap_day(
     return "normal"
 
 def _scan_day_statuses(
-    worker, device, account, screen_width, screen_height, templates, log
+    worker, device, account, screen_width, screen_height, templates, log,
+    poller=None,
 ):
     """Quét 30 ngày bằng Poller và trả tập ngày đã điểm danh."""
     if not worker._wait_if_paused():
@@ -252,7 +253,8 @@ def _scan_day_statuses(
         log(f"[{account.display_name}] Không chụp được màn hình khi mở Điểm danh: {exc}")
         return None, None
 
-    observation = DailyCheckInPoller().poll(
+    poller = poller or DailyCheckInPoller()
+    observation = poller.poll(
         screen_bgr,
         screen_width,
         screen_height,
@@ -266,11 +268,13 @@ def _scan_day_statuses(
     return observation
 
 def _tap_all_days(
-    worker, device, account, screen_width, screen_height, templates, log
+    worker, device, account, screen_width, screen_height, templates, log,
+    poller=None,
 ) -> bool:
     """Xử lý tuần tự các ô do Poller trả về, không phân biệt ngày thường/ngày bù."""
     observation = _scan_day_statuses(
-        worker, device, account, screen_width, screen_height, templates, log
+        worker, device, account, screen_width, screen_height, templates, log,
+        poller=poller,
     )
     if observation is None:
         return False
@@ -311,8 +315,10 @@ def run_diem_danh(worker, account, steps, device, ocr_client, log, screenshot=No
             screenshot = device.screenshot()
         screen_bgr = cv2.cvtColor(np.asarray(screenshot), cv2.COLOR_RGB2BGR)
         screen_height, screen_width = screen_bgr.shape[:2]
+        poller = DailyCheckInPoller()
         if not _tap_all_days(
-            worker, device, account, screen_width, screen_height, templates, log
+            worker, device, account, screen_width, screen_height, templates, log,
+            poller=poller,
         ):
             return False
 
