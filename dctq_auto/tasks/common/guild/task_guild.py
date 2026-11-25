@@ -35,6 +35,7 @@ from dctq_auto.tasks.common.guild.polling.knb_poller import (
     _RUN_TEMPLATES as _KNB_RUN_TEMPLATES,
     _CLOSE_TEMPLATES as _KNB_CLOSE_TEMPLATES,
 )
+from dctq_auto.vision.template_matching import TemplateMatch
 from dctq_auto.vision.template_store import get_templates
 
 
@@ -349,9 +350,14 @@ def _handle_daily_check_in_observation(observation, context, phase, templates):
             search_top, search_left, search_right, search_bottom = (
                 templates[_TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH].search_rect
             )
-            x = (search_left + search_right) // 2
-            y = (search_top + search_bottom) // 2
-            device.shell(f"input tap {x} {y}")
+            search_match = TemplateMatch(
+                search_top,
+                search_left,
+                search_right,
+                search_bottom,
+                1.0,
+            )
+            x, y = click_match(device, search_match)
             log(
                 f"[{account.display_name}] Màn hình chính Quân đoàn đang hiển thị; "
                 f"click trung điểm vùng search_rect của template chưa báo danh "
