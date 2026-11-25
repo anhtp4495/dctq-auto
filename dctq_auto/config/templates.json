@@ -1716,13 +1716,21 @@
         },
         "an_cho_trong_de_thoat": {
           "description": "[Màn hình chính] - [Thần Binh] - Ấn chỗ trống để thoát",
-          "rect": { "top": 33, "left": 1818, "right": 1878, "bottom": 101},
-          "search_rect": { "top": 0, "left": 1724, "right": 1919, "bottom": 161},
+          "rect": { "top": 45, "left": 378, "right": 465, "bottom": 101},
+          "search_rect": { "top": 190, "left": 303, "right": 1629, "bottom": 894},
           "threshold": 0.85,
+          "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "thoat": {
           "description": "[Màn hình chính] - [Thần Binh] - Thoát",
+          "rect": { "top": 55, "left": 1823, "right": 1868, "bottom": 99},
+          "search_rect": { "top": 0, "left": 1753, "right": 1919, "bottom": 170},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "hoi_thanh": {
+          "description": "[Màn hình chính] - [Thần Binh] - Hồi thành",
           "rect": { "top": 736, "left": 376, "right": 474, "bottom": 883},
           "search_rect": { "top": 615, "left": 273, "right": 618, "bottom": 967},
           "threshold": 0.85,
