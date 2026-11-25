@@ -244,6 +244,22 @@ def _update_knb_process_info(context, current):
     )
 
 
+def _update_lucky_bag_process_info(context, current):
+    """Cập nhật tiến độ nhận Túi phúc theo ba lượt nhận."""
+    worker = context["worker"]
+    process_id = getattr(worker, "_current_process_ids", {}).get(
+        _STEP_QUAN_DOAN_TUI_PHUC
+    )
+    if process_id is None:
+        return
+
+    worker.UpdateProcessInfo(
+        process_id=process_id,
+        current=min(current, 3),
+        total=3,
+    )
+
+
 def _run_knb_poller(poller, context):
     """Polling và điều phối đóng góp KNB; Poller chỉ nhận diện trạng thái."""
     account = context["account"]
@@ -657,7 +673,14 @@ def _run_remaining_poller(poller, context):
                     x, y = lucky_positions.pop(0)
                     try:
                         device.shell(f"input tap {x} {y}")
-                        log(f"[{account.display_name}] Nhận Túi phúc tại ({x}, {y}).")
+                        _update_lucky_bag_process_info(
+                            context,
+                            3 - len(lucky_positions),
+                        )
+                        log(
+                            f"[{account.display_name}] Nhận Túi phúc "
+                            f"({3 - len(lucky_positions)}/3) tại ({x}, {y})."
+                        )
                     except Exception as exc:
                         log(f"[{account.display_name}] Không nhận được Túi phúc: {exc}")
                         return False
