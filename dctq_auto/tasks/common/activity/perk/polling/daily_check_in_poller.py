@@ -45,6 +45,12 @@ class DailyCheckInPoller:
 
         return day_regions
 
+    def __init__(self):
+        # Giữ danh sách ô đã chọn để các lần poll sau chỉ kiểm tra lại các ô này.
+        self._target_cells = None
+        self._target_day = None
+        self._catchup_days = None
+
     def check_catchup_confirmation(self, screen_bgr, templates, account, log):
         """Nhận diện hộp thoại xác nhận điểm danh bù, chỉ trả observation."""
         template = templates.get(_TEMPLATE_XAC_NHAN_DIEM_DANH_BU)
@@ -113,10 +119,23 @@ class DailyCheckInPoller:
             log(f"[{account.display_name}] Thiếu template trạng thái ngày điểm danh.")
             return None
 
-        day_regions = self.build_day_regions(screen_width, screen_height)
+        all_day_regions = self.build_day_regions(screen_width, screen_height)
+        is_initial_poll = self._target_cells is None
+        if is_initial_poll:
+            day_regions = all_day_regions
+        else:
+            day_regions = [
+                (item["day"], item["search_rect"])
+                for item in self._target_cells
+            ]
+
         days = []
         already_days = set()
-        log(f"[{account.display_name}] Bắt đầu quét trạng thái {len(day_regions)} ngày.")
+        log(
+            f"[{account.display_name}] "
+            f"{'Quét lần đầu toàn bộ' if is_initial_poll else 'Quét lại các ô đã lưu'}: "
+            f"{len(day_regions)} ô."
+        )
 
         for day, search_rect in day_regions:
             try:
@@ -153,26 +172,38 @@ class DailyCheckInPoller:
                 "search_rect": search_rect,
             })
 
-        # Thứ tự xử lý: ngày cần điểm danh, ngày kế tiếp, rồi tối đa
-        # ba ngày còn thiếu trước ngày mục tiêu.
-        target_day = max(already_days, default=0) + 1
-        catchup_days = [
-            item["day"]
-            for item in days
-            if item["day"] < target_day and item["state"] != "completed"
-        ][:3]
-        selected_days = [target_day, target_day + 1, *catchup_days]
-        region_by_day = dict(day_regions)
-        target_cells = [
-            {"day": day, "search_rect": region_by_day[day]}
-            for day in selected_days
-            if day in region_by_day
-        ]
+        if is_initial_poll:
+            # Thứ tự xử lý: ngày cần điểm danh, ngày kế tiếp, rồi tối đa
+            # ba ngày còn thiếu trước ngày mục tiêu.
+            target_day = max(already_days, default=0) + 1
+            catchup_days = [
+                item["day"]
+                for item in days
+                if item["day"] < target_day and item["state"] != "completed"
+            ][:3]
+            selected_days = [target_day, target_day + 1, *catchup_days]
+            region_by_day = dict(all_day_regions)
+            target_cells = [
+                {"day": day, "search_rect": region_by_day[day]}
+                for day in selected_days
+                if day in region_by_day
+            ]
 
-        log(
-            f"[{account.display_name}] Các ô cần xử lý theo thứ tự: "
-            f"{[item['day'] for item in target_cells]}."
-        )
+            self._target_cells = target_cells
+            self._target_day = target_day
+            self._catchup_days = catchup_days
+            log(
+                f"[{account.display_name}] Lưu danh sách ô cần xử lý: "
+                f"{[item['day'] for item in target_cells]}."
+            )
+        else:
+            target_day = self._target_day
+            catchup_days = self._catchup_days
+            target_cells = self._target_cells
+            log(
+                f"[{account.display_name}] Tiếp tục dùng danh sách ô đã lưu: "
+                f"{[item['day'] for item in target_cells]}."
+            )
         return {
             "days": days,
             "already_days": already_days,
