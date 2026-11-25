@@ -69,11 +69,10 @@ class DailyCheckInPoller:
         account,
         log,
     ) -> dict | None:
-        """Trả trạng thái từng ô, ngày thường kế tiếp và danh sách ngày bù.
+        """Trả đúng một state: xác nhận, một ô cần điểm danh hoặc hoàn tất.
 
-        Mọi ô không nhận diện là đã điểm danh vẫn được xem là chưa hoàn thành,
-        giống quy tắc xử lý trước đây. Template điểm danh bù chỉ bổ sung thông tin
-        trạng thái hiển thị, không loại ô đó khỏi danh sách ứng viên.
+        Lần đầu quét 30 ô để lưu danh sách mục tiêu. Những lần sau chỉ kiểm tra
+        các ô đã lưu. Mọi ô chưa nhận diện là đã điểm danh vẫn được xem là còn thiếu.
         """
         already_template = templates.get(_TEMPLATE_DA_DIEM_DANH)
         catchup_template = templates.get(_TEMPLATE_DIEM_DANH_BU)
@@ -232,11 +231,3 @@ class DailyCheckInPoller:
 
         return {"state": "completed"}
 
-        return {
-            "days": days,
-            "already_days": already_days,
-            "day_regions": day_regions,
-            "target_day": target_day,
-            "catchup_days": catchup_days,
-            "target_cells": target_cells,
-        }
