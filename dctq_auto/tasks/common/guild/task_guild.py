@@ -231,11 +231,10 @@ def _run_knb_poller(poller, context):
     """Polling và điều phối đóng góp KNB; Poller chỉ nhận diện trạng thái."""
     account = context["account"]
     log = context["log"]
-    phase = "run"
     small_donation_count = 0
     last_small_donation_template = None
+    pending_donation = None
     template_names = _KNB_RUN_TEMPLATES
-    _KNB_DONATION_CLOSE_TEMPLATE = _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_GOP_KNB
     templates = get_templates(template_names)
     deadline = time.monotonic() + _POLL_TIMEOUT_SECONDS
 
@@ -250,61 +249,52 @@ def _run_knb_poller(poller, context):
             return False
 
         state = observation["state"]
-        if phase == "run":
-            if state == "entry":
-                x, y = click_match(context["device"], observation["match"])
-                log(
-                    f"[{account.display_name}] [Quân đoàn] [KNB] "
-                    f"Click trung tâm nút đóng góp KNB tại ({x}, {y})."
-                )
-            elif state in {"donate_10", "donate_20"}:
-                template_name = observation["template_name"]
-                if template_name == last_small_donation_template:
-                    time.sleep(_POLL_INTERVAL_SECONDS)
-                    continue
-                x, y = click_match(context["device"], observation["match"])
-                last_small_donation_template = template_name
-                small_donation_count += 1
-                log(
-                    f"[{account.display_name}] [Quân đoàn] [KNB] "
-                    f"Click mức {10 if state == 'donate_10' else 20} KNB "
-                    f"tại ({x}, {y}); lần {small_donation_count}/3."
-                )
-                if state == "donate_20" or small_donation_count >= 3:
-                    phase = "close_screen"
-                    # Nút đóng là tùy chọn: nếu xuất hiện thì click, nếu không
-                    # có thì chấp nhận màn hình chính làm dấu hoàn tất.
-                    template_names = (
-                        _KNB_DONATION_CLOSE_TEMPLATE,
-                        *_KNB_CLOSE_TEMPLATES,
-                    )
-                    templates = get_templates(template_names)
-                    log(
-                        f"[{account.display_name}] Đã hoàn tất đóng góp KNB; "
-                        "chờ nút đóng màn hình đóng góp hoặc màn hình chính Quân đoàn."
-                    )
-            elif state == "insufficient_conditions":
-                log(
-                    f"[{account.display_name}] Không đủ điều kiện đóng góp KNB; "
-                    "chờ xác nhận màn hình chính Quân đoàn."
-                )
-                phase = "close"
-                template_names = _KNB_CLOSE_TEMPLATES
-                templates = get_templates(template_names)
-            else:
-                log(
-                    f"[{account.display_name}] [Quân đoàn] [KNB] "
-                    f"Chưa nhận diện được trạng thái đóng góp ({state})."
-                )
-        elif phase == "close_screen" and state == "close_donation_screen":
+        if state == "entry":
+            x, y = click_match(context["device"], observation["match"])
+            log(
+                f"[{account.display_name}] [Quân đoàn] [KNB] "
+                f"Click trung tâm nút đóng góp KNB tại ({x}, {y})."
+            )
+        elif state in {"donate_10", "donate_20"}:
+            template_name = observation["template_name"]
+            if template_name == last_small_donation_template:
+                time.sleep(_POLL_INTERVAL_SECONDS)
+                continue
+            x, y = click_match(context["device"], observation["match"])
+            last_small_donation_template = template_name
+            pending_donation = state
+            small_donation_count += 1
+            log(
+                f"[{account.display_name}] [Quân đoàn] [KNB] "
+                f"Click mức {10 if state == 'donate_10' else 20} KNB "
+                f"tại ({x}, {y}); lần {small_donation_count}/3."
+            )
+        elif state == "close_donation_screen":
             x, y = click_match(context["device"], observation["match"])
             log(
                 f"[{account.display_name}] [Quân đoàn] [KNB] "
                 f"Click trung tâm nút đóng màn hình đóng góp tại ({x}, {y})."
             )
-            phase = "close"
-            template_names = _KNB_CLOSE_TEMPLATES
-            templates = get_templates(template_names)
+            # Nếu vừa chọn 10 KNB thì đóng hộp xác nhận rồi tiếp tục dò mức
+            # đóng góp kế tiếp. Sau 20 KNB, đủ 3 lần 10 KNB, hoặc gặp riêng
+            # nút đóng (đã đóng góp mức lớn hơn 20), kết thúc tác vụ.
+            if (
+                pending_donation == "donate_20"
+                or small_donation_count >= 3
+                or pending_donation is None
+            ):
+                log(
+                    f"[{account.display_name}] Đã hoàn tất đóng góp KNB; "
+                    "kết thúc sau khi đóng màn hình đóng góp."
+                )
+                return True
+            pending_donation = None
+        elif state == "insufficient_conditions":
+            log(
+                f"[{account.display_name}] Không đủ điều kiện đóng góp KNB; "
+                "hoàn tất tác vụ."
+            )
+            return True
         elif state == "guild_main":
             log(
                 f"[{account.display_name}] Đã xác nhận màn hình chính Quân đoàn; "
@@ -312,14 +302,9 @@ def _run_knb_poller(poller, context):
             )
             return True
         else:
-            waiting_for = (
-                "nút đóng màn hình đóng góp hoặc màn hình chính Quân đoàn"
-                if phase == "close_screen"
-                else "màn hình chính Quân đoàn"
-            )
             log(
                 f"[{account.display_name}] [Quân đoàn] [KNB] "
-                f"Đang chờ {waiting_for} ({state})."
+                f"Chưa nhận diện được trạng thái đóng góp ({state})."
             )
 
         time.sleep(_POLL_INTERVAL_SECONDS)
@@ -329,7 +314,6 @@ def _run_knb_poller(poller, context):
         "Quá thời gian polling tối đa 3 phút; giữ nguyên step."
     )
     return False
-
 
 
 def _handle_daily_check_in_observation(observation, context, phase, templates):
