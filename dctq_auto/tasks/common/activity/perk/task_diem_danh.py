@@ -205,20 +205,22 @@ def _scan_day_statuses(
     if observation is None:
         return None, None
 
-    return observation["already_days"], observation["day_regions"]
+    return observation
 
 def _tap_all_days(
     worker, device, account, screen_width, screen_height, templates, log
 ) -> bool:
     """Ưu tiên điểm danh ngày kế tiếp, sau đó bù tối đa ba ngày còn thiếu."""
-    already_days, day_regions = _scan_day_statuses(
+    observation = _scan_day_statuses(
         worker, device, account, screen_width, screen_height, templates, log
     )
-    if already_days is None:
+    if observation is None:
         return False
 
-    region_by_day = dict(day_regions)
-    target_day = max(already_days, default=0) + 1
+    already_days = observation["already_days"]
+    region_by_day = dict(observation["day_regions"])
+    target_day = observation["target_day"]
+    catchup_days = observation["catchup_days"]
     if target_day > 30:
         log(
             f"[{account.display_name}] Không còn ngày điểm danh thường; "
@@ -267,7 +269,14 @@ def _tap_all_days(
     # Sau ngày cần điểm danh, bù các ngày chưa điểm danh nằm trước ngày đó.
     # Tổng số ngày bù, kể cả ngày mục tiêu bất ngờ hiện hộp thoại bù, không quá 3.
     if catchup_count < 3:
-        for day in range(1, min(target_day, 31)):
+        # Poller đã xác định các ô bù. Nếu ngày mục tiêu cũng phát sinh hộp thoại
+        # bù, bổ sung các ngày thiếu trước mục tiêu mới theo đúng thứ tự cũ.
+        if target_day > observation["target_day"]:
+            catchup_days = sorted(set(catchup_days) | {
+                day for day in range(1, min(target_day, 31))
+                if day not in already_days
+            })
+        for day in catchup_days:
             if catchup_count >= 3:
                 break
             if day in already_days or day in processed_catchup_days:
