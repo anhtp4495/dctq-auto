@@ -1460,20 +1460,28 @@
         }
       }
     },
-    "chien_tranh.doan_chien.quyen_gop_phong_thu": {
+    "chien_tranh.doan_chien_quyen_gop_phong_thu": {
       "source_image": "resources/screens/chien_tranh/quyen_gop_phong_thu.png",
       "templates": {
         "man_hinh_chinh": {
           "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị]",
-          "rect": { "top": 46, "left": 685, "right": 1241, "bottom": 122},
-          "search_rect": { "top": 0, "left": 400, "right": 1400, "bottom": 200},
-          "threshold": 0.85,
+          "rect": { "top": 268, "left": 825, "right": 1063, "bottom": 335},
+          "search_rect": { "top": 171, "left": 769, "right": 1101, "bottom": 371},
+          "threshold": 0.70,
+          "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "quyen_gop": {
           "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị] - Quyên góp",
-          "rect": { "top": 46, "left": 685, "right": 1241, "bottom": 122},
-          "search_rect": { "top": 0, "left": 400, "right": 1400, "bottom": 200},
+          "rect": { "top": 930, "left": 839, "right": 1072, "bottom": 989},
+          "search_rect": { "top": 868, "left": 719, "right": 1166, "bottom": 1030},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "hien": {
+          "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị] - Hiến",
+          "rect": { "top": 930, "left": 839, "right": 1072, "bottom": 989},
+          "search_rect": { "top": 574, "left": 692, "right": 1222, "bottom": 759},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
@@ -1493,8 +1501,8 @@
         },
         "thoat": {
           "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị] - Thoát",
-          "rect": { "top": 46, "left": 685, "right": 1241, "bottom": 122},
-          "search_rect": { "top": 0, "left": 400, "right": 1400, "bottom": 200},
+          "rect": { "top": 91, "left": 1732, "right": 1782, "bottom": 144},
+          "search_rect": { "top": 0, "left": 1584, "right": 1917, "bottom": 250},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
