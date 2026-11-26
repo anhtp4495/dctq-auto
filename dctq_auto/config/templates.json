@@ -1478,7 +1478,14 @@
           "match_method": "TM_CCOEFF_NORMED"
         },
         "xac_nhan": {
-          "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị] - Xác nhận",
+          "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị] - Xác nhận mở [Túi bảo châu]",
+          "rect": { "top": 46, "left": 685, "right": 1241, "bottom": 122},
+          "search_rect": { "top": 0, "left": 400, "right": 1400, "bottom": 200},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "het_tai_nguyen": {
+          "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị] - Hết tài nguyên",
           "rect": { "top": 46, "left": 685, "right": 1241, "bottom": 122},
           "search_rect": { "top": 0, "left": 400, "right": 1400, "bottom": 200},
           "threshold": 0.85,
