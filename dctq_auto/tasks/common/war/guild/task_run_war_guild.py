@@ -194,10 +194,6 @@ def _run_defense_reinforcement(worker, account, device, log) -> bool:
                 _update_defense_reinforcement_process_info(
                     worker, contribution_count
                 )
-                log(
-                    f"[{account.display_name}] Hiến bảo châu "
-                    f"({contribution_count}/{_MAX_CONTRIBUTIONS}) tại ({x}, {y})."
-                )
                 if contribution_count >= _MAX_CONTRIBUTIONS:
                     phase = "close"
                     template_names = (_MAIN_QUAN_SU, _EXIT)
