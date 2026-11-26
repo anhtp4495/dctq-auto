@@ -1460,6 +1460,39 @@
         }
       }
     },
+    "chien_tranh.doan_chien.quyen_gop_phong_thu": {
+      "source_image": "resources/screens/chien_tranh/quyen_gop_phong_thu.png",
+      "templates": {
+        "man_hinh_chinh": {
+          "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị]",
+          "rect": { "top": 46, "left": 685, "right": 1241, "bottom": 122},
+          "search_rect": { "top": 0, "left": 400, "right": 1400, "bottom": 200},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quyen_gop": {
+          "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị] - Quyên góp",
+          "rect": { "top": 46, "left": 685, "right": 1241, "bottom": 122},
+          "search_rect": { "top": 0, "left": 400, "right": 1400, "bottom": 200},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "xac_nhan": {
+          "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị] - Xác nhận",
+          "rect": { "top": 46, "left": 685, "right": 1241, "bottom": 122},
+          "search_rect": { "top": 0, "left": 400, "right": 1400, "bottom": 200},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "thoat": {
+          "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị] - Thoát",
+          "rect": { "top": 46, "left": 685, "right": 1241, "bottom": 122},
+          "search_rect": { "top": 0, "left": 400, "right": 1400, "bottom": 200},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
     "quan_su.tranh_ba": {
       "source_image": "resources/screens/tranh_ba/man_hinh_chinh.png",
       "templates": {
