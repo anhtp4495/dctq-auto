@@ -16,9 +16,12 @@ from dctq_auto.config.constants import (
     _TEMPLATE_CHIEN_TRANH_TAM_QUAN_CHUA_NHAN_THUONG,
     _TEMPLATE_CHIEN_TRANH_TAM_QUAN_DONG_TONG_KET,
     _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_QUYEN_GOP_PHONG_THU_MAN_HINH_CHINH,
-    _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_QUYEN_GOP_PHONG_THU_QUYEN_GOP,
     _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_QUYEN_GOP_PHONG_THU_XAC_NHAN,
-    _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_QUYEN_GOP_PHONG_THU_HET_TAI_NGUYEN,
+    _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_QUYEN_GOP_PHONG_THU_LOI_VAO,
+    _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_QUYEN_GOP_PHONG_THU_CONG_HIEN_BAO_CHAU,
+    _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_QUYEN_GOP_PHONG_THU_HET_TAI_NGUYEN1,
+    _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_QUYEN_GOP_PHONG_THU_HET_TAI_NGUYEN2,
+    _TEMPLATE_MAIN_QUAN_SU,
     _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_QUYEN_GOP_PHONG_THU_THOAT,
 )
 from dctq_auto.tasks.common.battle.battle_utils import click_match, screen_bgr
@@ -47,10 +50,15 @@ _REWARD_TEMPLATES = (
 )
 
 _MAIN_SCREEN = _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_QUYEN_GOP_PHONG_THU_MAN_HINH_CHINH
-_CONTRIBUTE = _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_QUYEN_GOP_PHONG_THU_QUYEN_GOP
+_ENTRY = _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_QUYEN_GOP_PHONG_THU_LOI_VAO
+_CONTRIBUTE = _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_QUYEN_GOP_PHONG_THU_CONG_HIEN_BAO_CHAU
 _CONFIRM = _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_QUYEN_GOP_PHONG_THU_XAC_NHAN
-_RESOURCES_EXHAUSTED = _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_QUYEN_GOP_PHONG_THU_HET_TAI_NGUYEN
+_RESOURCES_EXHAUSTED = (
+    _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_QUYEN_GOP_PHONG_THU_HET_TAI_NGUYEN1,
+    _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_QUYEN_GOP_PHONG_THU_HET_TAI_NGUYEN2,
+)
 _EXIT = _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_QUYEN_GOP_PHONG_THU_THOAT
+_MAIN_QUAN_SU = _TEMPLATE_MAIN_QUAN_SU
 
 
 def _defense_reinforcement_is_due(now: datetime) -> bool:
@@ -128,7 +136,7 @@ def _run_reward(worker, account, device, log) -> bool:
 
 
 def _run_defense_reinforcement(worker, account, device, log) -> bool:
-    """Quyên góp phòng thủ tối đa 30 lần hoặc dừng ngay khi hết tài nguyên."""
+    """Quyên góp tối đa 30 lần hoặc dừng khi hết tài nguyên, sau đó thoát."""
     poller = DefenseReinforcementPoller()
     phase = "prepare"
     contribution_count = 0
@@ -148,40 +156,48 @@ def _run_defense_reinforcement(worker, account, device, log) -> bool:
 
         if phase == "prepare":
             if state == "main_screen":
-                phase = "contribute"
-                template_names = (_RESOURCES_EXHAUSTED, _CONFIRM, _CONTRIBUTE)
+                phase = "enter"
+                template_names = (_ENTRY,)
                 templates = get_templates(template_names)
-                log(f"[{account.display_name}] Đã xác nhận màn hình Chuẩn bị - Bổ sung phòng thủ.")
+                log(f"[{account.display_name}] Đã nhận diện màn hình chính; chờ lối vào quyên góp.")
+        elif phase == "enter":
+            if state == "entry":
+                x, y = click_match(device, observation["match"])
+                phase = "contribute"
+                template_names = (_RESOURCES_EXHAUSTED[0], _RESOURCES_EXHAUSTED[1], _CONFIRM, _CONTRIBUTE)
+                templates = get_templates(template_names)
+                log(f"[{account.display_name}] Đã vào màn hình quyên góp tại ({x}, {y}).")
         elif phase == "contribute":
             if state == "resources_exhausted":
                 phase = "close"
-                template_names = (_EXIT, _MAIN_SCREEN)
+                template_names = (_EXIT,)
                 templates = get_templates(template_names)
                 log(f"[{account.display_name}] Đã hết tài nguyên; dừng quyên góp và chuyển sang thoát.")
             elif state == "contribute":
                 x, y = click_match(device, observation["match"])
                 contribution_count += 1
                 log(
-                    f"[{account.display_name}] Quyên góp phòng thủ "
+                    f"[{account.display_name}] Hiến bảo châu "
                     f"({contribution_count}/{_MAX_CONTRIBUTIONS}) tại ({x}, {y})."
                 )
                 if contribution_count >= _MAX_CONTRIBUTIONS:
                     phase = "close"
-                    template_names = (_EXIT, _MAIN_SCREEN)
+                    template_names = (_EXIT,)
                     templates = get_templates(template_names)
-                    log(f"[{account.display_name}] Đã đủ {_MAX_CONTRIBUTIONS} lượt quyên góp; chuyển sang thoát.")
+                    log(f"[{account.display_name}] Đã đủ {_MAX_CONTRIBUTIONS} lần hiến; chuyển sang thoát.")
             elif state == "confirm":
                 x, y = click_match(device, observation["match"])
-                log(f"[{account.display_name}] Click xác nhận quyên góp tại ({x}, {y}).")
+                log(f"[{account.display_name}] Click xác nhận hiến bảo châu tại ({x}, {y}).")
         elif phase == "close":
             if state == "exit":
                 x, y = click_match(device, observation["match"])
-                log(f"[{account.display_name}] Click thoát màn hình bổ sung phòng thủ tại ({x}, {y}).")
-            elif state == "main_screen":
-                log(
-                    f"[{account.display_name}] Đã xác nhận quay lại màn hình Chuẩn bị - "
-                    "Bổ sung phòng thủ; hoàn tất."
-                )
+                phase = "wait_main"
+                template_names = (_MAIN_QUAN_SU,)
+                templates = get_templates(template_names)
+                log(f"[{account.display_name}] Đã click thoát màn hình quyên góp tại ({x}, {y}); chờ về màn hình Quân Sự.")
+        elif phase == "wait_main":
+            if state == "completed":
+                log(f"[{account.display_name}] Đã thoát về màn hình Quân Sự; hoàn tất bổ sung phòng thủ.")
                 return True
 
         time.sleep(_POLL_INTERVAL)
