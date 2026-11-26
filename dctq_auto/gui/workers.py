@@ -683,7 +683,6 @@ class BotWorker(
             return
 
         self._emit_overall_progress(0, 2, "Đang kết nối ADB")
-        self.log_message.emit(f"Bắt đầu với cấu hình: {self._config}")
         if not self._wait_if_paused():
             self.log_message.emit("Đã yêu cầu dừng trước khi kết nối ADB.")
             return
