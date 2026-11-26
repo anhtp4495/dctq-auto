@@ -198,7 +198,8 @@ def run(worker, account, steps: list[str], device, log) -> list[str]:
     now = datetime.now()
     if _STEP_CHIEN_TRANH_QUAN_DOAN_NHAN_THUONG in steps and now.weekday() in (0, 1):
         if _run_reward(worker, account, device, log):
-            log(f"[{account.display_name}] Đã hoàn tất nhận thưởng Đoàn Chiến.")
+            steps.remove(_STEP_CHIEN_TRANH_QUAN_DOAN_NHAN_THUONG)
+            log(f"[{account.display_name}] Đã hoàn tất nhận thưởng Đoàn Chiến; đã gỡ step.")
 
     if (
         _STEP_CHIEN_TRANH_QUAN_DOAN_BO_SUNG_PHONG_THU in steps
