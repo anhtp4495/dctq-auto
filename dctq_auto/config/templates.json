@@ -1471,38 +1471,45 @@
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
-        "quyen_gop": {
+        "loi_vao": {
           "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị] - Quyên góp",
           "rect": { "top": 930, "left": 839, "right": 1072, "bottom": 989},
           "search_rect": { "top": 868, "left": 719, "right": 1166, "bottom": 1030},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
-        "hien": {
+        "cong_hien_bao_chau": {
           "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị] - Hiến",
-          "rect": { "top": 930, "left": 839, "right": 1072, "bottom": 989},
+          "rect": { "top": 88, "left": 94, "right": 256, "bottom": 156},
           "search_rect": { "top": 574, "left": 692, "right": 1222, "bottom": 759},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "xac_nhan": {
           "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị] - Xác nhận mở [Túi bảo châu]",
-          "rect": { "top": 46, "left": 685, "right": 1241, "bottom": 122},
-          "search_rect": { "top": 0, "left": 400, "right": 1400, "bottom": 200},
+          "rect": { "top": 250, "left": 44, "right": 259, "bottom": 294},
+          "search_rect": { "top": 786, "left": 580, "right": 1343, "bottom": 968},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
-        "het_tai_nguyen": {
+        "het_tai_nguyen1": {
           "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị] - Hết tài nguyên",
-          "rect": { "top": 46, "left": 685, "right": 1241, "bottom": 122},
-          "search_rect": { "top": 0, "left": 400, "right": 1400, "bottom": 200},
+          "rect": { "top": 409, "left": 356, "right": 448, "bottom": 486},
+          "search_rect": { "top": 303, "left": 421, "right": 1490, "bottom": 1003},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "het_tai_nguyen2": {
+          "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị] - Hết tài nguyên 2",
+          "rect": { "top": 624, "left": 227, "right": 262, "bottom": 668},
+          "search_rect": { "top": 303, "left": 421, "right": 1490, "bottom": 1003},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "thoat": {
           "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị] - Thoát",
           "rect": { "top": 91, "left": 1732, "right": 1782, "bottom": 144},
-          "search_rect": { "top": 0, "left": 1584, "right": 1917, "bottom": 250},
+          "search_rect": { "top": 0, "left": 1399, "right": 1917, "bottom": 427},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
