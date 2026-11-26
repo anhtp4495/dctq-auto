@@ -60,6 +60,12 @@
     "priority": 10105
   },
   {
+    "id": "quan_doan_lanh_dia_chien_muu_ke",
+    "config_key": "clone_guild_territory_war_tactics",
+    "display_name": "Lãnh địa chiến - Mưu kế",
+    "priority": 10106
+  },
+  {
     "id": "cua_hang_danh_vong_mua_que_lanh",
     "config_key": "clone_buy_fortune_lot",
     "display_name": "Cửa hàng Danh Vọng - Mua quẻ lành",
@@ -74,6 +80,12 @@
       "chien_tranh2/doan_chien",
       "chien_tranh.doan_chien/man_hinh_chinh"
     ]
+  },
+  {
+    "id": "chien_tranh_quan_doan_bo_sung_phong_thu",
+    "config_key": "clone_war_guild_defense_reinforcement",
+    "display_name": "Đoàn chiến - Bổ sung phòng thủ",
+    "priority": 10401
   },
   {
     "id": "clone_chien_tranh_quoc_chien",
