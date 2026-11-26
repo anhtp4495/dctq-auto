@@ -34,4 +34,5 @@ class DefenseReinforcementPoller(BaseGuildPoller):
     template_names = tuple(state_by_template)
 
     def check(self, context) -> dict:
-        return self._match_first({**context, "template_names": self.template_names})
+        # Task truyền danh sách template theo từng phase; không tự mở rộng danh sách.
+        return self._match_first(context)
