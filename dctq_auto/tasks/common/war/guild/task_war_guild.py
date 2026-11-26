@@ -47,14 +47,7 @@ def pre_war_guild(steps, log, now=None) -> bool:
 
 
 def post_war_guild(steps, log, now=None) -> list[str]:
-    """Gỡ step nhận thưởng sau khi đã xử lý đợt thứ Hai/thứ Ba."""
-    now = now or datetime.now()
-    if (
-        _STEP_CHIEN_TRANH_QUAN_DOAN_NHAN_THUONG in steps
-        and _reward_is_due(now)
-    ):
-        steps.remove(_STEP_CHIEN_TRANH_QUAN_DOAN_NHAN_THUONG)
-        log("Đoàn Chiến: đã gỡ step nhận thưởng khỏi danh sách steps.")
+    """Hook sau khi xử lý Đoàn Chiến; step được task nghiệp vụ tự cập nhật."""
     return steps
 
 
