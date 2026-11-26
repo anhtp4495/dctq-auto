@@ -50,6 +50,8 @@ def _get_clone_optimize_config(self) -> dict:
         "clone_quan_su_tranh_ba": "Chiến tranh - Tranh Bá",
         "clone_quoc_chien": "Quốc chiến",
         "clone_reward_guild": "Nhận Thưởng - Quân Đoàn",
+        "clone_war_guild_defense_reinforcement": "Đoàn chiến - Bổ sung phòng thủ",
+        "clone_guild_territory_war_tactics": "Lãnh địa chiến - Mưu kế",
     }
 
     self.log_message.emit("Clone Optimize — Bước 1: đọc cấu hình đầu vào.")
