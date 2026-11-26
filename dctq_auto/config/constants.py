@@ -82,6 +82,8 @@ _TEMPLATE_QUAN_SU_TRANH_BA_MUA_THE_LUC = "quan_su.tranh_ba/mua_the_luc"
 _STEP_CHIEN_TRANH_MUU_BINH = "chien_tranh_muu_binh"
 _STEP_CHIEN_TRANH_QUOC_CHIEN = "chien_tranh_quoc_chien"
 _STEP_CHIEN_TRANH_QUAN_DOAN_NHAN_THUONG = "chien_tranh_quan_doan_nhan_thuong"
+_STEP_CHIEN_TRANH_QUAN_DOAN_BO_SUNG_PHONG_THU = "chien_tranh_quan_doan_bo_sung_phong_thu"
+_STEP_QUAN_DOAN_LANH_DIA_CHIEN_MUU_KE = "quan_doan_lanh_dia_chien_muu_ke"
 
 _TEMPLATE_MAIN_CHIEN_TRANH = "main/chien_tranh"
 _TEMPLATE_CHIEN_TRANH_MAN_HINH_CHINH = "chien_tranh/man_hinh_chinh"
