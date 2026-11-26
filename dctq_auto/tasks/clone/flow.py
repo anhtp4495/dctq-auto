@@ -207,7 +207,8 @@ def run_clone_flow_optimize_account(
                 status="running",
                 current=0,
                 total=(
-                    2 if step_id == _STEP_QUAN_DOAN_DONG_GOP_KNB
+                    30 if step_id == "chien_tranh_quan_doan_bo_sung_phong_thu"
+                    else 2 if step_id == _STEP_QUAN_DOAN_DONG_GOP_KNB
                     else 3 if step_id == _STEP_QUAN_DOAN_TUI_PHUC
                     else 1
                 ),
