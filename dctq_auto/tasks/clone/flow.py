@@ -291,7 +291,10 @@ def run_clone_flow_optimize_account(
                 self._config = original_config
 
         common_tasks = (
-            ("Chiến tranh - Nhận thưởng Đoàn Chiến", run_guild_war_reward, {"chien_tranh_quan_doan_nhan_thuong"}),
+            ("Chiến tranh - Nhận thưởng Đoàn Chiến", run_guild_war_reward, {
+                "chien_tranh_quan_doan_nhan_thuong",
+                "chien_tranh_quan_doan_bo_sung_phong_thu",
+            }),
             ("Hoạt động", run_activity, {"hoat_dong_phuc_loi_le_bao_quoc_van", "hoat_dong_phuc_loi_diem_danh"}),
             ("Quân đoàn", run_guild, {
                 "quan_doan_bao_danh", "quan_doan_tui_phuc", "quan_doan_cau_van",
