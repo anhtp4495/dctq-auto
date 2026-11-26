@@ -564,6 +564,8 @@ class MainWindow(QMainWindow):
                 "clone_reward_tam_quoc_lenh",
                 "clone_reward_daily_missions",
                 "clone_reward_guild",
+                "clone_war_guild_defense_reinforcement",
+                "clone_guild_territory_war_tactics",
             )
         }
 
