@@ -135,6 +135,21 @@ def _run_reward(worker, account, device, log) -> bool:
     return False
 
 
+def _update_defense_reinforcement_process_info(worker, current):
+    """Cập nhật tiến độ bổ sung phòng thủ theo 30 lần hiến bảo châu."""
+    process_id = getattr(worker, "_current_process_ids", {}).get(
+        _STEP_CHIEN_TRANH_QUAN_DOAN_BO_SUNG_PHONG_THU
+    )
+    if process_id is None:
+        return
+
+    worker.UpdateProcessInfo(
+        process_id=process_id,
+        current=min(current, _MAX_CONTRIBUTIONS),
+        total=_MAX_CONTRIBUTIONS,
+    )
+
+
 def _run_defense_reinforcement(worker, account, device, log) -> bool:
     """Quyên góp tối đa 30 lần hoặc dừng khi hết tài nguyên, sau đó thoát."""
     poller = DefenseReinforcementPoller()
@@ -170,19 +185,22 @@ def _run_defense_reinforcement(worker, account, device, log) -> bool:
         elif phase == "contribute":
             if state == "resources_exhausted":
                 phase = "close"
-                template_names = (_EXIT,)
+                template_names = (_MAIN_QUAN_SU, _EXIT)
                 templates = get_templates(template_names)
                 log(f"[{account.display_name}] Đã hết tài nguyên; dừng quyên góp và chuyển sang thoát.")
             elif state == "contribute":
                 x, y = click_match(device, observation["match"])
                 contribution_count += 1
+                _update_defense_reinforcement_process_info(
+                    worker, contribution_count
+                )
                 log(
                     f"[{account.display_name}] Hiến bảo châu "
                     f"({contribution_count}/{_MAX_CONTRIBUTIONS}) tại ({x}, {y})."
                 )
                 if contribution_count >= _MAX_CONTRIBUTIONS:
                     phase = "close"
-                    template_names = (_EXIT,)
+                    template_names = (_MAIN_QUAN_SU, _EXIT)
                     templates = get_templates(template_names)
                     log(f"[{account.display_name}] Đã đủ {_MAX_CONTRIBUTIONS} lần hiến; chuyển sang thoát.")
             elif state == "confirm":
@@ -191,12 +209,8 @@ def _run_defense_reinforcement(worker, account, device, log) -> bool:
         elif phase == "close":
             if state == "exit":
                 x, y = click_match(device, observation["match"])
-                phase = "wait_main"
-                template_names = (_MAIN_QUAN_SU,)
-                templates = get_templates(template_names)
-                log(f"[{account.display_name}] Đã click thoát màn hình quyên góp tại ({x}, {y}); chờ về màn hình Quân Sự.")
-        elif phase == "wait_main":
-            if state == "completed":
+                log(f"[{account.display_name}] Phát hiện nút thoát; click trung điểm tại ({x}, {y}) và tiếp tục kiểm tra.")
+            elif state == "completed":
                 log(f"[{account.display_name}] Đã thoát về màn hình Quân Sự; hoàn tất bổ sung phòng thủ.")
                 return True
 
