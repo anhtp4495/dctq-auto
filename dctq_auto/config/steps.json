@@ -36,12 +36,6 @@
     "priority": 10101
   },
   {
-    "id": "quan_doan_cau_van",
-    "config_key": "clone_guild_fortune",
-    "display_name": "Cầu vận quân đoàn",
-    "priority": 10102
-  },
-  {
     "id": "quan_doan_dong_gop_knb",
     "config_key": "clone_guild_donate_knb",
     "display_name": "Đóng góp KNB",
@@ -54,16 +48,22 @@
     "priority": 10104
   },
   {
-    "id": "quan_doan_nhan_thuong_boss",
-    "config_key": "clone_guild_boss_reward",
-    "display_name": "Nhận thưởng Boss",
+    "id": "quan_doan_cau_van",
+    "config_key": "clone_guild_fortune",
+    "display_name": "Cầu vận quân đoàn",
     "priority": 10105
   },
   {
     "id": "quan_doan_lanh_dia_chien_muu_ke",
     "config_key": "clone_guild_territory_war_tactics",
     "display_name": "Lãnh địa chiến - Mưu kế",
-    "priority": 10106
+    "priority": 10108
+  },
+  {
+    "id": "quan_doan_nhan_thuong_boss",
+    "config_key": "clone_guild_boss_reward",
+    "display_name": "Nhận thưởng Boss",
+    "priority": 10110
   },
   {
     "id": "cua_hang_danh_vong_mua_que_lanh",
