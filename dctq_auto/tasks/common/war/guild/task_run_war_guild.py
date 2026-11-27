@@ -207,11 +207,6 @@ def _run_defense_reinforcement(worker, account, device, log) -> bool:
                 x, y = click_match(device, observation["match"])
                 log(f"[{account.display_name}] Phát hiện nút thoát; click trung điểm tại ({x}, {y}) và tiếp tục kiểm tra.")
             elif state == "completed":
-                # Chốt tiến độ ở mức hoàn tất khi đã thoát thành công,
-                # kể cả trường hợp dừng sớm do hết tài nguyên.
-                _update_defense_reinforcement_process_info(
-                    worker, _MAX_CONTRIBUTIONS
-                )
                 log(f"[{account.display_name}] Đã thoát về màn hình Quân Sự; hoàn tất bổ sung phòng thủ.")
                 return True
 
