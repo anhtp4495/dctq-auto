@@ -1,6 +1,33 @@
 {
   "version": 1,
   "screens": {
+    "login_form": {
+      "source_image": "resources/screens/main/login_form.png",
+      "templates": {
+        "username": {
+          "description": "[Đăng nhập] - Tài khoản",
+          "rect": { "top": 389, "left": 564, "right": 686, "bottom": 413},
+          "search_rect": { "top": 389, "left": 564, "right": 686, "bottom": 413},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "password": {
+          "description": "[Đăng nhập] - Mật khẩu",
+          "rect": { "top": 469, "left": 518, "right": 619, "bottom": 495},
+          "search_rect": { "top": 469, "left": 518, "right": 619, "bottom": 495},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "login": {
+          "description": "[Đăng nhập] - Đăng nhập",
+          "rect": { "top": 586, "left": 889, "right": 1032, "bottom": 613},
+          "search_rect": { "top": 586, "left": 889, "right": 1032, "bottom": 613},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
     "main": {
       "source_image": "resources/screens/main/man_hinh_chinh.png",
       "templates": {
