@@ -853,6 +853,16 @@ class MainWindow(QMainWindow):
         completed = max(0, int(getattr(worker, "_progress_completed", 0)))
         if clone:
             total = max(1, self._clone_total_accounts)
+            # Clone dùng ProgressInfo root làm nguồn dữ liệu tiến trình tổng.
+            # _progress_completed chỉ phục vụ luồng mô phỏng/legacy nên thường
+            # vẫn là 0; lấy lại root ở đây để refresh sau khi worker kết thúc
+            # không ghi đè 2/2 thành 0/2.
+            manager = getattr(worker, "progress_manager", None)
+            root_id = getattr(worker, "_progress_root_id", None)
+            root = manager.get(root_id) if manager is not None and root_id else None
+            if root is not None:
+                total = max(1, root.total)
+                completed = root.current
         self.progress_bar.setRange(0, total)
         self.progress_bar.setFormat("%v/%m (%p%)")
         self.progress_bar.setValue(min(total, completed))
