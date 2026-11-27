@@ -182,10 +182,8 @@ def run_clone_flow_optimize(self, device) -> None:
             else:
                 failed_count += 1
 
-    # Khi vòng lặp đã xử lý hết danh sách account, tiến trình tổng phải
-    # đạt đủ tổng số account, kể cả account đăng nhập bị bỏ qua giữa chừng.
     self._emit_overall_progress(
-        total,
+        success_count + failed_count,
         total,
         f"{success_count} thành công | {failed_count} thất bại",
     )
