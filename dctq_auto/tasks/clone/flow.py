@@ -333,8 +333,32 @@ def run_clone_flow_optimize_account(
                 task_changed = steps != steps_before
                 for step_id in selected_group_steps:
                     completed = step_id not in steps
+                    process_id = self._current_process_ids[step_id]
+
+                    if completed:
+                        progress_manager = getattr(self, "progress_manager", None)
+                        progress_item = (
+                            progress_manager.get(process_id)
+                            if progress_manager is not None else None
+                        )
+                        # Các tác vụ chỉ có một trạng thái hoàn tất thường không
+                        # phát sinh cập nhật tiến độ trong lúc chạy. Khi thành công,
+                        # chuẩn hóa node mặc định 0/1 thành 100/100.
+                        # Giữ nguyên bộ đếm riêng của các tác vụ như KNB, Túi phúc,
+                        # Giao tranh hoặc Bổ sung phòng thủ.
+                        if (
+                            progress_item is not None
+                            and progress_item.current == 0
+                            and progress_item.total == 1
+                        ):
+                            self.UpdateProcessInfo(
+                                process_id=process_id,
+                                current=100,
+                                total=100,
+                            )
+
                     self.UpdateProcessStatus(
-                        process_id=self._current_process_ids[step_id],
+                        process_id=process_id,
                         status=(
                             ProgressStatus.SUCCESS
                             if completed
