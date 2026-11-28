@@ -61,6 +61,19 @@ class LordPoller(BaseMaturityPoller):
                 ),
             }
 
+        if not self.entry_clicked:
+            return {
+                "screen": screen,
+                "chua_cong": {
+                    "loi_vao": match(
+                        screen,
+                        self.loaded_templates[_TEMPLATE_MATURITY_CHUA_CONG_LOI_VAO],
+                        account=account,
+                        log=context["log"],
+                    ),
+                },
+            }
+
         return {
             "screen": screen,
             "chua_cong": {
