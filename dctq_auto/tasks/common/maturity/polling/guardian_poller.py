@@ -64,19 +64,6 @@ class GuardianPoller(BaseMaturityPoller):
                 ),
             }
 
-        if not self.entry_clicked:
-            return {
-                "screen": screen,
-                "ve_tuong": {
-                    "loi_vao": match(
-                        screen,
-                        self.loaded_templates[_TEMPLATE_MATURITY_VE_TUONG_LOI_VAO],
-                        account=account,
-                        log=context["log"],
-                    ),
-                },
-            }
-
         return {
             "screen": screen,
             "ve_tuong": {
