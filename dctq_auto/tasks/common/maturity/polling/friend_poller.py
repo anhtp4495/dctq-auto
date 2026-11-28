@@ -30,6 +30,7 @@ class FriendPoller(BaseMaturityPoller):
 
     def __init__(self):
         super().__init__()
+        self.entry_clicked = False
         self.loaded_templates = get_templates(self.templates)
         missing = [
             name for name in self.templates
@@ -63,11 +64,13 @@ class FriendPoller(BaseMaturityPoller):
         return {
             "screen": screen,
             "ban_be": {
-                "loi_vao": match(
+                "loi_vao": (
+                    None if self.entry_clicked else match(
                     screen,
                     self.loaded_templates[_TEMPLATE_MATURITY_BAN_BE_LOI_VAO],
                     account=account,
                     log=context["log"],
+                )
                 ),
                 "mien_phi": match(
                     screen,
