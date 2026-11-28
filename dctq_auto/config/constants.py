@@ -120,6 +120,7 @@ _TEMPLATE_MAIN_DANG_MO_CHIEN_TRANH = "main/dang_mo_chien_tranh"
 
 _TEMPLATE_TAM_QUOC_LENH_MAN_HINH_CHINH = "tam_quoc_lenh/man_hinh_chinh"
 _TEMPLATE_TAM_QUOC_LENH_DONG_MAN_HINH_CHINH = "tam_quoc_lenh/dong_man_hinh_chinh"
+_TEMPLATE_TAM_QUOC_LENH_THOAT_TIEN_GIAI_LENH_BAI = "tam_quoc_lenh/thoat_tien_giai_lenh_bai"
 _TEMPLATE_TAM_QUOC_LENH_THUONG_NHIEM_VU = "tam_quoc_lenh/thuong_nhiem_vu"
 _TEMPLATE_TAM_QUOC_LENH_NHAN_THUONG_NHANH = "tam_quoc_lenh/nhan_thuong_nhanh"
 _TEMPLATE_TAM_QUOC_LENH_NHAN_THUONG_NHANH2 = "tam_quoc_lenh/nhan_thuong_nhanh2"
