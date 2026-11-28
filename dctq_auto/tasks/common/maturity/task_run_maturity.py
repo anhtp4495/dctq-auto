@@ -120,6 +120,8 @@ def _handle_guardian_observation(observation, poller, context) -> bool:
             f"Click {label} tại ({x}, {y})."
         )
         poller.record_action(key, context)
+        if key == "loi_vao":
+            poller.entry_clicked = True
         if key == "thoat":
             poller.waiting_for_main = True
         return True
@@ -150,6 +152,8 @@ def _handle_soul_observation(observation, poller, context) -> bool:
             f"Click {label} tại ({x}, {y})."
         )
         poller.record_action(key, context)
+        if key == "loi_vao":
+            poller.entry_clicked = True
         if key == "thoat":
             poller.waiting_for_main = True
         return True
@@ -250,6 +254,8 @@ def _handle_friend_observation(observation, poller, context) -> bool:
             f"Click {label} tại ({x}, {y})."
         )
         poller.record_action(key, context)
+        if key == "loi_vao":
+            poller.entry_clicked = True
         if key == "thoat":
             poller.waiting_for_main = True
         return True
