@@ -5,6 +5,7 @@ from dctq_auto.config.constants import (
     _TEMPLATE_MATURITY_TUONG_AN_LOI_VAO,
     _TEMPLATE_MATURITY_TUONG_AN_TAT_CA,
     _TEMPLATE_MATURITY_TUONG_AN_MIEN_PHI,
+    _TEMPLATE_MATURITY_TUONG_AN_AN_CHO_TRONG_DE_THOAT,
     _TEMPLATE_MATURITY_TUONG_AN_THOAT,
 )
 from dctq_auto.tasks.common.battle.battle_utils import match, screen_bgr
@@ -28,6 +29,7 @@ class GeneralSealPoller(BaseMaturityPoller):
         _TEMPLATE_MATURITY_TUONG_AN_LOI_VAO,
         _TEMPLATE_MATURITY_TUONG_AN_TAT_CA,
         _TEMPLATE_MATURITY_TUONG_AN_MIEN_PHI,
+        _TEMPLATE_MATURITY_TUONG_AN_AN_CHO_TRONG_DE_THOAT,
         _TEMPLATE_MATURITY_TUONG_AN_THOAT,
         _TEMPLATE_MAIN_TRUONG_THANH,
     )
@@ -85,6 +87,14 @@ class GeneralSealPoller(BaseMaturityPoller):
                 "mien_phi": match(
                     screen,
                     self.loaded_templates[_TEMPLATE_MATURITY_TUONG_AN_MIEN_PHI],
+                    account=account,
+                    log=context["log"],
+                ),
+                "an_cho_trong_de_thoat": match(
+                    screen,
+                    self.loaded_templates[
+                        _TEMPLATE_MATURITY_TUONG_AN_AN_CHO_TRONG_DE_THOAT
+                    ],
                     account=account,
                     log=context["log"],
                 ),

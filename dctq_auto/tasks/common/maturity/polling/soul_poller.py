@@ -2,7 +2,6 @@
 
 from dctq_auto.config.constants import (
     _TEMPLATE_MAIN_TRUONG_THANH,
-    _TEMPLATE_MATURITY_CHIEN_HON_AN_CHO_TRONG_DE_THOAT,
     _TEMPLATE_MATURITY_CHIEN_HON_LOI_VAO,
     _TEMPLATE_MATURITY_CHIEN_HON_MIEN_PHI,
     _TEMPLATE_MATURITY_CHIEN_HON_THOAT,
@@ -26,7 +25,6 @@ class SoulPoller(BaseMaturityPoller):
     templates = (
         _TEMPLATE_MATURITY_CHIEN_HON_LOI_VAO,
         _TEMPLATE_MATURITY_CHIEN_HON_MIEN_PHI,
-        _TEMPLATE_MATURITY_CHIEN_HON_AN_CHO_TRONG_DE_THOAT,
         _TEMPLATE_MATURITY_CHIEN_HON_THOAT,
         _TEMPLATE_MAIN_TRUONG_THANH,
     )
@@ -78,14 +76,6 @@ class SoulPoller(BaseMaturityPoller):
                 "mien_phi": match(
                     screen,
                     self.loaded_templates[_TEMPLATE_MATURITY_CHIEN_HON_MIEN_PHI],
-                    account=account,
-                    log=context["log"],
-                ),
-                "an_cho_trong_de_thoat": match(
-                    screen,
-                    self.loaded_templates[
-                        _TEMPLATE_MATURITY_CHIEN_HON_AN_CHO_TRONG_DE_THOAT
-                    ],
                     account=account,
                     log=context["log"],
                 ),
