@@ -1818,6 +1818,13 @@
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
+        "tro_ve": {
+          "description": "[Màn hình chính] - [Thần Binh] - Trở về",
+          "rect": { "top": 355, "left": 76, "right": 257, "bottom": 415},
+          "search_rect": { "top": 632, "left": 448, "right": 1570, "bottom": 1078},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
         "an_cho_trong_de_thoat": {
           "description": "[Màn hình chính] - [Thần Binh] - Ấn chỗ trống để thoát",
           "rect": { "top": 45, "left": 378, "right": 465, "bottom": 101},
@@ -1881,30 +1888,23 @@
       "templates": {
         "loi_vao": {
           "description": "[Màn hình chính] - [Chiến hồn] - Chiến hồn bí bảo",
-          "rect": { "top": 197, "left": 358, "right": 526, "bottom": 257},
-          "search_rect": { "top": 14, "left": 319, "right": 563, "bottom": 107},
+          "rect": { "top": 131, "left": 1015, "right": 1025, "bottom": 141},
+          "search_rect": { "top": 130, "left": 932, "right": 1030, "bottom": 170},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "mien_phi": {
           "description": "[Màn hình chính] - [Chiến hồn] - Miễn phí",
-          "rect": { "top": 748, "left": 876, "right": 1038, "bottom": 799},
-          "search_rect": { "top": 696, "left": 818, "right": 1086, "bottom": 832},
+          "rect": { "top": 846, "left": 534, "right": 671, "bottom": 1009},
+          "search_rect": { "top": 825, "left": 465, "right": 753, "bottom": 1045},
           "threshold": 0.70,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
-        "an_cho_trong_de_thoat": {
-          "description": "[Màn hình chính] - [Chiến hồn] - Ấn chỗ trống để thoát",
-          "rect": { "top": 748, "left": 876, "right": 1038, "bottom": 799},
-          "search_rect": { "top": 696, "left": 818, "right": 1086, "bottom": 832},
-          "threshold": 0.85,
-          "match_method": "TM_CCOEFF_NORMED"
-        },
         "thoat": {
           "description": "[Màn hình chính] - [Chiến hồn] - Thoát",
-          "rect": { "top": 25, "left": 1842, "right": 1904, "bottom": 91},
-          "search_rect": { "top": 0, "left": 1807, "right": 1919, "bottom": 115},
+          "rect": { "top": 37, "left": 1736, "right": 1789, "bottom": 82},
+          "search_rect": { "top": 4, "left": 1625, "right": 1826, "bottom": 203},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }

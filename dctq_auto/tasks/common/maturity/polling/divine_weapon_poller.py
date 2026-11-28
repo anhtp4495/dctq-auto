@@ -6,6 +6,7 @@ from dctq_auto.config.constants import (
     _TEMPLATE_MATURITY_THAN_BINH_HOI_THANH,
     _TEMPLATE_MATURITY_THAN_BINH_LOI_VAO,
     _TEMPLATE_MATURITY_THAN_BINH_MIEN_PHI,
+    _TEMPLATE_MATURITY_THAN_BINH_TRO_VE,
     _TEMPLATE_MATURITY_THAN_BINH_THOAT,
 )
 from dctq_auto.tasks.common.battle.battle_utils import match, screen_bgr
@@ -28,6 +29,7 @@ class DivineWeaponPoller(BaseMaturityPoller):
     templates = (
         _TEMPLATE_MATURITY_THAN_BINH_LOI_VAO,
         _TEMPLATE_MATURITY_THAN_BINH_MIEN_PHI,
+        _TEMPLATE_MATURITY_THAN_BINH_TRO_VE,
         _TEMPLATE_MATURITY_THAN_BINH_AN_CHO_TRONG_DE_THOAT,
         _TEMPLATE_MATURITY_THAN_BINH_THOAT,
         _TEMPLATE_MATURITY_THAN_BINH_HOI_THANH,
@@ -97,6 +99,12 @@ class DivineWeaponPoller(BaseMaturityPoller):
                 "mien_phi": match(
                     screen,
                     self.loaded_templates[_TEMPLATE_MATURITY_THAN_BINH_MIEN_PHI],
+                    account=account,
+                    log=context["log"],
+                ),
+                "tro_ve": match(
+                    screen,
+                    self.loaded_templates[_TEMPLATE_MATURITY_THAN_BINH_TRO_VE],
                     account=account,
                     log=context["log"],
                 ),

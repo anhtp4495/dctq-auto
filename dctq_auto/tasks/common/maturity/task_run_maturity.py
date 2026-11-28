@@ -70,6 +70,7 @@ def _handle_divine_weapon_observation(observation, poller, context) -> bool:
         ("loi_vao", "Lối vào Thần binh"),
         ("mien_phi", "Miễn phí"),
         ("an_cho_trong_de_thoat", "Ấn chỗ trống để thoát"),
+        ("tro_ve", "Trở về"),
         ("thoat", "Thoát màn hình nhận miễn phí"),
         ("hoi_thanh", "Hồi thành"),
     )
