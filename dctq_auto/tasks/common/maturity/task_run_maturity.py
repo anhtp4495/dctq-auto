@@ -70,6 +70,8 @@ def _handle_divine_weapon_observation(observation, poller, context) -> bool:
         ("hoi_thanh", "Hồi thành"),
     )
     for key, label in actions:
+        if poller.has_completed_action(key):
+            continue
         if key == "loi_vao" and poller.entry_clicked:
             continue
         found = than_binh_found.get(key)
@@ -108,6 +110,8 @@ def _handle_guardian_observation(observation, poller, context) -> bool:
         ("thoat", "Thoát màn hình Vệ tướng"),
     )
     for key, label in actions:
+        if poller.has_completed_action(key):
+            continue
         found = ve_tuong_found.get(key)
         if found is None:
             continue
@@ -138,6 +142,8 @@ def _handle_soul_observation(observation, poller, context) -> bool:
         ("thoat", "Thoát màn hình Chiến hồn"),
     )
     for key, label in actions:
+        if poller.has_completed_action(key):
+            continue
         found = chien_hon_found.get(key)
         if found is None:
             continue
@@ -169,6 +175,8 @@ def _handle_tuong_an_observation(observation, poller, context) -> bool:
         ("thoat", "Thoát màn hình Tướng ấn"),
     )
     for key, label in actions:
+        if poller.has_completed_action(key):
+            continue
         if key == "loi_vao" and poller.entry_clicked:
             continue
         found = tuong_an_found.get(key)
@@ -205,6 +213,8 @@ def _handle_defense_forge_observation(observation, poller, context) -> bool:
         ("hoi_thanh", "Hồi thành"),
     )
     for key, label in actions:
+        if poller.has_completed_action(key):
+            continue
         if key == "loi_vao" and poller.entry_clicked:
             continue
         found = defense_forge_found.get(key)
@@ -242,6 +252,8 @@ def _handle_friend_observation(observation, poller, context) -> bool:
         ("thoat", "Thoát màn hình Bạn bè"),
     )
     for key, label in actions:
+        if poller.has_completed_action(key):
+            continue
         found = friend_found.get(key)
         if found is None:
             continue
