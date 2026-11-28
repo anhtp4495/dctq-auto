@@ -169,6 +169,8 @@ def _handle_tuong_an_observation(observation, poller, context) -> bool:
         ("thoat", "Thoát màn hình Tướng ấn"),
     )
     for key, label in actions:
+        if key == "loi_vao" and poller.entry_clicked:
+            continue
         found = tuong_an_found.get(key)
         if found is None:
             continue
@@ -179,7 +181,9 @@ def _handle_tuong_an_observation(observation, poller, context) -> bool:
             f"Click {label} tại ({x}, {y})."
         )
         poller.record_action(key, context)
-        if key == "thoat":
+        if key == "loi_vao":
+            poller.entry_clicked = True
+        elif key == "thoat":
             poller.waiting_for_main = True
         return True
 
@@ -201,6 +205,8 @@ def _handle_defense_forge_observation(observation, poller, context) -> bool:
         ("hoi_thanh", "Hồi thành"),
     )
     for key, label in actions:
+        if key == "loi_vao" and poller.entry_clicked:
+            continue
         found = defense_forge_found.get(key)
         if found is None:
             continue
@@ -211,9 +217,9 @@ def _handle_defense_forge_observation(observation, poller, context) -> bool:
             f"Click {label} tại ({x}, {y})."
         )
         poller.record_action(key, context)
-        if key == "thoat":
-            # Thoát màn hình nhận miễn phí xong phải tìm nút Hồi thành,
-            # không quay lại dò Lối vào trên màn hình trung gian.
+        if key == "loi_vao":
+            poller.entry_clicked = True
+        elif key == "thoat":
             poller.waiting_for_hall = True
         elif key == "hoi_thanh":
             poller.waiting_for_hall = False
