@@ -121,8 +121,22 @@ def _recognize_stage_number(device, account, log) -> int | None:
         alpha = row.getchannel("A").point(
             lambda value: 255 if value >= 128 else 0
         )
-        bbox = alpha.getbbox()
-        left_offset = bbox[0] if bbox else 0
+
+        # Bỏ các pixel trắng rời rạc ở mép trái. Nếu lấy bbox của toàn bộ
+        # pixel, chỉ một chấm nhiễu cũng khiến left_offset bị nhỏ hơn mép chữ
+        # thật, để lại một khoảng trắng trước "Ải 1" ... "Ải 9".
+        alpha_array = np.asarray(alpha, dtype=np.uint8)
+        component_count, _labels, stats, _centroids = cv2.connectedComponentsWithStats(
+            (alpha_array > 0).astype(np.uint8),
+            connectivity=8,
+        )
+        meaningful_left_edges = [
+            int(stats[index, cv2.CC_STAT_LEFT])
+            for index in range(1, component_count)
+            if stats[index, cv2.CC_STAT_AREA] >= 4
+        ]
+        left_offset = min(meaningful_left_edges) if meaningful_left_edges else 0
+
         aligned = Image.new(
             "RGBA", (_STAGE_IMAGE_WIDTH, _STAGE_IMAGE_HEIGHT), (0, 0, 0, 0)
         )
