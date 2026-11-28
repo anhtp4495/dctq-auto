@@ -31,6 +31,10 @@ class BaseMaturityPoller:
             message=f"Đang xử lý {label}",
         )
 
+    def has_completed_action(self, key: str) -> bool:
+        """Cho biết một hành động đã được click và ghi nhận hay chưa."""
+        return key in self._completed_steps
+
     def record_action(self, key: str, context) -> None:
         """Ghi nhận một thao tác đã click thành công."""
         self._ensure_progress(context)
