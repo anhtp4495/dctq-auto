@@ -61,6 +61,7 @@ def _handle_divine_weapon_observation(observation, poller, context) -> bool:
     if not than_binh_found:
         return False
 
+    # Xử lý ngay template đang được phát hiện; Lối vào chỉ click một lần.
     actions = (
         ("loi_vao", "Lối vào Thần binh"),
         ("mien_phi", "Miễn phí"),
@@ -69,6 +70,8 @@ def _handle_divine_weapon_observation(observation, poller, context) -> bool:
         ("hoi_thanh", "Hồi thành"),
     )
     for key, label in actions:
+        if key == "loi_vao" and poller.entry_clicked:
+            continue
         found = than_binh_found.get(key)
         if found is None:
             continue
@@ -79,7 +82,9 @@ def _handle_divine_weapon_observation(observation, poller, context) -> bool:
             f"Click {label} tại ({x}, {y})."
         )
         poller.record_action(key, context)
-        if key == "thoat":
+        if key == "loi_vao":
+            poller.entry_clicked = True
+        elif key == "thoat":
             # Sau khi thoát màn hình nhận miễn phí, chỉ tìm nút Hồi thành.
             poller.waiting_for_hall = True
         elif key == "hoi_thanh":
