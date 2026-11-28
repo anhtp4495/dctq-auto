@@ -17,6 +17,7 @@ from dctq_auto.vision.template_store import get_templates
 class DivineWeaponPoller(BaseMaturityPoller):
     """Nhận diện lối vào, miễn phí, thoát popup và hồi thành Thần binh."""
 
+    has_hall_action = True
     category_key = "than_binh"
     progress_steps = (
         ("loi_vao", "Lối vào Thần binh"),
@@ -38,6 +39,8 @@ class DivineWeaponPoller(BaseMaturityPoller):
 
     def __init__(self):
         super().__init__()
+        self.waiting_for_exit = False
+        self.waiting_for_hall_exit = False
         self.waiting_for_hall = False
         self.entry_clicked = False
         self.loaded_templates = get_templates(self.templates)
@@ -59,6 +62,28 @@ class DivineWeaponPoller(BaseMaturityPoller):
             )
             return None
 
+        if self.waiting_for_exit:
+            thoat = match(
+                screen,
+                self.loaded_templates[_TEMPLATE_MATURITY_THAN_BINH_THOAT],
+                account=account,
+                log=context["log"],
+            )
+            if thoat is not None:
+                return {"screen": screen, "than_binh": {"thoat": thoat}}
+            return {"screen": screen, "exit_closed": True}
+
+        if self.waiting_for_hall_exit:
+            hoi_thanh = match(
+                screen,
+                self.loaded_templates[_TEMPLATE_MATURITY_THAN_BINH_HOI_THANH],
+                account=account,
+                log=context["log"],
+            )
+            if hoi_thanh is not None:
+                return {"screen": screen, "than_binh": {"hoi_thanh": hoi_thanh}}
+            return {"screen": screen, "hall_closed": True}
+
         if self.waiting_for_main:
             return {
                 "screen": screen,
@@ -70,7 +95,7 @@ class DivineWeaponPoller(BaseMaturityPoller):
                 ),
             }
 
-        if self.waiting_for_hall:
+        if self.waiting_for_hall and not self.waiting_for_hall_exit:
             return {
                 "screen": screen,
                 "than_binh": {
