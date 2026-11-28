@@ -276,7 +276,7 @@ def _run_poller(poller, context) -> bool:
         if observation is None:
             return False
 
-        if poller.waiting_for_exit and observation.get("exit_closed"):
+        if getattr(poller, "waiting_for_exit", False) and observation.get("exit_closed"):
             poller.waiting_for_exit = False
             poller.waiting_for_main = True
 
