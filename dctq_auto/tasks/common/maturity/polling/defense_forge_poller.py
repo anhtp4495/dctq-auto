@@ -16,6 +16,7 @@ from dctq_auto.vision.template_store import get_templates
 class DefenseForgePoller(BaseMaturityPoller):
     """Detects the Defense Forge entry, free action, popup dismissal and exit."""
 
+    has_hall_action = True
     category_key = "than_tuong"
     progress_steps = (
         ("loi_vao", "Lối vào Thần tượng"),
@@ -36,6 +37,8 @@ class DefenseForgePoller(BaseMaturityPoller):
 
     def __init__(self):
         super().__init__()
+        self.waiting_for_exit = False
+        self.waiting_for_hall_exit = False
         self.entry_clicked = False
         self.waiting_for_hall = False
         self.loaded_templates = get_templates(self.templates)
@@ -57,6 +60,28 @@ class DefenseForgePoller(BaseMaturityPoller):
             )
             return None
 
+        if self.waiting_for_exit:
+            thoat = match(
+                screen,
+                self.loaded_templates[_TEMPLATE_MATURITY_THAN_TUONG_THOAT],
+                account=account,
+                log=context["log"],
+            )
+            if thoat is not None:
+                return {"screen": screen, "than_tuong": {"thoat": thoat}}
+            return {"screen": screen, "exit_closed": True}
+
+        if self.waiting_for_hall_exit:
+            hoi_thanh = match(
+                screen,
+                self.loaded_templates[_TEMPLATE_MATURITY_THAN_TUONG_HOI_THANH],
+                account=account,
+                log=context["log"],
+            )
+            if hoi_thanh is not None:
+                return {"screen": screen, "than_tuong": {"hoi_thanh": hoi_thanh}}
+            return {"screen": screen, "hall_closed": True}
+
         if self.waiting_for_main:
             return {
                 "screen": screen,
@@ -68,7 +93,7 @@ class DefenseForgePoller(BaseMaturityPoller):
                 ),
             }
 
-        if self.waiting_for_hall:
+        if self.waiting_for_hall and not self.waiting_for_hall_exit:
             return {
                 "screen": screen,
                 "than_tuong": {
