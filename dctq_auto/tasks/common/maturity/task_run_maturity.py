@@ -140,7 +140,6 @@ def _handle_soul_observation(observation, poller, context) -> bool:
         ("thoat", "Thoát màn hình Chiến hồn"),
     )
     for key, label in actions:
-            continue
         found = chien_hon_found.get(key)
         if found is None:
             continue
@@ -172,8 +171,6 @@ def _handle_tuong_an_observation(observation, poller, context) -> bool:
         ("thoat", "Thoát màn hình Tướng ấn"),
     )
     for key, label in actions:
-            continue
-            continue
         found = tuong_an_found.get(key)
         if found is None:
             continue
@@ -208,8 +205,6 @@ def _handle_defense_forge_observation(observation, poller, context) -> bool:
         ("hoi_thanh", "Hồi thành"),
     )
     for key, label in actions:
-            continue
-            continue
         found = defense_forge_found.get(key)
         if found is None:
             continue
@@ -245,7 +240,6 @@ def _handle_friend_observation(observation, poller, context) -> bool:
         ("thoat", "Thoát màn hình Bạn bè"),
     )
     for key, label in actions:
-            continue
         found = friend_found.get(key)
         if found is None:
             continue
