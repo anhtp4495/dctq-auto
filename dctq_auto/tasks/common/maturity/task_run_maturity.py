@@ -37,10 +37,7 @@ def _handle_lord_observation(observation, poller, context) -> bool:
         found = chua_cong_found["loi_vao"]
         label = "Chiến kỳ"
         action_key = "loi_vao"
-    elif (
-        chua_cong_found.get("mien_phi") is not None
-        and not poller.has_completed_action("mien_phi")
-    ):
+    elif chua_cong_found.get("mien_phi") is not None:
         found = chua_cong_found["mien_phi"]
         label = "Giương cờ"
         action_key = "mien_phi"
@@ -79,7 +76,7 @@ def _handle_divine_weapon_observation(observation, poller, context) -> bool:
         ("hoi_thanh", "Hồi thành"),
     )
     for key, label in actions:
-        if poller.has_completed_action(key):
+        if key != "mien_phi" and poller.has_completed_action(key):
             continue
         if key == "loi_vao" and poller.entry_clicked:
             continue
