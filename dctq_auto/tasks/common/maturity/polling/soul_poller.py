@@ -56,6 +56,17 @@ class SoulPoller(BaseMaturityPoller):
             )
             return None
 
+        if self.waiting_for_exit:
+            thoat = match(
+                screen,
+                self.loaded_templates[_TEMPLATE_MATURITY_CHIEN_HON_THOAT],
+                account=account,
+                log=context["log"],
+            )
+            if thoat is not None:
+                return {"screen": screen, "chien_hon": {"thoat": thoat}}
+            return {"screen": screen, "exit_closed": True}
+
         if self.waiting_for_main:
             return {
                 "screen": screen,
@@ -97,30 +108,6 @@ class SoulPoller(BaseMaturityPoller):
                         log=context["log"],
                     ),
                 },
-            }
-
-        if self.waiting_for_exit:
-            thoat = match(
-                screen,
-                self.loaded_templates[_TEMPLATE_MATURITY_CHIEN_HON_THOAT],
-                account=account,
-                log=context["log"],
-            )
-            if thoat is not None:
-                return {
-                    "screen": screen,
-                    "chien_hon": {"thoat": thoat},
-                }
-
-            return {
-                "screen": screen,
-                "exit_closed": True,
-                "main_maturity": match(
-                    screen,
-                    self.loaded_templates[_TEMPLATE_MAIN_TRUONG_THANH],
-                    account=account,
-                    log=context["log"],
-                ),
             }
 
         return {
