@@ -36,6 +36,7 @@ class SoulPoller(BaseMaturityPoller):
         super().__init__()
         self.bi_bao_clicked = False
         self.entry_clicked = False
+        self.waiting_for_exit = False
         self.loaded_templates = get_templates(self.templates)
         missing = [
             name for name in self.templates
@@ -98,17 +99,34 @@ class SoulPoller(BaseMaturityPoller):
                 },
             }
 
+        if self.waiting_for_exit:
+            thoat = match(
+                screen,
+                self.loaded_templates[_TEMPLATE_MATURITY_CHIEN_HON_THOAT],
+                account=account,
+                log=context["log"],
+            )
+            if thoat is not None:
+                return {
+                    "screen": screen,
+                    "chien_hon": {"thoat": thoat},
+                }
+
+            return {
+                "screen": screen,
+                "exit_closed": True,
+                "main_maturity": match(
+                    screen,
+                    self.loaded_templates[_TEMPLATE_MAIN_TRUONG_THANH],
+                    account=account,
+                    log=context["log"],
+                ),
+            }
+
         return {
             "screen": screen,
             "chien_hon": {
-                "loi_vao": (
-                    None if self.entry_clicked else match(
-                    screen,
-                    self.loaded_templates[_TEMPLATE_MATURITY_CHIEN_HON_LOI_VAO],
-                    account=account,
-                    log=context["log"],
-                )
-                ),
+                "loi_vao": None,
                 "mien_phi": match(
                     screen,
                     self.loaded_templates[_TEMPLATE_MATURITY_CHIEN_HON_MIEN_PHI],
