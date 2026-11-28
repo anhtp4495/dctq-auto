@@ -73,8 +73,6 @@ def _handle_divine_weapon_observation(observation, poller, context) -> bool:
         ("hoi_thanh", "Hồi thành"),
     )
     for key, label in actions:
-        if key == "loi_vao" and poller.has_completed_action(key):
-            continue
         if key == "loi_vao" and poller.entry_clicked:
             continue
         found = than_binh_found.get(key)
