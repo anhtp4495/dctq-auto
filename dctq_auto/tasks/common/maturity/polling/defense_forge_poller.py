@@ -36,6 +36,7 @@ class DefenseForgePoller(BaseMaturityPoller):
 
     def __init__(self):
         super().__init__()
+        self.entry_clicked = False
         self.waiting_for_hall = False
         self.loaded_templates = get_templates(self.templates)
         missing = [
@@ -83,11 +84,13 @@ class DefenseForgePoller(BaseMaturityPoller):
         return {
             "screen": screen,
             "than_tuong": {
-                "loi_vao": match(
-                    screen,
-                    self.loaded_templates[_TEMPLATE_MATURITY_THAN_TUONG_LOI_VAO],
-                    account=account,
-                    log=context["log"],
+                "loi_vao": (
+                    None if self.entry_clicked else match(
+                        screen,
+                        self.loaded_templates[_TEMPLATE_MATURITY_THAN_TUONG_LOI_VAO],
+                        account=account,
+                        log=context["log"],
+                    )
                 ),
                 "mien_phi": match(
                     screen,
