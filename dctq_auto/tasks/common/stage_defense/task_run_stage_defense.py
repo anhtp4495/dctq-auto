@@ -86,8 +86,10 @@ def _load_stage_templates() -> tuple[np.ndarray, ...]:
     return tuple(templates)
 
 
-def _recognize_stage_number(device, account, log) -> int | None:
-    """Nhận diện số ải bằng cách so khớp vùng tên ải với 100 template."""
+def _recognize_stage_number(
+    device, account, log, *, fallback: bool = False
+) -> int | None:
+    """Nhận diện số ải; fallback chỉ so khớp nửa dưới với ải 1 đến 9."""
     try:
         screenshot = device.screenshot()
         if screenshot.width < _STAGE_SCREENSHOT_RECT[2] or screenshot.height < _STAGE_SCREENSHOT_RECT[3]:
@@ -122,20 +124,8 @@ def _recognize_stage_number(device, account, log) -> int | None:
             lambda value: 255 if value >= 128 else 0
         )
 
-        # Bỏ các pixel trắng rời rạc ở mép trái. Nếu lấy bbox của toàn bộ
-        # pixel, chỉ một chấm nhiễu cũng khiến left_offset bị nhỏ hơn mép chữ
-        # thật, để lại một khoảng trắng trước "Ải 1" ... "Ải 9".
-        alpha_array = np.asarray(alpha, dtype=np.uint8)
-        component_count, _labels, stats, _centroids = cv2.connectedComponentsWithStats(
-            (alpha_array > 0).astype(np.uint8),
-            connectivity=8,
-        )
-        meaningful_left_edges = [
-            int(stats[index, cv2.CC_STAT_LEFT])
-            for index in range(1, component_count)
-            if stats[index, cv2.CC_STAT_AREA] >= 4
-        ]
-        left_offset = min(meaningful_left_edges) if meaningful_left_edges else 0
+        bbox = alpha.getbbox()
+        left_offset = bbox[0] if bbox else 0
 
         aligned = Image.new(
             "RGBA", (_STAGE_IMAGE_WIDTH, _STAGE_IMAGE_HEIGHT), (0, 0, 0, 0)
@@ -145,10 +135,13 @@ def _recognize_stage_number(device, account, log) -> int | None:
         )
         aligned.paste(content, (10, 0))
 
-        # Chỉ lấy vùng 135x60 sau khi đã căn trái.
-        source_image = aligned.crop(
-            (0, 0, _STAGE_TEMPLATE_WIDTH, _STAGE_TEMPLATE_HEIGHT)
-        )
+        # Nhận diện chính dùng toàn bộ vùng 135x60; fallback dùng nửa dưới.
+        if fallback:
+            source_image = aligned.crop((0, 30, _STAGE_TEMPLATE_WIDTH, 60))
+        else:
+            source_image = aligned.crop(
+                (0, 0, _STAGE_TEMPLATE_WIDTH, _STAGE_TEMPLATE_HEIGHT)
+            )
         source = cv2.cvtColor(
             np.asarray(source_image.convert("RGB")), cv2.COLOR_RGB2BGR
         )
@@ -156,11 +149,13 @@ def _recognize_stage_number(device, account, log) -> int | None:
         #    raise OSError(f"Không lưu được ảnh source: {_STAGE_SOURCE_IMAGE_PATH}")
 
         templates = _load_stage_templates()
+        if fallback:
+            templates = tuple(template[30:60, :, :] for template in templates[:9])
         scores = []
         best_stage = None
         best_score = float("-inf")
         for stage_number, template in enumerate(templates, start=1):
-            # Hai ảnh đều có kích thước 135x60; so khớp trực tiếp ảnh màu BGR.
+            # Ảnh chính 135x60; fallback so sánh phần dưới 135x30.
             result = cv2.matchTemplate(
                 source,
                 template,
@@ -174,7 +169,8 @@ def _recognize_stage_number(device, account, log) -> int | None:
                 best_score = score
 
         log(
-            f"[{account.display_name}] Điểm matching 100 template: "
+            f"[{account.display_name}] Điểm matching "
+            f"{'fallback 9 template (135x30)' if fallback else '100 template'}: "
             + ", ".join(f"ải {stage}: {score:.3f}" for stage, score in scores)
         )
 
@@ -446,10 +442,22 @@ def run(worker, account, device, log) -> bool:
                     worker.stage_number_changed.emit(stage_number)
                 elif stage_recognition_attempts == _STAGE_RECOGNITION_MAX_ATTEMPTS:
                     log(
-                        f"[{account.display_name}] Đã thử nhận diện ải "
-                        f"{_STAGE_RECOGNITION_MAX_ATTEMPTS} lần nhưng không thành công; "
-                        "bỏ qua nhận diện trong phần còn lại của lượt chạy."
+                        f"[{account.display_name}] Nhận diện chính thất bại "
+                        f"{_STAGE_RECOGNITION_MAX_ATTEMPTS} lần; thử fallback "
+                        "một lần với vùng (0, 30, 135, 60), chỉ so khớp ải 1-9."
                     )
+                    recognized_stage = _recognize_stage_number(
+                        device, account, log, fallback=True
+                    )
+                    if recognized_stage is not None:
+                        stage_number = recognized_stage
+                        worker._config["muu_binh_stage_number"] = stage_number
+                        worker.stage_number_changed.emit(stage_number)
+                    else:
+                        log(
+                            f"[{account.display_name}] Fallback cũng không nhận diện được ải; "
+                            "bỏ qua nhận diện trong phần còn lại của lượt chạy."
+                        )
 
             worker.UpdateProcessMessage(
                 root_progress_id,
