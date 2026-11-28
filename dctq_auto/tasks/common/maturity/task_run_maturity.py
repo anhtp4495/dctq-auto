@@ -137,8 +137,8 @@ def _handle_soul_observation(observation, poller, context) -> bool:
         return False
 
     actions = (
-        ("chien_hon_bi_bao", "Nhận Chiến hồn"),
         ("loi_vao", "Lối vào Chiến hồn"),
+        ("chien_hon_bi_bao", "Nhận Chiến hồn"),
         ("mien_phi", "Miễn phí"),
         ("an_cho_trong_de_thoat", "Ấn chỗ trống để thoát"),
         ("thoat", "Thoát màn hình Chiến hồn"),
@@ -154,9 +154,8 @@ def _handle_soul_observation(observation, poller, context) -> bool:
             f"Click {label} tại ({x}, {y})."
         )
         poller.record_action(key, context)
-        if key == "chien_hon_bi_bao":
+        if key == "loi_vao":
             poller.bi_bao_clicked = True
-        elif key == "loi_vao":
             poller.entry_clicked = True
         if key == "thoat":
             poller.waiting_for_main = True

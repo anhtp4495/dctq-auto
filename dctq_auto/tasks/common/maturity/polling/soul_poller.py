@@ -70,12 +70,18 @@ class SoulPoller(BaseMaturityPoller):
             return {
                 "screen": screen,
                 "chien_hon": {
+                    "loi_vao": match(
+                        screen,
+                        self.loaded_templates[_TEMPLATE_MATURITY_CHIEN_HON_LOI_VAO],
+                        account=account,
+                        log=context["log"],
+                    ),
                     "chien_hon_bi_bao": match(
                         screen,
                         self.loaded_templates[_TEMPLATE_MATURITY_CHIEN_HON_BI_BAO],
                         account=account,
                         log=context["log"],
-                    ),
+                    )
                 },
             }
 
