@@ -1,12 +1,12 @@
 """Điều phối các Poller thuộc màn hình [Quân đoàn]."""
 
-import importlib
 import time
 
 import cv2
 import numpy as np
 
 from dctq_auto.config.constants import (
+    _TEMPLATE_QUAN_DOAN_DONG_MAN_HINH_GOP_KNB,
     _STEP_QUAN_DOAN_BAO_DANH,
     _STEP_QUAN_DOAN_CAU_VAN,
     _STEP_QUAN_DOAN_DONG_GOP_KNB,
@@ -14,9 +14,16 @@ from dctq_auto.config.constants import (
     _STEP_QUAN_DOAN_TUI_PHUC,
     _STEP_QUAN_DOAN_NHAN_THUONG_BOSS,
     _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
+    _TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH,
+    _TEMPLATE_QUAN_DOAN_CAU_VAN,
+    _TEMPLATE_QUAN_DOAN_CO_THE_CAU_VAN,
+    _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN1,
+    _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN2,
+    _TEMPLATE_QUAN_DOAN_THOAT_MAN_HINH_CAU_VAN,
 )
 from dctq_auto.config.button_positions import ButtonPositions
-from dctq_auto.tasks.common.battle.battle_utils import click_match
+from dctq_auto.progress import ProgressStatus
+from dctq_auto.tasks.common.battle.battle_utils import click_match, swipe
 from dctq_auto.tasks.common.guild import task_close_guild, task_open_guild
 from dctq_auto.tasks.common.guild.polling import (
     DailyCheckInPoller,
@@ -30,6 +37,11 @@ from dctq_auto.tasks.common.guild.polling.rations_poller import (
     _RUN_TEMPLATES as _RATION_RUN_TEMPLATES,
     _CLOSE_TEMPLATES as _RATION_CLOSE_TEMPLATES,
 )
+from dctq_auto.tasks.common.guild.polling.knb_poller import (
+    _RUN_TEMPLATES as _KNB_RUN_TEMPLATES,
+    _CLOSE_TEMPLATES as _KNB_CLOSE_TEMPLATES,
+)
+from dctq_auto.vision.template_matching import TemplateMatch
 from dctq_auto.vision.template_store import get_templates
 
 
@@ -79,7 +91,7 @@ def _capture_screen(context):
         return None
 
 
-def _observe_ration(poller, context, templates, template_names):
+def _observe_poller(poller, context, templates, template_names):
     screen = _capture_screen(context)
     if screen is None:
         return None
@@ -176,7 +188,7 @@ def _run_rations_poller(poller, context):
             log(f"[{account.display_name}] Đóng góp Lương thảo đã dừng theo yêu cầu.")
             return False
 
-        observation = _observe_ration(poller, context, templates, template_names)
+        observation = _observe_poller(poller, context, templates, template_names)
         if observation is None:
             return False
 
@@ -216,19 +228,526 @@ def _run_rations_poller(poller, context):
     return False
 
 
-def _run_legacy_task(poller, context):
-    """Điều phối tạm thời category chưa chuyển sang observation handler."""
-    module = importlib.import_module(
-        f"dctq_auto.tasks.common.guild.{poller.task_module}"
+def _update_knb_process_info(context, current):
+    """Cập nhật tiến độ đóng góp KNB theo hai mốc 10 và 20 KNB."""
+    worker = context["worker"]
+    process_id = getattr(worker, "_current_process_ids", {}).get(
+        _STEP_QUAN_DOAN_DONG_GOP_KNB
     )
-    return module.run(
-        context["worker"],
-        context["account"],
-        context["steps"],
-        context["device"],
-        context.get("ocr_client"),
-        context["log"],
-        screenshot=context.get("screenshot"),
+    if process_id is None:
+        return
+
+    worker.UpdateProcessInfo(
+        process_id=process_id,
+        current=min(current, 2),
+        total=2,
+    )
+
+
+def _update_lucky_bag_process_info(context, current):
+    """Cập nhật tiến độ nhận Túi phúc theo ba lượt nhận."""
+    worker = context["worker"]
+    process_id = getattr(worker, "_current_process_ids", {}).get(
+        _STEP_QUAN_DOAN_TUI_PHUC
+    )
+    if process_id is None:
+        return
+
+    worker.UpdateProcessInfo(
+        process_id=process_id,
+        current=min(current, 3),
+        total=3,
+    )
+
+
+def _run_knb_poller(poller, context):
+    """Polling và điều phối đóng góp KNB; Poller chỉ nhận diện trạng thái."""
+    account = context["account"]
+    log = context["log"]
+    small_donation_count = 0
+    last_small_donation_template = None
+    pending_donation = None
+    template_names = _KNB_RUN_TEMPLATES
+    templates = get_templates(template_names)
+    deadline = time.monotonic() + _POLL_TIMEOUT_SECONDS
+
+    log(f"[{account.display_name}] Bắt đầu đóng góp KNB.")
+    while time.monotonic() < deadline:
+        if not context["worker"]._wait_if_paused():
+            log(f"[{account.display_name}] Đóng góp KNB đã dừng theo yêu cầu.")
+            return False
+
+        observation = _observe_poller(poller, context, templates, template_names)
+        if observation is None:
+            return False
+
+        state = observation["state"]
+        if state == "entry":
+            x, y = click_match(context["device"], observation["match"])
+            log(
+                f"[{account.display_name}] [Quân đoàn] [KNB] "
+                f"Click trung tâm nút đóng góp KNB tại ({x}, {y})."
+            )
+        elif state in {"donate_10", "donate_20"}:
+            template_name = observation["template_name"]
+            if template_name == last_small_donation_template:
+                time.sleep(_POLL_INTERVAL_SECONDS)
+                continue
+            x, y = click_match(context["device"], observation["match"])
+            last_small_donation_template = template_name
+            pending_donation = state
+            small_donation_count += 1
+            _update_knb_process_info(
+                context,
+                2 if state == "donate_20" or small_donation_count >= 3 else 1,
+            )
+            log(
+                f"[{account.display_name}] [Quân đoàn] [KNB] "
+                f"Click mức {10 if state == 'donate_10' else 20} KNB "
+                f"tại ({x}, {y}); lần {small_donation_count}/3."
+            )
+        elif state == "close_donation_screen":
+            x, y = click_match(context["device"], observation["match"])
+            log(
+                f"[{account.display_name}] [Quân đoàn] [KNB] "
+                f"Click trung tâm nút đóng màn hình đóng góp tại ({x}, {y})."
+            )
+            # Nếu vừa chọn 10 KNB thì đóng hộp xác nhận rồi tiếp tục dò mức
+            # đóng góp kế tiếp. Sau 20 KNB, đủ 3 lần 10 KNB, hoặc gặp riêng
+            # nút đóng (đã đóng góp mức lớn hơn 20), kết thúc tác vụ.
+            if (
+                pending_donation == "donate_20"
+                or small_donation_count >= 3
+                or pending_donation is None
+            ):
+                if pending_donation is None or pending_donation == "donate_20":
+                    _update_knb_process_info(context, 2)
+                log(
+                    f"[{account.display_name}] Đã hoàn tất đóng góp KNB; "
+                    "kết thúc sau khi đóng màn hình đóng góp."
+                )
+                return True
+            pending_donation = None
+            last_small_donation_template = None
+        elif state == "insufficient_conditions":
+            log(
+                f"[{account.display_name}] Không đủ điều kiện đóng góp KNB; "
+                "hoàn tất tác vụ."
+            )
+            return True
+        elif state == "guild_main":
+            log(
+                f"[{account.display_name}] Đã xác nhận màn hình chính Quân đoàn; "
+                "hoàn tất đóng góp KNB."
+            )
+            return True
+        else:
+            log(
+                f"[{account.display_name}] [Quân đoàn] [KNB] "
+                f"Chưa nhận diện được trạng thái đóng góp ({state})."
+            )
+
+        time.sleep(_POLL_INTERVAL_SECONDS)
+
+    log(
+        f"[{account.display_name}] [Quân đoàn] [KNB] "
+        "Quá thời gian polling tối đa 3 phút; giữ nguyên step."
+    )
+    return False
+
+
+def _handle_daily_check_in_observation(observation, context, phase, templates):
+    """Xử lý observation báo danh; Poller chỉ nhận diện trạng thái."""
+    account = context["account"]
+    device = context["device"]
+    log = context["log"]
+    state = observation["state"]
+
+    if state == "checked_in":
+        if phase == "run":
+            log(
+                f"[{account.display_name}] Đã báo danh Quân đoàn; "
+                "chờ xác nhận màn hình chính."
+            )
+            return "close"
+    elif state == "not_checked_in":
+        if phase == "run":
+            x, y = click_match(device, observation["match"])
+            log(
+                f"[{account.display_name}] Click trung điểm template chưa báo danh "
+                f"tại ({x}, {y}); chờ xác nhận màn hình chính."
+            )
+            return "close"
+    elif state == "guild_main":
+        if phase == "close":
+            log(
+                f"[{account.display_name}] Đã xác nhận màn hình chính Quân đoàn "
+                "sau thao tác báo danh; hoàn tất."
+            )
+            return "completed"
+        try:
+            search_top, search_left, search_right, search_bottom = (
+                templates[_TEMPLATE_QUAN_DOAN_CHUA_BAO_DANH].search_rect
+            )
+            search_match = TemplateMatch(
+                search_top,
+                search_left,
+                search_right,
+                search_bottom,
+                1.0,
+            )
+            x, y = click_match(device, search_match)
+            log(
+                f"[{account.display_name}] Màn hình chính Quân đoàn đang hiển thị; "
+                f"click trung điểm vùng search_rect của template chưa báo danh "
+                f"tại ({x}, {y}); chờ nhận diện lại màn hình chính để kết thúc."
+            )
+            return "close"
+        except Exception as exc:
+            log(
+                f"[{account.display_name}] Không click được trung điểm vùng "
+                f"search_rect của template chưa báo danh: {exc}"
+            )
+            return "failed"
+
+    return "continue"
+
+
+def _handle_blessing_observation(observation, context, phase):
+    """Xử lý observation Cầu vận; trả về kết quả, phase và bộ template tiếp theo."""
+    account = context["account"]
+    log = context["log"]
+    device = context["device"]
+    state = observation["state"]
+    match = observation.get("match")
+
+    if state == "entry":
+        x, y = click_match(device, match)
+        log(f"[{account.display_name}] Mở lối vào Cầu vận tại ({x}, {y}).")
+        # Template màn hình chính cùng xuất hiện với lối vào, chỉ bật sau click.
+        template_names = (
+            _TEMPLATE_QUAN_DOAN_CO_THE_CAU_VAN,
+            _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN1,
+            _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN2,
+            _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
+        )
+        return "continue", phase, template_names, get_templates(template_names)
+
+    if state == "can_bless":
+        x, y = click_match(device, match)
+        log(f"[{account.display_name}] Thực hiện Cầu vận tại ({x}, {y}).")
+    elif state in {"no_turns_1", "no_turns_2"}:
+        phase = "close"
+        log(f"[{account.display_name}] Đã xác nhận Cầu vận hết lượt.")
+        template_names = (
+            _TEMPLATE_QUAN_DOAN_THOAT_MAN_HINH_CAU_VAN,
+            _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,
+        )
+        return "continue", phase, template_names, get_templates(template_names)
+    elif state == "exit_blessing":
+        x, y = click_match(device, match)
+        log(f"[{account.display_name}] Thoát màn hình Cầu vận tại ({x}, {y}).")
+        template_names = (_TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,)
+        return "continue", phase, template_names, get_templates(template_names)
+    elif state == "guild_main":
+        log(
+            f"[{account.display_name}] Đã xác nhận màn hình chính Quân đoàn; "
+            "hoàn tất Cầu vận."
+        )
+        return "completed", phase, None, None
+
+    return "continue", phase, None, None
+
+
+
+def _handle_boss_reward_observation(
+    observation,
+    context,
+    phase,
+    boss_reward_clicked,
+    boss_empty_swipes,
+    boss_guild_main_swipes,
+):
+    """Xử lý observation nhận thưởng Boss; Poller chỉ nhận diện trạng thái."""
+    account = context["account"]
+    device = context["device"]
+    log = context["log"]
+    state = observation["state"]
+    match = observation.get("match")
+
+    if state == "guild_boss_entry":
+        x, y = click_match(device, match)
+        phase = "boss_entered"
+        boss_guild_main_swipes = 0
+        log(f"[{account.display_name}] Click trung điểm lối vào Boss Quân đoàn tại ({x}, {y}).")
+    elif state == "boss_main":
+        try:
+            start = ButtonPositions().get("quan_doan", "item_2")
+            end = ButtonPositions().get("quan_doan", "item_1")
+            swipe(device, start, end, account=account, log=log, duration_ms=500)
+            log(f"[{account.display_name}] Vuốt danh sách Boss để tìm thưởng.")
+        except Exception as exc:
+            log(f"[{account.display_name}] Không vuốt được danh sách Boss: {exc}")
+            return "failed", phase, boss_reward_clicked, boss_empty_swipes, boss_guild_main_swipes
+    elif state == "guild_main":
+        if phase in {"close_boss", "verify_guild_main"}:
+            log(f"[{account.display_name}] Đã xác nhận màn hình chính Quân đoàn; hoàn tất nhận thưởng Boss.")
+            return "completed", phase, boss_reward_clicked, boss_empty_swipes, boss_guild_main_swipes
+        try:
+            start = ButtonPositions().get("quan_doan", "item_2")
+            end = ButtonPositions().get("quan_doan", "item_1")
+            swipe(device, start, end, account=account, log=log, duration_ms=500)
+            boss_guild_main_swipes += 1
+            log(
+                f"[{account.display_name}] Màn hình chính Quân đoàn xuất hiện trước khi kết thúc; "
+                f"vuốt tìm lối vào Boss ({boss_guild_main_swipes}/2)."
+            )
+            if boss_guild_main_swipes >= 2:
+                phase = "verify_guild_main"
+                log(
+                    f"[{account.display_name}] Đã vuốt 2 lần nhưng không tìm thấy "
+                    "lối vào Boss; chuyển sang chờ xác nhận màn hình chính để kết thúc."
+                )
+        except Exception as exc:
+            log(f"[{account.display_name}] Không vuốt được màn hình chính Quân đoàn: {exc}")
+            return "failed", phase, boss_reward_clicked, boss_empty_swipes, boss_guild_main_swipes
+    elif state == "reward_available_entry":
+        x, y = click_match(device, match)
+        log(f"[{account.display_name}] Mở lối nhận thưởng Boss tại ({x}, {y}).")
+    elif state == "reward_entrance":
+        x, y = click_match(device, match)
+        log(f"[{account.display_name}] Mở màn hình nhận thưởng Boss tại ({x}, {y}).")
+    elif state == "reward_screen":
+        try:
+            start = ButtonPositions().get("quan_doan", "boss_item_2")
+            end = ButtonPositions().get("quan_doan", "boss_item_1")
+            swipe(device, start, end, account=account, log=log, duration_ms=500)
+            boss_empty_swipes += 1
+            log(
+                f"[{account.display_name}] Vuốt danh sách thưởng Boss "
+                f"({boss_empty_swipes}/2)."
+            )
+            if boss_empty_swipes >= 2:
+                phase = "close_boss"
+        except Exception as exc:
+            log(f"[{account.display_name}] Không vuốt được danh sách thưởng Boss: {exc}")
+            return "failed", phase, boss_reward_clicked, boss_empty_swipes, boss_guild_main_swipes
+    elif state == "ready_to_claim":
+        log(f"[{account.display_name}] Đã vào màn hình chuẩn bị nhận thưởng Boss.")
+    elif state == "claim_button":
+        x, y = click_match(device, match)
+        boss_reward_clicked = True
+        boss_empty_swipes = 0
+        log(f"[{account.display_name}] Nhận thưởng Boss tại ({x}, {y}).")
+    elif state == "exit_reward_screen":
+        x, y = click_match(device, match)
+        phase = "close_boss"
+        log(f"[{account.display_name}] Đóng màn hình nhận thưởng Boss tại ({x}, {y}).")
+    elif state == "exit_boss_screen":
+        x, y = click_match(device, match)
+        phase = "close_boss"
+        log(f"[{account.display_name}] Thoát màn hình Boss tại ({x}, {y}).")
+
+    return "continue", phase, boss_reward_clicked, boss_empty_swipes, boss_guild_main_swipes
+
+
+def _run_remaining_poller(poller, context):
+    """Điều phối các poller còn lại; mọi nhận diện đều qua observation."""
+    account = context["account"]
+    log = context["log"]
+    device = context["device"]
+    worker = context["worker"]
+    state_by_template = poller.state_by_template
+    # Các template màn hình tổng quan dễ xuất hiện thường xuyên nên luôn
+    # được kiểm tra sau các trạng thái thao tác cụ thể.
+    template_names = tuple(
+        name for name in state_by_template
+        if state_by_template[name] not in {"guild_main", "boss_main"}
+    )
+    if isinstance(poller, BossRewardPoller):
+        # Chưa bật template màn hình chính cho đến khi đã click lối vào Boss.
+        template_names += tuple(
+            name for name in state_by_template
+            if state_by_template[name] == "boss_main"
+        )
+    else:
+        template_names += tuple(
+            name for name in state_by_template
+            if state_by_template[name] == "guild_main"
+        )
+    templates = get_templates(template_names)
+    deadline = time.monotonic() + _POLL_TIMEOUT_SECONDS
+    phase = "run"
+    lucky_positions = None
+    lucky_closed = False
+    boss_reward_clicked = False
+    boss_empty_swipes = 0
+    boss_guild_main_swipes = 0
+
+    if isinstance(poller, BlessingPoller):
+        # Ban đầu chỉ nhận diện lối vào và trạng thái Cầu vận; chưa xét
+        # guild_main vì template này cùng xuất hiện với lối vào.
+        template_names = (
+            _TEMPLATE_QUAN_DOAN_CAU_VAN,
+            _TEMPLATE_QUAN_DOAN_CO_THE_CAU_VAN,
+            _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN1,
+            _TEMPLATE_QUAN_DOAN_HET_LUOT_CAU_VAN2,
+        )
+        templates = get_templates(template_names)
+        log(f"[{account.display_name}] Bắt đầu Cầu vận Quân đoàn.")
+    elif isinstance(poller, DailyCheckInPoller):
+        template_names = (
+            *[name for name in template_names if state_by_template[name] != "guild_main"],
+            *[name for name in template_names if state_by_template[name] == "guild_main"],
+        )
+        templates = get_templates(template_names)
+        log(f"[{account.display_name}] Bắt đầu báo danh Quân đoàn.")
+    elif isinstance(poller, LuckyBagPoller):
+        lucky_positions = [
+            ButtonPositions().get("quan_doan.tui_phuc", "tuong"),
+            ButtonPositions().get("quan_doan.tui_phuc", "truong_thanh"),
+            ButtonPositions().get("quan_doan.tui_phuc", "knb"),
+        ]
+        log(f"[{account.display_name}] Bắt đầu nhận Túi phúc Quân đoàn.")
+    elif isinstance(poller, BossRewardPoller):
+        log(f"[{account.display_name}] Bắt đầu nhận thưởng Boss Quân đoàn.")
+
+    while time.monotonic() < deadline:
+        if not worker._wait_if_paused():
+            log(f"[{account.display_name}] Tác vụ {poller.category_key} đã dừng theo yêu cầu.")
+            return False
+
+        observation = _observe_poller(poller, context, templates, template_names)
+        if observation is None:
+            return False
+        state = observation["state"]
+        match = observation.get("match")
+
+        if isinstance(poller, DailyCheckInPoller):
+            result = _handle_daily_check_in_observation(
+                observation,
+                context,
+                phase,
+                templates,
+            )
+            if result == "close":
+                phase = "close"
+                # Sau khi đã click CHƯA BÁO DANH (hoặc xác nhận ĐÃ BÁO DANH),
+                # không dò lại template này; chỉ chờ màn hình chính xuất hiện.
+                template_names = tuple(
+                    name for name in state_by_template
+                    if state_by_template[name] == "guild_main"
+                )
+                templates = get_templates(template_names)
+            elif result == "completed":
+                return True
+            elif result == "failed":
+                return False
+
+        elif isinstance(poller, BlessingPoller):
+            result, phase, next_template_names, next_templates = (
+                _handle_blessing_observation(observation, context, phase)
+            )
+            if result == "completed":
+                return True
+            if next_template_names is not None:
+                template_names = next_template_names
+                templates = next_templates
+
+        elif isinstance(poller, LuckyBagPoller):
+            if state in {"already_received", "not_received"}:
+                if lucky_positions is None:
+                    lucky_positions = []
+                x, y = click_match(device, match)
+                log(f"[{account.display_name}] Mở Túi phúc tại ({x}, {y}).")
+            elif state == "detail":
+                try:
+                    x, y = ButtonPositions().get("quan_doan.tui_phuc", "dong_man_hinh")
+                    device.shell(f"input tap {x} {y}")
+                    log(f"[{account.display_name}] Đóng chi tiết Túi phúc tại ({x}, {y}).")
+                except Exception as exc:
+                    log(f"[{account.display_name}] Không đóng được chi tiết Túi phúc: {exc}")
+                    return False
+            elif state == "receive_screen":
+                if lucky_positions:
+                    x, y = lucky_positions.pop(0)
+                    try:
+                        device.shell(f"input tap {x} {y}")
+                        _update_lucky_bag_process_info(
+                            context,
+                            3 - len(lucky_positions),
+                        )
+                        log(
+                            f"[{account.display_name}] Nhận Túi phúc "
+                            f"({3 - len(lucky_positions)}/3) tại ({x}, {y})."
+                        )
+                    except Exception as exc:
+                        log(f"[{account.display_name}] Không nhận được Túi phúc: {exc}")
+                        return False
+                else:
+                    try:
+                        x, y = ButtonPositions().get("quan_doan.tui_phuc", "dong_man_hinh")
+                        device.shell(f"input tap {x} {y}")
+                        lucky_closed = True
+                        template_names = tuple(
+                            name for name in state_by_template
+                            if state_by_template[name] == "guild_main"
+                        )
+                        templates = get_templates(template_names)
+                        log(f"[{account.display_name}] Đóng màn hình nhận Túi phúc tại ({x}, {y}); chờ màn hình chính Quân đoàn.")
+                    except Exception as exc:
+                        log(f"[{account.display_name}] Không đóng được màn hình Túi phúc: {exc}")
+                        return False
+            elif state == "guild_main" and lucky_closed:
+                return True
+
+        elif isinstance(poller, BossRewardPoller):
+            result, phase, boss_reward_clicked, boss_empty_swipes, boss_guild_main_swipes = (
+                _handle_boss_reward_observation(
+                    observation,
+                    context,
+                    phase,
+                    boss_reward_clicked,
+                    boss_empty_swipes,
+                    boss_guild_main_swipes,
+                )
+            )
+            if state == "guild_boss_entry" and phase == "boss_entered":
+                # Chỉ sau cú click trung điểm lối vào Boss mới bật điều kiện kết thúc.
+                if _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH not in template_names:
+                    template_names = (*template_names, _TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH)
+                    templates = get_templates(template_names)
+            elif phase == "verify_guild_main":
+                # Sau 2 lần vuốt không thấy lối vào Boss, chỉ dò lại màn hình chính
+                # để xác nhận kết thúc ở observation kế tiếp.
+                template_names = (_TEMPLATE_QUAN_DOAN_MAN_HINH_CHINH,)
+                templates = get_templates(template_names)
+            if result == "completed":
+                return True
+            if result == "failed":
+                return False
+
+        time.sleep(_POLL_INTERVAL_SECONDS)
+
+    log(
+        f"[{account.display_name}] [Quân đoàn] [{poller.category_key}] "
+        "Quá thời gian polling tối đa 3 phút; giữ nguyên step."
+    )
+    return False
+
+
+
+def _update_poller_process_status(poller, context, success):
+    """Cập nhật node tiến trình Clone ngay khi từng poller kết thúc."""
+    worker = context["worker"]
+    process_ids = getattr(worker, "_current_process_ids", {})
+    process_id = process_ids.get(poller.step_id)
+    if process_id is None:
+        return
+
+    worker.UpdateProcessStatus(
+        process_id=process_id,
+        status=ProgressStatus.SUCCESS if success else ProgressStatus.FAILED,
     )
 
 
@@ -257,13 +776,18 @@ def run(worker, account, steps, device, ocr_client, log, screenshot=None) -> lis
         for poller in create_pollers(context):
             try:
                 if isinstance(poller, RationsPoller):
-                    if _run_rations_poller(poller, context):
-                        if poller.step_id in steps:
-                            steps.remove(poller.step_id)
+                    poller_success = _run_rations_poller(poller, context)
+                elif isinstance(poller, KnbPoller):
+                    poller_success = _run_knb_poller(poller, context)
                 else:
-                    steps = _run_legacy_task(poller, context)
-                    context["steps"] = steps
+                    poller_success = _run_remaining_poller(poller, context)
+
+                if poller_success and poller.step_id in steps:
+                    steps.remove(poller.step_id)
+
+                _update_poller_process_status(poller, context, poller_success)
             except Exception as exc:
+                _update_poller_process_status(poller, context, False)
                 log(
                     f"[{account.display_name}] [Quân đoàn] "
                     f"{poller.category_key} thất bại: {exc}"

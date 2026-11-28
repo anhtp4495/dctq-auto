@@ -3,6 +3,7 @@
 from dctq_auto.config.constants import (
     _TEMPLATE_MAIN_TRUONG_THANH,
     _TEMPLATE_MATURITY_THAN_BINH_AN_CHO_TRONG_DE_THOAT,
+    _TEMPLATE_MATURITY_THAN_BINH_HOI_THANH,
     _TEMPLATE_MATURITY_THAN_BINH_LOI_VAO,
     _TEMPLATE_MATURITY_THAN_BINH_MIEN_PHI,
     _TEMPLATE_MATURITY_THAN_BINH_THOAT,
@@ -13,14 +14,15 @@ from dctq_auto.vision.template_store import get_templates
 
 
 class DivineWeaponPoller(BaseMaturityPoller):
-    """Nhận diện lối vào, miễn phí, thoát popup và thoát màn hình Thần binh."""
+    """Nhận diện lối vào, miễn phí, thoát popup và hồi thành Thần binh."""
 
     category_key = "than_binh"
     progress_steps = (
         ("loi_vao", "Lối vào Thần binh"),
         ("mien_phi", "Miễn phí"),
         ("an_cho_trong_de_thoat", "Ấn chỗ trống để thoát"),
-        ("thoat", "Thoát màn hình Thần binh"),
+        ("thoat", "Thoát màn hình nhận miễn phí"),
+        ("hoi_thanh", "Hồi thành"),
     )
 
     templates = (
@@ -28,11 +30,13 @@ class DivineWeaponPoller(BaseMaturityPoller):
         _TEMPLATE_MATURITY_THAN_BINH_MIEN_PHI,
         _TEMPLATE_MATURITY_THAN_BINH_AN_CHO_TRONG_DE_THOAT,
         _TEMPLATE_MATURITY_THAN_BINH_THOAT,
+        _TEMPLATE_MATURITY_THAN_BINH_HOI_THANH,
         _TEMPLATE_MAIN_TRUONG_THANH,
     )
 
     def __init__(self):
         super().__init__()
+        self.waiting_for_hall = False
         self.loaded_templates = get_templates(self.templates)
         missing = [
             name for name in self.templates
@@ -61,6 +65,19 @@ class DivineWeaponPoller(BaseMaturityPoller):
                     account=account,
                     log=context["log"],
                 ),
+            }
+
+        if self.waiting_for_hall:
+            return {
+                "screen": screen,
+                "than_binh": {
+                    "hoi_thanh": match(
+                        screen,
+                        self.loaded_templates[_TEMPLATE_MATURITY_THAN_BINH_HOI_THANH],
+                        account=account,
+                        log=context["log"],
+                    ),
+                },
             }
 
         return {

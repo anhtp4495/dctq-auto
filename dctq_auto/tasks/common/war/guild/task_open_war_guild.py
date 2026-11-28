@@ -79,7 +79,8 @@ def run(worker, account, device, log, current_try=1, has_swiped_war_menu=False) 
                 log(f"[{account.display_name}] Không mở được Chiến Tranh; dừng mở Đoàn Chiến.")
                 return False
             log(f"[{account.display_name}] Đã mở Chiến Tranh; tiếp tục nhận diện để mở Đoàn Chiến.")
-            time.sleep(1)
+            # TODO: FIX timeout
+            time.sleep(5)
             return run(
                 worker,
                 account,

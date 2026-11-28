@@ -564,6 +564,8 @@ class MainWindow(QMainWindow):
                 "clone_reward_tam_quoc_lenh",
                 "clone_reward_daily_missions",
                 "clone_reward_guild",
+                "clone_war_guild_defense_reinforcement",
+                "clone_guild_territory_war_tactics",
             )
         }
 
@@ -851,16 +853,38 @@ class MainWindow(QMainWindow):
         completed = max(0, int(getattr(worker, "_progress_completed", 0)))
         if clone:
             total = max(1, self._clone_total_accounts)
+            # Clone dùng ProgressInfo root làm nguồn dữ liệu tiến trình tổng.
+            # _progress_completed chỉ phục vụ luồng mô phỏng/legacy nên thường
+            manager = getattr(worker, "progress_manager", None)
+            root_id = getattr(worker, "_progress_root_id", None)
+            root = manager.get(root_id) if manager is not None and root_id else None
+            if root is not None:
+                total = max(1, root.total)
+                completed = root.current
         self.progress_bar.setRange(0, total)
         self.progress_bar.setFormat("%v/%m (%p%)")
         self.progress_bar.setValue(min(total, completed))
         self.current_activity_label.setText("Đang xử lý: " + ("Chuẩn bị…" if running else "Đã kết thúc"))
         manager = getattr(worker, "progress_manager", None)
         if manager is not None:
-            for info in manager.get_all():
-                if clone:
-                    self._add_clone_progress_item(info)
-                else:
+            progress_items = manager.get_all()
+            if clone:
+                # Giữ các tài khoản được bật (success/failed) ở trên,
+                # tài khoản disabled ở cuối danh sách sau khi refresh.
+                account_items = [
+                    info for info in progress_items
+                    if getattr(info, "category", None) == "account"
+                ]
+                account_items.sort(
+                    key=lambda info: info.status.value in ("disabled", "skipped")
+                )
+                for account_info in account_items:
+                    self._add_clone_progress_item(account_info)
+                    for child_info in progress_items:
+                        if child_info.parent_id == account_info.id:
+                            self._add_clone_progress_item(child_info)
+            else:
+                for info in progress_items:
                     self._add_standalone_progress_item(info)
         if self._run_started_at is not None:
             self._update_elapsed_time()

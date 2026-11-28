@@ -17,6 +17,10 @@ from dctq_auto.adb.client import AdbClient
 from dctq_auto.automation.battle_testkit import BattleSnapshot, run_mock_battle
 from dctq_auto.tasks.common.accounts import CURRENT_ACCOUNT, GameAccount, load_accounts
 from dctq_auto.config.step_registry import get_clone_step_registry
+from dctq_auto.config.constants import (
+    _STEP_QUAN_DOAN_DONG_GOP_KNB,
+    _STEP_QUAN_DOAN_TUI_PHUC,
+)
 from dctq_auto.progress import ProgressStatus
 
 
@@ -46,19 +50,13 @@ def _get_clone_optimize_config(self) -> dict:
         "clone_quan_su_tranh_ba": "Chiến tranh - Tranh Bá",
         "clone_quoc_chien": "Quốc chiến",
         "clone_reward_guild": "Nhận Thưởng - Quân Đoàn",
+        "clone_war_guild_defense_reinforcement": "Đoàn chiến - Bổ sung phòng thủ",
+        "clone_guild_territory_war_tactics": "Lãnh địa chiến - Mưu kế",
     }
 
-    self.log_message.emit("Clone Optimize — Bước 1: đọc cấu hình đầu vào.")
-    self.log_message.emit(
-        f"Clone Optimize — File tài khoản: "
-        f"{config.get('clone_account_file', '') or '(chưa chọn)'}"
-    )
     for key, label in checkbox_labels.items():
         enabled = bool(config.get(key, False))
         config[key] = enabled
-        self.log_message.emit(
-            f"Clone Optimize — Checkbox [{label}]: {'BẬT' if enabled else 'TẮT'} ({key}={enabled})"
-        )
 
     return config
 
@@ -70,44 +68,27 @@ def run_clone_flow_optimize(self, device) -> None:
     self._config.update(config)
     account_file = str(config.get("clone_account_file", "") or "").strip()
     if not account_file:
-        self.log_message.emit(
-            "Clone Optimize — chưa cấu hình clone_account_file; dừng ở bước đọc cấu hình."
-        )
         self._emit_overall_progress(0, 0, "Chưa chọn file tài khoản Clone")
         return
 
     use_current_account = account_file == CURRENT_ACCOUNT
     if use_current_account:
         accounts = [GameAccount("", "", True, "Tài khoản hiện tại")]
-        self.log_message.emit(
-            "Clone Optimize — sử dụng phiên đăng nhập hiện tại; bỏ qua đăng nhập và đăng xuất."
-        )
     else:
         try:
             accounts = load_accounts(account_file)
         except (OSError, UnicodeError, ValueError) as exc:
-            self.log_message.emit(
-                f"Clone Optimize — không đọc được file tài khoản {account_file!r}: {exc}"
-            )
             self._emit_overall_progress(0, 0, "Không đọc được file tài khoản Clone")
             return
 
     enabled_accounts = [account for account in accounts if account.enabled]
     disabled_accounts = [account for account in accounts if not account.enabled]
     total = len(enabled_accounts)
-    self.log_message.emit(
-        f"Clone Optimize — đã nạp {len(accounts)} tài khoản: "
-        f"{total} bật, {len(disabled_accounts)} vô hiệu hóa."
-    )
 
     for account in disabled_accounts:
         self._emit_clone_account_status(account.display_name, "disabled")
-        self.log_message.emit(
-            f"Clone Optimize — tài khoản {account.display_name}: vô hiệu hóa, bỏ qua."
-        )
 
     if not enabled_accounts:
-        self.log_message.emit("Clone Optimize — không có tài khoản nào được bật.")
         self._emit_overall_progress(0, 0, "Không có tài khoản được bật")
         return
 
@@ -121,16 +102,8 @@ def run_clone_flow_optimize(self, device) -> None:
             if step_registry.get_priority(step_id) is not None else 0,
         ),
     )
-    self.log_message.emit(
-        "Clone Optimize — các bước được bật: "
-        + (
-            ", ".join(step_registry.get_label(step_id) for step_id in selected_steps)
-            if selected_steps else "(không có)"
-        )
-    )
 
     if not selected_steps:
-        self.log_message.emit("Clone Optimize — Kết thúc. Không có tác vụ nào được chọn.")
         self._emit_overall_progress(0, total, "Không có tác vụ nào được chọn")
         return
 
@@ -141,7 +114,7 @@ def run_clone_flow_optimize(self, device) -> None:
 
     for index, account in enumerate(enabled_accounts, start=1):
         if not self._wait_if_paused():
-            self.log_message.emit("Clone Optimize — đã dừng theo yêu cầu.")
+            self.log_message.emit("Đã dừng theo yêu cầu.")
             return
 
         self._emit_overall_progress(
@@ -208,19 +181,11 @@ def run_clone_flow_optimize(self, device) -> None:
                 success_count += 1
             else:
                 failed_count += 1
-        else:
-            self.log_message.emit(
-                f"Clone Optimize — {account.display_name}: chưa có kết quả xử lý."
-            )
 
     self._emit_overall_progress(
         success_count + failed_count,
         total,
         f"{success_count} thành công | {failed_count} thất bại",
-    )
-    self.log_message.emit(
-        f"Clone Optimize — kết thúc điều phối: {success_count} thành công, "
-        f"{failed_count} thất bại, {total - success_count - failed_count} chưa xử lý."
     )
 
 
@@ -241,12 +206,14 @@ def run_clone_flow_optimize_account(
                 name=step_registry.get_label(step_id),
                 status="running",
                 current=0,
-                total=1,
+                total=(
+                    30 if step_id == "chien_tranh_quan_doan_bo_sung_phong_thu"
+                    else 2 if step_id == _STEP_QUAN_DOAN_DONG_GOP_KNB
+                    else 3 if step_id == _STEP_QUAN_DOAN_TUI_PHUC
+                    else 1
+                ),
                 parent_id=getProcessIdOfAccount(self, account),
             )
-        self.log_message.emit(
-            f"[{account.display_name}] Clone Optimize — bắt đầu tác vụ tài khoản {index}/{total}."
-        )
         self._config["_clone_guild_screen_closed"] = False
         _ocr_client = AdbClient(serial=self._serial)
 
@@ -324,7 +291,10 @@ def run_clone_flow_optimize_account(
                 self._config = original_config
 
         common_tasks = (
-            ("Chiến tranh - Nhận thưởng Đoàn Chiến", run_guild_war_reward, {"chien_tranh_quan_doan_nhan_thuong"}),
+            ("Chiến tranh - Nhận thưởng Đoàn Chiến", run_guild_war_reward, {
+                "chien_tranh_quan_doan_nhan_thuong",
+                "chien_tranh_quan_doan_bo_sung_phong_thu",
+            }),
             ("Hoạt động", run_activity, {"hoat_dong_phuc_loi_le_bao_quoc_van", "hoat_dong_phuc_loi_diem_danh"}),
             ("Quân đoàn", run_guild, {
                 "quan_doan_bao_danh", "quan_doan_tui_phuc", "quan_doan_cau_van",
@@ -341,7 +311,7 @@ def run_clone_flow_optimize_account(
                 self.log_message.emit(f"[{account.display_name}] Đã dừng trước task {task_label}.")
                 return None
             self.log_message.emit(
-                f"[{account.display_name}] Clone Optimize — bắt đầu task {task_label}."
+                f"[{account.display_name}] - bắt đầu task {task_label}."
             )
             selected_group_steps = [
                 step_id for step_id in steps if step_id in group_step_ids
@@ -363,8 +333,32 @@ def run_clone_flow_optimize_account(
                 task_changed = steps != steps_before
                 for step_id in selected_group_steps:
                     completed = step_id not in steps
+                    process_id = self._current_process_ids[step_id]
+
+                    if completed:
+                        progress_manager = getattr(self, "progress_manager", None)
+                        progress_item = (
+                            progress_manager.get(process_id)
+                            if progress_manager is not None else None
+                        )
+                        # Các tác vụ chỉ có một trạng thái hoàn tất thường không
+                        # phát sinh cập nhật tiến độ trong lúc chạy. Khi thành công,
+                        # chuẩn hóa node mặc định 0/1 thành 100/100.
+                        # Giữ nguyên bộ đếm riêng của các tác vụ như KNB, Túi phúc,
+                        # Giao tranh hoặc Bổ sung phòng thủ.
+                        if (
+                            progress_item is not None
+                            and progress_item.current == 0
+                            and progress_item.total == 1
+                        ):
+                            self.UpdateProcessInfo(
+                                process_id=process_id,
+                                current=100,
+                                total=100,
+                            )
+
                     self.UpdateProcessStatus(
-                        process_id=self._current_process_ids[step_id],
+                        process_id=process_id,
                         status=(
                             ProgressStatus.SUCCESS
                             if completed

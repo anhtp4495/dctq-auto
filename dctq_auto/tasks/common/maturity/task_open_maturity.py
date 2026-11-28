@@ -26,7 +26,7 @@ _GRID_CELL_RECT_SIZE = 60
 _MAX_OPEN_TRIES = 2
 _OPEN_POLL_INTERVAL = 2.0
 
-_PROCESSABLE_TEMPLATE_IDS = {"chua_cong", "ve_tuong", "than_binh", "chien_hon", "tuong_an"}
+_PROCESSABLE_TEMPLATE_IDS = {"chua_cong", "ve_tuong", "than_binh", "chien_hon", "tuong_an", "than_tuong"}
 
 _OPEN_TEMPLATES = (
     _TEMPLATE_MAIN_LOI_VAO_TUONG_AN,

@@ -352,6 +352,24 @@ class CloneTab(QWidget):
         reward_layout.addWidget(self.clone_reward_guild)
         layout.addWidget(reward_group)
 
+        donation_group = QGroupBox("Quyên góp")
+        donation_layout = QVBoxLayout(donation_group)
+        self.clone_war_guild_defense_reinforcement = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_war_guild_defense_reinforcement",
+                "Đoàn chiến - Bổ sung phòng thủ",
+            )
+        )
+        self.clone_guild_territory_war_tactics = QCheckBox(
+            step_registry.get_display_name_by_config_key(
+                "clone_guild_territory_war_tactics",
+                "Lãnh địa chiến - Mưu kế",
+            )
+        )
+        donation_layout.addWidget(self.clone_war_guild_defense_reinforcement)
+        donation_layout.addWidget(self.clone_guild_territory_war_tactics)
+        layout.addWidget(donation_group)
+
         layout.addStretch(1)
         # Giữ đủ chiều rộng tối thiểu cho các điều khiển; nếu cửa sổ hẹp,
         # người dùng có thể cuộn ngang để thấy các checkbox bị khuất.
@@ -481,6 +499,8 @@ class CloneTab(QWidget):
             ),
             "clone_quoc_chien": self.clone_quoc_chien.isChecked(),
             "clone_reward_guild": self.clone_reward_guild.isChecked(),
+            "clone_war_guild_defense_reinforcement": self.clone_war_guild_defense_reinforcement.isChecked(),
+            "clone_guild_territory_war_tactics": self.clone_guild_territory_war_tactics.isChecked(),
             "clone_reward_tam_quoc_lenh": self.clone_reward_tam_quoc_lenh.isChecked(),
             "clone_logout": True,
         }

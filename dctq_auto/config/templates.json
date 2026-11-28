@@ -1,6 +1,33 @@
 {
   "version": 1,
   "screens": {
+    "login_form": {
+      "source_image": "resources/screens/main/login_form.png",
+      "templates": {
+        "username": {
+          "description": "[Đăng nhập] - Tài khoản",
+          "rect": { "top": 389, "left": 564, "right": 686, "bottom": 413},
+          "search_rect": { "top": 389, "left": 564, "right": 686, "bottom": 413},
+          "threshold": 0.95,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "password": {
+          "description": "[Đăng nhập] - Mật khẩu",
+          "rect": { "top": 469, "left": 518, "right": 619, "bottom": 495},
+          "search_rect": { "top": 469, "left": 518, "right": 619, "bottom": 495},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "login": {
+          "description": "[Đăng nhập] - Đăng nhập",
+          "rect": { "top": 586, "left": 889, "right": 1032, "bottom": 613},
+          "search_rect": { "top": 586, "left": 889, "right": 1032, "bottom": 613},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
     "main": {
       "source_image": "resources/screens/main/man_hinh_chinh.png",
       "templates": {
@@ -524,6 +551,13 @@
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
+        "dong_quan_doan_man_hinh_chinh": {
+          "description": "Màn hình [Quân Đoàn] - Thoát",
+          "rect": { "top": 29, "left": 1826, "right": 1882, "bottom": 91},
+          "search_rect": { "top": 0, "left": 1000, "right": 1920, "bottom": 450},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
         "quan_doan_man_hinh_chinh_1": {
           "description": "Màn hình [Quân Đoàn].",
           "rect": { "top": 22, "left": 182, "right": 936, "bottom": 104},
@@ -570,7 +604,7 @@
         "quan_doan_chua_bao_danh": {
           "description": "Màn hình [Quân Đoàn] - Chưa [Báo danh].",
           "rect": { "top": 838, "left": 1604, "right": 1750, "bottom": 964},
-          "search_rect": { "top": 786, "left": 1048, "right": 1888, "bottom": 1050},
+          "search_rect": { "top": 795, "left": 1511, "right": 1846, "bottom": 995},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
@@ -601,7 +635,7 @@
         "quan_doan_da_bao_danh": {
           "description": "Màn hình [Quân Đoàn] - Đã [Báo danh].",
           "rect": { "top": 866, "left": 597, "right": 690, "bottom": 929},
-          "search_rect": { "top": 786, "left": 1048, "right": 1888, "bottom": 1050},
+          "search_rect": { "top": 795, "left": 1511, "right": 1846, "bottom": 995},
           "threshold": 0.95,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
@@ -693,10 +727,11 @@
           "match_method": "TM_CCOEFF_NORMED"
         },
         "quan_doan_co_the_cau_van": {
-          "description": "Màn hình [Quân Đoàn] - [Cầu vận] - Hết lượt.",
+          "description": "Màn hình [Quân Đoàn] - [Cầu vận] - Còn lượt.",
           "rect": { "top": 870, "left": 498, "right": 700, "bottom": 936},
           "search_rect": { "top": 738, "left": 172, "right": 962, "bottom": 1060},
-          "threshold": 0.85,
+          "threshold": 0.95,
+          "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "quan_doan_het_luot_cau_van1": {
@@ -711,6 +746,13 @@
           "rect": { "top": 520, "left": 491, "right": 707, "bottom": 620},
           "search_rect": { "top": 842, "left": 422, "right": 817, "bottom": 1032},
           "threshold": 0.95,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_doan_thoat_man_hinh_cau_van": {
+          "description": "Màn hình [Quân Đoàn] - [Cầu vận] - Thoát.",
+          "rect": { "top": 62, "left": 1737, "right": 1787, "bottom": 109},
+          "search_rect": { "top": 15, "left": 1681, "right": 1817, "bottom": 144},
+          "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
       }
@@ -785,6 +827,13 @@
           "search_rect": { "top": 216, "left": 462, "right": 1450, "bottom": 872},
           "threshold": 0.95,
           "match_method": "TM_CCOEFF_NORMED"
+        },
+        "quan_doan_dong_man_hinh_gop_knb": {
+          "description": "Màn hình [Quân Đoàn] - [Đóng góp KNB] - Thoát.",
+          "rect": { "top": 228, "left": 1376, "right": 1428, "bottom": 280},
+          "search_rect": { "top": 194, "left": 1349, "right": 1460, "bottom": 319},
+          "threshold": 0.95,
+          "match_method": "TM_CCOEFF_NORMED"
         }
       }
     },
@@ -821,6 +870,13 @@
           "description": "[Quân Đoàn] - [Túi Phúc] - [Chi tiết].",
           "rect": { "top": 970, "left": 750, "right": 1166, "bottom": 1035},
           "search_rect":  { "top": 0, "left": 0, "right": 1900, "bottom": 150},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "dong_man_hinh_tui_phuc": {
+          "description": "[Quân Đoàn] - [Túi Phúc] - Thoát",
+          "rect": { "top": 32, "left": 1726, "right": 1779, "bottom": 85},
+          "search_rect": { "top": 3, "left": 1564, "right": 1808, "bottom": 200},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
@@ -1446,6 +1502,61 @@
         }
       }
     },
+    "chien_tranh.doan_chien_quyen_gop_phong_thu": {
+      "source_image": "resources/screens/chien_tranh/quyen_gop_phong_thu.png",
+      "templates": {
+        "man_hinh_chinh": {
+          "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị]",
+          "rect": { "top": 268, "left": 825, "right": 1063, "bottom": 335},
+          "search_rect": { "top": 171, "left": 769, "right": 1101, "bottom": 371},
+          "threshold": 0.70,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "loi_vao": {
+          "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị] - Quyên góp",
+          "rect": { "top": 930, "left": 839, "right": 1072, "bottom": 989},
+          "search_rect": { "top": 868, "left": 719, "right": 1166, "bottom": 1030},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "cong_hien_bao_chau": {
+          "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị] - Hiến",
+          "rect": { "top": 88, "left": 94, "right": 256, "bottom": 156},
+          "search_rect": { "top": 574, "left": 692, "right": 1222, "bottom": 759},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "xac_nhan": {
+          "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị] - Xác nhận mở [Túi bảo châu]",
+          "rect": { "top": 250, "left": 44, "right": 259, "bottom": 294},
+          "search_rect": { "top": 786, "left": 580, "right": 1343, "bottom": 968},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "het_tai_nguyen1": {
+          "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị] - Hết tài nguyên",
+          "rect": { "top": 409, "left": 356, "right": 448, "bottom": 486},
+          "search_rect": { "top": 303, "left": 421, "right": 1490, "bottom": 1003},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "het_tai_nguyen2": {
+          "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị] - Hết tài nguyên 2",
+          "rect": { "top": 624, "left": 227, "right": 262, "bottom": 668},
+          "search_rect": { "top": 303, "left": 421, "right": 1490, "bottom": 1003},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "thoat": {
+          "description": "[Chiến tranh] - [Đại chiến Quân Đoàn] - [Chuẩn bị] - Thoát",
+          "rect": { "top": 91, "left": 1732, "right": 1782, "bottom": 144},
+          "search_rect": { "top": 0, "left": 1399, "right": 1917, "bottom": 427},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        }
+      }
+    },
     "quan_su.tranh_ba": {
       "source_image": "resources/screens/tranh_ba/man_hinh_chinh.png",
       "templates": {
@@ -1618,15 +1729,23 @@
       "templates": {
         "loi_vao": {
           "description": "[Màn hình chính] - [Tướng ấn] - Thăm dò lãnh địa",
-          "rect": { "top": 197, "left": 358, "right": 526, "bottom": 257},
-          "search_rect": { "top": 14, "left": 319, "right": 563, "bottom": 107},
+          "rect": { "top": 852, "left": 1247, "right": 1282, "bottom": 890},
+          "search_rect": { "top": 912, "left": 1299, "right": 1544, "bottom": 1054},
           "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "tat_ca": {
+          "description": "[Màn hình chính] - [Tướng ấn] - Thăm dò tất cả",
+          "rect": { "top": 981, "left": 1488, "right": 1515, "bottom": 1010},
+          "search_rect": { "top": 968, "left": 1475, "right": 1528, "bottom": 1021},
+          "threshold": 0.90,
+          "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "mien_phi": {
           "description": "[Màn hình chính] - [Tướng ấn] - Miễn phí",
-          "rect": { "top": 748, "left": 876, "right": 1038, "bottom": 799},
-          "search_rect": { "top": 696, "left": 818, "right": 1086, "bottom": 832},
+          "rect": { "top": 883, "left": 1518, "right": 1673, "bottom": 931},
+          "search_rect": { "top": 867, "left": 1466, "right": 1729, "bottom": 952},
           "threshold": 0.70,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
@@ -1640,8 +1759,8 @@
         },
         "thoat": {
           "description": "[Màn hình chính] - [Tướng ấn] - Thoát",
-          "rect": { "top": 25, "left": 1842, "right": 1904, "bottom": 91},
-          "search_rect": { "top": 0, "left": 1807, "right": 1919, "bottom": 115},
+          "rect": { "top": 81, "left": 1729, "right": 1778, "bottom": 139},
+          "search_rect": { "top": 0, "left": 1644, "right": 1919, "bottom": 183},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
@@ -1679,30 +1798,38 @@
       "templates": {
         "loi_vao": {
           "description": "[Màn hình chính] - [Thần Binh] - Tầm binh mịnh bảo",
-          "rect": { "top": 197, "left": 358, "right": 526, "bottom": 257},
-          "search_rect": { "top": 14, "left": 319, "right": 563, "bottom": 107},
+          "rect": { "top": 474, "left": 912, "right": 1021, "bottom": 581},
+          "search_rect": { "top": 335, "left": 796, "right": 1135, "bottom": 654},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "mien_phi": {
           "description": "[Màn hình chính] - [Thần Binh] - Miễn phí",
-          "rect": { "top": 748, "left": 876, "right": 1038, "bottom": 799},
-          "search_rect": { "top": 696, "left": 818, "right": 1086, "bottom": 832},
-          "threshold": 0.70,
+          "rect": { "top": 31, "left": 166, "right": 232, "bottom": 65},
+          "search_rect": { "top": 632, "left": 448, "right": 1570, "bottom": 1078},
+          "threshold": 0.95,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "an_cho_trong_de_thoat": {
           "description": "[Màn hình chính] - [Thần Binh] - Ấn chỗ trống để thoát",
-          "rect": { "top": 748, "left": 876, "right": 1038, "bottom": 799},
-          "search_rect": { "top": 696, "left": 818, "right": 1086, "bottom": 832},
+          "rect": { "top": 45, "left": 378, "right": 465, "bottom": 101},
+          "search_rect": { "top": 190, "left": 303, "right": 1629, "bottom": 894},
           "threshold": 0.85,
+          "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "thoat": {
           "description": "[Màn hình chính] - [Thần Binh] - Thoát",
-          "rect": { "top": 25, "left": 1842, "right": 1904, "bottom": 91},
-          "search_rect": { "top": 0, "left": 1807, "right": 1919, "bottom": 115},
+          "rect": { "top": 55, "left": 1823, "right": 1868, "bottom": 99},
+          "search_rect": { "top": 0, "left": 1753, "right": 1919, "bottom": 170},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "hoi_thanh": {
+          "description": "[Màn hình chính] - [Thần Binh] - Hồi thành",
+          "rect": { "top": 736, "left": 376, "right": 474, "bottom": 883},
+          "search_rect": { "top": 615, "left": 273, "right": 618, "bottom": 967},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }
@@ -1781,30 +1908,37 @@
       "templates": {
         "loi_vao": {
           "description": "[Màn hình chính] - [Thần tượng] - Thiên sư đạo",
-          "rect": { "top": 197, "left": 358, "right": 526, "bottom": 257},
-          "search_rect": { "top": 14, "left": 319, "right": 563, "bottom": 107},
+          "rect": { "top": 527, "left": 1265, "right": 1369, "bottom": 628},
+          "search_rect":{ "top": 421, "left": 1115, "right": 1529, "bottom": 787},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "mien_phi": {
           "description": "[Màn hình chính] - [Thần tượng] - Miễn phí",
-          "rect": { "top": 748, "left": 876, "right": 1038, "bottom": 799},
-          "search_rect": { "top": 696, "left": 818, "right": 1086, "bottom": 832},
+          "rect": { "top": 898, "left": 1215, "right": 1442, "bottom": 944},
+          "search_rect": { "top": 837, "left": 441, "right": 778, "bottom": 953},
           "threshold": 0.70,
           "grayscale": false,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "an_cho_trong_de_thoat": {
           "description": "[Màn hình chính] - [Thần tượng] - Ấn chỗ trống để thoát",
-          "rect": { "top": 748, "left": 876, "right": 1038, "bottom": 799},
-          "search_rect": { "top": 696, "left": 818, "right": 1086, "bottom": 832},
+          "rect": { "top": 902, "left": 1623, "right": 1795, "bottom": 954},
+          "search_rect": { "top": 928, "left": 467, "right": 761, "bottom": 1025},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
         "thoat": {
           "description": "[Màn hình chính] - [Thần tượng] - Thoát",
-          "rect": { "top": 25, "left": 1842, "right": 1904, "bottom": 91},
-          "search_rect": { "top": 0, "left": 1807, "right": 1919, "bottom": 115},
+          "rect": { "top": 38, "left": 1778, "right": 1829, "bottom": 104},
+          "search_rect": { "top": 0, "left": 1713, "right": 1919, "bottom": 159},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "hoi_thanh": {
+          "description": "[Màn hình chính] - [Thần tượng] - Hồi thành",
+          "rect": { "top": 792, "left": 470, "right": 579, "bottom": 864},
+          "search_rect":  { "top": 742, "left": 368, "right": 687, "bottom": 976},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         }

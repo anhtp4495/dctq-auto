@@ -65,7 +65,8 @@ def _handle_divine_weapon_observation(observation, poller, context) -> bool:
         ("loi_vao", "Lối vào Thần binh"),
         ("mien_phi", "Miễn phí"),
         ("an_cho_trong_de_thoat", "Ấn chỗ trống để thoát"),
-        ("thoat", "Thoát màn hình Thần binh"),
+        ("thoat", "Thoát màn hình nhận miễn phí"),
+        ("hoi_thanh", "Hồi thành"),
     )
     for key, label in actions:
         found = than_binh_found.get(key)
@@ -79,6 +80,10 @@ def _handle_divine_weapon_observation(observation, poller, context) -> bool:
         )
         poller.record_action(key, context)
         if key == "thoat":
+            # Sau khi thoát màn hình nhận miễn phí, chỉ tìm nút Hồi thành.
+            poller.waiting_for_hall = True
+        elif key == "hoi_thanh":
+            poller.waiting_for_hall = False
             poller.waiting_for_main = True
         return True
 
@@ -153,6 +158,7 @@ def _handle_tuong_an_observation(observation, poller, context) -> bool:
 
     actions = (
         ("loi_vao", "Thăm dò lãnh địa"),
+        ("tat_ca", "Thăm dò tất cả"),
         ("mien_phi", "Miễn phí"),
         ("an_cho_trong_de_thoat", "Ấn chỗ trống để thoát"),
         ("thoat", "Thoát màn hình Tướng ấn"),
@@ -186,7 +192,8 @@ def _handle_defense_forge_observation(observation, poller, context) -> bool:
         ("loi_vao", "Lối vào Thần tượng"),
         ("mien_phi", "Miễn phí"),
         ("an_cho_trong_de_thoat", "Ấn chỗ trống để thoát"),
-        ("thoat", "Thoát màn hình Thần tượng"),
+        ("thoat", "Thoát màn hình nhận miễn phí"),
+        ("hoi_thanh", "Hồi thành"),
     )
     for key, label in actions:
         found = defense_forge_found.get(key)
@@ -195,11 +202,16 @@ def _handle_defense_forge_observation(observation, poller, context) -> bool:
 
         x, y = click_match(context["device"], found)
         context["log"](
-            f"[{context['account'].display_name}] [Trưởng thành] [Defense Forge] "
+            f"[{context['account'].display_name}] [Trưởng thành] [Thần tượng] "
             f"Click {label} tại ({x}, {y})."
         )
         poller.record_action(key, context)
         if key == "thoat":
+            # Thoát màn hình nhận miễn phí xong phải tìm nút Hồi thành,
+            # không quay lại dò Lối vào trên màn hình trung gian.
+            poller.waiting_for_hall = True
+        elif key == "hoi_thanh":
+            poller.waiting_for_hall = False
             poller.waiting_for_main = True
         return True
 
