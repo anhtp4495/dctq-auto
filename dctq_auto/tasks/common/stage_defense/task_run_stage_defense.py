@@ -51,7 +51,7 @@ _STAGE_TEMPLATE_PATH = (
 _STAGE_TEMPLATE_WIDTH = 135
 _STAGE_TEMPLATE_HEIGHT = 60
 _STAGE_MATCH_THRESHOLD = 0.85
-_STAGE_RECOGNITION_MAX_ATTEMPTS = 3
+_STAGE_RECOGNITION_MAX_ATTEMPTS = 2
 _STAGE_SOURCE_IMAGE_PATH = (
     Path(__file__).resolve().parents[4]
     / "resources"
@@ -441,7 +441,7 @@ def run(worker, account, device, log) -> bool:
             ):
                 stage_recognition_attempts += 1
                 log(
-                    f"[{account.display_name}] Thử nhận diện ải "
+                    f"[{account.display_name}] Thử nhận diện chính "
                     f"lần {stage_recognition_attempts}/{_STAGE_RECOGNITION_MAX_ATTEMPTS}."
                 )
                 recognized_stage = _recognize_stage_number(device, account, log)
@@ -449,11 +449,10 @@ def run(worker, account, device, log) -> bool:
                     stage_number = recognized_stage
                     worker._config["muu_binh_stage_number"] = stage_number
                     worker.stage_number_changed.emit(stage_number)
-                elif stage_recognition_attempts == _STAGE_RECOGNITION_MAX_ATTEMPTS:
+                elif stage_recognition_attempts == 1:
                     log(
-                        f"[{account.display_name}] Nhận diện chính thất bại "
-                        f"{_STAGE_RECOGNITION_MAX_ATTEMPTS} lần; thử fallback "
-                        "một lần với source_image 105x60 (giảm 30px chiều rộng), chỉ so khớp ải 1-9."
+                        f"[{account.display_name}] Nhận diện chính lần 1 thất bại; "
+                        "thử fallback ngay với source_image 105x60, chỉ so khớp ải 1-9."
                     )
                     recognized_stage = _recognize_stage_number(
                         device, account, log, fallback=True
@@ -464,9 +463,14 @@ def run(worker, account, device, log) -> bool:
                         worker.stage_number_changed.emit(stage_number)
                     else:
                         log(
-                            f"[{account.display_name}] Fallback cũng không nhận diện được ải; "
-                            "bỏ qua nhận diện trong phần còn lại của lượt chạy."
+                            f"[{account.display_name}] Fallback thất bại; "
+                            "sẽ thử nhận diện chính lần 2."
                         )
+                else:
+                    log(
+                        f"[{account.display_name}] Nhận diện chính lần 2 cũng thất bại; "
+                        "dừng nhận diện ải trong lượt chạy này."
+                    )
 
             worker.UpdateProcessMessage(
                 root_progress_id,
