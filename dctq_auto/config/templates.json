@@ -1886,10 +1886,17 @@
     "nhiem_vu_hang_ngay.chien_hon": {
       "source_image": "resources/screens/nhiem_vu_hang_ngay/chien_hon.png",
       "templates": {
+        "chien_hon_bi_bao": {
+          "description": "[Màn hình chính] - [Chiến hồn] - Nhận chiến hồn",
+          "rect": { "top": 50, "left": 712, "right": 884, "bottom": 89},
+          "search_rect": { "top": 17, "left": 683, "right": 939, "bottom": 118},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
         "loi_vao": {
           "description": "[Màn hình chính] - [Chiến hồn] - Chiến hồn bí bảo",
-          "rect": { "top": 131, "left": 1015, "right": 1025, "bottom": 141},
-          "search_rect": { "top": 130, "left": 932, "right": 1030, "bottom": 170},
+          "rect": { "top": 170, "left": 451, "right": 728, "bottom": 222},
+          "search_rect": { "top": 128, "left": 410, "right": 778, "bottom": 255},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
