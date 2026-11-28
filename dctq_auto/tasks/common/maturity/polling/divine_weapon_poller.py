@@ -83,6 +83,19 @@ class DivineWeaponPoller(BaseMaturityPoller):
                 },
             }
 
+        if not self.entry_clicked:
+            return {
+                "screen": screen,
+                "than_binh": {
+                    "loi_vao": match(
+                        screen,
+                        self.loaded_templates[_TEMPLATE_MATURITY_THAN_BINH_LOI_VAO],
+                        account=account,
+                        log=context["log"],
+                    ),
+                },
+            }
+
         return {
             "screen": screen,
             "than_binh": {
