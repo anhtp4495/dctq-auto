@@ -33,6 +33,7 @@ class SoulPoller(BaseMaturityPoller):
 
     def __init__(self):
         super().__init__()
+        self.entry_clicked = False
         self.loaded_templates = get_templates(self.templates)
         missing = [
             name for name in self.templates
@@ -66,11 +67,13 @@ class SoulPoller(BaseMaturityPoller):
         return {
             "screen": screen,
             "chien_hon": {
-                "loi_vao": match(
+                "loi_vao": (
+                    None if self.entry_clicked else match(
                     screen,
                     self.loaded_templates[_TEMPLATE_MATURITY_CHIEN_HON_LOI_VAO],
                     account=account,
                     log=context["log"],
+                )
                 ),
                 "mien_phi": match(
                     screen,
