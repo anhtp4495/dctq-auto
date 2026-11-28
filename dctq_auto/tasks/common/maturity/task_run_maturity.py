@@ -44,7 +44,7 @@ def _handle_lord_observation(observation, poller, context) -> bool:
         found = chua_cong_found["thoat"]
         label = "Thoát màn hình Chúa công"
         action_key = "thoat"
-        poller.waiting_for_main = True
+        poller.waiting_for_exit = True
     else:
         return False
 
@@ -88,11 +88,9 @@ def _handle_divine_weapon_observation(observation, poller, context) -> bool:
         if key == "loi_vao":
             poller.entry_clicked = True
         elif key == "thoat":
-            # Sau khi thoát màn hình nhận miễn phí, chỉ tìm nút Hồi thành.
-            poller.waiting_for_hall = True
+            poller.waiting_for_exit = True
         elif key == "hoi_thanh":
-            poller.waiting_for_hall = False
-            poller.waiting_for_main = True
+            poller.waiting_for_hall_exit = True
         return True
 
     return False
@@ -124,7 +122,7 @@ def _handle_guardian_observation(observation, poller, context) -> bool:
         if key == "loi_vao":
             poller.entry_clicked = True
         if key == "thoat":
-            poller.waiting_for_main = True
+            poller.waiting_for_exit = True
         return True
 
     return False
@@ -191,7 +189,7 @@ def _handle_tuong_an_observation(observation, poller, context) -> bool:
         if key == "loi_vao":
             poller.entry_clicked = True
         elif key == "thoat":
-            poller.waiting_for_main = True
+            poller.waiting_for_exit = True
         return True
 
     return False
@@ -225,10 +223,9 @@ def _handle_defense_forge_observation(observation, poller, context) -> bool:
         if key == "loi_vao":
             poller.entry_clicked = True
         elif key == "thoat":
-            poller.waiting_for_hall = True
+            poller.waiting_for_exit = True
         elif key == "hoi_thanh":
-            poller.waiting_for_hall = False
-            poller.waiting_for_main = True
+            poller.waiting_for_hall_exit = True
         return True
 
     return False
@@ -260,7 +257,7 @@ def _handle_friend_observation(observation, poller, context) -> bool:
         if key == "loi_vao":
             poller.entry_clicked = True
         if key == "thoat":
-            poller.waiting_for_main = True
+            poller.waiting_for_exit = True
         return True
 
     return False
@@ -278,6 +275,14 @@ def _run_poller(poller, context) -> bool:
 
         if getattr(poller, "waiting_for_exit", False) and observation.get("exit_closed"):
             poller.waiting_for_exit = False
+            if getattr(poller, "has_hall_action", False):
+                poller.waiting_for_hall = True
+            else:
+                poller.waiting_for_main = True
+
+        if getattr(poller, "waiting_for_hall_exit", False) and observation.get("hall_closed"):
+            poller.waiting_for_hall_exit = False
+            poller.waiting_for_hall = False
             poller.waiting_for_main = True
 
         if poller.waiting_for_main:
