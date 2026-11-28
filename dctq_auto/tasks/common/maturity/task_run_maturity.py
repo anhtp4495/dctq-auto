@@ -30,15 +30,24 @@ def _handle_lord_observation(observation, poller, context) -> bool:
     if not chua_cong_found:
         return False
 
-    if chua_cong_found.get("loi_vao") is not None:
+    if (
+        chua_cong_found.get("loi_vao") is not None
+        and not poller.has_completed_action("loi_vao")
+    ):
         found = chua_cong_found["loi_vao"]
         label = "Chiến kỳ"
         action_key = "loi_vao"
-    elif chua_cong_found.get("mien_phi") is not None:
+    elif (
+        chua_cong_found.get("mien_phi") is not None
+        and not poller.has_completed_action("mien_phi")
+    ):
         found = chua_cong_found["mien_phi"]
         label = "Giương cờ"
         action_key = "mien_phi"
-    elif chua_cong_found.get("thoat") is not None:
+    elif (
+        chua_cong_found.get("thoat") is not None
+        and not poller.has_completed_action("thoat")
+    ):
         found = chua_cong_found["thoat"]
         label = "Thoát màn hình Chúa công"
         action_key = "thoat"
