@@ -61,6 +61,19 @@ class FriendPoller(BaseMaturityPoller):
                 ),
             }
 
+        if not self.entry_clicked:
+            return {
+                "screen": screen,
+                "ban_be": {
+                    "loi_vao": match(
+                        screen,
+                        self.loaded_templates[_TEMPLATE_MATURITY_BAN_BE_LOI_VAO],
+                        account=account,
+                        log=context["log"],
+                    ),
+                },
+            }
+
         return {
             "screen": screen,
             "ban_be": {

@@ -62,6 +62,19 @@ class SoulPoller(BaseMaturityPoller):
                 ),
             }
 
+        if not self.entry_clicked:
+            return {
+                "screen": screen,
+                "chien_hon": {
+                    "loi_vao": match(
+                        screen,
+                        self.loaded_templates[_TEMPLATE_MATURITY_CHIEN_HON_LOI_VAO],
+                        account=account,
+                        log=context["log"],
+                    ),
+                },
+            }
+
         return {
             "screen": screen,
             "chien_hon": {
