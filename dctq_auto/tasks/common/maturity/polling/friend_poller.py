@@ -30,6 +30,7 @@ class FriendPoller(BaseMaturityPoller):
 
     def __init__(self):
         super().__init__()
+        self.waiting_for_exit = False
         self.entry_clicked = False
         self.loaded_templates = get_templates(self.templates)
         missing = [
@@ -49,6 +50,17 @@ class FriendPoller(BaseMaturityPoller):
                 f"Không chụp được màn hình: {exc}"
             )
             return None
+
+        if self.waiting_for_exit:
+            thoat = match(
+                screen,
+                self.loaded_templates[_TEMPLATE_MATURITY_BAN_BE_THOAT],
+                account=account,
+                log=context["log"],
+            )
+            if thoat is not None:
+                return {"screen": screen, "ban_be": {"thoat": thoat}}
+            return {"screen": screen, "exit_closed": True}
 
         if self.waiting_for_main:
             return {
