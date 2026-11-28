@@ -8,7 +8,7 @@ import numpy as np
 from dctq_auto.config.button_positions import ButtonPositions
 from dctq_auto.config.constants import (
     _TEMPLATE_CHIEN_TRANH2_DOAN_CHIEN,
-    _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_MAN_HINH_CHINH,
+    _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_DIEM_THANH,
     _TEMPLATE_CHIEN_TRANH_MAN_HINH_CHINH,
     _TEMPLATE_MAIN_QUAN_SU,
 )
@@ -22,7 +22,7 @@ _MAX_TRIES = 60
 _OPEN_TEMPLATES = (
     _TEMPLATE_CHIEN_TRANH2_DOAN_CHIEN,
     _TEMPLATE_CHIEN_TRANH_MAN_HINH_CHINH,
-    _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_MAN_HINH_CHINH,
+    _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_DIEM_THANH,
     _TEMPLATE_MAIN_QUAN_SU,
 )
 
@@ -112,7 +112,7 @@ def run(worker, account, device, log, current_try=1, has_swiped_war_menu=False) 
         elif name == _TEMPLATE_CHIEN_TRANH2_DOAN_CHIEN:
             x, y = click_match(device, found)
             log(f"[{account.display_name}] Click lối vào Đoàn Chiến tại ({x}, {y}).")
-        elif name == _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_MAN_HINH_CHINH:
+        elif name == _TEMPLATE_CHIEN_TRANH_DOAN_CHIEN_DIEM_THANH:
             log(f"[{account.display_name}] Đã mở màn hình chính Đoàn Chiến.")
             return True
 

@@ -1357,6 +1357,14 @@
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
+        "diem_thanh": {
+          "description": "[Đoàn Chiến] - [Màn hình chính] - Điểm thành",
+          "rect": { "top": 567, "left": 1268, "right": 1413, "bottom": 604},
+          "search_rect": { "top": 527, "left": 1248, "right": 1439, "bottom": 622},
+          "threshold": 0.90,
+          "grayscale": false,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
         "dong_man_hinh_doan_chien": {
           "description": "[Đoàn Chiến] - [Màn hình chính] - Đóng",
           "rect": { "top": 221, "left": 1748, "right": 1804, "bottom": 293},
@@ -1375,6 +1383,13 @@
         "chua_nhan_thuong": {
           "description": "[Đoàn Chiến] - Chưa nhận thưởng",
           "rect": { "top": 901, "left": 1100, "right": 1335, "bottom": 1002},
+          "search_rect": { "top": 774, "left": 1088, "right": 1368, "bottom": 1022},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
+        "chua_nhan_thuong2": {
+          "description": "[Đoàn Chiến] - Chưa nhận thưởng",
+          "rect": { "top": 858, "left": 762, "right": 939, "bottom": 999},
           "search_rect": { "top": 774, "left": 1088, "right": 1368, "bottom": 1022},
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
