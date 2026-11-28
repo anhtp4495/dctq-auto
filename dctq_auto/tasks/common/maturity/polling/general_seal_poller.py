@@ -36,6 +36,7 @@ class GeneralSealPoller(BaseMaturityPoller):
 
     def __init__(self):
         super().__init__()
+        self.waiting_for_exit = False
         self.entry_clicked = False
         self.loaded_templates = get_templates(self.templates)
         missing = [
@@ -55,6 +56,17 @@ class GeneralSealPoller(BaseMaturityPoller):
                 f"Failed to capture screen: {exc}"
             )
             return None
+
+        if self.waiting_for_exit:
+            thoat = match(
+                screen,
+                self.loaded_templates[_TEMPLATE_MATURITY_TUONG_AN_THOAT],
+                account=account,
+                log=context["log"],
+            )
+            if thoat is not None:
+                return {"screen": screen, "tuong_an": {"thoat": thoat}}
+            return {"screen": screen, "exit_closed": True}
 
         if self.waiting_for_main:
             return {
