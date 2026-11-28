@@ -37,6 +37,7 @@ class DivineWeaponPoller(BaseMaturityPoller):
     def __init__(self):
         super().__init__()
         self.waiting_for_hall = False
+        self.entry_clicked = False
         self.loaded_templates = get_templates(self.templates)
         missing = [
             name for name in self.templates
@@ -83,11 +84,15 @@ class DivineWeaponPoller(BaseMaturityPoller):
         return {
             "screen": screen,
             "than_binh": {
-                "loi_vao": match(
-                    screen,
-                    self.loaded_templates[_TEMPLATE_MATURITY_THAN_BINH_LOI_VAO],
-                    account=account,
-                    log=context["log"],
+                "loi_vao": (
+                    None
+                    if self.entry_clicked
+                    else match(
+                        screen,
+                        self.loaded_templates[_TEMPLATE_MATURITY_THAN_BINH_LOI_VAO],
+                        account=account,
+                        log=context["log"],
+                    )
                 ),
                 "mien_phi": match(
                     screen,
