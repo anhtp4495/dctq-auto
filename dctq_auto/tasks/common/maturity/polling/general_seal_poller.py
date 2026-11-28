@@ -36,6 +36,7 @@ class GeneralSealPoller(BaseMaturityPoller):
 
     def __init__(self):
         super().__init__()
+        self.entry_clicked = False
         self.loaded_templates = get_templates(self.templates)
         missing = [
             name for name in self.templates
@@ -69,11 +70,13 @@ class GeneralSealPoller(BaseMaturityPoller):
         return {
             "screen": screen,
             "tuong_an": {
-                "loi_vao": match(
-                    screen,
-                    self.loaded_templates[_TEMPLATE_MATURITY_TUONG_AN_LOI_VAO],
-                    account=account,
-                    log=context["log"],
+                "loi_vao": (
+                    None if self.entry_clicked else match(
+                        screen,
+                        self.loaded_templates[_TEMPLATE_MATURITY_TUONG_AN_LOI_VAO],
+                        account=account,
+                        log=context["log"],
+                    )
                 ),
                 "tat_ca": match(
                     screen,
