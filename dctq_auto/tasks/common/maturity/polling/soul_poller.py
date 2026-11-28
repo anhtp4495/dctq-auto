@@ -2,6 +2,7 @@
 
 from dctq_auto.config.constants import (
     _TEMPLATE_MAIN_TRUONG_THANH,
+    _TEMPLATE_MATURITY_CHIEN_HON_BI_BAO,
     _TEMPLATE_MATURITY_CHIEN_HON_LOI_VAO,
     _TEMPLATE_MATURITY_CHIEN_HON_MIEN_PHI,
     _TEMPLATE_MATURITY_CHIEN_HON_THOAT,
@@ -16,6 +17,7 @@ class SoulPoller(BaseMaturityPoller):
 
     category_key = "chien_hon"
     progress_steps = (
+        ("chien_hon_bi_bao", "Nhận Chiến hồn"),
         ("loi_vao", "Lối vào Chiến hồn"),
         ("mien_phi", "Miễn phí"),
         ("an_cho_trong_de_thoat", "Ấn chỗ trống để thoát"),
@@ -23,6 +25,7 @@ class SoulPoller(BaseMaturityPoller):
     )
 
     templates = (
+        _TEMPLATE_MATURITY_CHIEN_HON_BI_BAO,
         _TEMPLATE_MATURITY_CHIEN_HON_LOI_VAO,
         _TEMPLATE_MATURITY_CHIEN_HON_MIEN_PHI,
         _TEMPLATE_MATURITY_CHIEN_HON_THOAT,
@@ -31,6 +34,7 @@ class SoulPoller(BaseMaturityPoller):
 
     def __init__(self):
         super().__init__()
+        self.bi_bao_clicked = False
         self.entry_clicked = False
         self.loaded_templates = get_templates(self.templates)
         missing = [
@@ -60,6 +64,19 @@ class SoulPoller(BaseMaturityPoller):
                     account=account,
                     log=context["log"],
                 ),
+            }
+
+        if not self.bi_bao_clicked:
+            return {
+                "screen": screen,
+                "chien_hon": {
+                    "chien_hon_bi_bao": match(
+                        screen,
+                        self.loaded_templates[_TEMPLATE_MATURITY_CHIEN_HON_BI_BAO],
+                        account=account,
+                        log=context["log"],
+                    ),
+                },
             }
 
         if not self.entry_clicked:
