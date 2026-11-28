@@ -89,7 +89,7 @@ def _load_stage_templates() -> tuple[np.ndarray, ...]:
 def _recognize_stage_number(
     device, account, log, *, fallback: bool = False
 ) -> int | None:
-    """Nhận diện số ải; fallback chỉ so khớp nửa dưới với ải 1 đến 9."""
+    """Nhận diện số ải; fallback dùng source_image rộng 105px với ải 1 đến 9."""
     try:
         screenshot = device.screenshot()
         if screenshot.width < _STAGE_SCREENSHOT_RECT[2] or screenshot.height < _STAGE_SCREENSHOT_RECT[3]:
@@ -135,9 +135,10 @@ def _recognize_stage_number(
         )
         aligned.paste(content, (10, 0))
 
-        # Nhận diện chính dùng toàn bộ vùng 135x60; fallback dùng nửa dưới.
+        # Nhận diện chính dùng source_image 135x60; fallback giảm chiều rộng
+        # source_image đi 30px còn 105x60, không thay đổi template.
         if fallback:
-            source_image = aligned.crop((0, 30, _STAGE_TEMPLATE_WIDTH, 60))
+            source_image = aligned.crop((0, 0, _STAGE_TEMPLATE_WIDTH - 30, _STAGE_TEMPLATE_HEIGHT))
         else:
             source_image = aligned.crop(
                 (0, 0, _STAGE_TEMPLATE_WIDTH, _STAGE_TEMPLATE_HEIGHT)
@@ -150,17 +151,25 @@ def _recognize_stage_number(
 
         templates = _load_stage_templates()
         if fallback:
-            templates = tuple(template[30:60, :, :] for template in templates[:9])
+            templates = templates[:9]
         scores = []
         best_stage = None
         best_score = float("-inf")
         for stage_number, template in enumerate(templates, start=1):
-            # Ảnh chính 135x60; fallback so sánh phần dưới 135x30.
-            result = cv2.matchTemplate(
-                source,
-                template,
-                cv2.TM_CCOEFF_NORMED,
-            )
+            # Fallback source_image nhỏ hơn template theo chiều ngang;
+            # đảo vai trò để tìm vùng khớp 105x60 bên trong template 135x60.
+            if fallback:
+                result = cv2.matchTemplate(
+                    template,
+                    source,
+                    cv2.TM_CCOEFF_NORMED,
+                )
+            else:
+                result = cv2.matchTemplate(
+                    source,
+                    template,
+                    cv2.TM_CCOEFF_NORMED,
+                )
             _min_value, max_value, _min_location, _max_location = cv2.minMaxLoc(result)
             score = float(max_value)
             scores.append((stage_number, score))
@@ -170,7 +179,7 @@ def _recognize_stage_number(
 
         log(
             f"[{account.display_name}] Điểm matching "
-            f"{'fallback 9 template (135x30)' if fallback else '100 template'}: "
+            f"{'fallback 9 template (source_image 105x60)' if fallback else '100 template'}: "
             + ", ".join(f"ải {stage}: {score:.3f}" for stage, score in scores)
         )
 
@@ -444,7 +453,7 @@ def run(worker, account, device, log) -> bool:
                     log(
                         f"[{account.display_name}] Nhận diện chính thất bại "
                         f"{_STAGE_RECOGNITION_MAX_ATTEMPTS} lần; thử fallback "
-                        "một lần với vùng (0, 30, 135, 60), chỉ so khớp ải 1-9."
+                        "một lần với source_image 105x60 (giảm 30px chiều rộng), chỉ so khớp ải 1-9."
                     )
                     recognized_stage = _recognize_stage_number(
                         device, account, log, fallback=True
