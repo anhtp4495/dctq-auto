@@ -41,10 +41,7 @@ def _handle_lord_observation(observation, poller, context) -> bool:
         found = chua_cong_found["mien_phi"]
         label = "Giương cờ"
         action_key = "mien_phi"
-    elif (
-        chua_cong_found.get("thoat") is not None
-        and not poller.has_completed_action("thoat")
-    ):
+    elif chua_cong_found.get("thoat") is not None:
         found = chua_cong_found["thoat"]
         label = "Thoát màn hình Chúa công"
         action_key = "thoat"
@@ -76,7 +73,7 @@ def _handle_divine_weapon_observation(observation, poller, context) -> bool:
         ("hoi_thanh", "Hồi thành"),
     )
     for key, label in actions:
-        if key != "mien_phi" and poller.has_completed_action(key):
+        if key == "loi_vao" and poller.has_completed_action(key):
             continue
         if key == "loi_vao" and poller.entry_clicked:
             continue
@@ -116,7 +113,7 @@ def _handle_guardian_observation(observation, poller, context) -> bool:
         ("thoat", "Thoát màn hình Vệ tướng"),
     )
     for key, label in actions:
-        if key != "mien_phi" and poller.has_completed_action(key):
+        if key == "loi_vao" and poller.has_completed_action(key):
             continue
         found = ve_tuong_found.get(key)
         if found is None:
@@ -148,7 +145,7 @@ def _handle_soul_observation(observation, poller, context) -> bool:
         ("thoat", "Thoát màn hình Chiến hồn"),
     )
     for key, label in actions:
-        if key != "mien_phi" and poller.has_completed_action(key):
+        if key == "loi_vao" and poller.has_completed_action(key):
             continue
         found = chien_hon_found.get(key)
         if found is None:
@@ -181,7 +178,7 @@ def _handle_tuong_an_observation(observation, poller, context) -> bool:
         ("thoat", "Thoát màn hình Tướng ấn"),
     )
     for key, label in actions:
-        if key != "mien_phi" and poller.has_completed_action(key):
+        if key == "loi_vao" and poller.has_completed_action(key):
             continue
         if key == "loi_vao" and poller.entry_clicked:
             continue
@@ -219,7 +216,7 @@ def _handle_defense_forge_observation(observation, poller, context) -> bool:
         ("hoi_thanh", "Hồi thành"),
     )
     for key, label in actions:
-        if key != "mien_phi" and poller.has_completed_action(key):
+        if key == "loi_vao" and poller.has_completed_action(key):
             continue
         if key == "loi_vao" and poller.entry_clicked:
             continue
@@ -258,7 +255,7 @@ def _handle_friend_observation(observation, poller, context) -> bool:
         ("thoat", "Thoát màn hình Bạn bè"),
     )
     for key, label in actions:
-        if key != "mien_phi" and poller.has_completed_action(key):
+        if key == "loi_vao" and poller.has_completed_action(key):
             continue
         found = friend_found.get(key)
         if found is None:
