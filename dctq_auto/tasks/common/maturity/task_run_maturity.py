@@ -154,9 +154,8 @@ def _handle_soul_observation(observation, poller, context) -> bool:
             f"Click {label} tại ({x}, {y})."
         )
         poller.record_action(key, context)
-        if key == "chien_hon_bi_bao":
+        if key == "loi_vao":
             poller.bi_bao_clicked = True
-        elif key == "loi_vao":
             poller.entry_clicked = True
         elif key == "thoat":
             poller.waiting_for_exit = True
