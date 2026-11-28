@@ -1048,6 +1048,13 @@
           "threshold": 0.85,
           "match_method": "TM_CCOEFF_NORMED"
         },
+        "thoat_tien_giai_lenh_bai": {
+          "description": "[Tam Quốc Lệnh] - [Tiến giải lệnh bài] - Đóng",
+          "rect": { "top": 50, "left": 1737, "right": 1787, "bottom": 86},
+          "search_rect": { "top": 72, "left": 1322, "right": 1670, "bottom": 391},
+          "threshold": 0.85,
+          "match_method": "TM_CCOEFF_NORMED"
+        },
         "nhan_thuong_nhanh": {
           "description": "[Tam Quốc Lệnh] - Nhận thưởng nhanh",
           "rect": { "top": 948, "left": 1307, "right": 1487, "bottom": 1020},
